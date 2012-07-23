@@ -11,6 +11,7 @@
 
 /* ADC register offset */
 #define FA_DMA_MEM_OFF	0x00000
+#define FA_UTC_MEM_OFF	0x40000
 #define FA_IRQ_MEM_OFF	0x50000
 #define FA_ADC_MEM_OFF	0x90000
 
@@ -18,6 +19,7 @@ struct spec_fa {
 	struct spec_dev		*spec;
 	struct zio_device	*hwzdev;
 
+	struct sg_table		sgt;	/* scatter/gather table */
 	unsigned char __iomem	*base;	/* regs files are byte-oriented */
 };
 
@@ -136,6 +138,20 @@ enum zfat_irq {
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
 #include <linux/zio.h>
 #include <linux/zio-trigger.h>
+
+#include <linux/dma-mapping.h>
+#include <linux/scatterlist.h>
+
+
+static inline uint32_t sg_dma_address_l(struct scatterlist *sg)
+{
+	return ((uint32_t) (sg_dma_address(sg) & 0xFFFFFFFF));
+}
+static inline uint32_t sg_dma_address_h(struct scatterlist *sg)
+{
+	return ((uint32_t) (32 >> (sg_dma_address(sg) & (~0xFFFFFFFF))));
+}
+
 
 static inline struct spec_fa *get_zfadc(struct device *dev)
 {
