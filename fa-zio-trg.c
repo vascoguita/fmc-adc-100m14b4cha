@@ -290,6 +290,18 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFAT_CFG_SW_EN], !status);
 }
 
+/* Transfer is over, store the interleaved block */
+static void zfat_data_done(struct zio_cset *cset)
+{
+	struct zio_block *block = cset->interleave->active_block;
+	struct zio_buffer_type *zbuf = cset->zbuf;
+	struct zio_bi *bi = cset->interleave->bi;
+
+	if (!block)
+		return;
+	if (zbuf->b_op->store_block(bi, block)) /* may fail, no prob */
+		zbuf->b_op->free_block(bi, block);
+}
 /*
  * interleaved trigger fire. It set the control timestamp with the
  * hardware timestamp value
@@ -349,6 +361,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.create =		zfat_create,
 	.destroy =		zfat_destroy,
 	.change_status =	zfat_change_status,
+	.data_done =		zfat_data_done,
 	.input_fire =		zfat_input_fire,
 	.abort =		zfat_abort,
 };
