@@ -331,7 +331,7 @@ static int zfad_input_cset(struct zio_cset *cset)
 
 	/* Start DMA transefer */
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_CTL_START], 1);
-	return 0; /* data_done on DMA_DONE interrupt */
+	return -EAGAIN; /* data_done on DMA_DONE interrupt */
 }
 
 static int zfad_zio_probe(struct zio_device *zdev)
