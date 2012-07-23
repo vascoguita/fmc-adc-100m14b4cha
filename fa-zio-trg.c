@@ -291,6 +291,54 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 }
 
 /*
+ * interleaved trigger fire. It set the control timestamp with the
+ * hardware timestamp value
+ */
+static void zfat_input_fire(struct zio_ti *ti)
+{
+	struct zio_channel *interleave = ti->cset->interleave;
+	struct zio_timestamp *tstamp = &interleave->current_ctrl->tstamp;
+	struct zio_buffer_type *zbuf = ti->cset->zbuf;
+	struct zio_control *ctrl;
+	struct zio_block *block;
+	int err;
+
+	ctrl = zio_alloc_control(GFP_ATOMIC);
+	/* Update sequence number */
+	interleave->current_ctrl->seq_num++;
+	/* Retrieve last trigger time-stamp */
+	zfa_common_info_get(&ti->cset->head.dev,
+			    &zfad_regs[ZFA_UTC_TRIG_SECONDS], tstamp->secs);
+	zfa_common_info_get(&ti->cset->head.dev,
+			    &zfad_regs[ZFA_UTC_TRIG_COARSE], tstamp->ticks);
+	zfa_common_info_get(&ti->cset->head.dev,
+			    &zfad_regs[ZFA_UTC_TRIG_FINE], tstamp->bins);
+	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
+
+	/* Allocate a new block for DMA transfer */
+	block = zbuf->b_op->alloc_block(interleave->bi, ctrl,
+					ctrl->ssize * ctrl->nsamples,
+					GFP_ATOMIC);
+	if (IS_ERR(block)) {
+		dev_err(&ti->cset->head.dev, "can't alloc block\n");
+		goto out;
+	}
+	interleave->active_block = block;
+
+	err = ti->cset->raw_io(ti->cset);
+	if (err != -EAGAIN) {
+		dev_err(&ti->cset->head.dev, "Can't transfer err %i \n", err);
+		goto out_free;
+	}
+	return;
+
+out_free:
+	zbuf->b_op->free_block(interleave->bi, block);
+out:
+	zio_free_control(ctrl);
+	interleave->active_block = NULL;
+}
+/*
  * Abort depends on the state machine status and DMA status.*/
 static void zfat_abort(struct zio_cset *cset)
 {
@@ -301,6 +349,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.create =		zfat_create,
 	.destroy =		zfat_destroy,
 	.change_status =	zfat_change_status,
+	.input_fire =		zfat_input_fire,
 	.abort =		zfat_abort,
 };
 
