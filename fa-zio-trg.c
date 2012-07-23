@@ -350,11 +350,15 @@ out:
 	zio_free_control(ctrl);
 	interleave->active_block = NULL;
 }
-/*
- * Abort depends on the state machine status and DMA status.*/
+
+/* Abort depends on the state machine status and DMA status.*/
 static void zfat_abort(struct zio_cset *cset)
 {
+	struct zio_block *block = cset->interleave->active_block;
+	struct zio_buffer_type *zbuf = cset->zbuf;
+	struct zio_bi *bi = cset->interleave->bi;
 
+	zbuf->b_op->free_block(bi, block);
 }
 
 static const struct zio_trigger_operations zfat_ops = {
