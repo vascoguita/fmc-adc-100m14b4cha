@@ -11,6 +11,8 @@
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/list.h>
+#include <linux/dma-mapping.h>
+#include <linux/scatterlist.h>
 
 #include <linux/zio.h>
 #include <linux/zio-buffer.h>
@@ -223,6 +225,92 @@ static const struct zio_sysfs_operations zfad_s_op = {
 	.info_get = zfad_info_get,
 };
 
+
+/*
+ * Map a scatter/gather table for the DMA transfer from the FMC-ADC.
+ */
+static int zfad_map_dma(struct zio_cset *cset)
+{
+	struct spec_fa *fa = cset->zdev->priv_d;
+	struct scatterlist *sg, *nsg;
+	struct zio_block *block = cset->interleave->active_block;
+	unsigned int i, pages, size, sglen;
+	int err;
+
+	/* Create sglists for the transfers, PAGE_SIZE granularity */
+	size = cset->interleave->current_ctrl->nsamples *
+	       cset->interleave->current_ctrl->ssize;
+	pages = DIV_ROUND_UP(size, PAGE_SIZE);
+	dev_dbg(&cset->head.dev, "using %d pages for transfer\n", pages);
+
+	/* Create sglists for the transfers */
+	err = sg_alloc_table(&fa->sgt, pages, GFP_ATOMIC);
+	if (err)
+		goto out;
+
+	/* Configure DMA list's items */
+	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
+		if (i == 0) {	/* first item on the device */
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_ADDR], 0);
+			/* Set the low 32bit address */
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_ADDR_L],
+					    sg_dma_address_l(sg));
+			/* Set the high 32bit address */
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_ADDR_H],
+					    sg_dma_address_h(sg));
+			/* Set the first item len */
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_LEN],
+					    sg_dma_len(sg));
+			if (fa->sgt.nents == 1) /* single transfer */
+				continue;
+
+			/*
+			 * data requires more then one transfer, then prepare
+			 * the next item. We need the next SG
+			 */
+			nsg = sg_next(sg);
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_NEXT_L],
+					    sg_dma_address_l(nsg));
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_NEXT_H],
+					    sg_dma_address_l(nsg));
+			/* Set that there is a next item */
+			zfa_common_conf_set(&cset->head.dev,
+					    &zfad_regs[ZFA_DMA_BR_LAST], 1);
+		} else {	/* other items in the memory */
+			/*
+			 * Each item in the list is made of the following
+			 * registers: DMACSTARTR, DMAHSTARTLR, DMAH-STARTHR,
+			 *  DMALENR, DMANEXTLR, DMANEXTHR and DMAATTRIBR
+			 */
+
+			if (i == fa->sgt.nents - 1)	/* last item*/
+				continue;
+
+			nsg = sg_next(sg);
+			/* FIXME set NEXT_L NEXT_H and BR_LAST*/
+		}
+	}
+
+	/* Map DMA buffers */
+	sglen = dma_map_sg(&fa->spec->pdev->dev, fa->sgt.sgl, fa->sgt.nents,
+			   DMA_FROM_DEVICE);
+	if (!sglen)
+		goto out_free;
+
+	return 0;
+
+out_free:
+	sg_free_table(&fa->sgt);
+out:
+	return -ENOMEM;
+}
+
 /*
  * Prepare the FMC-ADC for the DMA transfer. FMC-ADC fire the hardware trigger,
  * it acquires all samples in its DDR memory and then it allows the driver to
@@ -231,15 +319,18 @@ static const struct zio_sysfs_operations zfad_s_op = {
  */
 static int zfad_input_cset(struct zio_cset *cset)
 {
+	int err;
+
 	/* ZIO should configure only the interleaved channel */
 	if (!cset->interleave)
 		return -EINVAL;
 
-	/* FIXME configure DMA */
+	err = zfad_map_dma(cset);
+	if (err)
+		return err;
 
 	/* Start DMA transefer */
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_CTL_START], 1);
-	/* FIXME DMA start autoclear is there? */
 	return 0; /* data_done on DMA_DONE interrupt */
 }
 
@@ -303,6 +394,7 @@ static struct zio_device zfad_tmpl = {
 	},
 	/* This driver work only with the fmc-adc-trig */
 	.preferred_trigger = "fmc-adc-trig",
+	.preferred_buffer = "vmalloc",
 };
 
 static const struct zio_device_id zfad_table[] = {
@@ -334,10 +426,15 @@ void fa_zio_unregister(void)
 /* Init and exit are called for each FMC-ADC card we have */
 int fa_zio_init(struct spec_fa *fa)
 {
-	struct pci_dev *pdev;
+	struct pci_dev *pdev = fa->spec->pdev;
 	uint32_t dev_id;
 	int err;
 
+	/* Check if hardware support 64-bit DMA */
+	if(dma_set_mask(&fa->spec->pdev->dev, DMA_BIT_MASK(64))) {
+		dev_err(&pdev->dev, "64-bit DMA addressing not available\n");
+		return -EINVAL;
+	}
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
