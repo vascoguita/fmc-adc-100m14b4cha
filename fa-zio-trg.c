@@ -91,27 +91,6 @@ static struct zio_attribute zfat_ext_zattr[] = {
 };
 
 
-/* FIXME: zio need an update, introduce PRE and POST and replace NSAMPLES*/
-static void zfat_update_nsample(struct zio_ti *ti, enum zfadc_dregs_enum type,
-				uint32_t val)
-{
-	struct zio_attribute_set *zattr_set =  &ti->zattr_set;
-	struct zio_attribute *n = &zattr_set->std_zattr[ZATTR_TRIG_NSAMPLES];
-	 /* 9-th attribute is PRE */
-	struct zio_attribute *pre = &zattr_set->ext_zattr[9];
-	/* 10-th attribute is POST */
-	struct zio_attribute *post = &zattr_set->ext_zattr[10];
-
-	if (type == ZFAT_PRE)
-		n->value = val + post->value;
-	else if (type == ZFAT_POST)
-		n->value = pre->value + val;
-	/*
-	 * FIXME n->value must update current_control. Make propagete_value
-	 * a public function?
-	 */
-}
-
 /* set a value to a FMC-ADC trigger register */
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
@@ -119,6 +98,8 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	const struct zio_reg_desc *reg = &zfad_regs[zattr->priv.addr];
 	struct zio_ti *ti = to_zio_ti(dev);
 	int err;
+	/* These static value are synchronized with the ZIO attribute value */
+	static uint32_t pre_s = 0, post_s = 0;
 
 	switch (zattr->priv.addr) {
 		case ZFAT_SW:
@@ -142,10 +123,25 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	if (err)
 		return err;
 
-	if ( zattr->priv.addr == ZFAT_PRE ||  zattr->priv.addr == ZFAT_POST) {
-		zfat_update_nsample(to_zio_ti(dev), zattr->priv.addr, usr_val);
+	/* Update static value */
+	if (zattr->priv.addr == ZFAT_PRE) {
+		pre_s = usr_val;
+	}
+	if (zattr->priv.addr == ZFAT_POST) {
+		post_s = usr_val;
 	}
 
+	if ( zattr->priv.addr == ZFAT_PRE ||  zattr->priv.addr == ZFAT_POST) {
+		/* Check if the acquisition of all required samples is possibile */
+		if ((pre_s + post_s) * ti->cset->ssize >= FA_MAX_ACQ_BYTE) {
+			dev_warn(&ti->cset->head.dev,
+				 "you can't acquire more then %i samples"
+				"(pre-samples = %i, post-samples = %i).",
+				FA_MAX_ACQ_BYTE/ti->cset->ssize,
+				pre_s, post_s);
+		}
+	}
+	/* FIXME: zio need an update, introduce PRE and POST and replace NSAMPLES*/
 	return 0;
 }
 /* get the value of a FMC-ADC trigger register */
