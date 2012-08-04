@@ -7,6 +7,7 @@
 #ifndef _FMC_ADC_H_
 #define _FMC_ADC_H_
 
+#include <linux/zio.h>
 #include "spec.h"
 
 /* ADC register offset */
@@ -15,6 +16,9 @@
 #define FA_IRQ_MEM_OFF	0x50000
 #define FA_ADC_MEM_OFF	0x90000
 
+/* ADC DDR memory */
+#define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
+
 struct spec_fa {
 	struct spec_dev		*spec;
 	struct zio_device	*hwzdev;
@@ -22,6 +26,24 @@ struct spec_fa {
 	struct sg_table		sgt;	/* scatter/gather table */
 	unsigned char __iomem	*base;	/* regs files are byte-oriented */
 };
+
+/* The information about a DMA transfer */
+struct dma_item {
+	uint32_t start_addr;	/* 0x00 */
+	uint32_t dma_addr_l;	/* 0x04 */
+	uint32_t dma_addr_h;	/* 0x08 */
+	uint32_t dma_len;	/* 0x0C */
+	uint32_t next_addr_l;	/* 0x10 */
+	uint32_t next_addr_h;	/* 0x14 */
+	uint32_t attribute;	/* 0x18 */
+	/*
+	 * attribute is used only to provide the "last item" bit, direction is
+	 * fixed to device->host
+	 */
+};
+
+extern int zfad_map_dma(struct zio_cset *cset);
+extern void zfad_unmap_dma(struct zio_cset *cset);
 
 /*
  * ZFA_CHx_MULT
@@ -159,17 +181,6 @@ enum zfat_irq {
 
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
-
-
-static inline uint32_t sg_dma_address_l(struct scatterlist *sg)
-{
-	return ((uint32_t) (sg_dma_address(sg) & 0xFFFFFFFF));
-}
-static inline uint32_t sg_dma_address_h(struct scatterlist *sg)
-{
-	return ((uint32_t) (32 >> (sg_dma_address(sg) & (~0xFFFFFFFF))));
-}
-
 
 static inline struct spec_fa *get_zfadc(struct device *dev)
 {

@@ -18,6 +18,7 @@ spec-fmc-adc-objs =  fa-zio-drv.o
 spec-fmc-adc-objs += fa-core.o
 spec-fmc-adc-objs += fa-spec.o
 spec-fmc-adc-objs += fa-zio-trg.o
+spec-fmc-adc-objs += fa-dma.o
 
 
 all: modules

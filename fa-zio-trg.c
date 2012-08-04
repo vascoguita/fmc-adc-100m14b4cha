@@ -157,17 +157,6 @@ static const struct zio_sysfs_operations zfat_s_op = {
 	.info_get = zfat_info_get,
 };
 
-/*
- *
- */
-static void zfad_unmap_dma(struct zio_cset *cset)
-{
-	struct spec_fa *fa = cset->zdev->priv_d;
-
-	dma_unmap_sg(&fa->spec->pdev->dev);
-	sg_free_table(&fa->sgt);
-}
-
 irqreturn_t zfadc_irq(int irq, void *ptr)
 {
 	struct zfat_instance *zfat = ptr;
