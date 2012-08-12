@@ -304,13 +304,14 @@ static void zfat_input_fire(struct zio_ti *ti)
 	ctrl = zio_alloc_control(GFP_ATOMIC);
 	/* Update sequence number */
 	interleave->current_ctrl->seq_num++;
+
 	/* Retrieve last trigger time-stamp (hw trigger already fired) */
 	zfa_common_info_get(&ti->cset->head.dev,
-			    &zfad_regs[ZFA_UTC_TRIG_SECONDS], tstamp->secs);
+			    &zfad_regs[ZFA_UTC_TRIG_SECONDS], &tstamp->secs);
 	zfa_common_info_get(&ti->cset->head.dev,
-			    &zfad_regs[ZFA_UTC_TRIG_COARSE], tstamp->ticks);
+			    &zfad_regs[ZFA_UTC_TRIG_COARSE], &tstamp->ticks);
 	zfa_common_info_get(&ti->cset->head.dev,
-			    &zfad_regs[ZFA_UTC_TRIG_FINE], tstamp->bins);
+			    &zfad_regs[ZFA_UTC_TRIG_FINE], &tstamp->bins);
 	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
 
 	/* Allocate a new block for DMA transfer */
