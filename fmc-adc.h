@@ -223,7 +223,8 @@ static inline int zfa_common_conf_set(struct device *dev,
 	uint32_t cur, val;
 
 	if ((usr_val & (~reg->mask))) {
-		dev_err(dev, "the value must fit the mask 0x%x\n", reg->mask);
+		dev_err(dev, "the value 0x%x must fit the mask 0x%x\n",
+			usr_val, reg->mask);
 		return -EINVAL;
 	}
 	/* Read current register*/
