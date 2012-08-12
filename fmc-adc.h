@@ -229,9 +229,9 @@ static inline int zfa_common_conf_set(struct device *dev,
 	/* Read current register*/
 	cur = fa_read_reg(get_zfadc(dev), reg);
 	/* Mask the value */
-	cur &= (~(reg->mask << reg->off));
+	cur &= (~(reg->mask << reg->shift));
 	/* Write the new value */
-	val = cur | (usr_val << reg->off);
+	val = cur | (usr_val << reg->shift);
 	/* FIXME re-write usr_val when possible (zio need a patch) */
 	/* If the attribute has a valid address */
 	fa_write_reg(val, get_zfadc(dev), reg);
