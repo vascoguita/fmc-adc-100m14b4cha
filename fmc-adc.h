@@ -157,9 +157,17 @@ enum zfadc_dregs_enum {
 	ZFA_UTC_ACQ_END_COARSE,
 	ZFA_UTC_ACQ_END_FINE,
 };
+/* Device registers */
+extern const struct zio_reg_desc zfad_regs[];
+
+enum zfa_fsm_cmd {
+	ZFA_NONE =	0x0,
+	ZFA_START =	0x1,
+	ZFA_STOP =	0x2,
+};
 /* All possible state of the state machine, other values are invalid*/
 enum zfa_fsm_state {
-	ZFA_STATE_IDLE =	0x1,
+	ZFA_STATE_IDLE = 0x1,
 	ZFA_STATE_PRE,
 	ZFA_STATE_POST,
 	ZFA_STATE_WAIT,

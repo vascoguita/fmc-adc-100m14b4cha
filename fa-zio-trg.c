@@ -180,7 +180,7 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 				    &zfad_regs[ZFAT_CFG_HW_EN], 0);
 		/* Start state machine */
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFA_CTL_FMS_CMD], 2);
+				    &zfad_regs[ZFA_CTL_FMS_CMD], ZFA_START);
 	}
 
 	if (irq_status & ZFAT_TRG_FIRE) { /* Trigger fire */
@@ -201,9 +201,11 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 		zfa_common_info_get(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFA_STA_FSM],&val);
 		if (val == ZFA_STATE_IDLE) {
+			dev_dbg(&zfat->ti.head.dev, "Start DMA from device\n");
 			/* Stop state machine */
 			zfa_common_conf_set(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFA_CTL_FMS_CMD], 2);
+					    &zfad_regs[ZFA_CTL_FMS_CMD],
+					    ZFA_STOP);
 			/* Disable all triggers */
 			zfa_common_conf_set(&zfat->ti.cset->head.dev,
 					    &zfad_regs[ZFAT_CFG_HW_EN], 0);
