@@ -29,9 +29,6 @@ struct zfat_instance {
 };
 #define to_zfat_instance(_ti) container_of(_ti, struct zfat_instance, ti)
 
-/* Device registers */
-extern const struct zio_reg_desc zfad_regs[];
-
 /* zio trigger attributes */
 static DEFINE_ZATTR_STD(TRIG, zfat_std_zattr) = {
 	/* Number of shots */
