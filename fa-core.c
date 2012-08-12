@@ -13,45 +13,57 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
-int fa_probe(struct spec_dev *spec)
+int fa_probe(struct fmc_device *fmc)
 {
 	struct spec_fa *fa;
+	struct spec_dev *spec = fmc->carrier_data;
 	int err;
 
 	pr_info("%s:%d\n", __func__, __LINE__);
-	fa = kzalloc(sizeof(struct spec_fa), GFP_KERNEL);
+	/* Driver data */
+	fa = devm_kzalloc(&fmc->dev, sizeof(struct spec_fa), GFP_KERNEL);
 	if (!fa)
 		return -ENOMEM;
+	fmc_set_drvdata(fmc, fa);
 
-	spec->sub_priv = fa;
-	fa->spec = spec;
+	fa->fmc = fmc;
 	fa->base = spec->remap[0];
 
 	/* Initliaze sub-system (FIXME only ZIO at the moment) */
 	err = fa_zio_init(fa);
 	if (err) {
-		kfree(fa);
+		devm_kfree(&fmc->dev, fa);
 		return err;
 	}
 	return 0;
 }
-void fa_remove(struct spec_dev *dev)
+int fa_remove(struct fmc_device *fmc)
 {
-	fa_zio_exit(dev->sub_priv);
-	kfree(dev->sub_priv);
+	struct spec_fa *fa = fmc_get_drvdata(fmc);
+
+	fa_zio_exit(fa);
+	devm_kfree(&fmc->dev, fa);
+	return 0;
 }
+static struct fmc_driver fmc_adc__drv = {
+	.driver.name = KBUILD_MODNAME,
+	.probe = fa_probe,
+	.remove = fa_remove,
+	/* no table, as the current match just matches everything */
+};
 
 static int fa_init(void)
 {
 	int ret;
 
 	pr_debug("%s\n",__func__);
-	ret = fa_zio_register();
-	if (ret < 0)
+	ret = fmc_driver_register(&fmc_adc__drv);
+	if (ret)
 		return ret;
-	ret = fa_spec_init();
-	if (ret < 0) {
-		fa_zio_unregister();
+
+	ret = fa_zio_register();
+	if (ret) {
+		fmc_driver_unregister(&fmc_adc__drv);
 		return ret;
 	}
 	return 0;
@@ -59,8 +71,8 @@ static int fa_init(void)
 
 static void fa_exit(void)
 {
-	fa_spec_exit();
 	fa_zio_unregister();
+	fmc_driver_unregister(&fmc_adc__drv);
 }
 
 module_init(fa_init);

@@ -157,12 +157,14 @@ static const struct zio_sysfs_operations zfat_s_op = {
 irqreturn_t zfadc_irq(int irq, void *ptr)
 {
 	struct zfat_instance *zfat = ptr;
+	struct spec_fa *fa = zfat->fa;
 	uint32_t irq_status = 0, val;
 
 	zfa_common_info_get(&zfat->ti.cset->head.dev,
 			    &zfad_regs[ZFA_IRQ_SRC],&irq_status);
 	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x\n", irq_status);
 
+	fa->fmc->op->irq_ack(fa->fmc);
 	if (irq_status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) {
 		if (irq_status & ZFAT_DMA_DONE) { /* DMA done*/
 			zio_trigger_data_done(zfat->ti.cset);
@@ -243,8 +245,7 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 
 	zfat->fa = fa;
 
-	err = request_irq(fa->spec->pdev->irq, zfadc_irq, IRQF_SHARED,
-			  "wr-nic", zfat);
+	err = fa->fmc->op->irq_request(fa->fmc, zfadc_irq, "fmc-adc", 0);
 	if (err) {
 		dev_err(&fa->spec->pdev->dev, "can't request irq %i (err %i)\n",
 				fa->spec->pdev->irq, err);
@@ -260,13 +261,17 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 
 static void zfat_destroy(struct zio_ti *ti)
 {
+	struct spec_fa *fa = ti->cset->zdev->priv_d;
+	struct zfat_instance *zfat = to_zfat_instance(ti);
+
 	/* Disable all interrupt */
 	zfa_common_conf_set(&ti->cset->head.dev, &zfad_regs[ZFA_IRQ_MASK],
 			    ZFAT_NONE);
-	kfree(to_zfat_instance(ti));
+	fa->fmc->op->irq_free(fa->fmc);
+	kfree(zfat);
 }
 
-/* status is active low on ZIO but active high on the FMC-ADC */
+/* status is active low on ZIO but active high on the FMC-ADC, then use ! */
 static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
 	/* Enable/Disable HW trigger */

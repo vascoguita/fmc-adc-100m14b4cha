@@ -15,16 +15,23 @@
 #define FA_UTC_MEM_OFF	0x40000
 #define FA_IRQ_MEM_OFF	0x50000
 #define FA_ADC_MEM_OFF	0x90000
+#define FA_OWI_MEM_OFF	0XA0000 /* one-wire */
 
 /* ADC DDR memory */
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
 
 struct spec_fa {
+	struct fmc_device	*fmc;
 	struct spec_dev		*spec;
 	struct zio_device	*hwzdev;
 
 	struct sg_table		sgt;	/* scatter/gather table */
 	unsigned char __iomem	*base;	/* regs files are byte-oriented */
+
+	/* one-wire */
+	uint8_t ds18_id[8];
+	unsigned long		next_t;
+	int			temp;	/* temperature: scaled by 4 bits */
 };
 
 /* The information about a DMA transfer */
@@ -255,18 +262,16 @@ static inline void zfa_common_info_get(struct device *dev,
 	/* Read current register*/
 	cur = fa_read_reg(get_zfadc(dev), reg);
 	/* Mask the value */
-	cur &= (reg->mask << reg->off);
+	cur &= (reg->mask << reg->shift);
 	/* Return the value */
-	*usr_val = cur >> reg->off;
+	*usr_val = cur >> reg->shift;
 }
 
 extern struct zio_trigger_type zfat_type;
 /* Registers lists used in fd-zio-drv.c and fd-zio-trg.c */
 extern const struct zio_reg_desc zfad_regs[];
 
-/* Functions exported by fd-core.c */
-extern int fa_probe(struct spec_dev *dev);
-extern void fa_remove(struct spec_dev *dev);
+
 /* Functions exported by fa-zio.c */
 extern int fa_zio_register(void);
 extern void fa_zio_unregister(void);
@@ -276,6 +281,9 @@ extern void fa_zio_exit(struct spec_fa *fa);
 /* Functions exported by fa-spec.c */
 extern int fa_spec_init(void);
 extern void fa_spec_exit(void);
+/* Functions exported by onewire.c */
+extern int fa_onewire_init(struct spec_fa *fa);
+extern void fa_onewire_exit(struct spec_fa *fa);
 
 #endif /* __KERNEL__ */
 #endif /* _FMC_ADC_H_ */

@@ -252,7 +252,6 @@ static int zfad_input_cset(struct zio_cset *cset)
 
 static int zfad_zio_probe(struct zio_device *zdev)
 {
-	struct spec_fa *fa = zdev->priv_d;
 	const struct zio_reg_desc *reg;
 	int i;
 
@@ -342,16 +341,18 @@ void fa_zio_unregister(void)
 /* Init and exit are called for each FMC-ADC card we have */
 int fa_zio_init(struct spec_fa *fa)
 {
-	struct pci_dev *pdev = fa->spec->pdev;
+	struct device *hwdev = fa->fmc->hwdev;
+	struct spec_dev *spec = fa->fmc->carrier_data;
+	struct pci_dev *pdev = spec->pdev;
 	uint32_t dev_id;
 	int err;
 
 	/* Check if hardware support 64-bit DMA */
-	if(dma_set_mask(&fa->spec->pdev->dev, DMA_BIT_MASK(64))) {
-		dev_err(&pdev->dev, "64-bit DMA addressing not available\n");
+	if(dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
+		dev_err(hwdev, "64-bit DMA addressing not available\n");
 		return -EINVAL;
 	}
-	pr_info("%s:%d\n", __func__, __LINE__);
+
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev))
@@ -362,7 +363,6 @@ int fa_zio_init(struct spec_fa *fa)
 	fa->hwzdev->priv_d = fa;
 
 	/* Our dev_id is bus+devfn*/
-	pdev = fa->spec->pdev;
 	dev_id = (pdev->bus->number << 8) | pdev->devfn;
 
 	/* Register our trigger hardware */
