@@ -102,28 +102,46 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	const struct zio_reg_desc *reg = &zfad_regs[zattr->priv.addr];
 	struct zio_ti *ti = to_zio_ti(dev);
 	int err;
+	uint32_t tmp_val = usr_val;
+
 	/* These static value are synchronized with the ZIO attribute value */
 	static uint32_t pre_s = 0, post_s = 0;
 
 	switch (zattr->priv.addr) {
+		case ZATTR_TRIG_REENABLE:
+			/*
+			 * Increase the reenable by 1 to be choerent with the
+			 * re-enable meaning. On the ADC there is NSHOTS which
+			 * is the number of shots to do, so to do 1 shot this
+			 * register must be set to 1. ZIO use re-enable to do
+			 * multiple shots, so 1 mean one more shot after the
+			 * first one.
+			 */
+			++tmp_val;
+			break;
 		case ZFAT_SW:
 			/* Fire if software trigger is enabled */
 			if (!ti->zattr_set.ext_zattr[3].value) {
 				dev_err(dev, "sw trigger must be enable");
 				return -EPERM;
 			}
+			/* Fire if nsamples!=0 */
+			if (!ti->cset->interleave->current_ctrl->nsamples) {
+				dev_err(dev, "there aren't samples to acquire");
+				return -EINVAL;
+			}
 			/* Abort current acquisition if any */
-			err = zfa_common_conf_set(dev,
-					&zfad_regs[ZFA_CTL_FMS_CMD], 2);
-			if (err)
-				return err;
-			zio_trigger_abort(ti->cset);
-			/* Start a new acquisition */
-			zio_fire_trigger(ti);
+			//zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
+			//		    ZFA_STOP);
+			//zio_trigger_abort(ti->cset);
+			/* Restart FSM */
+			//zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
+			//		    ZFA_START);
+			dev_dbg(dev, "software trigger fire (0x%x)\n", usr_val);
 			break;
 	}
 
-	err = zfa_common_conf_set(dev, reg, usr_val);
+	err = zfa_common_conf_set(dev, reg, tmp_val);
 	if (err)
 		return err;
 
@@ -136,6 +154,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	}
 
 	if ( zattr->priv.addr == ZFAT_PRE ||  zattr->priv.addr == ZFAT_POST) {
+		ti->cset->interleave->current_ctrl->nsamples = pre_s + post_s;
 		/* Check if the acquisition of all required samples is possibile */
 		if ((pre_s + post_s) * ti->cset->ssize >= FA_MAX_ACQ_BYTE) {
 			dev_warn(&ti->cset->head.dev,
@@ -143,6 +162,8 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 				"(pre-samples = %i, post-samples = %i).",
 				FA_MAX_ACQ_BYTE/ti->cset->ssize,
 				pre_s, post_s);
+			ti->cset->interleave->current_ctrl->nsamples =
+						FA_MAX_ACQ_BYTE/ti->cset->ssize;
 		}
 	}
 	/* FIXME: zio need an update, introduce PRE and POST and replace NSAMPLES*/
