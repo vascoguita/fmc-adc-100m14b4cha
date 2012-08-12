@@ -386,8 +386,10 @@ int fa_zio_init(struct spec_fa *fa)
 
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
-	if (IS_ERR(fa->hwzdev))
+	if (IS_ERR(fa->hwzdev)) {
+		dev_err(hwdev, "Cannot allocate ZIO device\n");
 		return PTR_ERR(fa->hwzdev);
+	}
 
 	/* Mandatory fields */
 	fa->hwzdev->owner = THIS_MODULE;
@@ -398,13 +400,16 @@ int fa_zio_init(struct spec_fa *fa)
 
 	/* Register our trigger hardware */
 	err = zio_register_trig(&zfat_type, "fmc-adc-trig");
-	if (err)
+	if (err) {
+		dev_err(hwdev, "Cannot register ZIO trigger fmc-adc-trig\n");
 		goto out_trg;
+	}
 	/* Register our device */
 	err = zio_register_device(fa->hwzdev, "fmc-adc", dev_id);
-	if (err)
+	if (err) {
+		dev_err(hwdev, "Cannot register ZIO device fmc-adc\n");
 		goto out_dev;
-
+	}
 	return 0;
 
 out_dev:
