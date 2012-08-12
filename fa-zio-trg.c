@@ -175,7 +175,7 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 			zfat->n_err++;
 		}
 		/* unmap dma */
-		zfad_unmap_dma(&zfat->ti.cset);
+		zfad_unmap_dma(zfat->ti.cset);
 		/* Enable all triggers */
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFAT_CFG_SW_EN], 0);
@@ -229,11 +229,11 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 				 struct zio_cset *cset,
 				 struct zio_control *ctrl, fmode_t flags)
 {
-	struct spec_dev *spec = cset->zdev->priv_d;
+	struct spec_fa *fa = cset->zdev->priv_d;
 	struct zfat_instance *zfat;
 	int err;
 
-	if (!spec) {
+	if (!fa) {
 		dev_err(&cset->head.dev, "no spec device defined\n");
 		return ERR_PTR(-ENODEV);
 	}
@@ -242,12 +242,13 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 	if (!zfat)
 		return ERR_PTR(-ENOMEM);
 
-	zfat->fa = spec->sub_priv;
+	zfat->fa = fa;
 
-	err = request_irq(spec->pdev->irq, zfadc_irq, IRQF_SHARED, "wr-nic", zfat);
+	err = request_irq(fa->spec->pdev->irq, zfadc_irq, IRQF_SHARED,
+			  "wr-nic", zfat);
 	if (err) {
-		dev_err(&spec->pdev->dev, "can't request irq %i (err %i)\n",
-				spec->pdev->irq, err);
+		dev_err(&fa->spec->pdev->dev, "can't request irq %i (err %i)\n",
+				fa->spec->pdev->irq, err);
 		return ERR_PTR(err);
 	}
 
@@ -303,7 +304,7 @@ static void zfat_input_fire(struct zio_ti *ti)
 	ctrl = zio_alloc_control(GFP_ATOMIC);
 	/* Update sequence number */
 	interleave->current_ctrl->seq_num++;
-	/* Retrieve last trigger time-stamp */
+	/* Retrieve last trigger time-stamp (hw trigger already fired) */
 	zfa_common_info_get(&ti->cset->head.dev,
 			    &zfad_regs[ZFA_UTC_TRIG_SECONDS], tstamp->secs);
 	zfa_common_info_get(&ti->cset->head.dev,
