@@ -175,7 +175,17 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
-	ZATTR_EXT_REG("in_range", S_IRUGO, ZFA_CHx_CTL_RANGE, 0),
+	/*
+	 * in-range
+	 * 0x23 (35): 100mV range
+	 * 0x11 (17): 1V range
+	 * 0x45 (69): 10V range
+	 * 0x00 (0): Open input
+	 * 0x42 (66): 100mV range calibration
+	 * 0x40 (64): 1V range calibration
+	 * 0x44 (68): 10V range calibration
+	 */
+	ZATTR_EXT_REG("in-range", S_IRUGO, ZFA_CHx_CTL_RANGE, 0),
 	ZATTR_EXT_REG("termination_en", S_IRUGO, ZFA_CHx_CTL_TERM, 0),
 	PARAM_EXT_REG("current_value", S_IRUGO, ZFA_CHx_STA, 0),
 };
