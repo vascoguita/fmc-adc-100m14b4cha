@@ -123,8 +123,7 @@ const struct zio_reg_desc zfad_regs[] = {
 static DEFINE_ZATTR_STD(ZDEV, zfad_dev_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES, 14),
 	/* Sample rate */
-	ZATTR_REG(trig, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 0),
-
+	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 0),
 };
 static struct zio_attribute zfad_dev_ext_zattr[] = {
 	/* Control register */
@@ -133,8 +132,9 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	 * 1: start
 	 * 2: stop
 	 */
-	PARAM_EXT_REG("fsm_cmd", S_IRUGO | S_IWUGO, ZFA_CTL_FMS_CMD, 0),
-	ZATTR_EXT_REG("fmc_clk_en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 0),
+	PARAM_EXT_REG("fsm_cmd", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
+	/* FMC clock, must be enabled  */
+	ZATTR_EXT_REG("fmc_clk_en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
 	ZATTR_EXT_REG("offset_dac_clr_n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 0),
 	ZATTR_EXT_REG("bitslip", S_IRUGO | S_IWUGO, ZFA_CTL_BSLIP, 0),
 	ZATTR_EXT_REG("test_data_en", S_IRUGO | S_IWUGO, ZFA_CTL_TEST_DATA_EN, 0),
@@ -151,9 +151,23 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	 * 5: DECR_SHOT
 	 * 7: Illegal
 	 * */
-	PARAM_EXT_REG("fsm", S_IRUGO, ZFA_STA_FSM, 0),
+	PARAM_EXT_REG("fsm_state", S_IRUGO, ZFA_STA_FSM, 0),
 	PARAM_EXT_REG("serdes_pll", S_IRUGO, ZFA_STA_SERDES_PLL, 0),
 	PARAM_EXT_REG("serdes_synced", S_IRUGO, ZFA_STA_SERDES_SYNCED, 0),
+
+	/* TIME STAMPS */
+	PARAM_EXT_REG("trig-sec", S_IRUGO, ZFA_UTC_TRIG_SECONDS, 0),
+	PARAM_EXT_REG("trig-ticks", S_IRUGO, ZFA_UTC_TRIG_COARSE, 0),
+	PARAM_EXT_REG("trig-bins", S_IRUGO, ZFA_UTC_TRIG_FINE, 0),
+	PARAM_EXT_REG("acq-start-sec", S_IRUGO, ZFA_UTC_ACQ_START_SECONDS, 0),
+	PARAM_EXT_REG("acq-start-ticks", S_IRUGO, ZFA_UTC_ACQ_START_COARSE, 0),
+	PARAM_EXT_REG("acq-start-bins", S_IRUGO, ZFA_UTC_ACQ_START_FINE, 0),
+	PARAM_EXT_REG("acq-end-sec", S_IRUGO, ZFA_UTC_ACQ_END_SECONDS, 0),
+	PARAM_EXT_REG("acq-end-ticks", S_IRUGO, ZFA_UTC_ACQ_END_COARSE, 0),
+	PARAM_EXT_REG("acq-end-bins", S_IRUGO, ZFA_UTC_ACQ_END_FINE, 0),
+	PARAM_EXT_REG("acq-stop-sec", S_IRUGO, ZFA_UTC_ACQ_STOP_SECONDS, 0),
+	PARAM_EXT_REG("acq-stop-ticks", S_IRUGO, ZFA_UTC_ACQ_STOP_COARSE, 0),
+	PARAM_EXT_REG("acq-stop-bins", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
 };
 static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_GAIN, S_IRUGO | S_IWUGO, ZFA_CHx_GAIN, 0x30),

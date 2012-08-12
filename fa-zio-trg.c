@@ -85,6 +85,13 @@ static struct zio_attribute zfat_ext_zattr[] = {
 
 	/* Post-sample*/
 	ZATTR_EXT_REG("post-sample", S_IRUGO | S_IWUGO, ZFAT_POST, 0),
+
+	/* IRQ status */
+	PARAM_EXT_REG("irq-status", S_IRUGO, ZFA_IRQ_SRC, 0),
+	/* IRQ status */
+	PARAM_EXT_REG("irq-multi", S_IRUGO, ZFA_IRQ_MULTI, 0),
+	/* IRQ status */
+	PARAM_EXT_REG("irq-mask", S_IRUGO, ZFA_IRQ_MASK, 0),
 };
 
 
