@@ -279,23 +279,28 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	const struct zio_reg_desc *reg;
 	int i;
 
-	/* Initialize channels range FIXME*/
+	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
+	/* Force stop FSM */
+	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
+			    ZFA_STOP);
 
-	/* Initialize channels gain to 1*/
+	/* Initialize channels gain to 1 and range to 10V */
 	for (i = 0; i < 4; ++i) {
 		reg = &zfad_regs[ZFA_CH1_GAIN + (i*4)];
-		fa_write_reg(0x8000, fa, reg);
+		zfa_common_conf_set(&zdev->head.dev, reg, 0x8000);
+		reg = &zfad_regs[ZFA_CH1_CTL_RANGE + (i*4)];
+		zfa_common_conf_set(&zdev->head.dev, reg, 0x45);
 	}
-	/* Enable mezzanine clock and offset DACs */
+	/* Enable mezzanine clock */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_CLK_EN], 1);
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
-
+	/* Enable offset DACs FIXME clear active low ???? */
+	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
 	/* Set DMA to transfer data from device to host */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
-
-	/* Disable all interrupt */
+	/* Enable all interrupt FIXME enable one at time? */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_IRQ_MASK],
-			    ZFAT_NONE);
+			    ZFAT_ALL);
+
 	return 0;
 }
 
@@ -317,6 +322,7 @@ static struct zio_cset zfad_cset[] = {
 		.flags =  ZCSET_TYPE_ANALOG |	/* is analog */
 			  ZIO_DIR_INPUT |	/* is input */
 			  ZCSET_INTERLEAVE_ONLY,/* interleave only */
+		/* .priv_d is used by DMA code */
 	}
 };
 
