@@ -58,25 +58,25 @@ const struct zio_reg_desc zfad_regs[] = {
 		/* Sample counter */
 	[ZFAT_CNT] =			{FA_ADC_MEM_OFF + 0x28, 0xFFFFFFFF, 0},
 	/* Channel 1 */
-	[ZFA_CH1_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x2C, 0x007B, 0},
+	[ZFA_CH1_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x2C, 0x007F, 0},
 	[ZFA_CH1_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x2C, 0x0001, 3},
 	[ZFA_CH1_STA] =			{FA_ADC_MEM_OFF + 0x30, 0xFFFF, 0},
 	[ZFA_CH1_GAIN] =		{FA_ADC_MEM_OFF + 0x34, 0xFFFF, 0},
 	[ZFA_CH1_OFFSET] =		{FA_ADC_MEM_OFF + 0x38, 0xFFFF, 0},
 	/* Channel 2 */
-	[ZFA_CH2_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x3C, 0x007B, 0},
+	[ZFA_CH2_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x3C, 0x007F, 0},
 	[ZFA_CH2_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x3C, 0x0001, 3},
 	[ZFA_CH2_STA] =			{FA_ADC_MEM_OFF + 0x40, 0xFFFF, 0},
 	[ZFA_CH2_GAIN] =		{FA_ADC_MEM_OFF + 0x44, 0xFFFF, 0},
 	[ZFA_CH2_OFFSET] =		{FA_ADC_MEM_OFF + 0x48, 0xFFFF, 0},
 	/* Channel 3 */
-	[ZFA_CH3_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x4C, 0x007B, 0},
+	[ZFA_CH3_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x4C, 0x007F, 0},
 	[ZFA_CH3_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x4C, 0x0001, 3},
 	[ZFA_CH3_STA] =			{FA_ADC_MEM_OFF + 0x50, 0xFFFF, 0},
 	[ZFA_CH3_GAIN] =		{FA_ADC_MEM_OFF + 0x54, 0xFFFF, 0},
 	[ZFA_CH3_OFFSET] =		{FA_ADC_MEM_OFF + 0x58, 0xFFFF, 0},
 	/* Channel 4 */
-	[ZFA_CH4_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x5C, 0x007B, 0},
+	[ZFA_CH4_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x5C, 0x007F, 0},
 	[ZFA_CH4_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x5C, 0x0001, 3},
 	[ZFA_CH4_STA] =			{FA_ADC_MEM_OFF + 0x60, 0xFFFF, 0},
 	[ZFA_CH4_GAIN] =		{FA_ADC_MEM_OFF + 0x64, 0xFFFF, 0},
@@ -118,6 +118,7 @@ const struct zio_reg_desc zfad_regs[] = {
 	[ZFA_UTC_ACQ_END_COARSE] =	{FA_UTC_MEM_OFF + 0x40, ~0x0, 0},
 	[ZFA_UTC_ACQ_END_FINE] =	{FA_UTC_MEM_OFF + 0x44, ~0x0, 0},
 };
+#define FA_CHAN_REG_OFF 5
 
 /* zio device attributes */
 static DEFINE_ZATTR_STD(ZDEV, zfad_dev_std_zattr) = {
@@ -286,9 +287,9 @@ static int zfad_zio_probe(struct zio_device *zdev)
 
 	/* Initialize channels gain to 1 and range to 10V */
 	for (i = 0; i < 4; ++i) {
-		reg = &zfad_regs[ZFA_CH1_GAIN + (i*4)];
+		reg = &zfad_regs[ZFA_CH1_GAIN + (i * FA_CHAN_REG_OFF)];
 		zfa_common_conf_set(&zdev->head.dev, reg, 0x8000);
-		reg = &zfad_regs[ZFA_CH1_CTL_RANGE + (i*4)];
+		reg = &zfad_regs[ZFA_CH1_CTL_RANGE + (i * FA_CHAN_REG_OFF)];
 		zfa_common_conf_set(&zdev->head.dev, reg, 0x45);
 	}
 	/* Enable mezzanine clock */
