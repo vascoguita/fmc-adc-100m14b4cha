@@ -132,14 +132,14 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	 * 1: start
 	 * 2: stop
 	 */
-	PARAM_EXT_REG("fsm_cmd", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
+	PARAM_EXT_REG("fsm-cmd", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
 	/* FMC clock, must be enabled  */
-	ZATTR_EXT_REG("fmc_clk_en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
-	ZATTR_EXT_REG("offset_dac_clr_n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 0),
+	ZATTR_EXT_REG("fmc-clk-en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
+	ZATTR_EXT_REG("offset-dac-clr-n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 0),
 	ZATTR_EXT_REG("bitslip", S_IRUGO | S_IWUGO, ZFA_CTL_BSLIP, 0),
-	ZATTR_EXT_REG("test_data_en", S_IRUGO | S_IWUGO, ZFA_CTL_TEST_DATA_EN, 0),
-	PARAM_EXT_REG("trig_led", S_IRUGO | S_IWUGO, ZFA_CTL_TRIG_LED, 0),
-	PARAM_EXT_REG("acq_led", S_IRUGO | S_IWUGO, ZFA_CTL_ACQ_LED, 0),
+	ZATTR_EXT_REG("test-data-en", S_IRUGO | S_IWUGO, ZFA_CTL_TEST_DATA_EN, 0),
+	PARAM_EXT_REG("trig-led", S_IRUGO | S_IWUGO, ZFA_CTL_TRIG_LED, 0),
+	PARAM_EXT_REG("acq-led", S_IRUGO | S_IWUGO, ZFA_CTL_ACQ_LED, 0),
 
 	/* Status register */
 	/*
@@ -151,9 +151,9 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	 * 5: DECR_SHOT
 	 * 7: Illegal
 	 * */
-	PARAM_EXT_REG("fsm_state", S_IRUGO, ZFA_STA_FSM, 0),
-	PARAM_EXT_REG("serdes_pll", S_IRUGO, ZFA_STA_SERDES_PLL, 0),
-	PARAM_EXT_REG("serdes_synced", S_IRUGO, ZFA_STA_SERDES_SYNCED, 0),
+	PARAM_EXT_REG("fsm-state", S_IRUGO, ZFA_STA_FSM, 0),
+	PARAM_EXT_REG("serdes-pll", S_IRUGO, ZFA_STA_SERDES_PLL, 0),
+	PARAM_EXT_REG("serdes-synced", S_IRUGO, ZFA_STA_SERDES_SYNCED, 0),
 
 	/* TIME STAMPS */
 	PARAM_EXT_REG("trig-sec", S_IRUGO, ZFA_UTC_TRIG_SECONDS, 0),
@@ -186,8 +186,8 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 	 * 0x44 (68): 10V range calibration
 	 */
 	ZATTR_EXT_REG("in-range", S_IRUGO, ZFA_CHx_CTL_RANGE, 0),
-	ZATTR_EXT_REG("termination_en", S_IRUGO, ZFA_CHx_CTL_TERM, 0),
-	PARAM_EXT_REG("current_value", S_IRUGO, ZFA_CHx_STA, 0),
+	ZATTR_EXT_REG("termination-en", S_IRUGO, ZFA_CHx_CTL_TERM, 0),
+	PARAM_EXT_REG("current-value", S_IRUGO, ZFA_CHx_STA, 0),
 };
 
 

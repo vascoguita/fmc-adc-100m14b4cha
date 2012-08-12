@@ -49,7 +49,7 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 0: internal (data threshold)
 	 * 1: external (front panel trigger input)
 	 */
-	ZATTR_EXT_REG("hw_select", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	ZATTR_EXT_REG("hw-select", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
 	/*
 	 * Hardware trigger polarity
 	 * 0: positive edge/slope
@@ -57,9 +57,9 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 */
 	ZATTR_EXT_REG("polarity", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_POL, 0),
 	/* Enable (1) or disable (0) hardware trigger */
-	ZATTR_EXT_REG("hw_trig_enable", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_EN, 0),
+	ZATTR_EXT_REG("hw-trig-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_EN, 0),
 	/* Enable (1) or disable (0) software trigger */
-	ZATTR_EXT_REG("sw_trig_enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
+	ZATTR_EXT_REG("sw-trig-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
 	/*
 	 * Channel selection for internal trigger
 	 * 0: channel 1
@@ -67,18 +67,18 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 2: channel 3
 	 * 3: channel 4
 	 */
-	ZATTR_EXT_REG("int_select", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	ZATTR_EXT_REG("int-select", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
 	/* Threshold value for internal trigger */
-	ZATTR_EXT_REG("int_threshold", S_IRUGO | S_IWUGO, ZFAT_CFG_THRES, 0),
+	ZATTR_EXT_REG("int-threshold", S_IRUGO | S_IWUGO, ZFAT_CFG_THRES, 0),
 
 	/* Delay */
 	ZATTR_EXT_REG("delay", S_IRUGO | S_IWUGO, ZFAT_DLY, 0),
 
 	/* Software */
-	PARAM_EXT_REG("sw_fire", S_IWUGO, ZFAT_SW, 0),
+	PARAM_EXT_REG("sw-fire", S_IWUGO, ZFAT_SW, 0),
 
 	/* Position address */
-	ZATTR_EXT_REG("position_addr", S_IRUGO, ZFAT_POS, 0),
+	ZATTR_EXT_REG("position-addr", S_IRUGO, ZFAT_POS, 0),
 
 	/* Pre-sample*/
 	ZATTR_EXT_REG("pre-sample", S_IRUGO | S_IWUGO, ZFAT_PRE, 0),
