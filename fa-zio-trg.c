@@ -33,15 +33,8 @@ struct zfat_instance {
 static DEFINE_ZATTR_STD(TRIG, zfat_std_zattr) = {
 	/* Number of shots */
 	ZATTR_REG(trig, ZATTR_TRIG_REENABLE, S_IRUGO | S_IWUGO, ZFAT_SHOTS_NB, 0),
-
-	/*
-	 * The ADC has pre-sample and post-sample configuration. NSAMPLES doesn't
-	 * apply in this case, so it is a read-only attribute update with the
-	 * value calculated pre-sample + post-sample.
-	 * If read from device, it contains the numer of samples acquired in a
-	 * particular moment
-	 */
-	ZATTR_REG(trig, ZATTR_TRIG_NSAMPLES, S_IRUGO, ZFAT_CNT, 0),
+	ZATTR_REG(trig, ZATTR_TRIG_PRE_SAMP, S_IRUGO | S_IWUGO, ZFAT_PRE, 0),
+	ZATTR_REG(trig, ZATTR_TRIG_POST_SAMP, S_IRUGO | S_IWUGO, ZFAT_POST, 0),
 };
 static struct zio_attribute zfat_ext_zattr[] = {
 	/* Config register */
@@ -80,12 +73,6 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	/* Position address */
 	ZATTR_EXT_REG("position-addr", S_IRUGO, ZFAT_POS, 0),
 
-	/* Pre-sample*/
-	ZATTR_EXT_REG("pre-sample", S_IRUGO | S_IWUGO, ZFAT_PRE, 0),
-
-	/* Post-sample*/
-	ZATTR_EXT_REG("post-sample", S_IRUGO | S_IWUGO, ZFAT_POST, 0),
-
 	/* IRQ status */
 	PARAM_EXT_REG("irq-status", S_IRUGO, ZFA_IRQ_SRC, 0),
 	/* IRQ status */
@@ -101,11 +88,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 {
 	const struct zio_reg_desc *reg = &zfad_regs[zattr->priv.addr];
 	struct zio_ti *ti = to_zio_ti(dev);
-	int err;
 	uint32_t tmp_val = usr_val;
-
-	/* These static value are synchronized with the ZIO attribute value */
-	static uint32_t pre_s = 0, post_s = 0;
 
 	switch (zattr->priv.addr) {
 		case ZATTR_TRIG_REENABLE:
@@ -141,33 +124,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			break;
 	}
 
-	err = zfa_common_conf_set(dev, reg, tmp_val);
-	if (err)
-		return err;
-
-	/* Update static value */
-	if (zattr->priv.addr == ZFAT_PRE) {
-		pre_s = usr_val;
-	}
-	if (zattr->priv.addr == ZFAT_POST) {
-		post_s = usr_val;
-	}
-
-	if ( zattr->priv.addr == ZFAT_PRE ||  zattr->priv.addr == ZFAT_POST) {
-		ti->cset->interleave->current_ctrl->nsamples = pre_s + post_s;
-		/* Check if the acquisition of all required samples is possibile */
-		if ((pre_s + post_s) * ti->cset->ssize >= FA_MAX_ACQ_BYTE) {
-			dev_warn(&ti->cset->head.dev,
-				 "you can't acquire more then %i samples"
-				"(pre-samples = %i, post-samples = %i).",
-				FA_MAX_ACQ_BYTE/ti->cset->ssize,
-				pre_s, post_s);
-			ti->cset->interleave->current_ctrl->nsamples =
-						FA_MAX_ACQ_BYTE/ti->cset->ssize;
-		}
-	}
-	/* FIXME: zio need an update, introduce PRE and POST and replace NSAMPLES*/
-	return 0;
+	return zfa_common_conf_set(dev, reg, tmp_val);
 }
 /* get the value of a FMC-ADC trigger register */
 static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
