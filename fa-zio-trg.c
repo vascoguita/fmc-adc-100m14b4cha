@@ -114,12 +114,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 				return -EINVAL;
 			}
 			/* Abort current acquisition if any */
-			//zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
-			//		    ZFA_STOP);
-			//zio_trigger_abort(ti->cset);
+			zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
+					ZFA_STOP);
+			zio_trigger_abort(ti->cset);
 			/* Restart FSM */
-			//zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
-			//		    ZFA_START);
+			zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
+					    ZFA_START);
 			dev_dbg(dev, "software trigger fire (0x%x)\n", usr_val);
 			break;
 	}
