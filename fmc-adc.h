@@ -10,6 +10,8 @@
 #include <linux/zio.h>
 #include "spec.h"
 
+#define FA_GATEWARE_DEFAULT_NAME "fmc/fmc-adc.bin"
+
 /* ADC register offset */
 #define FA_DMA_MEM_OFF	0x00000
 #define FA_UTC_MEM_OFF	0x40000

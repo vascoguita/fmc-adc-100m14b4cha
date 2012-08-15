@@ -13,6 +13,10 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
+static struct fmc_driver fmc_adc__drv;
+static char *fa_binaries = FA_GATEWARE_DEFAULT_NAME;
+module_param_named(file, fa_binaries, charp, 0444);
+
 /* This structure lists the various subsystems */
 struct fa_modlist {
 	char *name;
@@ -21,17 +25,17 @@ struct fa_modlist {
 };
 #define SUBSYS(x) { #x, fa_ ## x ## _init, fa_ ## x ## _exit }
 static struct fa_modlist mods[] = {
-	SUBSYS(onewire),
+	//SUBSYS(onewire),
 	SUBSYS(zio),
 };
 
 /* probe and remove are called by fa-spec.c */
 int fa_probe(struct fmc_device *fmc)
 {
-	struct fa_modlist *m;
+	struct fa_modlist *m = NULL;
 	struct spec_fa *fa;
 	struct spec_dev *spec = fmc->carrier_data;
-	int err, i;
+	int err, i = 0;
 
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
@@ -43,14 +47,20 @@ int fa_probe(struct fmc_device *fmc)
 	fa->fmc = fmc;
 	fa->base = spec->remap[0];
 
+	/* We first write a new binary (and lm32) within the spec */
+	err = fmc->op->reprogram(fmc, &fmc_adc__drv, fa_binaries);
+	if (err) {
+		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
+				fa_binaries, err);
+		goto out;
+	}
+
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
-		pr_debug("%s: Calling init for \"%s\"\n", __func__,
-			 m->name);
+		dev_dbg(fmc->hwdev, "Calling init for \"%s\"\n", m->name);
 		err = m->init(fa);
 		if (err) {
-			pr_err("%s: error initializing %s\n", __func__,
-				 m->name);
+			dev_err(fmc->hwdev, "error initializing %s\n", m->name);
 			goto out;
 		}
 
