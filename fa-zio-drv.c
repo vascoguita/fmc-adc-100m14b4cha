@@ -171,8 +171,16 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	PARAM_EXT_REG("acq-stop-bins", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
 };
 static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
-	ZATTR_REG(zdev, ZATTR_GAIN, S_IRUGO | S_IWUGO, ZFA_CHx_GAIN, 0x30),
-	ZATTR_REG(zdev, ZATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 14),
+	/*
+	 * The gain value is a value between 0 and 2. These 16bit are
+	 * represented as following:
+	 * bit 15: 2^0
+	 * bit 14: 2^(-1)
+	 * [...]
+	 * bit 0: 2^(-15)
+	 */
+	ZATTR_REG(zdev, ZATTR_GAIN, S_IRUGO | S_IWUGO, ZFA_CHx_GAIN, 0x8000),
+	ZATTR_REG(zdev, ZATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
