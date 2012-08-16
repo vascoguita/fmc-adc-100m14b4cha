@@ -37,6 +37,10 @@ int fa_probe(struct fmc_device *fmc)
 	struct spec_dev *spec = fmc->carrier_data;
 	int err, i = 0;
 
+	if (strcmp(fmc->carrier_name, "SPEC")) {
+		dev_err(fmc->hwdev, "ADC work only on spec\n");
+		return -EINVAL;
+	}
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
 	fa = devm_kzalloc(&fmc->dev, sizeof(struct spec_fa), GFP_KERNEL);
