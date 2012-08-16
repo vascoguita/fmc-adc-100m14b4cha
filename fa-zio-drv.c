@@ -208,6 +208,11 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, chan_index;
 
 	switch (zattr->priv.addr) {
+		case ZFAT_SR_DECI:
+			if (usr_val == 0) {
+				dev_err(dev, "max-sample-rate minimum value is 1");
+				return -EINVAL;
+			}
 		case ZFA_CHx_CTL_RANGE:
 			if (usr_val != 0x23 || usr_val != 0x11 ||
 			    usr_val != 0x45 || usr_val != 0x00) {
@@ -309,6 +314,8 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* Enable all interrupt FIXME enable one at time? */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_IRQ_MASK],
 			    ZFAT_ALL);
+	/* Set decimation to minimum */
+	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
 
 	return 0;
 }
