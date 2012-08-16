@@ -25,6 +25,7 @@
 struct spec_fa {
 	struct fmc_device	*fmc;
 	struct spec_dev		*spec;
+	struct zio_device	*zdev;
 	struct zio_device	*hwzdev;
 
 	struct sg_table		sgt;	/* scatter/gather table */

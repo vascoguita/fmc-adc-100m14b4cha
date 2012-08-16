@@ -291,9 +291,13 @@ static int zfad_input_cset(struct zio_cset *cset)
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	const struct zio_reg_desc *reg;
+	struct spec_fa *fa = zdev->priv_d;
 	int i;
 
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
+	/* Save also the pointer to the real zio_device */
+	fa->zdev = zdev;
+
 	/* Force stop FSM */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
 			    ZFA_STOP);

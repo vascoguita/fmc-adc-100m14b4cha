@@ -141,8 +141,9 @@ static const struct zio_sysfs_operations zfat_s_op = {
 
 irqreturn_t zfadc_irq(int irq, void *ptr)
 {
-	struct zfat_instance *zfat = ptr;
-	struct spec_fa *fa = zfat->fa;
+	struct fmc_device *fmc = ptr;
+	struct spec_fa *fa = fmc_get_drvdata(fmc);
+	struct zfat_instance *zfat = to_zfat_instance(fa->zdev->cset->ti);
 	uint32_t irq_status = 0, val;
 
 	zfa_common_info_get(&zfat->ti.cset->head.dev,
