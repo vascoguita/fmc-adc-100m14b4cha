@@ -315,9 +315,6 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
 	/* Set DMA to transfer data from device to host */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
-	/* Enable all interrupt FIXME enable one at time? */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_IRQ_MASK],
-			    ZFAT_ALL);
 	/* Set decimation to minimum */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
 
