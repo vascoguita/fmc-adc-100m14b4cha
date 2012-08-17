@@ -358,7 +358,7 @@ static struct zio_device zfad_tmpl = {
 		.n_ext_attr = ARRAY_SIZE(zfad_dev_ext_zattr),
 	},
 	/* This driver work only with the fmc-adc-trig */
-	.preferred_trigger = "fmc-adc-trig",
+	.preferred_trigger = "fmc-adc-trg",
 	.preferred_buffer = "vmalloc",
 };
 
@@ -418,7 +418,7 @@ int fa_zio_init(struct spec_fa *fa)
 	dev_id = (pdev->bus->number << 8) | pdev->devfn;
 
 	/* Register our trigger hardware */
-	err = zio_register_trig(&zfat_type, "fmc-adc-trig");
+	err = zio_register_trig(&zfat_type, "fmc-adc-trg");
 	if (err) {
 		dev_err(hwdev, "Cannot register ZIO trigger fmc-adc-trig\n");
 		goto out_trg;
