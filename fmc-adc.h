@@ -22,21 +22,6 @@
 /* ADC DDR memory */
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
 
-struct spec_fa {
-	struct fmc_device	*fmc;
-	struct spec_dev		*spec;
-	struct zio_device	*zdev;
-	struct zio_device	*hwzdev;
-
-	struct sg_table		sgt;	/* scatter/gather table */
-	unsigned char __iomem	*base;	/* regs files are byte-oriented */
-
-	/* one-wire */
-	uint8_t ds18_id[8];
-	unsigned long		next_t;
-	int			temp;	/* temperature: scaled by 4 bits */
-};
-
 /* The information about a DMA transfer */
 struct dma_item {
 	uint32_t start_addr;	/* 0x00 */
@@ -50,6 +35,25 @@ struct dma_item {
 	 * attribute is used only to provide the "last item" bit, direction is
 	 * fixed to device->host
 	 */
+};
+
+struct spec_fa {
+	struct fmc_device	*fmc;
+	struct spec_dev		*spec;
+	struct zio_device	*zdev;
+	struct zio_device	*hwzdev;
+
+	/* DMA variable */
+	struct sg_table		sgt;		/* scatter/gather table */
+	struct dma_item		*items;		/* items for DMA transfers */
+	dma_addr_t		dma_list_item;	/* DMA address for items */
+
+	unsigned char __iomem	*base;	/* regs files are byte-oriented */
+
+	/* one-wire */
+	uint8_t ds18_id[8];
+	unsigned long		next_t;
+	int			temp;	/* temperature: scaled by 4 bits */
 };
 
 extern int zfad_map_dma(struct zio_cset *cset);
