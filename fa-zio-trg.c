@@ -137,33 +137,56 @@ static const struct zio_sysfs_operations zfat_s_op = {
 	.info_get = zfat_info_get,
 };
 
+/*
+ * The different irq status are handled in different if statement. At the end
+ * of the if statement we don't call return because it is possible that there
+ * are others irq to handle. The order of irq handlers is based on the
+ * possibility to have many irq rise at the same time. It is possible that
+ * ZFAT_TRG_FIRE and ZFAT_ACQ_END happens simultaneously, so we handle FIRE
+ * before END. If ZFAT_DMA_DONE happens with ZFAT_TRG_FIRE and ZFAT_ACQ_END, we
+ * handle DMA_DONE before the other because we must conclude a previous
+ * acquisition before start a new one
+ *
+ */
 irqreturn_t zfadc_irq(int irq, void *ptr)
 {
 	struct fmc_device *fmc = ptr;
 	struct spec_fa *fa = fmc_get_drvdata(fmc);
 	struct zfat_instance *zfat = to_zfat_instance(fa->zdev->cset->ti);
-	uint32_t irq_status = 0, val;
+	uint32_t irq_status = 0, irq_multi = 0, dma_status, val;
 
+	/* Get current interrupts status */
 	zfa_common_info_get(&zfat->ti.cset->head.dev,
 			    &zfad_regs[ZFA_IRQ_SRC],&irq_status);
-	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x\n", irq_status);
+	zfa_common_info_get(&zfat->ti.cset->head.dev,
+			    &zfad_regs[ZFA_IRQ_MULTI],&irq_multi);
+	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x multi=0x%x\n",
+		irq_status, irq_multi);
 
+	/* Clear current interrupts status */
+	dev_dbg(&zfat->ti.head.dev, "Clear handled interrupts\n");
+	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_SRC],
+			    irq_status);
+	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_MULTI],
+			     irq_multi);
+
+	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
 	if (irq_status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) {
+		/* unmap dma */
+		zfad_unmap_dma(zfat->ti.cset);
 		if (irq_status & ZFAT_DMA_DONE) { /* DMA done*/
 			zio_trigger_data_done(zfat->ti.cset);
 			zfat->n_acq_dev--;
 		} else {	/* DMA error */
+			zfa_common_info_get(&zfat->ti.cset->head.dev,
+					    &zfad_regs[ZFA_DMA_STA],
+					    &dma_status);
+			dev_err(fmc->hwdev, "DMA error (status 0x%x)\n",
+				dma_status);
 			zio_trigger_abort(zfat->ti.cset);
 			zfat->n_err++;
 		}
-		/* unmap dma */
-		zfad_unmap_dma(zfat->ti.cset);
-		/* Enable all triggers */
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFAT_CFG_SW_EN], 0);
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFAT_CFG_HW_EN], 0);
 		/* Start state machine */
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFA_CTL_FMS_CMD], ZFA_START);
@@ -192,13 +215,13 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 			zfa_common_conf_set(&zfat->ti.cset->head.dev,
 					    &zfad_regs[ZFA_CTL_FMS_CMD],
 					    ZFA_STOP);
-			/* Disable all triggers */
-			zfa_common_conf_set(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFAT_CFG_HW_EN], 0);
-			zfa_common_conf_set(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFAT_CFG_SW_EN], 0);
 			/* Fire ZIO trigger so it will DMA */
 			zio_fire_trigger(&zfat->ti);
+			/*
+			 * During DMA transfert, hardware ensures that no other
+			 * trigger will fire, so we don't need to temporary
+			 * disable triggers
+			 */
 		} else {
 			/* we can't DMA if the state machine is not idle */
 			dev_warn(&zfat->ti.cset->head.dev,
@@ -287,6 +310,7 @@ static void zfat_input_fire(struct zio_ti *ti)
 	struct zio_buffer_type *zbuf = ti->cset->zbuf;
 	struct zio_control *ctrl;
 	struct zio_block *block;
+	unsigned int size;
 	int err;
 
 	ctrl = zio_alloc_control(GFP_ATOMIC);
