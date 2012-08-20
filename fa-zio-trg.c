@@ -81,7 +81,25 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	PARAM_EXT_REG("irq-mask", S_IRUGO, ZFA_IRQ_MASK, 0),
 };
 
+static int zfat_overflow_detection(struct zio_ti *ti, unsigned int flag,
+				   uint32_t val)
+{
+	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
+	uint32_t pre_t, post_t, nshot_t;
 
+	if (!flag)
+		return 0;
+
+	pre_t = flag == ZFAT_PRE ? val : ti_zattr[ZATTR_TRIG_PRE_SAMP].value;
+	post_t = flag == ZFAT_POST ? val : ti_zattr[ZATTR_TRIG_POST_SAMP].value;
+	nshot_t = flag == ZFAT_SHOTS_NB ? val : ti_zattr[ZATTR_TRIG_REENABLE].value;
+
+	if (((pre_t + post_t) * ti->cset->ssize * nshot_t) >= FA_MAX_ACQ_BYTE) {
+		dev_err(&ti->head.dev, "cannot acquire, device memory overflow\n");
+		return -ENOMEM;
+	}
+	return 0;
+}
 /* set a value to a FMC-ADC trigger register */
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
@@ -89,9 +107,10 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	const struct zio_reg_desc *reg = &zfad_regs[zattr->priv.addr];
 	struct zio_ti *ti = to_zio_ti(dev);
 	uint32_t tmp_val = usr_val;
+	int err = 0;
 
 	switch (zattr->priv.addr) {
-		case ZATTR_TRIG_REENABLE:
+		case ZFAT_SHOTS_NB:
 			/*
 			 * Increase the reenable by 1 to be choerent with the
 			 * re-enable meaning. On the ADC there is NSHOTS which
@@ -101,6 +120,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 * first one.
 			 */
 			++tmp_val;
+		case ZFAT_PRE:
+		case ZFAT_POST:
+			err = zfat_overflow_detection(ti, zattr->priv.addr,
+						      tmp_val);
+			if (err)
+				return err;
 			break;
 		case ZFAT_SW:
 			/* Fire if software trigger is enabled */
