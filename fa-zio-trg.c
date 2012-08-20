@@ -326,9 +326,13 @@ static void zfat_input_fire(struct zio_ti *ti)
 			    &zfad_regs[ZFA_UTC_TRIG_FINE], &tstamp->bins);
 	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
 
+	/*
+	 * Calculate the required size to store all channels.
+	 * n_chan - 1 because of interleaved channel
+	 */
+	size = ctrl->ssize * ctrl->nsamples * (ti->cset->n_chan - 1);
 	/* Allocate a new block for DMA transfer */
-	block = zbuf->b_op->alloc_block(interleave->bi, ctrl,
-					ctrl->ssize * ctrl->nsamples,
+	block = zbuf->b_op->alloc_block(interleave->bi, ctrl, size,
 					GFP_ATOMIC);
 	if (IS_ERR(block)) {
 		dev_err(&ti->cset->head.dev, "can't alloc block\n");
