@@ -187,15 +187,14 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 			zio_trigger_abort(zfat->ti.cset);
 			zfat->n_err++;
 		}
-		/* Start state machine */
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFA_CTL_FMS_CMD], ZFA_START);
 	}
 
 	if (irq_status & ZFAT_TRG_FIRE) { /* Trigger fire */
 		/*
 		 * FIXME: I think we don't care about this because ZIO fires
-		 * a fake trigger before DMA
+		 * a fake trigger before DMA.
+		 *
+		 * save time stamp? for multishot?
 		 */
 		zfat->n_acq_dev++;
 	}
@@ -211,14 +210,10 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 				    &zfad_regs[ZFA_STA_FSM],&val);
 		if (val == ZFA_STATE_IDLE) {
 			dev_dbg(&zfat->ti.head.dev, "Start DMA from device\n");
-			/* Stop state machine */
-			zfa_common_conf_set(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFA_CTL_FMS_CMD],
-					    ZFA_STOP);
 			/* Fire ZIO trigger so it will DMA */
 			zio_fire_trigger(&zfat->ti);
 			/*
-			 * During DMA transfert, hardware ensures that no other
+			 * During DMA transfer hardware ensures that no other
 			 * trigger will fire, so we don't need to temporary
 			 * disable triggers
 			 */
@@ -226,6 +221,7 @@ irqreturn_t zfadc_irq(int irq, void *ptr)
 			/* we can't DMA if the state machine is not idle */
 			dev_warn(&zfat->ti.cset->head.dev,
 				 "Can't start DMA on the last acquisition\n");
+			/* FIXME maybe don't clear ACQEND interrupt*/
 		}
 	}
 
