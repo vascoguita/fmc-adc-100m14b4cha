@@ -113,14 +113,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 				dev_err(dev, "there aren't samples to acquire");
 				return -EINVAL;
 			}
-			/* Abort current acquisition if any */
-			zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
-					ZFA_STOP);
-			zio_trigger_abort(ti->cset);
-			/* Restart FSM */
-			zfa_common_conf_set(dev, &zfad_regs[ZFA_CTL_FMS_CMD],
-					    ZFA_START);
-			dev_dbg(dev, "software trigger fire (0x%x)\n", usr_val);
+			/*
+			 * The software trigger will be fired to force
+			 * acquisition, so we don't care about current active
+			 * acquisition or other problems:
+			 */
+			dev_dbg(dev, "software trigger fire\n");
 			break;
 	}
 
