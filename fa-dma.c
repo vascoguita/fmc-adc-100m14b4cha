@@ -90,9 +90,10 @@ int zfad_map_dma(struct zio_cset *cset)
 	/* Map DMA buffers */
 	sglen = dma_map_sg(fa->fmc->hwdev, fa->sgt.sgl, fa->sgt.nents,
 			   DMA_FROM_DEVICE);
-	if (!sglen)
+	if (!sglen) {
+		dev_err(fa->fmc->hwdev, "cannot map dma memory\n");
 		goto out_free;
-
+	}
 	/* Configure DMA items */
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
 		dev_dbg(&cset->head.dev, "configure DMA item %d(%p)"
