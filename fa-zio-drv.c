@@ -276,9 +276,10 @@ static int zfad_input_cset(struct zio_cset *cset)
 	if (!cset->interleave)
 		return -EINVAL;
 	/* nsamples can't be 0 */
-	if (!cset->interleave->current_ctrl->nsamples)
+	if (!cset->interleave->current_ctrl->nsamples) {
+		dev_err(&cset->head.dev, "no post/pre-sample configured\n");
 		return -EINVAL;
-
+	}
 	err = zfad_map_dma(cset);
 	if (err)
 		return err;
