@@ -287,6 +287,8 @@ static int zfad_input_cset(struct zio_cset *cset)
 
 	/* Start DMA transefer */
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_CTL_START], 1);
+	dev_dbg(&cset->head.dev, "Start DMA transfer\n");
+
 	return -EAGAIN; /* data_done on DMA_DONE interrupt */
 }
 
@@ -299,6 +301,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
+	fa->dev_data_mem = 0;
 
 	/* Force stop FSM */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
@@ -320,6 +323,13 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* Set decimation to minimum */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
 
+	/* Trigger registers */
+	/* Set to single shot mode by default */
+	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_SHOTS_NB], 1);
+	zdev->cset->ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 0;
+	/* Enable all interrupt */
+	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_IRQ_MASK],
+			    ZFAT_ALL);
 	return 0;
 }
 
@@ -358,7 +368,7 @@ static struct zio_device zfad_tmpl = {
 	},
 	/* This driver work only with the fmc-adc-trig */
 	.preferred_trigger = "fmc-adc-trg",
-	.preferred_buffer = "vmalloc",
+	.preferred_buffer = "kmalloc",
 };
 
 static const struct zio_device_id zfad_table[] = {
