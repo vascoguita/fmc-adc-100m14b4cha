@@ -30,7 +30,8 @@ static void zfad_setup_dma_scatter(struct spec_fa *fa, struct zio_block *block)
 	int mapbytes;
 	int i;
 
-	dev_dbg(&fa->zdev->head.dev, "Setup dma scatterlist");
+	dev_dbg(&fa->zdev->head.dev, "Setup dma scatterlist for %d bytes",
+		block->datalen);
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
 		/*
 		 * If there are less bytes left than what fits
@@ -46,6 +47,8 @@ static void zfad_setup_dma_scatter(struct spec_fa *fa, struct zio_block *block)
 		/* Configure next values */
 		bufp += mapbytes;
 		bytesleft -= mapbytes;
+		dev_dbg(&fa->zdev->head.dev, "sg item (%p, len:%d, left:%d)\n",
+			bufp, mapbytes, bytesleft);
 	}
 
 	BUG_ON(bytesleft);
@@ -62,11 +65,12 @@ int zfad_map_dma(struct zio_cset *cset)
 	struct scatterlist *sg;
 	struct zio_block *block = cset->interleave->active_block;
 	struct dma_item *items;
-	unsigned int i, pages, sglen, dev_data_mem = 0;
+	unsigned int i, pages, sglen, size;
 	dma_addr_t tmp;
 	int err;
 
-	/* Create sglists for the transfers, PAGE_SIZE granularity */
+	/* Create sglists for the transfers, PAGE_SIZE granularity, work
+	 * only with kmalloc FIXME */
 	pages = DIV_ROUND_UP(block->datalen, PAGE_SIZE);
 	dev_dbg(&cset->head.dev, "using %d pages for transfer\n", pages);
 
@@ -77,14 +81,19 @@ int zfad_map_dma(struct zio_cset *cset)
 		goto out;
 	}
 
-	/* FIXME maybe dma_pool */
 	/* Limited to 32-bit (kernel limit) */
-	fa->items = dma_alloc_coherent(fa->fmc->hwdev,
-				       sizeof(struct dma_item) * fa->sgt.nents,
-				       &fa->dma_list_item, GFP_ATOMIC);
-	if (!items)
+	size = sizeof(struct dma_item) * fa->sgt.nents;
+	items = kzalloc(size, GFP_ATOMIC);
+	if (!items) {
+		dev_err(fa->fmc->hwdev, "cannot allocate coherent dma memory\n");
 		goto out_mem;
-
+	}
+	fa->items = items;
+	fa->dma_list_item = dma_map_single(fa->fmc->hwdev, items, size,
+					   DMA_FROM_DEVICE);
+	if (!fa->dma_list_item) {
+		goto out_free;
+	}
 	/* Setup the scatter list for the provided block */
 	zfad_setup_dma_scatter(fa, block);
 	/* Map DMA buffers */
@@ -92,7 +101,7 @@ int zfad_map_dma(struct zio_cset *cset)
 			   DMA_FROM_DEVICE);
 	if (!sglen) {
 		dev_err(fa->fmc->hwdev, "cannot map dma memory\n");
-		goto out_free;
+		goto out_map;
 	}
 	/* Configure DMA items */
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
@@ -100,11 +109,11 @@ int zfad_map_dma(struct zio_cset *cset)
 			"(addr: 0x%p, len: %d)\n",
 			i, sg, sg_dma_address(sg), sg_dma_len(sg));
 		/* Prepare DMA item */
-		items[i].start_addr = dev_data_mem;
+		items[i].start_addr = fa->dev_data_mem;
 		items[i].dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
 		items[i].dma_addr_h = sg_dma_address(sg) >> 32;
 		items[i].dma_len = sg_dma_len(sg);
-		dev_data_mem += items[i].dma_len;
+		fa->dev_data_mem += items[i].dma_len;
 		if (!sg_is_last(sg)) {/* more transfers */
 			/* uint64_t so it works on 32 and 64 bit */
 			tmp = fa->dma_list_item;
@@ -144,6 +153,9 @@ int zfad_map_dma(struct zio_cset *cset)
 
 	return 0;
 
+out_map:
+	dma_unmap_single(fa->fmc->hwdev, fa->dma_list_item, size,
+		       DMA_FROM_DEVICE);
 out_free:
 	kfree(fa->items);
 out_mem:
@@ -157,14 +169,16 @@ out:
 void zfad_unmap_dma(struct zio_cset *cset)
 {
 	struct spec_fa *fa = cset->zdev->priv_d;
+	unsigned int size;
 
 	dev_dbg(fa->fmc->hwdev, "unmap DMA\n");
+	size = sizeof(struct dma_item) * fa->sgt.nents;
+	dma_unmap_single(fa->fmc->hwdev, fa->dma_list_item, size,
+			       DMA_FROM_DEVICE);
 	dma_unmap_sg(fa->fmc->hwdev, fa->sgt.sgl, fa->sgt.nents,
 		     DMA_FROM_DEVICE);
 
-	dma_free_coherent(fa->fmc->hwdev,
-			  sizeof(struct dma_item) * fa->sgt.nents,
-			  fa->items, fa->dma_list_item);
+	kfree(fa->items);
 	fa->items = NULL;
 	fa->dma_list_item = 0;
 	sg_free_table(&fa->sgt);
