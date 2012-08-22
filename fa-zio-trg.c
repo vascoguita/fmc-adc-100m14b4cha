@@ -32,6 +32,7 @@ struct zfat_instance {
 };
 struct zfat_block {
 	struct zio_block *block;
+	unsigned int dev_addr;
 	struct list_head list;
 };
 
@@ -80,27 +81,20 @@ static struct zio_attribute zfat_ext_zattr[] = {
 
 	/* Position address */
 	ZATTR_EXT_REG("position-addr", S_IRUGO, ZFAT_POS, 0),
-
-	/* IRQ status */
-	PARAM_EXT_REG("irq-status", S_IRUGO, ZFA_IRQ_SRC, 0),
-	/* IRQ status */
-	PARAM_EXT_REG("irq-multi", S_IRUGO, ZFA_IRQ_MULTI, 0),
-	/* IRQ status */
-	PARAM_EXT_REG("irq-mask", S_IRUGO, ZFA_IRQ_MASK, 0),
 };
 
-static int zfat_overflow_detection(struct zio_ti *ti, unsigned int flag,
+static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 				   uint32_t val)
 {
 	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
 	uint32_t pre_t, post_t, nshot_t;
 
-	if (!flag)
+	if (!addr)
 		return 0;
 
-	pre_t = flag == ZFAT_PRE ? val : ti_zattr[ZATTR_TRIG_PRE_SAMP].value;
-	post_t = flag == ZFAT_POST ? val : ti_zattr[ZATTR_TRIG_POST_SAMP].value;
-	nshot_t = flag == ZFAT_SHOTS_NB ? val : ti_zattr[ZATTR_TRIG_REENABLE].value + 1;
+	pre_t = addr == ZFAT_PRE ? val : ti_zattr[ZATTR_TRIG_PRE_SAMP].value;
+	post_t = addr == ZFAT_POST ? val : ti_zattr[ZATTR_TRIG_POST_SAMP].value;
+	nshot_t = addr == ZFAT_SHOTS_NB ? val : ti_zattr[ZATTR_TRIG_REENABLE].value + 1;
 
 	if (((pre_t + post_t) * ti->cset->ssize * nshot_t) >= FA_MAX_ACQ_BYTE) {
 		dev_err(&ti->head.dev, "cannot acquire, device memory overflow\n");
@@ -148,7 +142,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			}
 			/*
 			 * The software trigger will be fired to force
-			 * acquisition, so we don't care about current active
+			 * acquisition, so we don't care about current
 			 * acquisition or other problems:
 			 */
 			break;
@@ -169,68 +163,7 @@ static const struct zio_sysfs_operations zfat_s_op = {
 	.info_get = zfat_info_get,
 };
 
-/*
- * Trigger fires, but ZIO allow only one trigger at time, and the ADC in
- * multi-shot mode don't complete an acquisition until all triggers fire; more
- * over, the ADC save only the last trigger timestamp. So, we need to handle
- * separately each trigger fire if we want to get all time-stamp. In this first
- * step we prepare all necessary blocks and set the time-stamp ....
- */
-static void zfat_trigger_fire(struct zio_ti *ti)
-{
-	struct zio_channel *interleave = ti->cset->interleave;
-	struct zfat_instance *zfat = to_zfat_instance(ti);
-	struct zio_timestamp *tstamp = &interleave->current_ctrl->tstamp;
-	struct zio_buffer_type *zbuf = ti->cset->zbuf;
-	struct zio_control *ctrl;
-	struct zio_block *block;
-	struct zfat_block *zfat_block;
-	unsigned int size;
-	int err;
 
-	ctrl = zio_alloc_control(GFP_ATOMIC);
-	/* Update sequence number */
-	interleave->current_ctrl->seq_num++;
-
-	/* Retrieve last trigger time-stamp (hw trigger already fired) */
-	zfa_common_info_get(&ti->cset->head.dev,
-			    &zfad_regs[ZFA_UTC_TRIG_SECONDS], &tstamp->secs);
-	zfa_common_info_get(&ti->cset->head.dev,
-			    &zfad_regs[ZFA_UTC_TRIG_COARSE], &tstamp->ticks);
-	zfa_common_info_get(&ti->cset->head.dev,
-			    &zfad_regs[ZFA_UTC_TRIG_FINE], &tstamp->bins);
-	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
-
-	/*
-	 * Calculate the required size to store all channels.
-	 * n_chan - 1 because of interleaved channel
-	 */
-	size = ctrl->ssize * ctrl->nsamples * (ti->cset->n_chan - 1);
-	/* Allocate a new block for DMA transfer */
-	block = zbuf->b_op->alloc_block(interleave->bi, ctrl, size,
-					GFP_ATOMIC);
-	if (IS_ERR(block)) {
-		dev_err(&ti->cset->head.dev, "can't alloc block\n");
-		goto out;
-	}
-	/* Create a list of prepared block */
-	zfat_block = kmalloc(sizeof(struct zfat_block), GFP_ATOMIC);
-	if (!zfat_block) {
-		err = -ENOMEM;
-		goto out_free;
-	}
-	zfat_block->block = block;
-	spin_lock(&zfat->lock);
-	list_add_tail(&zfat_block->list, &zfat->list_block);
-	spin_unlock(&zfat->lock);
-	return;
-
-out_free:
-	zbuf->b_op->free_block(interleave->bi, block);
-out:
-	zio_free_control(ctrl);
-	interleave->active_block = NULL;
-}
 /*
  * .... In this second step we know that all data from all triggers is ready.
  * So we get the first block from the list and start the acquisition on it.
@@ -239,15 +172,18 @@ out:
  */
 static void zfat_start_next_dma(struct zio_ti *ti)
 {
-	struct zio_channel *interleave = ti->cset->interleave;
 	struct zfat_instance *zfat = to_zfat_instance(ti);
+	struct spec_fa *fa = ti->cset->zdev->priv_d;
+	struct zio_channel *interleave = ti->cset->interleave;
 	struct zfat_block *zfat_block;
 	struct zio_buffer_type *zbuf = ti->cset->zbuf;
+	unsigned long flags;
 	int err;
 
-	/* Do nothing if list is empty */
 	if (list_empty(&zfat->list_block)) {
-		dev_dbg(&ti->head.dev, "all DMA transfers finish\n");
+		dev_dbg(&ti->head.dev, "All DMA transfers finish\n");
+		/* ADC will restart fill data from 0 */
+		fa->lst_dev_mem = 0;
 		/*
 		 * All DMA transfers finish, so we can safely re-enable
 		 * triggers. (2) hardware trigger, (3) software trigger
@@ -258,55 +194,195 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFAT_CFG_SW_EN],
 				    ti->zattr_set.ext_zattr[3].value);
-		/* Data offset reset to 0 */
-		zfat->fa->dev_data_mem = 0;
 		/* Re-enable FSM */
-		/*FIXME it should not be required, but it
-		 * doesn't work if we don't restart FSM
-		 */
 		zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
 					    ZFA_START);
 		return;
 	}
 
 	/* Get the first block */
-	spin_lock(&zfat->lock);
+	spin_lock_irqsave(&zfat->lock, flags);
 	zfat_block = list_first_entry(&zfat->list_block, struct zfat_block, list);
 	list_del(&zfat_block->list);
-	spin_unlock(&zfat->lock);
+	spin_unlock_irqrestore(&zfat->lock, flags);
+
 	/* Acquire data from device */
+	fa->cur_dev_mem = zfat_block->dev_addr;
 	interleave->active_block = zfat_block->block;
 	err = ti->cset->raw_io(ti->cset);
 	if (err != -EAGAIN) {
 		dev_err(&ti->cset->head.dev,
-			"Can't transfer block (err %i)\n", err);
+			"Cannot transfer block (err %i)\n", err);
 		zbuf->b_op->free_block(interleave->bi, zfat_block->block);
 	}
 	/* Clear memory */
 	kfree(zfat_block);
 }
 
+
+/* IRQ functions handler */
+
+/* Get irq and clear the register. To clear an interrupt we have to write 1
+ * on the handled interrupt. We handle all interrupt so we clear all interrupts
+ */
 static uint32_t zfat_get_irq_status(struct zfat_instance *zfat)
 {
 	uint32_t irq_status, irq_multi;
 
+	dev_dbg(&zfat->ti.head.dev, "Get interrupts\n");
 	/* Get current interrupts status */
 	zfa_common_info_get(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_SRC],
 			    &irq_status);
 	zfa_common_info_get(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_MULTI],
 			    &irq_multi);
+	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x multi = 0x%x\n",
+			irq_status, irq_multi);
 	/* Clear current interrupts status */
-	dev_dbg(&zfat->ti.head.dev, "Clear handled interrupts\n");
 	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_SRC],
 			    irq_status);
 	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_MULTI],
 			     irq_multi);
-	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x multi = 0x%x\n",
-		irq_status, irq_multi);
 
 	return irq_status | irq_multi;
 }
 
+/*
+ * The DMA is finish due to an error or not. We must handle both the condition.
+ * If DMA aborted by an error we abort the acquisition, so we lost all the data.
+ * If the DMA complete successfully, we can call zio_trigger_data_done which
+ * will complete the transfer
+ */
+static void zfat_irq_dma_done(struct fmc_device *fmc,
+			      struct zfat_instance *zfat, int status)
+{	uint32_t val;
+
+	/* unmap dma */
+	zfad_unmap_dma(zfat->ti.cset);
+	if (status & ZFAT_DMA_DONE) { /* DMA done*/
+		dev_dbg(&zfat->ti.head.dev, "DMA transfer done\n");
+		zio_trigger_data_done(zfat->ti.cset);
+		zfat->n_acq_dev--;
+	} else {	/* DMA error */
+		zfa_common_info_get(&zfat->ti.cset->head.dev,
+				    &zfad_regs[ZFA_DMA_STA], &val);
+		dev_err(fmc->hwdev,
+			"DMA error (status 0x%x). All acquisition lost\n", val);
+		zio_trigger_abort(zfat->ti.cset);
+		zfat->n_err++;
+	}
+}
+static void zfat_get_time_stamp(struct device *dev, struct zio_timestamp *ts)
+{
+	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_SECONDS], &ts->secs);
+	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_COARSE], &ts->ticks);
+	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_FINE], &ts->bins);
+}
+/*
+ * Trigger fires, but ZIO allow only one trigger at time, and the ADC in
+ * multi-shot mode don't complete an acquisition until all triggers fire; more
+ * over, the ADC save only the last trigger timestamp. So, we need to handle
+ * separately each trigger fire if we want to get all time-stamp. In this first
+ * step we prepare all necessary blocks and set the time-stamp ....
+ */
+static void zfat_irq_trg_fire(struct zfat_instance *zfat)
+{
+	struct zio_ti *ti = &zfat->ti;
+	struct zio_channel *interleave = ti->cset->interleave;
+	struct zio_buffer_type *zbuf = ti->cset->zbuf;
+	struct spec_fa *fa = ti->cset->zdev->priv_d;
+	struct zio_control *ctrl;
+	struct zio_block *block;
+	struct zfat_block *zfat_block;
+	unsigned long flags;
+	unsigned int size;
+
+	dev_dbg(&zfat->ti.head.dev, "Trigger fire\n");
+	zfat->n_acq_dev++;
+	/*
+	 * Calculate the required size to store all channels.
+	 * n_chan - 1 because of interleaved channel
+	 */
+	size = interleave->current_ctrl->ssize *
+	       interleave->current_ctrl->nsamples * (ti->cset->n_chan - 1);
+	/*
+	 * Immediately update the pointer to the last block of data because if
+	 * block allocation fail, we must ready for the next block. If we don't
+	 * Proceed in this way we will have time-stamp which doesn't correspond
+	 * to the data block
+	 */
+	fa->lst_dev_mem += size; /* next data will be here */
+
+	/* Create a list of prepared block */
+	zfat_block = kmalloc(sizeof(struct zfat_block), GFP_ATOMIC);
+	if (!zfat_block)
+		return;
+	zfat_block->dev_addr = fa->lst_dev_mem - size; /* previous block */
+
+	/* Allocate and update control */
+	ctrl = zio_alloc_control(GFP_ATOMIC);
+	if (!ctrl)
+		goto out;
+	/* Update sequence number */
+	interleave->current_ctrl->seq_num++;
+	/* Retrieve last trigger time-stamp (hw trigger already fired) */
+	zfat_get_time_stamp(&ti->head.dev, &interleave->current_ctrl->tstamp);
+	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
+
+	/* Allocate a new block for DMA transfer */
+	block = zbuf->b_op->alloc_block(interleave->bi, ctrl, size,
+					GFP_ATOMIC);
+	if (IS_ERR(block)) {
+		dev_err(&ti->cset->head.dev, "can't alloc block\n");
+		goto out_block;
+	}
+	zfat_block->block = block;
+
+	/* Add to the list of prepared blocks */
+	spin_lock_irqsave(&zfat->lock, flags);
+	list_add_tail(&zfat_block->list, &zfat->list_block);
+	spin_unlock_irqrestore(&zfat->lock, flags);
+	return;
+
+out_block:
+	zio_free_control(ctrl);
+out:
+	kfree(zfat_block);
+}
+/*
+ * The ADC and the acquisition, so, if the state machine is idle, we can
+ * retrieve data from the ADC DDR memory. To start the transfer we fire the zio
+ * trigger. We can't use zio_fire_trigger when the real trigger fire due to
+ * multi-shot capabilities of the ADC
+ * FIXME maybe here reset cur|lst_dev_mem
+ */
+static void zfat_irq_acq_end(struct zfat_instance *zfat)
+{
+	uint32_t val;
+
+	/*
+	 * All programmed triggers fire, so the acquisition is ended.
+	 * If the state machine is _idle_ we can start the DMA transfer.
+	 */
+	zfa_common_info_get(&zfat->ti.cset->head.dev,
+			    &zfad_regs[ZFA_STA_FSM],&val);
+	if (val == ZFA_STATE_IDLE) {
+		/*
+		 * Disable all triggers to prevent fires between
+		 * different DMA transfers required for multi-shots
+		 */
+		zfa_common_conf_set(&zfat->ti.cset->head.dev,
+				    &zfad_regs[ZFAT_CFG_HW_EN], 0);
+		zfa_common_conf_set(&zfat->ti.cset->head.dev,
+				    &zfad_regs[ZFAT_CFG_SW_EN], 0);
+		dev_dbg(&zfat->ti.head.dev, "Start DMA from device\n");
+		zio_fire_trigger(&zfat->ti);
+	} else {
+		/* we can't DMA if the state machine is not idle */
+		dev_warn(&zfat->ti.cset->head.dev,
+			 "Can't start DMA on the last acquisition, "
+			 "it will be done on the next acquisition end\n");
+	}
+}
 /*
  * The different irq status are handled in different if statement. At the end
  * of the if statement we don't call return because it is possible that there
@@ -316,69 +392,26 @@ static uint32_t zfat_get_irq_status(struct zfat_instance *zfat)
  * before END. If ZFAT_DMA_DONE happens with ZFAT_TRG_FIRE and ZFAT_ACQ_END, we
  * handle DMA_DONE before the other because we must conclude a previous
  * acquisition before start a new one
- *
  */
-irqreturn_t zfadc_irq(int irq, void *ptr)
+static irqreturn_t zfadc_irq(int irq, void *ptr)
 {
 	struct fmc_device *fmc = ptr;
 	struct spec_fa *fa = fmc_get_drvdata(fmc);
 	struct zfat_instance *zfat = to_zfat_instance(fa->zdev->cset->ti);
-	uint32_t status, val;
+	uint32_t status;
 
 	/* irq to handle */
 	status = zfat_get_irq_status(zfat);
 	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
+	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR))
+		zfat_irq_dma_done(fmc, zfat, status);
 
-	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) {
-		/* unmap dma */
-		zfad_unmap_dma(zfat->ti.cset);
-		if (status & ZFAT_DMA_DONE) { /* DMA done*/
-			dev_dbg(&zfat->ti.head.dev, "DMA transfer done\n");
-			zio_trigger_data_done(zfat->ti.cset);
-			zfat->n_acq_dev--;
-		} else {	/* DMA error */
-			zfa_common_info_get(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFA_DMA_STA], &val);
-			dev_err(fmc->hwdev, "DMA error (status 0x%x)\n", val);
-			zio_trigger_abort(zfat->ti.cset);
-			zfat->n_err++;
-		}
-	}
+	if (status & ZFAT_TRG_FIRE)
+		zfat_irq_trg_fire(zfat);
 
-	if (status & ZFAT_TRG_FIRE) { /* Trigger fire */
-		dev_dbg(&zfat->ti.head.dev, "Trigger fire\n");
-		zfat->n_acq_dev++;
-		/* Get time-stamp and prepare block */
-		zfat_trigger_fire(&zfat->ti);
-	}
-
-	if (status & ZFAT_ACQ_END) { /* Acquisition end */
-		/*
-		 * All programmed triggers fire, so the acquisition is ended.
-		 * If the state machine is _idle_ we can start the DMA transfer.
-		 */
-		zfa_common_info_get(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFA_STA_FSM],&val);
-		if (val == ZFA_STATE_IDLE) {
-			/*
-			 * Disable all triggers to prevent fires between
-			 * different DMA transfers required for multi-shots
-			 */
-			zfa_common_conf_set(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFAT_CFG_HW_EN], 0);
-			zfa_common_conf_set(&zfat->ti.cset->head.dev,
-					    &zfad_regs[ZFAT_CFG_SW_EN], 0);
-			dev_dbg(&zfat->ti.head.dev, "Start DMA from device\n");
-			zio_fire_trigger(&zfat->ti);
-		} else {
-			/* we can't DMA if the state machine is not idle */
-			dev_warn(&zfat->ti.cset->head.dev,
-				 "Can't start DMA on the last acquisition, "
-				 "it will be done on the next acquisition end\n");
-		}
-	}
-
+	if (status & ZFAT_ACQ_END)
+		zfat_irq_acq_end(zfat);
 	return IRQ_HANDLED;
 }
 
@@ -414,7 +447,6 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 
 	return &zfat->ti;
 }
-
 static void zfat_destroy(struct zio_ti *ti)
 {
 	struct spec_fa *fa = ti->cset->zdev->priv_d;
@@ -436,7 +468,10 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFAT_CFG_SW_EN], !status);
 }
 
-/* Transfer is over, store the interleaved block */
+/*
+ * Transfer is over for the active block, so store the interleaved block
+ * and start the next dma transfer for the next block (if any)
+ */
 static void zfat_data_done(struct zio_cset *cset)
 {
 	struct zio_block *block = cset->interleave->active_block;
@@ -453,15 +488,26 @@ static void zfat_data_done(struct zio_cset *cset)
 	zfat_start_next_dma(cset->ti);
 }
 
-/* Abort depends on the state machine status and DMA status.*/
+/*
+ * Abort acquisition empty the list of prepared buffer. If a DMA
+ * transfer is active, it will complete only the block that it takes
+ */
 static void zfat_abort(struct zio_cset *cset)
 {
-	struct zio_block *block = cset->interleave->active_block;
-	struct zio_buffer_type *zbuf = cset->zbuf;
 	struct zio_bi *bi = cset->interleave->bi;
+	struct zfat_instance *zfat = to_zfat_instance(cset->ti);
+	struct zfat_block *zfat_block, *node;
+	unsigned long flags;
 
-	pr_debug("%s\n", __func__);
-	zbuf->b_op->free_block(bi, block);
+	spin_lock_irqsave(&zfat->lock, flags);
+	list_for_each_entry_safe(zfat_block, node, &zfat->list_block, list) {
+		bi->b_op->free_block(bi, zfat_block->block);
+		list_del(&zfat_block->list);
+		kfree(zfat_block);
+	}
+	spin_unlock_irqrestore(&zfat->lock, flags);
+	zfat->fa->cur_dev_mem = 0;
+	zfat->fa->lst_dev_mem = 0;
 }
 
 /* Do the trigger initialization */
@@ -487,6 +533,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.init =			zfat_initialize,
 };
 
+/* Definition of the trigger type */
 struct zio_trigger_type zfat_type = {
 	.owner = THIS_MODULE,
 	.zattr_set = {
