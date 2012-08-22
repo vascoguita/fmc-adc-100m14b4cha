@@ -58,8 +58,6 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 1: negative edge/slope
 	 */
 	ZATTR_EXT_REG("polarity", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_POL, 0),
-	/* Enable (1) or disable (0) hardware trigger */
-	ZATTR_EXT_REG("hw-trig-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_EN, 0),
 	/* Enable (1) or disable (0) software trigger */
 	ZATTR_EXT_REG("sw-trig-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
 	/*
@@ -459,13 +457,14 @@ static void zfat_destroy(struct zio_ti *ti)
 	kfree(zfat);
 }
 
-/* status is active low on ZIO but active high on the FMC-ADC, then use ! */
+/*
+ * Enable or disable the hardware trigger. The hardware trigger is the prefered
+ * trigger so it correspond to the ZIO enable of the trigger.Status is active
+ * low on ZIO but active high on the FMC-ADC, then use '!' on status
+ */
 static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
-	/* Enable/Disable HW trigger */
 	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], !status);
-	/* Enable/Disable SW trigger */
-	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFAT_CFG_SW_EN], !status);
 }
 
 /*
