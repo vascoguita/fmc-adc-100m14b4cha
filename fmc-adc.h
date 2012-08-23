@@ -37,6 +37,28 @@ struct dma_item {
 	 */
 };
 
+/*
+ * spec_fa: is the descriptor of the FMC ADC mezzanine
+ *
+ * @fmc: the pointer to the fmc_device generic structure
+ * @spec: this driver depends on spec (FIXME no svec at the moment)
+ * @zdev: is the pointer to the real zio_device in use
+ * @hwzdev: is the pointer to the fake zio_device, used to initialize and
+ *          to remove a zio_device
+ *
+ * DMA variable: these variables are used by the fa-dma.c engine
+ * @sgt: scatter/gather table
+ * @items: vector of dma_item for a single DMA transfer
+ * @dma_list_item: contains the address of items mapped for DMA access. The
+ *                 device will access items to retrive information about the
+ *                 DMA items to transfer.
+ * @lst_dev_mem: contains the device address where last block is stored.
+ *               FIXME when it reset?
+ * @cur_dev_mem: contains the device address to the current block of data in
+ *               transmission from device. It is updated for each dma_items
+ *               transfer
+ * @base: the base address for to access device registers (BAR0)
+ */
 struct spec_fa {
 	struct fmc_device	*fmc;
 	struct spec_dev		*spec;
@@ -44,13 +66,13 @@ struct spec_fa {
 	struct zio_device	*hwzdev;
 
 	/* DMA variable */
-	struct sg_table		sgt;		/* scatter/gather table */
-	struct dma_item		*items;		/* items for DMA transfers */
-	dma_addr_t		dma_list_item;	/* DMA address for items */
-	uint32_t		lst_dev_mem;	/* offset of last acquired */
-	uint32_t		cur_dev_mem;	/* current dev memory acq */
+	struct sg_table		sgt;
+	struct dma_item		*items;
+	dma_addr_t		dma_list_item;
+	uint32_t		lst_dev_mem;
+	uint32_t		cur_dev_mem;
 
-	unsigned char __iomem	*base;	/* regs files are byte-oriented */
+	unsigned char __iomem	*base;
 
 	/* one-wire */
 	uint8_t ds18_id[8];
