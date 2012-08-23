@@ -269,6 +269,7 @@ static void zfat_irq_dma_done(struct fmc_device *fmc,
 		zfat->n_err++;
 	}
 }
+/* Get the last trigger time-stamp from device */
 static void zfat_get_time_stamp(struct device *dev, struct zio_timestamp *ts)
 {
 	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_SECONDS], &ts->secs);
@@ -320,9 +321,7 @@ static void zfat_irq_trg_fire(struct zfat_instance *zfat)
 	ctrl = zio_alloc_control(GFP_ATOMIC);
 	if (!ctrl)
 		goto out;
-	/* Update sequence number */
 	interleave->current_ctrl->seq_num++;
-	/* Retrieve last trigger time-stamp (hw trigger already fired) */
 	zfat_get_time_stamp(&ti->head.dev, &interleave->current_ctrl->tstamp);
 	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
 
