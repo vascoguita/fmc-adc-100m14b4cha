@@ -306,18 +306,18 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
-	fa->dev_data_mem = 0;
+	fa->lst_dev_mem = 0;
+	fa->cur_dev_mem = 0;
 
-	/* Force stop FSM */
+	/* Force stop FSM to prevent early trigger fire */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
 			    ZFA_STOP);
-
-	/* Initialize channels gain to 1 and range to 10V */
+	/* Initialize channels gain to 1 and range to 1V */
 	for (i = 0; i < 4; ++i) {
 		reg = &zfad_regs[ZFA_CH1_GAIN + (i * ZFA_CHx_MULT)];
 		zfa_common_conf_set(&zdev->head.dev, reg, 0x8000);
 		reg = &zfad_regs[ZFA_CH1_CTL_RANGE + (i * ZFA_CHx_MULT)];
-		zfa_common_conf_set(&zdev->head.dev, reg, 0x45);
+		zfa_common_conf_set(&zdev->head.dev, reg, 0x17);
 	}
 	/* Enable mezzanine clock */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_CLK_EN], 1);
@@ -335,6 +335,8 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* Enable all interrupt */
 	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_IRQ_MASK],
 			    ZFAT_ALL);
+	/* Enable Hardware trigger*/
+	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], 1);
 	return 0;
 }
 
@@ -356,10 +358,8 @@ static struct zio_cset zfad_cset[] = {
 		.flags =  ZCSET_TYPE_ANALOG |	/* is analog */
 			  ZIO_DIR_INPUT |	/* is input */
 			  ZCSET_INTERLEAVE_ONLY,/* interleave only */
-		/* .priv_d is used by DMA code */
 	}
 };
-
 static struct zio_device zfad_tmpl = {
 	.owner = THIS_MODULE,
 	.s_op = &zfad_s_op,
@@ -371,11 +371,13 @@ static struct zio_device zfad_tmpl = {
 		.ext_zattr = zfad_dev_ext_zattr,
 		.n_ext_attr = ARRAY_SIZE(zfad_dev_ext_zattr),
 	},
-	/* This driver work only with the fmc-adc-trig */
+	/* This driver work only with the fmc-adc-trg */
 	.preferred_trigger = "fmc-adc-trg",
 	.preferred_buffer = "kmalloc",
 };
 
+
+/* List of supported boards */
 static const struct zio_device_id zfad_table[] = {
 	{"fmc-adc", &zfad_tmpl},
 	{},
@@ -428,7 +430,7 @@ int fa_zio_init(struct spec_fa *fa)
 	fa->hwzdev->owner = THIS_MODULE;
 	fa->hwzdev->priv_d = fa;
 
-	/* Our dev_id is bus+devfn*/
+	/* Our dev_id is bus+devfn */
 	dev_id = (pdev->bus->number << 8) | pdev->devfn;
 
 	/* Register our trigger hardware */
@@ -437,7 +439,8 @@ int fa_zio_init(struct spec_fa *fa)
 		dev_err(hwdev, "Cannot register ZIO trigger fmc-adc-trig\n");
 		goto out_trg;
 	}
-	/* Register our device */
+
+	/* Register the hardware zio_device */
 	err = zio_register_device(fa->hwzdev, "fmc-adc", dev_id);
 	if (err) {
 		dev_err(hwdev, "Cannot register ZIO device fmc-adc\n");
