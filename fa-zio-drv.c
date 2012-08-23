@@ -116,7 +116,7 @@ const struct zio_reg_desc zfad_regs[] = {
 };
 
 /* zio device attributes */
-static DEFINE_ZATTR_STD(ZDEV, zfad_dev_std_zattr) = {
+static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES, 14),
 	/*
 	 * Sample rate
@@ -126,7 +126,7 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_dev_std_zattr) = {
 	 */
 	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 };
-static struct zio_attribute zfad_dev_ext_zattr[] = {
+static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/* Control register */
 	/*
 	 * State machine commands
@@ -358,6 +358,11 @@ static struct zio_cset zfad_cset[] = {
 		.flags =  ZCSET_TYPE_ANALOG |	/* is analog */
 			  ZIO_DIR_INPUT |	/* is input */
 			  ZCSET_INTERLEAVE_ONLY,/* interleave only */
+		.zattr_set = {
+			.std_zattr = zfad_cset_std_zattr,
+			.ext_zattr = zfad_cset_ext_zattr,
+			.n_ext_attr = ARRAY_SIZE(zfad_cset_ext_zattr),
+		},
 	}
 };
 static struct zio_device zfad_tmpl = {
@@ -366,11 +371,7 @@ static struct zio_device zfad_tmpl = {
 	.flags = 0,
 	.cset = zfad_cset,
 	.n_cset = ARRAY_SIZE(zfad_cset),
-	.zattr_set = {
-		.std_zattr = zfad_dev_std_zattr,
-		.ext_zattr = zfad_dev_ext_zattr,
-		.n_ext_attr = ARRAY_SIZE(zfad_dev_ext_zattr),
-	},
+
 	/* This driver work only with the fmc-adc-trg */
 	.preferred_trigger = "fmc-adc-trg",
 	.preferred_buffer = "kmalloc",
