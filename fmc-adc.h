@@ -250,7 +250,7 @@ static inline struct spec_dev *get_spec(struct device *dev)
 {
 	return get_zfadc(dev)->spec;
 }
-
+/* FIXME convert fa_{read|write}_reg to fmc_{writel|readl} when fmc is fixed */
 static inline uint32_t fa_read_reg(struct fmc_adc *fa,
 				    const struct zio_reg_desc *reg)
 {
