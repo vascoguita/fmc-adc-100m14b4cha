@@ -103,17 +103,19 @@ int zfad_map_dma(struct zio_cset *cset)
 		dev_err(fa->fmc->hwdev, "cannot map dma memory\n");
 		goto out_map;
 	}
+
 	/* Configure DMA items */
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
 		dev_dbg(&cset->head.dev, "configure DMA item %d(%p)"
-			"(addr: 0x%p, len: %d)\n",
-			i, sg, sg_dma_address(sg), sg_dma_len(sg));
+			"(addr: 0x%p, len: %d)(dev off: 0x%x)\n",
+			i, sg, sg_dma_address(sg), sg_dma_len(sg),
+			fa->cur_dev_mem);
 		/* Prepare DMA item */
-		items[i].start_addr = fa->dev_data_mem;
+		items[i].start_addr = fa->cur_dev_mem;
 		items[i].dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
 		items[i].dma_addr_h = sg_dma_address(sg) >> 32;
 		items[i].dma_len = sg_dma_len(sg);
-		fa->dev_data_mem += items[i].dma_len;
+		fa->cur_dev_mem += items[i].dma_len;
 		if (!sg_is_last(sg)) {/* more transfers */
 			/* uint64_t so it works on 32 and 64 bit */
 			tmp = fa->dma_list_item;
