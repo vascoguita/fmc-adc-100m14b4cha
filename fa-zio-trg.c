@@ -243,6 +243,8 @@ static uint32_t zfat_get_irq_status(struct zfat_instance *zfat)
 			    irq_status);
 	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_MULTI],
 			     irq_multi);
+	/* ack the irq */
+	zfat->fa->fmc->op->irq_ack(zfat->fa->fmc);
 
 	return irq_status | irq_multi;
 }
@@ -402,8 +404,6 @@ static irqreturn_t zfadc_irq(int irq, void *ptr)
 
 	/* irq to handle */
 	status = zfat_get_irq_status(zfat);
-	/* ack the irq */
-	fa->fmc->op->irq_ack(fa->fmc);
 	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR))
 		zfat_irq_dma_done(fmc, zfat, status);
 
