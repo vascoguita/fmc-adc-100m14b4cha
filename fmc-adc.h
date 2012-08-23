@@ -47,6 +47,8 @@ struct spec_fa {
 	struct sg_table		sgt;		/* scatter/gather table */
 	struct dma_item		*items;		/* items for DMA transfers */
 	dma_addr_t		dma_list_item;	/* DMA address for items */
+	uint32_t		lst_dev_mem;	/* offset of last acquired */
+	uint32_t		cur_dev_mem;	/* current dev memory acq */
 
 	unsigned char __iomem	*base;	/* regs files are byte-oriented */
 
@@ -58,12 +60,6 @@ struct spec_fa {
 
 extern int zfad_map_dma(struct zio_cset *cset);
 extern void zfad_unmap_dma(struct zio_cset *cset);
-
-/*
- * ZFA_CHx_MULT
- * address offset between two registers of the same type on consecutive channel
- */
-#define ZFA_CHx_MULT 5
 
 /* Device registers */
 enum zfadc_dregs_enum {
@@ -105,31 +101,26 @@ enum zfadc_dregs_enum {
 	ZFAT_CNT,
 	/* Channel 1 */
 	ZFA_CH1_CTL_RANGE,
-	ZFA_CH1_CTL_TERM,
 	ZFA_CH1_STA,
 	ZFA_CH1_GAIN,
 	ZFA_CH1_OFFSET,
 	/* Channel 2 */
 	ZFA_CH2_CTL_RANGE,
-	ZFA_CH2_CTL_TERM,
 	ZFA_CH2_STA,
 	ZFA_CH2_GAIN,
 	ZFA_CH2_OFFSET,
 	/* Channel 3 */
 	ZFA_CH3_CTL_RANGE,
-	ZFA_CH3_CTL_TERM,
 	ZFA_CH3_STA,
 	ZFA_CH3_GAIN,
 	ZFA_CH3_OFFSET,
 	/* Channel 4 */
 	ZFA_CH4_CTL_RANGE,
-	ZFA_CH4_CTL_TERM,
 	ZFA_CH4_STA,
 	ZFA_CH4_GAIN,
 	ZFA_CH4_OFFSET,
 	/* Other*/
 	ZFA_CHx_CTL_RANGE,
-	ZFA_CHx_CTL_TERM,
 	ZFA_CHx_STA,
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
@@ -171,6 +162,18 @@ enum zfadc_dregs_enum {
 	ZFA_UTC_ACQ_END_COARSE,
 	ZFA_UTC_ACQ_END_FINE,
 };
+/*
+ * ZFA_CHx_MULT
+ * address offset between two registers of the same type on consecutive channel
+ */
+#define ZFA_CHx_MULT 4
+/*
+ * ZFA_CHx_CH1_DIFF
+ * index difference between fake register index CHx and the first channel
+ * index CH1
+ */
+#define ZFA_CHx_CH1_DIFF ZFA_CHx_CTL_RANGE - ZFA_CH1_CTL_RANGE
+
 /* Device registers */
 extern const struct zio_reg_desc zfad_regs[];
 
