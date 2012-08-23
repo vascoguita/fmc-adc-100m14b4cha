@@ -118,8 +118,13 @@ const struct zio_reg_desc zfad_regs[] = {
 /* zio device attributes */
 static DEFINE_ZATTR_STD(ZDEV, zfad_dev_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES, 14),
-	/* Sample rate */
-	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 0),
+	/*
+	 * Sample rate
+	 * ADC acquire always at the maximum sample rate, to make slower
+	 * acquisition you can decimate samples. 0 is a forbidden value, 1
+	 * for the maximum speed.
+	 */
+	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 };
 static struct zio_attribute zfad_dev_ext_zattr[] = {
 	/* Control register */
@@ -129,9 +134,9 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	 * 2: stop
 	 */
 	PARAM_EXT_REG("fsm-cmd", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
-	/* FMC clock, must be enabled  */
+	/* FMC clock, must be enabled */
 	ZATTR_EXT_REG("fmc-clk-en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
-	ZATTR_EXT_REG("offset-dac-clr-n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 0),
+	ZATTR_EXT_REG("offset-dac-clr-n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 	ZATTR_EXT_REG("bitslip", S_IRUGO | S_IWUGO, ZFA_CTL_BSLIP, 0),
 	ZATTR_EXT_REG("test-data-en", S_IRUGO | S_IWUGO, ZFA_CTL_TEST_DATA_EN, 0),
 	PARAM_EXT_REG("trig-led", S_IRUGO | S_IWUGO, ZFA_CTL_TRIG_LED, 0),
@@ -189,7 +194,7 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 	 * 0x40 (64): 1V range calibration
 	 * 0x44 (68): 10V range calibration
 	 */
-	ZATTR_EXT_REG("in-range", S_IRUGO, ZFA_CHx_CTL_RANGE, 0),
+	ZATTR_EXT_REG("in-range", S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x17),
 	PARAM_EXT_REG("current-value", S_IRUGO, ZFA_CHx_STA, 0),
 };
 /* Calculate correct index for channel from CHx indexes */
