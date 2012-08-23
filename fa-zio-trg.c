@@ -196,9 +196,6 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFAT_CFG_SW_EN],
 				    ti->zattr_set.ext_zattr[5].value);
-		/* Re-enable FSM */
-		zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
-					    ZFA_START);
 		return;
 	}
 
