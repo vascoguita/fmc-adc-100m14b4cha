@@ -51,34 +51,35 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 0: internal (data threshold)
 	 * 1: external (front panel trigger input)
 	 */
-	ZATTR_EXT_REG("hw-select", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	ZATTR_EXT_REG("external", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
 	/*
-	 * Hardware trigger polarity
+	 * Internal Hardware trigger polarity
 	 * 0: positive edge/slope
 	 * 1: negative edge/slope
 	 */
 	ZATTR_EXT_REG("polarity", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_POL, 0),
-	/* Enable (1) or disable (0) software trigger */
-	ZATTR_EXT_REG("sw-trig-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
 	/*
 	 * Channel selection for internal trigger
-	 * 0: channel 1
-	 * 1: channel 2
-	 * 2: channel 3
-	 * 3: channel 4
+	 * 0: channel 1, 1: channel 2, 2: channel 3, 3: channel 4
 	 */
-	ZATTR_EXT_REG("int-select", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
-	/* Threshold value for internal trigger */
+	ZATTR_EXT_REG("int-channel", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	/* Internal trigger threshold value is 2 complement format */
 	ZATTR_EXT_REG("int-threshold", S_IRUGO | S_IWUGO, ZFAT_CFG_THRES, 0),
-
-	/* Delay */
+	/*
+	 * Delay to apply on the trigger in sampling clock period. The default
+	 * clock frequency is 100MHz (period = 10ns)
+	 */
 	ZATTR_EXT_REG("delay", S_IRUGO | S_IWUGO, ZFAT_DLY, 0),
 
-	/* Software */
-	PARAM_EXT_REG("sw-fire", S_IWUGO, ZFAT_SW, 0),
+	/* Software Trigger */
+	/* Enable (1) or disable (0) software trigger */
+	PARAM_EXT_REG("sw-trg-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
+	PARAM_EXT_REG("sw-trg-fire", S_IWUGO, ZFAT_SW, 0),
 
-	/* Position address */
-	ZATTR_EXT_REG("position-addr", S_IRUGO, ZFAT_POS, 0),
+	/* last trigger time stamp */
+	PARAM_EXT_REG("tstamp-trg-lst-s", S_IRUGO, ZFA_UTC_TRIG_SECONDS, 0),
+	PARAM_EXT_REG("tstamp-trg-lst-t", S_IRUGO, ZFA_UTC_TRIG_COARSE, 0),
+	PARAM_EXT_REG("tstamp-trg-lst-b", S_IRUGO, ZFA_UTC_TRIG_FINE, 0),
 };
 
 static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
@@ -128,8 +129,8 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 				return err;
 			break;
 		case ZFAT_SW:
-			/* Fire if software trigger is enabled */
-			if (!ti->zattr_set.ext_zattr[3].value) {
+			/* Fire if software trigger is enabled (index 5) */
+			if (!ti->zattr_set.ext_zattr[5].value) {
 				dev_err(dev, "sw trigger must be enable");
 				return -EPERM;
 			}
@@ -184,14 +185,16 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 		fa->lst_dev_mem = 0;
 		/*
 		 * All DMA transfers finish, so we can safely re-enable
-		 * triggers. (2) hardware trigger, (3) software trigger
+		 * triggers. Hardware trigger depends on the enable status
+		 * of the trigger. Software trigger depends on the previous
+		 * status taken form zio attributes (index 5 of extended one)
 		 */
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFAT_CFG_HW_EN],
-				    ti->zattr_set.ext_zattr[2].value);
+				    (ti->flags & ZIO_STATUS ? 0 : 1));
 		zfa_common_conf_set(&zfat->ti.cset->head.dev,
 				    &zfad_regs[ZFAT_CFG_SW_EN],
-				    ti->zattr_set.ext_zattr[3].value);
+				    ti->zattr_set.ext_zattr[5].value);
 		/* Re-enable FSM */
 		zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
 					    ZFA_START);
