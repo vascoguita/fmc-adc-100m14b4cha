@@ -508,19 +508,6 @@ static void zfat_abort(struct zio_cset *cset)
 	zfat->fa->lst_dev_mem = 0;
 }
 
-/* Do the trigger initialization */
-static int zfat_initialize(struct zio_ti *ti)
-{
-	/* Enable all interrupt */
-	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFA_IRQ_MASK],
-			    ZFAT_ALL);
-	/* Set to single shot mode by default */
-	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFAT_SHOTS_NB], 1);
-	ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 1;
-
-	return 0;
-}
-
 static const struct zio_trigger_operations zfat_ops = {
 	.create =		zfat_create,
 	.destroy =		zfat_destroy,
@@ -528,7 +515,6 @@ static const struct zio_trigger_operations zfat_ops = {
 	.data_done =		zfat_data_done,
 	.input_fire =		zfat_start_next_dma,
 	.abort =		zfat_abort,
-	.init =			zfat_initialize,
 };
 
 /* Definition of the trigger type */
