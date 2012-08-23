@@ -20,8 +20,8 @@ module_param_named(file, fa_binaries, charp, 0444);
 /* This structure lists the various subsystems */
 struct fa_modlist {
 	char *name;
-	int (*init)(struct spec_fa *);
-	void (*exit)(struct spec_fa *);
+	int (*init)(struct fmc_adc *);
+	void (*exit)(struct fmc_adc *);
 };
 #define SUBSYS(x) { #x, fa_ ## x ## _init, fa_ ## x ## _exit }
 static struct fa_modlist mods[] = {
@@ -33,7 +33,7 @@ static struct fa_modlist mods[] = {
 int fa_probe(struct fmc_device *fmc)
 {
 	struct fa_modlist *m = NULL;
-	struct spec_fa *fa;
+	struct fmc_adc *fa;
 	struct spec_dev *spec = fmc->carrier_data;
 	int err, i = 0;
 
@@ -43,7 +43,7 @@ int fa_probe(struct fmc_device *fmc)
 	}
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
-	fa = devm_kzalloc(&fmc->dev, sizeof(struct spec_fa), GFP_KERNEL);
+	fa = devm_kzalloc(&fmc->dev, sizeof(struct fmc_adc), GFP_KERNEL);
 	if (!fa)
 		return -ENOMEM;
 	fmc_set_drvdata(fmc, fa);
@@ -80,7 +80,7 @@ out:
 }
 int fa_remove(struct fmc_device *fmc)
 {
-	struct spec_fa *fa = fmc_get_drvdata(fmc);
+	struct fmc_adc *fa = fmc_get_drvdata(fmc);
 
 	fa_zio_exit(fa);
 	devm_kfree(&fmc->dev, fa);

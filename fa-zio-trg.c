@@ -23,7 +23,7 @@
 
 struct zfat_instance {
 	struct zio_ti ti;
-	struct spec_fa *fa;
+	struct fmc_adc *fa;
 	unsigned int n_acq_dev;	/* number of acquisitions on device memory */
 	unsigned int n_err;	/* number of errors */
 
@@ -171,7 +171,7 @@ static const struct zio_sysfs_operations zfat_s_op = {
 static void zfat_start_next_dma(struct zio_ti *ti)
 {
 	struct zfat_instance *zfat = to_zfat_instance(ti);
-	struct spec_fa *fa = ti->cset->zdev->priv_d;
+	struct fmc_adc *fa = ti->cset->zdev->priv_d;
 	struct zio_channel *interleave = ti->cset->interleave;
 	struct zfat_block *zfat_block;
 	struct zio_buffer_type *zbuf = ti->cset->zbuf;
@@ -288,7 +288,7 @@ static void zfat_irq_trg_fire(struct zfat_instance *zfat)
 	struct zio_ti *ti = &zfat->ti;
 	struct zio_channel *interleave = ti->cset->interleave;
 	struct zio_buffer_type *zbuf = ti->cset->zbuf;
-	struct spec_fa *fa = ti->cset->zdev->priv_d;
+	struct fmc_adc *fa = ti->cset->zdev->priv_d;
 	struct zio_control *ctrl;
 	struct zio_block *block;
 	struct zfat_block *zfat_block;
@@ -393,7 +393,7 @@ static void zfat_irq_acq_end(struct zfat_instance *zfat)
 static irqreturn_t zfadc_irq(int irq, void *ptr)
 {
 	struct fmc_device *fmc = ptr;
-	struct spec_fa *fa = fmc_get_drvdata(fmc);
+	struct fmc_adc *fa = fmc_get_drvdata(fmc);
 	struct zfat_instance *zfat = to_zfat_instance(fa->zdev->cset->ti);
 	uint32_t status;
 
@@ -417,7 +417,7 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 				 struct zio_cset *cset,
 				 struct zio_control *ctrl, fmode_t flags)
 {
-	struct spec_fa *fa = cset->zdev->priv_d;
+	struct fmc_adc *fa = cset->zdev->priv_d;
 	struct zfat_instance *zfat;
 	int err;
 
@@ -446,7 +446,7 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 }
 static void zfat_destroy(struct zio_ti *ti)
 {
-	struct spec_fa *fa = ti->cset->zdev->priv_d;
+	struct fmc_adc *fa = ti->cset->zdev->priv_d;
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
 	/* Disable all interrupt */
