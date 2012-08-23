@@ -186,7 +186,7 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 	 * 0x40 (64): 1V range calibration
 	 * 0x44 (68): 10V range calibration
 	 */
-	ZATTR_EXT_REG("in-range", S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x17),
+	ZATTR_EXT_REG("in-range", S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
 	PARAM_EXT_REG("current-value", S_IRUGO, ZFA_CHx_STA, 0),
 };
 /* Calculate correct index for channel from CHx indexes */
@@ -291,47 +291,54 @@ static int zfad_input_cset(struct zio_cset *cset)
 
 static int zfad_zio_probe(struct zio_device *zdev)
 {
-	const struct zio_reg_desc *reg;
 	struct fmc_adc *fa = zdev->priv_d;
-	int i;
 
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
+	/* be sure to initialize these values for DMA transfer */
 	fa->lst_dev_mem = 0;
 	fa->cur_dev_mem = 0;
 
+	return 0;
+}
+
+static int zfad_init_cset(struct zio_cset *cset)
+{
+	const struct zio_reg_desc *reg;
+	int i;
+
+	dev_dbg(&cset->head.dev, "%s:%d", __func__, __LINE__);
 	/* Force stop FSM to prevent early trigger fire */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
+	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
 			    ZFA_STOP);
 	/* Initialize channels gain to 1 and range to 1V */
 	for (i = 0; i < 4; ++i) {
 		reg = &zfad_regs[ZFA_CH1_GAIN + (i * ZFA_CHx_MULT)];
-		zfa_common_conf_set(&zdev->head.dev, reg, 0x8000);
+		zfa_common_conf_set(&cset->head.dev, reg, 0x8000);
 		reg = &zfad_regs[ZFA_CH1_CTL_RANGE + (i * ZFA_CHx_MULT)];
-		zfa_common_conf_set(&zdev->head.dev, reg, 0x17);
+		zfa_common_conf_set(&cset->head.dev, reg, 0x11);
 	}
 	/* Enable mezzanine clock */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_CLK_EN], 1);
+	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_CTL_CLK_EN], 1);
 	/* Enable offset DACs FIXME clear active low ???? */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
+	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
 	/* Set DMA to transfer data from device to host */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
+	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
 	/* Set decimation to minimum */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
+	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
 
 	/* Trigger registers */
 	/* Set to single shot mode by default */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_SHOTS_NB], 1);
-	zdev->cset->ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 0;
+	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_SHOTS_NB], 1);
+	cset->ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 0;
 	/* Enable all interrupt */
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFA_IRQ_MASK],
+	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFA_IRQ_MASK],
 			    ZFAT_ALL);
 	/* Enable Hardware trigger*/
-	zfa_common_conf_set(&zdev->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], 1);
+	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], 1);
 	return 0;
 }
-
 
 /* Device description */
 static struct zio_channel zfad_chan_tmpl = {
@@ -355,6 +362,7 @@ static struct zio_cset zfad_cset[] = {
 			.ext_zattr = zfad_cset_ext_zattr,
 			.n_ext_attr = ARRAY_SIZE(zfad_cset_ext_zattr),
 		},
+		.init = zfad_init_cset,
 	}
 };
 static struct zio_device zfad_tmpl = {
