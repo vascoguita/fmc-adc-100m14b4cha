@@ -327,6 +327,9 @@ static int zfad_init_cset(struct zio_cset *cset)
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
 	/* Set decimation to minimum */
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
+	/* Disable Test Register */
+	zfa_common_conf_set(&cset->ti->head.dev,
+			    &zfad_regs[ZFA_CTL_TEST_DATA_EN], 0);
 
 	/* Trigger registers */
 	/* Set to single shot mode by default */
