@@ -154,7 +154,8 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	zfa_common_info_get(dev, &zfad_regs[zattr->priv.addr], usr_val);
-
+	if (zattr->priv.addr == ZFAT_SHOTS_NB)
+		(*usr_val)--;
 	return 0;
 }
 static const struct zio_sysfs_operations zfat_s_op = {
