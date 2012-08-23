@@ -413,10 +413,14 @@ int fa_zio_init(struct spec_fa *fa)
 	uint32_t dev_id;
 	int err;
 
-	/* Check if hardware support 64-bit DMA */
+	/* Check if hardware supports 64-bit DMA */
 	if(dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
-		dev_err(hwdev, "64-bit DMA addressing not available\n");
-		return -EINVAL;
+		dev_err(hwdev, "64-bit DMA addressing not available, try 32\n");
+		/* Check if hardware supports 32-bit DMA */
+		if(dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
+			dev_err(hwdev, "32-bit DMA addressing not available\n");
+			return -EINVAL;
+		}
 	}
 
 	/* Allocate the hardware zio_device for registration */
