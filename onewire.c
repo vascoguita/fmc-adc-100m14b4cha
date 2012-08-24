@@ -5,6 +5,8 @@
  * Author: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
  * Author: Alessandro Rubini <rubini@gnudd.com>
  *
+ * Copied from the fine-delay driver and updated with fmc-adc variable
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2 as published by the Free Software Foundation or, at your
@@ -51,7 +53,7 @@
 #define CMD_RECALL_EEPROM	0xB8
 #define CMD_READ_POWER_SUPPLY	0xB4
 
-#define FD_OW_PORT 0 /* what is this slow? */
+#define FA_OW_PORT 0 /* what is this slow? */
 
 static void ow_writel(struct fa_dev *fa, uint32_t val, unsigned long reg)
 {
@@ -145,8 +147,8 @@ static int ds18x_read_serial(struct fa_dev *fa)
 		return -EIO;
 	}
 
-	ow_write_byte(fa, FD_OW_PORT, CMD_ROM_READ);
-	return ow_read_block(fa, FD_OW_PORT, fa->ds18_id, 8);
+	ow_write_byte(fa, FA_OW_PORT, CMD_ROM_READ);
+	return ow_read_block(fa, FA_OW_PORT, fa->ds18_id, 8);
 }
 
 static int ds18x_access(struct fa_dev *fa)
@@ -156,12 +158,12 @@ static int ds18x_access(struct fa_dev *fa)
 
 	if (0) {
 		/* select the rom among several of them */
-		if (ow_write_byte(fa, FD_OW_PORT, CMD_ROM_MATCH) < 0)
+		if (ow_write_byte(fa, FA_OW_PORT, CMD_ROM_MATCH) < 0)
 			goto out;
-		return ow_write_block(fa, FD_OW_PORT, fa->ds18_id, 8);
+		return ow_write_block(fa, FA_OW_PORT, fa->ds18_id, 8);
 	} else {
 		/* we have one only, so skip rom */
-		return ow_write_byte(fa, FD_OW_PORT, CMD_ROM_SKIP);
+		return ow_write_byte(fa, FA_OW_PORT, CMD_ROM_SKIP);
 	}
 out:
 	pr_err("%s: Failure in one-wire communication\n", KBUILD_MODNAME);
@@ -173,7 +175,7 @@ static void __temp_command_and_next_t(struct fa_dev *fa, int cfg_reg)
 	int ms;
 
 	ds18x_access(fa);
-	ow_write_byte(fa, FD_OW_PORT, CMD_CONVERT_TEMP);
+	ow_write_byte(fa, FA_OW_PORT, CMD_CONVERT_TEMP);
 	/* The conversion takes some time, so mark when will it be ready */
 	ms = 94 * ( 1 << (cfg_reg >> 5));
 	fa->next_t = jiffies + msecs_to_jiffies(ms);
@@ -199,8 +201,8 @@ int fa_read_temp(struct fa_dev *fa, int verbose)
 	}
 
 	ds18x_access(fa);
-	ow_write_byte(fa, FD_OW_PORT, CMD_READ_SCRATCHPAD);
-	ow_read_block(fa, FD_OW_PORT, data, 9);
+	ow_write_byte(fa, FA_OW_PORT, CMD_READ_SCRATCHPAD);
+	ow_read_block(fa, FA_OW_PORT, data, 9);
 
 	if (verbose > 1) {
 		pr_info("%s: Scratchpad: ", __func__);
