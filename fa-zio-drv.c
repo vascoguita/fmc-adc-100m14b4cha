@@ -342,6 +342,9 @@ static int zfad_init_cset(struct zio_cset *cset)
 	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 	/* Enable Hardware trigger*/
 	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], 1);
+	/* Select external trigger (index 0) */
+	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_INT_SEL], 1);
+	cset->ti->zattr_set.ext_zattr[0].value = 1;
 	return 0;
 }
 
