@@ -22,7 +22,7 @@
 #include "fmc-adc.h"
 
 /* Initialize each element of the scatter list */
-static void zfad_setup_dma_scatter(struct fmc_adc *fa, struct zio_block *block)
+static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zio_block *block)
 {
 	struct scatterlist *sg;
 	int bytesleft = block->datalen;
@@ -61,7 +61,7 @@ static void zfad_setup_dma_scatter(struct fmc_adc *fa, struct zio_block *block)
  */
 int zfad_map_dma(struct zio_cset *cset)
 {
-	struct fmc_adc *fa = cset->zdev->priv_d;
+	struct fa_dev *fa = cset->zdev->priv_d;
 	struct scatterlist *sg;
 	struct zio_block *block = cset->interleave->active_block;
 	struct dma_item *items;
@@ -170,7 +170,7 @@ out:
  */
 void zfad_unmap_dma(struct zio_cset *cset)
 {
-	struct fmc_adc *fa = cset->zdev->priv_d;
+	struct fa_dev *fa = cset->zdev->priv_d;
 	unsigned int size;
 
 	dev_dbg(fa->fmc->hwdev, "unmap DMA\n");

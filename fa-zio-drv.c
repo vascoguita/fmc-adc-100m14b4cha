@@ -291,7 +291,7 @@ static int zfad_input_cset(struct zio_cset *cset)
 
 static int zfad_zio_probe(struct zio_device *zdev)
 {
-	struct fmc_adc *fa = zdev->priv_d;
+	struct fa_dev *fa = zdev->priv_d;
 
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
@@ -409,7 +409,7 @@ void fa_zio_unregister(void)
 
 
 /* Init and exit are called for each FMC-ADC card we have */
-int fa_zio_init(struct fmc_adc *fa)
+int fa_zio_init(struct fa_dev *fa)
 {
 	struct device *hwdev = fa->fmc->hwdev;
 	struct spec_dev *spec = fa->fmc->carrier_data;
@@ -463,7 +463,7 @@ out_trg:
 	return err;
 }
 
-void fa_zio_exit(struct fmc_adc *fa)
+void fa_zio_exit(struct fa_dev *fa)
 {
 	zio_unregister_device(fa->hwzdev);
 	zio_free_device(fa->hwzdev);

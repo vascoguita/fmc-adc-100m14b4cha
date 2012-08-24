@@ -13,15 +13,15 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
-static struct fmc_driver fmc_adc__drv;
+static struct fmc_driver fa_dev__drv;
 static char *fa_binaries = FA_GATEWARE_DEFAULT_NAME;
 module_param_named(file, fa_binaries, charp, 0444);
 
 /* This structure lists the various subsystems */
 struct fa_modlist {
 	char *name;
-	int (*init)(struct fmc_adc *);
-	void (*exit)(struct fmc_adc *);
+	int (*init)(struct fa_dev *);
+	void (*exit)(struct fa_dev *);
 };
 #define SUBSYS(x) { #x, fa_ ## x ## _init, fa_ ## x ## _exit }
 static struct fa_modlist mods[] = {
@@ -33,7 +33,7 @@ static struct fa_modlist mods[] = {
 int fa_probe(struct fmc_device *fmc)
 {
 	struct fa_modlist *m = NULL;
-	struct fmc_adc *fa;
+	struct fa_dev *fa;
 	struct spec_dev *spec = fmc->carrier_data;
 	int err, i = 0;
 
@@ -43,7 +43,7 @@ int fa_probe(struct fmc_device *fmc)
 	}
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
-	fa = devm_kzalloc(&fmc->dev, sizeof(struct fmc_adc), GFP_KERNEL);
+	fa = devm_kzalloc(&fmc->dev, sizeof(struct fa_dev), GFP_KERNEL);
 	if (!fa)
 		return -ENOMEM;
 	fmc_set_drvdata(fmc, fa);
@@ -52,7 +52,7 @@ int fa_probe(struct fmc_device *fmc)
 	fa->base = spec->remap[0];
 
 	/* We first write a new binary (and lm32) within the spec */
-	err = fmc->op->reprogram(fmc, &fmc_adc__drv, fa_binaries);
+	err = fmc->op->reprogram(fmc, &fa_dev__drv, fa_binaries);
 	if (err) {
 		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
 				fa_binaries, err);
@@ -80,13 +80,13 @@ out:
 }
 int fa_remove(struct fmc_device *fmc)
 {
-	struct fmc_adc *fa = fmc_get_drvdata(fmc);
+	struct fa_dev *fa = fmc_get_drvdata(fmc);
 
 	fa_zio_exit(fa);
 	devm_kfree(&fmc->dev, fa);
 	return 0;
 }
-static struct fmc_driver fmc_adc__drv = {
+static struct fmc_driver fa_dev__drv = {
 	.driver.name = KBUILD_MODNAME,
 	.probe = fa_probe,
 	.remove = fa_remove,
@@ -98,13 +98,13 @@ static int fa_init(void)
 	int ret;
 
 	pr_debug("%s\n",__func__);
-	ret = fmc_driver_register(&fmc_adc__drv);
+	ret = fmc_driver_register(&fa_dev__drv);
 	if (ret)
 		return ret;
 
 	ret = fa_zio_register();
 	if (ret) {
-		fmc_driver_unregister(&fmc_adc__drv);
+		fmc_driver_unregister(&fa_dev__drv);
 		return ret;
 	}
 	return 0;
@@ -113,7 +113,7 @@ static int fa_init(void)
 static void fa_exit(void)
 {
 	fa_zio_unregister();
-	fmc_driver_unregister(&fmc_adc__drv);
+	fmc_driver_unregister(&fa_dev__drv);
 }
 
 module_init(fa_init);

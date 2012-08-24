@@ -4,8 +4,8 @@
  * Driver for the mezzanine ADC for the SPEC
  */
 
-#ifndef _FMC_ADC_H_
-#define _FMC_ADC_H_
+#ifndef _fa_dev_H_
+#define _fa_dev_H_
 
 #include <linux/zio.h>
 #include "spec.h"
@@ -38,7 +38,7 @@ struct dma_item {
 };
 
 /*
- * fmc_adc: is the descriptor of the FMC ADC mezzanine
+ * fa_dev: is the descriptor of the FMC ADC mezzanine
  *
  * @fmc: the pointer to the fmc_device generic structure
  * @spec: this driver depends on spec (FIXME no svec at the moment)
@@ -59,7 +59,7 @@ struct dma_item {
  *               transfer
  * @base: the base address for to access device registers (BAR0)
  */
-struct fmc_adc {
+struct fa_dev {
 	struct fmc_device	*fmc;
 	struct spec_dev		*spec;
 	struct zio_device	*zdev;
@@ -229,7 +229,7 @@ enum zfat_irq {
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 
-static inline struct fmc_adc *get_zfadc(struct device *dev)
+static inline struct fa_dev *get_zfadc(struct device *dev)
 {
 	switch (to_zio_head(dev)->zobj_type) {
 		case ZDEV:
@@ -251,12 +251,12 @@ static inline struct spec_dev *get_spec(struct device *dev)
 	return get_zfadc(dev)->spec;
 }
 /* FIXME convert fa_{read|write}_reg to fmc_{writel|readl} when fmc is fixed */
-static inline uint32_t fa_read_reg(struct fmc_adc *fa,
+static inline uint32_t fa_read_reg(struct fa_dev *fa,
 				    const struct zio_reg_desc *reg)
 {
 	return readl(fa->base + reg->addr);
 }
-static inline void fa_write_reg(uint32_t val, struct fmc_adc *fa,
+static inline void fa_write_reg(uint32_t val, struct fa_dev *fa,
 				 const struct zio_reg_desc *reg)
 {
 	writel(val, fa->base + reg->addr);
@@ -307,15 +307,15 @@ extern const struct zio_reg_desc zfad_regs[];
 /* Functions exported by fa-zio.c */
 extern int fa_zio_register(void);
 extern void fa_zio_unregister(void);
-extern int fa_zio_init(struct fmc_adc *fa);
-extern void fa_zio_exit(struct fmc_adc *fa);
+extern int fa_zio_init(struct fa_dev *fa);
+extern void fa_zio_exit(struct fa_dev *fa);
 
 /* Functions exported by fa-spec.c */
 extern int fa_spec_init(void);
 extern void fa_spec_exit(void);
 /* Functions exported by onewire.c */
-extern int fa_onewire_init(struct fmc_adc *fa);
-extern void fa_onewire_exit(struct fmc_adc *fa);
+extern int fa_onewire_init(struct fa_dev *fa);
+extern void fa_onewire_exit(struct fa_dev *fa);
 
 #endif /* __KERNEL__ */
-#endif /* _FMC_ADC_H_ */
+#endif /* _fa_dev_H_ */
