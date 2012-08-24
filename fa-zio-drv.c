@@ -11,6 +11,7 @@
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/list.h>
+#include <linux/moduleparam.h>
 
 #include <linux/zio.h>
 #include <linux/zio-buffer.h>
@@ -19,6 +20,9 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
+static int enable_test_data = 0;
+
+module_param(enable_test_data, int, 0444);
 /* Definition of the fmc-adc registers address - mask - mask offset */
 const struct zio_reg_desc zfad_regs[] = {
 	/* Control registers */
@@ -327,9 +331,9 @@ static int zfad_init_cset(struct zio_cset *cset)
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
 	/* Set decimation to minimum */
 	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
-	/* Disable Test Register */
+	/* Set test data register */
 	zfa_common_conf_set(&cset->ti->head.dev,
-			    &zfad_regs[ZFA_CTL_TEST_DATA_EN], 0);
+			    &zfad_regs[ZFA_CTL_TEST_DATA_EN], enable_test_data);
 
 	/* Trigger registers */
 	/* Set to single shot mode by default */
