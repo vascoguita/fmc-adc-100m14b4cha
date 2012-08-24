@@ -338,6 +338,8 @@ static int zfad_init_cset(struct zio_cset *cset)
 	/* Enable all interrupt */
 	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFA_IRQ_MASK],
 			    ZFAT_ALL);
+	/* Disable Software trigger*/
+	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 	/* Enable Hardware trigger*/
 	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], 1);
 	return 0;
