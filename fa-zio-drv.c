@@ -205,6 +205,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		uint32_t usr_val)
 {
 	const struct zio_reg_desc *reg;
+	uint32_t val;
 	int i;
 
 	switch (zattr->priv.addr) {
@@ -240,6 +241,20 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 * If it is a clean START, the abort has not effects
 			 */
 			zio_trigger_abort(to_zio_cset(dev));
+			/* Verify the SerDes status */
+			zfa_common_info_get(dev, &zfad_regs[ZFA_STA_SERDES_PLL],
+					    &val);
+			if (usr_val == ZFA_START && val != 1) {
+				dev_err(dev, "SerDes PLL is not locked\n");
+				return -EBUSY;
+			}
+			zfa_common_info_get(dev,
+					    &zfad_regs[ZFA_STA_SERDES_SYNCED],
+					    &val);
+			if (usr_val == ZFA_START && val != 1) {
+				dev_err(dev, "SerDes is not synchronized\n");
+				return -EBUSY;
+			}
 		default:
 			reg = &zfad_regs[zattr->priv.addr];
 	}
