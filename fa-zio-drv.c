@@ -470,7 +470,8 @@ int fa_zio_init(struct fa_dev *fa)
 			return -EINVAL;
 		}
 	}
-
+	/* Wait 50ms, so device has time to calibrate */
+	mdelay(50);
 	/* Verify that the FMC is plugged (0 is plugged) */
 	zfa_common_info_get(fa, &zfad_regs[ZFA_CAR_FMC_PRES], &val);
 	if (val) {
