@@ -205,15 +205,51 @@ static inline int zfad_get_chx_index(unsigned long addr,
 {
 	return addr + ZFA_CHx_MULT  * (1 + chan->index - chan->cset->n_chan);
 }
+static int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
+{
+	uint32_t val;
 
+	/* If START, check if we can start */
+	if (command == ZFA_START) {
+		/* Verify that SerDes PLL is lockes */
+		zfa_common_info_get(fa, &zfad_regs[ZFA_STA_SERDES_PLL], &val);
+		if (!val) {
+			dev_err(fa->fmc->hwdev,
+			"Cannot start acquisition: SerDes PLL not locked\n");
+			return -EBUSY;
+		}
+		/* Verify that SerDes is synched */
+		zfa_common_info_get(fa, &zfad_regs[ZFA_STA_SERDES_SYNCED], &val);
+		if (!val) {
+			dev_err(fa->fmc->hwdev,
+			"Cannot start acquisition: SerDes not synchronized\n");
+			return -EBUSY;
+		}
+	}
+	/*
+	 * When any command occurs we are ready to start a new
+	 * acquisition, so we must abort any previous one.
+	 * If it is STOP, we abort because we abort
+	 * an acquisition.
+	 * If it is START, we abort because if there was a
+	 * previous start but the acquisition end interrupt
+	 * doesn't occurs, START mean RESTART.
+	 * If it is a clean START, the abort has not effects
+	 */
+	zio_trigger_abort(fa->zdev->cset);
+	if (command == ZFA_START) {
+		dev_dbg(fa->fmc->hwdev, "Enable interrupts\n");
+		zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_ALL);
+	}
+	return 0;
+}
 /* set a value to a FMC-ADC registers */
 static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	const struct zio_reg_desc *reg;
-	uint32_t val;
-	int i;
+	int i, err;
 
 	switch (zattr->priv.addr) {
 		case ZFAT_SR_DECI:
@@ -237,31 +273,9 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			reg = &zfad_regs[i];
 			break;
 		case ZFA_CTL_FMS_CMD:
-			/* Verify the SerDes status */
-			zfa_common_info_get(fa, &zfad_regs[ZFA_STA_SERDES_PLL],
-					    &val);
-			if (usr_val == ZFA_START && val != 1) {
-				dev_err(dev, "SerDes PLL is not locked\n");
-				return -EBUSY;
-			}
-			zfa_common_info_get(fa,
-					    &zfad_regs[ZFA_STA_SERDES_SYNCED],
-					    &val);
-			if (usr_val == ZFA_START && val != 1) {
-				dev_err(dev, "SerDes is not synchronized\n");
-				return -EBUSY;
-			}
-			/*
-			 * When any command occurs we are ready to start a new
-			 * acquisition, so we must abort any previous one.
-			 * If it is STOP, we abort because we abort
-			 * an acquisition.
-			 * If it is START, we abort because if there was a
-			 * previous start but the acquisition end interrupt
-			 * doesn't occurs, START mean RESTART.
-			 * If it is a clean START, the abort has not effects
-			 */
-			zio_trigger_abort(to_zio_cset(dev));
+			err = zfad_fsm_command(fa, usr_val);
+			if (err)
+				return err;
 		default:
 			reg = &zfad_regs[zattr->priv.addr];
 	}
@@ -375,8 +389,6 @@ static int zfad_init_cset(struct zio_cset *cset)
 	/* Set to single shot mode by default */
 	zfa_common_conf_set(fa, &zfad_regs[ZFAT_SHOTS_NB], 1);
 	cset->ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 0;
-	/* Enable all interrupt */
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_ALL);
 	/* Disable Software trigger*/
 	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 	/* Enable Hardware trigger*/
