@@ -12,6 +12,7 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/moduleparam.h>
+#include <linux/delay.h>
 
 #include <linux/zio.h>
 #include <linux/zio-buffer.h>
@@ -117,6 +118,11 @@ const struct zio_reg_desc zfad_regs[] = {
 	[ZFA_UTC_ACQ_END_SECONDS] =	{FA_UTC_MEM_OFF + 0x3C, ~0x0, 0},
 	[ZFA_UTC_ACQ_END_COARSE] =	{FA_UTC_MEM_OFF + 0x40, ~0x0, 0},
 	[ZFA_UTC_ACQ_END_FINE] =	{FA_UTC_MEM_OFF + 0x44, ~0x0, 0},
+	/* Carrier CSR */
+	[ZFA_CAR_FMC_PRES] = {FA_CAR_MEM_OFF + 0x0C, 0x1, 0},
+	[ZFA_CAR_P2L_PLL] = {FA_CAR_MEM_OFF + 0x0C, 0x1, 1},
+	[ZFA_CAR_SYS_PLL] = {FA_CAR_MEM_OFF + 0x0C, 0x1, 2},
+	[ZFA_CAR_DDR_CAL] = {FA_CAR_MEM_OFF + 0x0C, 0x1, 3},
 };
 
 /* zio device attributes */
@@ -450,7 +456,7 @@ int fa_zio_init(struct fa_dev *fa)
 	struct device *hwdev = fa->fmc->hwdev;
 	struct spec_dev *spec = fa->fmc->carrier_data;
 	struct pci_dev *pdev = spec->pdev;
-	uint32_t dev_id;
+	uint32_t dev_id, val;
 	int err;
 
 	/* Check if hardware supports 64-bit DMA */
@@ -463,6 +469,24 @@ int fa_zio_init(struct fa_dev *fa)
 		}
 	}
 
+	/* Verify that the FMC is plugged (0 is plugged) */
+	zfa_common_info_get(hwdev, &zfad_regs[ZFA_CAR_FMC_PRES], &val);
+	if (val) {
+		dev_err(hwdev, "No FCM ADC plugged\n");
+		return -ENODEV;
+	}
+	/* Verify that system PLL is locked (1 is calibrated) */
+	zfa_common_info_get(hwdev, &zfad_regs[ZFA_CAR_SYS_PLL], &val);
+	if (!val) {
+		dev_err(hwdev, "System PLL not locked\n");
+		return -ENODEV;
+	}
+	/* Verify that DDR3 calibration is done (1 is calibrated) */
+	zfa_common_info_get(hwdev, &zfad_regs[ZFA_CAR_DDR_CAL], &val);
+	if (!val) {
+		dev_err(hwdev, "DDR3 Calibration not done\n");
+		return -ENODEV;
+	}
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev)) {

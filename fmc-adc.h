@@ -14,6 +14,7 @@
 
 /* ADC register offset */
 #define FA_DMA_MEM_OFF	0x00000
+#define FA_CAR_MEM_OFF	0x30000
 #define FA_UTC_MEM_OFF	0x40000
 #define FA_IRQ_MEM_OFF	0x50000
 #define FA_ADC_MEM_OFF	0x90000
@@ -183,6 +184,12 @@ enum zfadc_dregs_enum {
 	ZFA_UTC_ACQ_END_SECONDS,
 	ZFA_UTC_ACQ_END_COARSE,
 	ZFA_UTC_ACQ_END_FINE,
+	/* Carrier CSR */
+	ZFA_CAR_FMC_PRES,
+	ZFA_CAR_P2L_PLL,
+	ZFA_CAR_SYS_PLL,
+	ZFA_CAR_DDR_CAL,
+
 };
 /*
  * ZFA_CHx_MULT
