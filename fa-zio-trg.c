@@ -106,6 +106,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	const struct zio_reg_desc *reg = &zfad_regs[zattr->priv.addr];
+	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
 	uint32_t tmp_val = usr_val;
 	int err = 0;
@@ -147,13 +148,15 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			break;
 	}
 
-	return zfa_common_conf_set(dev, reg, tmp_val);
+	return zfa_common_conf_set(fa, reg, tmp_val);
 }
 /* get the value of a FMC-ADC trigger register */
 static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
-	zfa_common_info_get(dev, &zfad_regs[zattr->priv.addr], usr_val);
+	struct fa_dev *fa = get_zfadc(dev);
+
+	zfa_common_info_get(fa, &zfad_regs[zattr->priv.addr], usr_val);
 	if (zattr->priv.addr == ZFAT_SHOTS_NB)
 		(*usr_val)--;
 	return 0;
@@ -190,11 +193,9 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 		 * of the trigger. Software trigger depends on the previous
 		 * status taken form zio attributes (index 5 of extended one)
 		 */
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFAT_CFG_HW_EN],
+		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN],
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFAT_CFG_SW_EN],
+		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN],
 				    ti->zattr_set.ext_zattr[5].value);
 		return;
 	}
@@ -226,21 +227,18 @@ static void zfat_start_next_dma(struct zio_ti *ti)
  */
 static uint32_t zfat_get_irq_status(struct zfat_instance *zfat)
 {
+	struct fa_dev *fa = zfat->ti.cset->zdev->priv_d;
 	uint32_t irq_status, irq_multi;
 
 	dev_dbg(&zfat->ti.head.dev, "Get interrupts\n");
 	/* Get current interrupts status */
-	zfa_common_info_get(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_SRC],
-			    &irq_status);
-	zfa_common_info_get(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_MULTI],
-			    &irq_multi);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_SRC], &irq_status);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_MULTI], &irq_multi);
 	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x multi = 0x%x\n",
 			irq_status, irq_multi);
 	/* Clear current interrupts status */
-	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_SRC],
-			    irq_status);
-	zfa_common_conf_set(&zfat->ti.cset->head.dev, &zfad_regs[ZFA_IRQ_MULTI],
-			     irq_multi);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_SRC], irq_status);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MULTI], irq_multi);
 	/* ack the irq */
 	zfat->fa->fmc->op->irq_ack(zfat->fa->fmc);
 
@@ -255,7 +253,9 @@ static uint32_t zfat_get_irq_status(struct zfat_instance *zfat)
  */
 static void zfat_irq_dma_done(struct fmc_device *fmc,
 			      struct zfat_instance *zfat, int status)
-{	uint32_t val;
+{
+	struct fa_dev *fa = zfat->ti.cset->zdev->priv_d;
+	uint32_t val;
 
 	/* unmap dma */
 	zfad_unmap_dma(zfat->ti.cset);
@@ -264,8 +264,7 @@ static void zfat_irq_dma_done(struct fmc_device *fmc,
 		zio_trigger_data_done(zfat->ti.cset);
 		zfat->n_acq_dev--;
 	} else {	/* DMA error */
-		zfa_common_info_get(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFA_DMA_STA], &val);
+		zfa_common_info_get(fa, &zfad_regs[ZFA_DMA_STA], &val);
 		dev_err(fmc->hwdev,
 			"DMA error (status 0x%x). All acquisition lost\n", val);
 		zio_trigger_abort(zfat->ti.cset);
@@ -273,11 +272,11 @@ static void zfat_irq_dma_done(struct fmc_device *fmc,
 	}
 }
 /* Get the last trigger time-stamp from device */
-static void zfat_get_time_stamp(struct device *dev, struct zio_timestamp *ts)
+static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
 {
-	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_SECONDS], &ts->secs);
-	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_COARSE], &ts->ticks);
-	zfa_common_info_get(dev, &zfad_regs[ZFA_UTC_TRIG_FINE], &ts->bins);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_SECONDS], &ts->secs);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_COARSE], &ts->ticks);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_FINE], &ts->bins);
 }
 /*
  * Trigger fires, but ZIO allow only one trigger at time, and the ADC in
@@ -325,7 +324,7 @@ static void zfat_irq_trg_fire(struct zfat_instance *zfat)
 	if (!ctrl)
 		goto out;
 	interleave->current_ctrl->seq_num++;
-	zfat_get_time_stamp(&ti->head.dev, &interleave->current_ctrl->tstamp);
+	zfat_get_time_stamp(fa, &interleave->current_ctrl->tstamp);
 	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
 
 	/* Allocate a new block for DMA transfer */
@@ -357,23 +356,21 @@ out:
  */
 static void zfat_irq_acq_end(struct zfat_instance *zfat)
 {
+	struct fa_dev *fa = zfat->ti.cset->zdev->priv_d;
 	uint32_t val;
 
 	/*
 	 * All programmed triggers fire, so the acquisition is ended.
 	 * If the state machine is _idle_ we can start the DMA transfer.
 	 */
-	zfa_common_info_get(&zfat->ti.cset->head.dev,
-			    &zfad_regs[ZFA_STA_FSM],&val);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_STA_FSM],&val);
 	if (val == ZFA_STATE_IDLE) {
 		/*
 		 * Disable all triggers to prevent fires between
 		 * different DMA transfers required for multi-shots
 		 */
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFAT_CFG_HW_EN], 0);
-		zfa_common_conf_set(&zfat->ti.cset->head.dev,
-				    &zfad_regs[ZFAT_CFG_SW_EN], 0);
+		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN], 0);
+		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 		dev_dbg(&zfat->ti.head.dev, "Start DMA from device\n");
 		zio_fire_trigger(&zfat->ti);
 	} else {
@@ -451,8 +448,7 @@ static void zfat_destroy(struct zio_ti *ti)
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
 	/* Disable all interrupt */
-	zfa_common_conf_set(&ti->cset->head.dev, &zfad_regs[ZFA_IRQ_MASK],
-			    ZFAT_NONE);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_NONE);
 	fa->fmc->op->irq_free(fa->fmc);
 	kfree(zfat);
 }
@@ -464,7 +460,9 @@ static void zfat_destroy(struct zio_ti *ti)
  */
 static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
-	zfa_common_conf_set(&ti->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], !status);
+	struct fa_dev *fa = ti->cset->zdev->priv_d;
+
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN], !status);
 }
 
 /*

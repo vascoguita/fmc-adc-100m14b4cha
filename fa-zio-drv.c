@@ -210,6 +210,7 @@ static inline int zfad_get_chx_index(unsigned long addr,
 static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		uint32_t usr_val)
 {
+	struct fa_dev *fa = get_zfadc(dev);
 	const struct zio_reg_desc *reg;
 	uint32_t val;
 	int i;
@@ -248,13 +249,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 */
 			zio_trigger_abort(to_zio_cset(dev));
 			/* Verify the SerDes status */
-			zfa_common_info_get(dev, &zfad_regs[ZFA_STA_SERDES_PLL],
+			zfa_common_info_get(fa, &zfad_regs[ZFA_STA_SERDES_PLL],
 					    &val);
 			if (usr_val == ZFA_START && val != 1) {
 				dev_err(dev, "SerDes PLL is not locked\n");
 				return -EBUSY;
 			}
-			zfa_common_info_get(dev,
+			zfa_common_info_get(fa,
 					    &zfad_regs[ZFA_STA_SERDES_SYNCED],
 					    &val);
 			if (usr_val == ZFA_START && val != 1) {
@@ -265,13 +266,14 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			reg = &zfad_regs[zattr->priv.addr];
 	}
 
-	return zfa_common_conf_set(dev, reg, usr_val);
+	return zfa_common_conf_set(fa, reg, usr_val);
 }
 /* get the value of a FMC-ADC register */
 static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		uint32_t *usr_val)
 {
 	const struct zio_reg_desc *reg;
+	struct fa_dev *fa = get_zfadc(dev);
 	int i;
 
 	switch (zattr->priv.addr) {
@@ -287,7 +289,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			reg = &zfad_regs[zattr->priv.addr];
 	}
 
-	zfa_common_info_get(dev, reg, usr_val);
+	zfa_common_info_get(fa, reg, usr_val);
 
 	return 0;
 }
@@ -305,6 +307,7 @@ static const struct zio_sysfs_operations zfad_s_op = {
  */
 static int zfad_input_cset(struct zio_cset *cset)
 {
+	struct fa_dev *fa = cset->zdev->priv_d;
 	int err;
 
 	/* ZIO should configure only the interleaved channel */
@@ -320,7 +323,7 @@ static int zfad_input_cset(struct zio_cset *cset)
 		return err;
 
 	/* Start DMA transefer */
-	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_CTL_START], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_CTL_START], 1);
 	dev_dbg(&cset->head.dev, "Start DMA transfer\n");
 
 	return -EAGAIN; /* data_done on DMA_DONE interrupt */
@@ -343,44 +346,43 @@ static int zfad_zio_probe(struct zio_device *zdev)
 static int zfad_init_cset(struct zio_cset *cset)
 {
 	const struct zio_reg_desc *reg;
+	struct fa_dev *fa = cset->zdev->priv_d;
 	int i;
 
 	dev_dbg(&cset->head.dev, "%s:%d", __func__, __LINE__);
 	/* Force stop FSM to prevent early trigger fire */
-	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_CTL_FMS_CMD],
-			    ZFA_STOP);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_FMS_CMD], ZFA_STOP);
 	/* Initialize channels gain to 1 and range to 1V */
 	for (i = 0; i < 4; ++i) {
 		reg = &zfad_regs[ZFA_CH1_GAIN + (i * ZFA_CHx_MULT)];
-		zfa_common_conf_set(&cset->head.dev, reg, 0x8000);
+		zfa_common_conf_set(fa, reg, 0x8000);
 		reg = &zfad_regs[ZFA_CH1_CTL_RANGE + (i * ZFA_CHx_MULT)];
-		zfa_common_conf_set(&cset->head.dev, reg, 0x11);
+		zfa_common_conf_set(fa, reg, 0x11);
 	}
 	/* Enable mezzanine clock */
-	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_CTL_CLK_EN], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_CLK_EN], 1);
 	/* Enable offset DACs FIXME clear active low ???? */
-	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
 	/* Set DMA to transfer data from device to host */
-	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFA_DMA_BR_DIR], 0);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_BR_DIR], 0);
 	/* Set decimation to minimum */
-	zfa_common_conf_set(&cset->head.dev, &zfad_regs[ZFAT_SR_DECI], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_SR_DECI], 1);
 	/* Set test data register */
-	zfa_common_conf_set(&cset->ti->head.dev,
-			    &zfad_regs[ZFA_CTL_TEST_DATA_EN], enable_test_data);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
+			    enable_test_data);
 
 	/* Trigger registers */
 	/* Set to single shot mode by default */
-	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_SHOTS_NB], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_SHOTS_NB], 1);
 	cset->ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 0;
 	/* Enable all interrupt */
-	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFA_IRQ_MASK],
-			    ZFAT_ALL);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_ALL);
 	/* Disable Software trigger*/
-	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_SW_EN], 0);
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 	/* Enable Hardware trigger*/
-	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_HW_EN], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN], 1);
 	/* Select external trigger (index 0) */
-	zfa_common_conf_set(&cset->ti->head.dev, &zfad_regs[ZFAT_CFG_INT_SEL], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_INT_SEL], 1);
 	cset->ti->zattr_set.ext_zattr[0].value = 1;
 	return 0;
 }
@@ -470,19 +472,19 @@ int fa_zio_init(struct fa_dev *fa)
 	}
 
 	/* Verify that the FMC is plugged (0 is plugged) */
-	zfa_common_info_get(hwdev, &zfad_regs[ZFA_CAR_FMC_PRES], &val);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_CAR_FMC_PRES], &val);
 	if (val) {
 		dev_err(hwdev, "No FCM ADC plugged\n");
 		return -ENODEV;
 	}
 	/* Verify that system PLL is locked (1 is calibrated) */
-	zfa_common_info_get(hwdev, &zfad_regs[ZFA_CAR_SYS_PLL], &val);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_CAR_SYS_PLL], &val);
 	if (!val) {
 		dev_err(hwdev, "System PLL not locked\n");
 		return -ENODEV;
 	}
 	/* Verify that DDR3 calibration is done (1 is calibrated) */
-	zfa_common_info_get(hwdev, &zfad_regs[ZFA_CAR_DDR_CAL], &val);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_CAR_DDR_CAL], &val);
 	if (!val) {
 		dev_err(hwdev, "DDR3 Calibration not done\n");
 		return -ENODEV;

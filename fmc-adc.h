@@ -257,53 +257,37 @@ static inline struct spec_dev *get_spec(struct device *dev)
 {
 	return get_zfadc(dev)->spec;
 }
+
 /* FIXME convert fa_{read|write}_reg to fmc_{writel|readl} when fmc is fixed */
-static inline uint32_t fa_read_reg(struct fa_dev *fa,
-				    const struct zio_reg_desc *reg)
-{
-	return readl(fa->base + reg->addr);
-}
-static inline void fa_write_reg(uint32_t val, struct fa_dev *fa,
-				 const struct zio_reg_desc *reg)
-{
-	writel(val, fa->base + reg->addr);
-}
-
-
-static inline int zfa_common_conf_set(struct device *dev,
+static inline int zfa_common_conf_set(struct fa_dev *fa,
 				      const struct zio_reg_desc *reg,
 				      uint32_t usr_val)
 {
 	uint32_t cur, val;
 
 	if ((usr_val & (~reg->mask))) {
-		dev_err(dev, "the value 0x%x must fit the mask 0x%x\n",
+		dev_err(fa->fmc->hwdev, "value 0x%x must fit mask 0x%x\n",
 			usr_val, reg->mask);
 		return -EINVAL;
 	}
 	/* Read current register*/
-	cur = fa_read_reg(get_zfadc(dev), reg);
-	/* Mask the value */
-	cur &= (~(reg->mask << reg->shift));
-	/* Write the new value */
-	val = cur | (usr_val << reg->shift);
+	cur = readl(fa->base + reg->addr);
+	val = zio_reg_set(reg, cur, usr_val);
 	/* FIXME re-write usr_val when possible (zio need a patch) */
 	/* If the attribute has a valid address */
-	fa_write_reg(val, get_zfadc(dev), reg);
+	writel(val, fa->base + reg->addr);
 	return 0;
 }
-static inline void zfa_common_info_get(struct device *dev,
+static inline void zfa_common_info_get(struct fa_dev *fa,
 				       const struct zio_reg_desc *reg,
 				       uint32_t *usr_val)
 {
 	uint32_t cur;
 
 	/* Read current register*/
-	cur = fa_read_reg(get_zfadc(dev), reg);
-	/* Mask the value */
-	cur &= (reg->mask << reg->shift);
+	cur = readl(fa->base + reg->addr);
 	/* Return the value */
-	*usr_val = cur >> reg->shift;
+	*usr_val = zio_reg_get(reg, cur);
 }
 
 extern struct zio_trigger_type zfat_type;

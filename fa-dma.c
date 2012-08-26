@@ -128,27 +128,20 @@ int zfad_map_dma(struct zio_cset *cset)
 		}
 		/* The first item is written on the device */
 		if (i == 0) {
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_ADDR],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_ADDR],
 					    items[i].start_addr);
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_ADDR_L],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_ADDR_L],
 					    items[i].dma_addr_l);
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_ADDR_H],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_ADDR_H],
 					    items[i].dma_addr_h);
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_LEN],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_LEN],
 					    items[i].dma_len);
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_NEXT_L],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_NEXT_L],
 					    items[i].next_addr_l);
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_NEXT_H],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_NEXT_H],
 					    items[i].next_addr_h);
 			/* Set that there is a next item */
-			zfa_common_conf_set(&cset->head.dev,
-					    &zfad_regs[ZFA_DMA_BR_LAST],
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_BR_LAST],
 					    items[i].attribute);
 		}
 	}
