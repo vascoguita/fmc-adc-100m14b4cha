@@ -228,6 +228,18 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 					       to_zio_chan(dev));
 			reg = &zfad_regs[i];
 			break;
+		case ZFA_CTL_FMS_CMD:
+			/*
+			 * When any command occurs we are ready to start a new
+			 * acquisition, so we must abort any previous one.
+			 * If it is STOP, we abort because we abort
+			 * an acquisition.
+			 * If it is START, we abort because if there was a
+			 * previous start but the acquisition end interrupt
+			 * doesn't occurs, START mean RESTART.
+			 * If it is a clean START, the abort has not effects
+			 */
+			zio_trigger_abort(to_zio_cset(dev));
 		default:
 			reg = &zfad_regs[zattr->priv.addr];
 	}
