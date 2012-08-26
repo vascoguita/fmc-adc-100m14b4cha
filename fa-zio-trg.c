@@ -496,6 +496,12 @@ static void zfat_abort(struct zio_cset *cset)
 	struct zfat_block *zfat_block, *node;
 	unsigned long flags;
 
+	/*
+	 * Disable all interrupt. We are aborting acquisition, we don't need
+	 * any interrupt
+	 */
+	dev_dbg(zfat->fa->fmc->hwdev, "Disable interrupts\n");
+	zfa_common_conf_set(zfat->fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_NONE);
 	spin_lock_irqsave(&zfat->lock, flags);
 	list_for_each_entry_safe(zfat_block, node, &zfat->list_block, list) {
 		bi->b_op->free_block(bi, zfat_block->block);
