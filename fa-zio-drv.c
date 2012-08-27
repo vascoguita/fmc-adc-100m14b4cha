@@ -293,10 +293,15 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		uint32_t *usr_val)
 {
 	const struct zio_reg_desc *reg;
+	struct zio_cset *cset;
 	struct fa_dev *fa = get_zfadc(dev);
 	int i;
 
 	switch (zattr->priv.addr) {
+	case ZFA_SW_R_NOADDRES_NBIT:
+		cset = to_zio_cset(dev);
+		*usr_val = cset->zattr_set.std_zattr[ZATTR_NBITS].value;
+		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
 		/* Read temperature from onewire */
 		*usr_val = fa_read_temp(fa, 0);
