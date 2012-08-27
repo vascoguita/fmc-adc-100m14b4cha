@@ -37,8 +37,8 @@
 #define CDR_OVD_OFS	16
 #define CDR_OVD_MSK	(0xFFFF<<16)
 
-#define CLK_DIV_NOR	(624/2)
-#define CLK_DIV_OVD	(124/2)
+#define CLK_DIV_NOR	(624)
+#define CLK_DIV_OVD	(124)
 
 #define CMD_ROM_SEARCH		0xF0
 #define CMD_ROM_READ		0x33
