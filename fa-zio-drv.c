@@ -463,7 +463,7 @@ static struct zio_device zfad_tmpl = {
 	},
 	/* This driver work only with the fmc-adc-trg */
 	.preferred_trigger = "fmc-adc-trg",
-	.preferred_buffer = "kmalloc",
+	.preferred_buffer = "vmalloc",
 };
 
 
