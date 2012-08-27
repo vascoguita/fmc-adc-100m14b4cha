@@ -141,7 +141,7 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
 static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/* FMC clock, must be enabled */
 	ZATTR_EXT_REG("fmc-clk-en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
-	ZATTR_EXT_REG("offset-dac-clr-n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
+	ZATTR_EXT_REG("rst-ch-offset", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 
 	/*
 	 * State machine commands
@@ -386,7 +386,7 @@ static int zfad_init_cset(struct zio_cset *cset)
 	}
 	/* Enable mezzanine clock */
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_CLK_EN], 1);
-	/* Enable offset DACs FIXME clear active low ???? */
+	/* Reset channel offset to mid-scale (active low) */
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
 	/* Set DMA to transfer data from device to host */
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_BR_DIR], 0);
