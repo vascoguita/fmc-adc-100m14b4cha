@@ -272,6 +272,10 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 						usr_val != 0x44))
 				return -EINVAL;
 		}
+		/*
+		 * FIXME every time range change, update gain and offset with
+		 * calibrated values
+		 */
 	case ZFA_CHx_STA:
 	case ZFA_CHx_GAIN:
 	case ZFA_CHx_OFFSET:
