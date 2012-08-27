@@ -139,7 +139,7 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 };
 static struct zio_attribute zfad_cset_ext_zattr[] = {
-	ZATTR_EXT_REG("rst-ch-offset", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
+	ZATTR_EXT_REG("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 
 	/*
 	 * State machine commands
@@ -247,6 +247,12 @@ static int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	}
 	return 0;
 }
+static void zfad_reset_offset(struct fa_dev *fa)
+{
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
+	udelay(20);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
+}
 /* set a value to a FMC-ADC registers */
 static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		uint32_t usr_val)
@@ -256,6 +262,9 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, err;
 
 	switch (zattr->priv.addr) {
+	case ZFA_CTL_DAC_CLR_N:
+		zfad_reset_offset(fa);
+		return 0;
 	case ZFAT_SR_DECI:
 		if (usr_val == 0) {
 			dev_err(dev, "max-sample-rate minimum value is 1\n");
@@ -393,8 +402,8 @@ static int zfad_init_cset(struct zio_cset *cset)
 	}
 	/* Enable mezzanine clock */
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_CLK_EN], 1);
-	/* Reset channel offset to mid-scale (active low) */
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
+	/* Reset channel offset to mid-scale */
+	zfad_reset_offset(fa);
 	/* Set DMA to transfer data from device to host */
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_DMA_BR_DIR], 0);
 	/* Set decimation to minimum */
