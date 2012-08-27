@@ -22,8 +22,10 @@
 #include "fmc-adc.h"
 
 static int enable_test_data = 0;
+static int enable_calibration = 0;
 
 module_param(enable_test_data, int, 0444);
+module_param(enable_calibration, int, 0444);
 /* Definition of the fmc-adc registers address - mask - mask offset */
 const struct zio_reg_desc zfad_regs[] = {
 	/* Control registers */
@@ -254,7 +256,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	switch (zattr->priv.addr) {
 		case ZFAT_SR_DECI:
 			if (usr_val == 0) {
-				dev_err(dev, "max-sample-rate minimum value is 1");
+				dev_err(dev, "max-sample-rate minimum value is 1\n");
 				return -EINVAL;
 			}
 			reg = &zfad_regs[zattr->priv.addr];
@@ -262,8 +264,17 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		case ZFA_CHx_CTL_RANGE:
 			if (usr_val != 0x23 || usr_val != 0x11 ||
 			    usr_val != 0x45 || usr_val != 0x00) {
-				dev_err(dev, " in_range valid value: 0 17 35 69");
-				return -EINVAL;
+				if (!enable_calibration) {
+					dev_err(dev,
+					  "in_range valid value: 0 17 35 69\n");
+					return -EINVAL;
+				}
+				if ((usr_val != 0x40 || usr_val != 0x42 ||
+							usr_val != 0x44)) {
+					dev_err(dev,
+					  "in_range valid value: 64 66 68\n");
+					return -EINVAL;
+				}
 			}
 		case ZFA_CHx_STA:
 		case ZFA_CHx_GAIN:
