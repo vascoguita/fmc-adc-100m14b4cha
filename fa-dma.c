@@ -21,6 +21,25 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
+static int zfat_calculate_nents(struct zio_block *block)
+{
+	int bytesleft = block->datalen;
+	void *bufp = block->data;
+	int mapbytes;
+	int nents = 0;
+
+	while (bytesleft) {
+		nents++;
+		if (bytesleft < (PAGE_SIZE - offset_in_page(bufp)))
+			mapbytes = bytesleft;
+		else
+			mapbytes = PAGE_SIZE - offset_in_page(bufp);
+		bufp += mapbytes;
+		bytesleft -= mapbytes;
+	}
+	return nents;
+}
+
 /* Initialize each element of the scatter list */
 static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zio_block *block)
 {
@@ -43,15 +62,20 @@ static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zio_block *block)
 			mapbytes = bytesleft;
 		else
 			mapbytes = PAGE_SIZE - offset_in_page(bufp);
-		sg_set_buf(sg, bufp, mapbytes);
+		/* Map the page */
+		if (is_vmalloc_addr(bufp))
+			sg_set_page(sg, vmalloc_to_page(bufp), mapbytes,
+				    offset_in_page(bufp));
+		else
+			sg_set_buf(sg, bufp, mapbytes);
 		/* Configure next values */
 		bufp += mapbytes;
 		bytesleft -= mapbytes;
-		dev_dbg(&fa->zdev->head.dev, "sg item (%p, len:%d, left:%d)\n",
-			bufp, mapbytes, bytesleft);
+		pr_debug("sg item (%p(+0x%x), len:%d, left:%d)\n",
+			virt_to_page(bufp), offset_in_page(bufp), mapbytes, bytesleft);
 	}
 
-	BUG_ON(bytesleft);
+	WARN(bytesleft, "Something Wrong");
 }
 
 /*
@@ -69,9 +93,7 @@ int zfad_map_dma(struct zio_cset *cset)
 	dma_addr_t tmp;
 	int err;
 
-	/* Create sglists for the transfers, PAGE_SIZE granularity, work
-	 * only with kmalloc FIXME */
-	pages = DIV_ROUND_UP(block->datalen, PAGE_SIZE);
+	pages = zfat_calculate_nents(block);
 	dev_dbg(&cset->head.dev, "using %d pages for transfer\n", pages);
 
 	/* Create sglists for the transfers */
@@ -106,9 +128,9 @@ int zfad_map_dma(struct zio_cset *cset)
 
 	/* Configure DMA items */
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
-		dev_dbg(&cset->head.dev, "configure DMA item %d(%p)"
+		dev_dbg(&cset->head.dev, "configure DMA item %d"
 			"(addr: 0x%p, len: %d)(dev off: 0x%x)\n",
-			i, sg, sg_dma_address(sg), sg_dma_len(sg),
+			i, sg_dma_address(sg), sg_dma_len(sg),
 			fa->cur_dev_mem);
 		/* Prepare DMA item */
 		items[i].start_addr = fa->cur_dev_mem;
