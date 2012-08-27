@@ -147,7 +147,6 @@ enum zfadc_dregs_enum {
 	ZFA_CHx_STA,
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
-	ZFA_SW_R_NOADDRES,
 	/* DMA */
 	ZFA_DMA_CTL_SWP,
 	ZFA_DMA_CTL_ABORT,
@@ -189,7 +188,9 @@ enum zfadc_dregs_enum {
 	ZFA_CAR_P2L_PLL,
 	ZFA_CAR_SYS_PLL,
 	ZFA_CAR_DDR_CAL,
-
+	/* Other "address" */
+	ZFA_SW_R_NOADDRES_NBIT,
+	ZFA_SW_R_NOADDRES_TEMP,
 };
 /*
  * ZFA_CHx_MULT

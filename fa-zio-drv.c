@@ -129,7 +129,7 @@ const struct zio_reg_desc zfad_regs[] = {
 
 /* zio device attributes */
 static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
-	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES, 14),
+	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES_NBIT, 14),
 	/*
 	 * Sample rate
 	 * ADC acquire always at the maximum sample rate, to make slower
