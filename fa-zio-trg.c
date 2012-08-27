@@ -112,40 +112,39 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int err = 0;
 
 	switch (zattr->priv.addr) {
-		case ZFAT_SHOTS_NB:
-			/*
-			 * Increase the reenable by 1 to be choerent with the
-			 * re-enable meaning. On the ADC there is NSHOTS which
-			 * is the number of shots to do, so to do 1 shot this
-			 * register must be set to 1. ZIO use re-enable to do
-			 * multiple shots, so 1 mean one more shot after the
-			 * first one.
-			 */
-			++tmp_val;
-		case ZFAT_PRE:
-		case ZFAT_POST:
-			err = zfat_overflow_detection(ti, zattr->priv.addr,
-						      tmp_val);
-			if (err)
-				return err;
-			break;
-		case ZFAT_SW:
-			/* Fire if software trigger is enabled (index 5) */
-			if (!ti->zattr_set.ext_zattr[5].value) {
-				dev_err(dev, "sw trigger must be enable");
-				return -EPERM;
-			}
-			/* Fire if nsamples!=0 */
-			if (!ti->cset->interleave->current_ctrl->nsamples) {
-				dev_err(dev, "there aren't samples to acquire");
-				return -EINVAL;
-			}
-			/*
-			 * The software trigger will be fired to force
-			 * acquisition, so we don't care about current
-			 * acquisition or other problems:
-			 */
-			break;
+	case ZFAT_SHOTS_NB:
+		/*
+		 * Increase the reenable by 1 to be choerent with the
+		 * re-enable meaning. On the ADC there is NSHOTS which
+		 * is the number of shots to do, so to do 1 shot this
+		 * register must be set to 1. ZIO use re-enable to do
+		 * multiple shots, so 1 mean one more shot after the
+		 * first one.
+		 */
+		++tmp_val;
+	case ZFAT_PRE:
+	case ZFAT_POST:
+		err = zfat_overflow_detection(ti, zattr->priv.addr, tmp_val);
+		if (err)
+			return err;
+		break;
+	case ZFAT_SW:
+		/* Fire if software trigger is enabled (index 5) */
+		if (!ti->zattr_set.ext_zattr[5].value) {
+			dev_err(dev, "sw trigger must be enable");
+			return -EPERM;
+		}
+		/* Fire if nsamples!=0 */
+		if (!ti->cset->interleave->current_ctrl->nsamples) {
+			dev_err(dev, "there aren't samples to acquire");
+			return -EINVAL;
+		}
+		/*
+		 * The software trigger will be fired to force
+		 * acquisition, so we don't care about current
+		 * acquisition or other problems:
+		 */
+		break;
 	}
 
 	return zfa_common_conf_set(fa, reg, tmp_val);

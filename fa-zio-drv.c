@@ -254,41 +254,34 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, err;
 
 	switch (zattr->priv.addr) {
-		case ZFAT_SR_DECI:
-			if (usr_val == 0) {
-				dev_err(dev, "max-sample-rate minimum value is 1\n");
+	case ZFAT_SR_DECI:
+		if (usr_val == 0) {
+			dev_err(dev, "max-sample-rate minimum value is 1\n");
+			return -EINVAL;
+		}
+		reg = &zfad_regs[zattr->priv.addr];
+		break;
+	case ZFA_CHx_CTL_RANGE:
+		if (usr_val != 0x23 || usr_val != 0x11 ||
+		    usr_val != 0x45 || usr_val != 0x00) {
+			if (!enable_calibration)
 				return -EINVAL;
-			}
-			reg = &zfad_regs[zattr->priv.addr];
-			break;
-		case ZFA_CHx_CTL_RANGE:
-			if (usr_val != 0x23 || usr_val != 0x11 ||
-			    usr_val != 0x45 || usr_val != 0x00) {
-				if (!enable_calibration) {
-					dev_err(dev,
-					  "in_range valid value: 0 17 35 69\n");
-					return -EINVAL;
-				}
-				if ((usr_val != 0x40 || usr_val != 0x42 ||
-							usr_val != 0x44)) {
-					dev_err(dev,
-					  "in_range valid value: 64 66 68\n");
-					return -EINVAL;
-				}
-			}
-		case ZFA_CHx_STA:
-		case ZFA_CHx_GAIN:
-		case ZFA_CHx_OFFSET:
-			i = zfad_get_chx_index(zattr->priv.addr,
-					       to_zio_chan(dev));
-			reg = &zfad_regs[i];
-			break;
-		case ZFA_CTL_FMS_CMD:
-			err = zfad_fsm_command(fa, usr_val);
-			if (err)
-				return err;
-		default:
-			reg = &zfad_regs[zattr->priv.addr];
+			if ((usr_val != 0x40 || usr_val != 0x42 ||
+						usr_val != 0x44))
+				return -EINVAL;
+		}
+	case ZFA_CHx_STA:
+	case ZFA_CHx_GAIN:
+	case ZFA_CHx_OFFSET:
+		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
+		reg = &zfad_regs[i];
+		break;
+	case ZFA_CTL_FMS_CMD:
+		err = zfad_fsm_command(fa, usr_val);
+		if (err)
+			return err;
+	default:
+		reg = &zfad_regs[zattr->priv.addr];
 	}
 
 	return zfa_common_conf_set(fa, reg, usr_val);
@@ -302,16 +295,15 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	int i;
 
 	switch (zattr->priv.addr) {
-		case ZFA_CHx_CTL_RANGE:
-		case ZFA_CHx_STA:
-		case ZFA_CHx_GAIN:
-		case ZFA_CHx_OFFSET:
-			i = zfad_get_chx_index(zattr->priv.addr,
-					       to_zio_chan(dev));
-			reg = &zfad_regs[i];
-			break;
-		default:
-			reg = &zfad_regs[zattr->priv.addr];
+	case ZFA_CHx_CTL_RANGE:
+	case ZFA_CHx_STA:
+	case ZFA_CHx_GAIN:
+	case ZFA_CHx_OFFSET:
+		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
+		reg = &zfad_regs[i];
+		break;
+	default:
+		reg = &zfad_regs[zattr->priv.addr];
 	}
 
 	zfa_common_info_get(fa, reg, usr_val);
