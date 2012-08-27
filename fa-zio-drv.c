@@ -139,8 +139,6 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 };
 static struct zio_attribute zfad_cset_ext_zattr[] = {
-	/* FMC clock, must be enabled */
-	ZATTR_EXT_REG("fmc-clk-en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
 	ZATTR_EXT_REG("rst-ch-offset", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 
 	/*
