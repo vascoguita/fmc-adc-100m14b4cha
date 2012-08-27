@@ -1,7 +1,8 @@
 /*
- * Copyright CERN 2012 (author Federico Vaga)
+ * Copyright CERN 2012
+ * Author: Federico Vaga <federico.vaga@gmail.com>
  *
- * Driver for the mezzanine ADC for the SPEC
+ * Header for the mezzanine ADC for the SPEC
  */
 
 #ifndef _fa_dev_H_
