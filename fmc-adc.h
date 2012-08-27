@@ -308,6 +308,7 @@ extern void fa_spec_exit(void);
 /* Functions exported by onewire.c */
 extern int fa_onewire_init(struct fa_dev *fa);
 extern void fa_onewire_exit(struct fa_dev *fa);
+extern int fa_read_temp(struct fa_dev *fa, int verbose);
 
 #endif /* __KERNEL__ */
 #endif /* _fa_dev_H_ */

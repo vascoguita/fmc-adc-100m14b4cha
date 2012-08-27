@@ -201,6 +201,11 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 	ZATTR_EXT_REG("in-range", S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
 	PARAM_EXT_REG("current-value", S_IRUGO, ZFA_CHx_STA, 0),
 };
+
+static struct zio_attribute zfad_dev_ext_zattr[] = {
+	/* Get Mezzanine temperature from onewire */
+	PARAM_EXT_REG("temperature", S_IRUGO, ZFA_SW_R_NOADDRES_TEMP, 0),
+};
 /* Calculate correct index for channel from CHx indexes */
 static inline int zfad_get_chx_index(unsigned long addr,
 				     struct zio_channel *chan)
@@ -295,6 +300,10 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	int i;
 
 	switch (zattr->priv.addr) {
+	case ZFA_SW_R_NOADDRES_TEMP:
+		/* Read temperature from onewire */
+		*usr_val = fa_read_temp(fa, 0);
+		return 0;
 	case ZFA_CHx_CTL_RANGE:
 	case ZFA_CHx_STA:
 	case ZFA_CHx_GAIN:
@@ -433,7 +442,10 @@ static struct zio_device zfad_tmpl = {
 	.flags = 0,
 	.cset = zfad_cset,
 	.n_cset = ARRAY_SIZE(zfad_cset),
-
+	.zattr_set = {
+		.ext_zattr = zfad_dev_ext_zattr,
+		.n_ext_attr = ARRAY_SIZE(zfad_dev_ext_zattr),
+	},
 	/* This driver work only with the fmc-adc-trg */
 	.preferred_trigger = "fmc-adc-trg",
 	.preferred_buffer = "kmalloc",
