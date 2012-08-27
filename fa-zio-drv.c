@@ -142,7 +142,6 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/* FMC clock, must be enabled */
 	ZATTR_EXT_REG("fmc-clk-en", S_IRUGO | S_IWUGO, ZFA_CTL_CLK_EN, 1),
 	ZATTR_EXT_REG("offset-dac-clr-n", S_IRUGO | S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
-	ZATTR_EXT_REG("bitslip", S_IRUGO | S_IWUGO, ZFA_CTL_BSLIP, 0),
 
 	/*
 	 * State machine commands
