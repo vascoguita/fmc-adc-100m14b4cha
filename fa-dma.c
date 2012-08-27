@@ -2,7 +2,7 @@
  * Copyright CERN 2012
  * Author: Federico Vaga <federico.vaga@gmail.com>
  *
- * DMA handle
+ * handle DMA mapping
  */
 
 #include <linux/kernel.h>
