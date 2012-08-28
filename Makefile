@@ -19,6 +19,7 @@ spec-fmc-adc-objs += fa-core.o
 spec-fmc-adc-objs += fa-zio-trg.o
 spec-fmc-adc-objs += fa-dma.o
 spec-fmc-adc-objs += onewire.o
+spec-fmc-adc-objs += spi.o
 
 
 all: modules

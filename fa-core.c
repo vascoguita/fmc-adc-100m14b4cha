@@ -25,6 +25,7 @@ struct fa_modlist {
 };
 #define SUBSYS(x) { #x, fa_ ## x ## _init, fa_ ## x ## _exit }
 static struct fa_modlist mods[] = {
+	SUBSYS(spi),
 	SUBSYS(onewire),
 	SUBSYS(zio),
 };

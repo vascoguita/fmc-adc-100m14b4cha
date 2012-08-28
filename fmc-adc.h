@@ -18,6 +18,7 @@
 #define FA_CAR_MEM_OFF	0x30000
 #define FA_UTC_MEM_OFF	0x40000
 #define FA_IRQ_MEM_OFF	0x50000
+#define FA_SPI_MEM_OFF	0x70000
 #define FA_ADC_MEM_OFF	0x90000
 #define FA_OWI_MEM_OFF	0XA0000 /* one-wire */
 
@@ -310,6 +311,11 @@ extern void fa_spec_exit(void);
 extern int fa_onewire_init(struct fa_dev *fa);
 extern void fa_onewire_exit(struct fa_dev *fa);
 extern int fa_read_temp(struct fa_dev *fa, int verbose);
+/* functions exported by spi.c */
+extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
+		       uint32_t tx, uint32_t *rx);
+extern int fa_spi_init(struct fa_dev *fd);
+extern void fa_spi_exit(struct fa_dev *fd);
 
 #endif /* __KERNEL__ */
 #endif /* _fa_dev_H_ */
