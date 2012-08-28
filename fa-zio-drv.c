@@ -273,11 +273,11 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		reg = &zfad_regs[zattr->priv.addr];
 		break;
 	case ZFA_CHx_CTL_RANGE:
-		if (usr_val != 0x23 || usr_val != 0x11 ||
-		    usr_val != 0x45 || usr_val != 0x00) {
+		if (usr_val != 0x23 && usr_val != 0x11 &&
+		    usr_val != 0x45 && usr_val != 0x00) {
 			if (!enable_calibration)
 				return -EINVAL;
-			if ((usr_val != 0x40 || usr_val != 0x42 ||
+			if ((usr_val != 0x40 && usr_val != 0x42 &&
 						usr_val != 0x44))
 				return -EINVAL;
 		}
