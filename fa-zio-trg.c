@@ -471,15 +471,16 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 static void zfat_data_done(struct zio_cset *cset)
 {
 	struct zio_block *block = cset->interleave->active_block;
-	struct zio_buffer_type *zbuf = cset->zbuf;
 	struct zio_bi *bi = cset->interleave->bi;
 
 	if (!block)
 		return;
-	if (zbuf->b_op->store_block(bi, block)) { /* may fail, no prob */
-		zbuf->b_op->free_block(bi, block);
+	/* Store block in the ZIO buffer */
+	if (bi->b_op->store_block(bi, block)) { /* may fail, no prob */
+		bi->b_op->free_block(bi, block);
 	}
-
+	/* Clear active block */
+	cset->interleave->active_block = NULL;
 	/* Start next block DMA transfer */
 	zfat_start_next_dma(cset->ti);
 }
