@@ -259,9 +259,16 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	const struct zio_reg_desc *reg;
+	uint32_t tmp;
 	int i, err;
 
 	switch (zattr->priv.addr) {
+	case ZFA_CHx_OFFSET:
+		err = fa_spi_xfer(fa, 1, 16, usr_val, &tmp);
+		if (err)
+			return err;
+		return 0;
+		break;
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
@@ -287,7 +294,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		 */
 	case ZFA_CHx_STA:
 	case ZFA_CHx_GAIN:
-	case ZFA_CHx_OFFSET:
 		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
 		reg = &zfad_regs[i];
 		break;
@@ -306,11 +312,11 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		uint32_t *usr_val)
 {
 	const struct zio_reg_desc *reg;
-	struct zio_cset *cset;
 	struct fa_dev *fa = get_zfadc(dev);
 	int i;
 
 	switch (zattr->priv.addr) {
+	case ZFA_CHx_OFFSET:
 	case ZFA_SW_R_NOADDRES_NBIT:
 		/* ZIO automatically return the attribute value */
 		return 0;
@@ -321,7 +327,6 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_CTL_RANGE:
 	case ZFA_CHx_STA:
 	case ZFA_CHx_GAIN:
-	case ZFA_CHx_OFFSET:
 		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
 		reg = &zfad_regs[i];
 		break;
