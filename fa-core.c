@@ -123,3 +123,4 @@ module_exit(fa_exit);
 MODULE_AUTHOR("Federico Vaga");
 MODULE_DESCRIPTION("FMC-ADC Linux Driver");
 MODULE_LICENSE("GPL");
+MODULE_VERSION("0.8");
