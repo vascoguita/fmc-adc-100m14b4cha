@@ -182,9 +182,6 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_GAIN, S_IRUGO | S_IWUGO, ZFA_CHx_GAIN, 0x8000),
 	/* the offset is complement 2 format */
 	ZATTR_REG(zdev, ZATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
-};
-
-static struct zio_attribute zfad_chan_ext_zattr[] = {
 	/*
 	 * in-range
 	 * 0x23 (35): 100mV range
@@ -195,7 +192,11 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 	 * 0x40 (64): 1V range calibration
 	 * 0x44 (68): 10V range calibration
 	 */
-	ZATTR_EXT_REG("in-range", S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
+	ZATTR_REG(zdev, ZATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
+};
+
+static struct zio_attribute zfad_chan_ext_zattr[] = {
+
 	PARAM_EXT_REG("current-value", S_IRUGO, ZFA_CHx_STA, 0),
 };
 
