@@ -265,7 +265,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 
 	switch (zattr->priv.addr) {
 	case ZFA_CHx_OFFSET:
-		err = fa_spi_xfer(fa, 1, 16, usr_val, &tmp);
+		err = fa_spi_xfer(fa, to_zio_chan(dev)->index, 16,
+				  usr_val, &tmp);
 		if (err)
 			return err;
 		return 0;
