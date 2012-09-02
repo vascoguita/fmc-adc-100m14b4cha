@@ -5,6 +5,7 @@ HOST_EXTRACFLAGS += -I$(M) -I$(ZIO)/include -Wno-trigraphs -Wall -ggdb
 HOSTCC ?= gcc
 
 hostprogs-y := fau-trg-config
+hostprogs-y += fau-acq-time
 
 # we are not in the kernel, so we need to piggy-back on "make modules"
 modules: $(hostprogs-y)
