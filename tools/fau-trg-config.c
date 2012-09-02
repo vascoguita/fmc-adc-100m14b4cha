@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 		case 'P':
 			attrval[FAU_TRG_PST] = atoi(optarg);
 			break;
-		case 'n':
+		case 'r':
 			attrval[FAU_TRG_RE_EN] = atoi(optarg);
 			break;
 		case 'd':
