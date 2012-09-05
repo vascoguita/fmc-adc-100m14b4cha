@@ -51,7 +51,7 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 0: internal (data threshold)
 	 * 1: external (front panel trigger input)
 	 */
-	ZATTR_EXT_REG("external", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	ZATTR_EXT_REG("external", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_SEL, 0),
 	/*
 	 * Internal Hardware trigger polarity
 	 * 0: positive edge/slope

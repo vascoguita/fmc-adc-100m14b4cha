@@ -102,7 +102,7 @@ enum zfadc_dregs_enum {
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
 	/* Configuration register */
-	ZFDAC_CFG_HW_SEL,
+	ZFAT_CFG_HW_SEL,
 	ZFAT_CFG_HW_POL,
 	ZFAT_CFG_HW_EN,
 	ZFAT_CFG_SW_EN,
