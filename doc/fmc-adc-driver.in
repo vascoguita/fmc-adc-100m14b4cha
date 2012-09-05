@@ -1,0 +1,286 @@
+\input texinfo    @c -*-texinfo-*-
+%
+% fmc-adc-driver.in - main file for the documentation
+%
+%%%%
+
+@comment %**start of header
+@documentlanguage en
+@documentencoding ISO-8859-1
+@setfilename fine-delay.info
+@settitle fine-delay
+@iftex
+@afourpaper
+@end iftex
+@paragraphindent none
+@comment %**end of header
+
+@setchapternewpage off
+
+@set update-month August 2012
+@set release 0.8
+@set tagname fine-delay-sw-v1.1
+
+@finalout
+
+@titlepage
+@title FMC ADC User's Manual
+@subtitle @value{update-month} -- Release @value{release}
+@subtitle FMC ADC 100M 14 b 4ch hardware and software manual
+@author CERN BE-CO-HT / Federico Vaga
+@end titlepage
+@headings single
+
+@c ##########################################################################
+@iftex
+@contents
+@end iftex
+
+@c ##########################################################################
+@node Top
+@top Introduction
+
+This is the user manual for the @i{FMC ADC 100M 14b 4cha}
+board developed on the @b{Open Hardware Repository}
+@footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha}}.
+
+
+@menu
+            
+@end menu
+
+@c ##########################################################################
+@node Repositories and Releases
+@chapter Repositories and Releases
+This project is hosted on the Open Hardware repository at the
+following link:
+
+@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw}
+
+
+Here a list of the resources that you can find on the project page.
+@table @code 
+ @item Document 
+  @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/documents}} contains the @t{.pdf} documentation for every official release.
+
+@item File
+ @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/files}} contains the @t{.tar.gz} file for every official release including the @t{.git} tree.
+
+@item Repository
+ @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/repository}} contains the git repository of the project @uref{git://ohwr.org/fmc-projects/fmc-adc-100m14b4cha/fmc-adc-100m14b4cha-sw.git}.
+@end table
+
+@c ##########################################################################
+@node Driver Features
+@chapter Driver Features
+This driver is based on the @i{ZIO} framework and the @i{spec-sw}
+driver. It supports initial setup of the board, it allows user to
+manually configure the board, to start and stop acquisitions, to force
+trigger and read latest time-stamps.
+
+@c ##########################################################################
+@node Installation
+@chapter Installation
+This driver depends on two other driver, as well as the Linux kernel.
+Also, it must talk to a specific FPGA binary file running in the
+carrier card.
+
+@c ==========================================================================
+@node Gateware Dependencies
+@section Gateware Dependencies
+To install the FPGA image in the target system, please follow the
+instruction in the documentation of @i{spec-sw}. To summarize,
+you'll need to place the @t{.bin} file in @file{/lib/firmware/fmc}.
+The default name of the binary file is @t{fmc-adc.bin} and you
+can find the copy of the last tested binary within the source code of
+this driver. Anyway, you are free to use a different binary for the
+ADC and you can load it by specifying the module parameter
+@t{file}.
+
+@c ==========================================================================
+@node Gateware Installation
+@section Gateware Installation
+
+@c ==========================================================================
+@node Software Dependencies
+@section Software Dependencies
+@c FIXME
+
+@c ==========================================================================
+@node Software Installation
+@section Software Installation
+First of all, please note that you need to define the following
+environment variables to be able to compile this driver. All of them
+are assumed to be already set when running the commands shown.
+
+@table @code
+@item LINUX
+	The top-level directory of the Linux kernel you are compiling
+        against. This document assumes it is already set.
+
+@item ZIO
+	The top-level directory of the ZIO repository checkout.
+
+@item SPEC_SW
+	The top-level directory of the @i{spec-sw} repository checkout.
+
+@end table
+
+
+@c ==========================================================================
+@node Module Parameters
+@section Module Parameters
+The driver accepts a few load-time parameters for configuration. You
+can pass them to insmod directly, or write them in @file{/etc/modules.conf}
+or the proper file in @file{/etc/modutils/} .
+
+
+The following parameters are used:
+@table @code
+ @item file=
+  The binary file to use to reprogram the FPGA. The default value for this parameter is @t{fmc/fmc-adc-bin} as seen in @ref{Gateware Installation}
+ @item enable_test_data=
+  This is for testing purpose. This option enable the testing data, so the ADC doesn't store samples, but fill the memory with sequential number.
+@end table
+
+@c ##########################################################################
+@node Source Code Conventions
+@chapter Source Code Conventions
+This is a random list of conventions used in this package
+
+@itemize @bullet
+ @item All the internal symbols used in the whole driver begin with the prefix @t{fa_}. The prefix mean: @i{Fmc Adc}.
+ @item All internal symbols in the zio driver begin with @t{zfad_}. The prefix mean: @i{Zio Fmc Adc Driver}.
+
+ @item All internal symbols in the zio trigger begin with @t{zfat_}. The prefix mean: @i{Zio Fmc Adc Trigger}.
+
+@end itemize
+
+@c ##########################################################################
+@node Using the Driver Directly
+@chapter Using the Driver Directly
+
+@c ==========================================================================
+@node Introduction
+@section Introduction
+
+The reader of this chapter is expected to be confident with basic ZIO
+concepts, available in ZIO documentation @footnote{@uref{http://www.ohwr.org/projects/zio}}.
+
+
+The device has 1 cset with 5 channels. Channels from 0 to 3
+represent che physical channels 1 to 4. The 5th channels
+@i{chani} represent the interleaved acquisition.
+
+@float
+@center @image{img/fmc-adc-hierarchy, 7cm,,FMC ADC ZIO hierarchy, pdf}
+@end float
+
+The overall device (@i{fmc-adc}) has not any particular capabilities because
+the may feature are handled by the internal trigger.
+
+
+
+@c ==========================================================================
+@node The device
+@section The device
+
+
+
+To read data from user-space you must use the char device interface
+@c FIXME update when PF_ZIO will be available
+which export 2 char device for each channel (as documented in
+ZIO documentation).
+
+
+@smallexample
+corinno-test:~# ls -l /dev/zio/
+total 0
+crw------- 1 root root 250, 0 Aug 23 22:21 fmc-adc-0100-0-0-ctrl
+crw------- 1 root root 250, 1 Aug 23 22:21 fmc-adc-0100-0-0-data
+crw------- 1 root root 250, 2 Aug 23 22:21 fmc-adc-0100-0-1-ctrl
+crw------- 1 root root 250, 3 Aug 23 22:21 fmc-adc-0100-0-1-data
+crw------- 1 root root 250, 4 Aug 23 22:21 fmc-adc-0100-0-2-ctrl
+crw------- 1 root root 250, 5 Aug 23 22:21 fmc-adc-0100-0-2-data
+crw------- 1 root root 250, 6 Aug 23 22:21 fmc-adc-0100-0-3-ctrl
+crw------- 1 root root 250, 7 Aug 23 22:21 fmc-adc-0100-0-3-data
+crw------- 1 root root 250, 8 Aug 23 22:21 fmc-adc-0100-0-i-ctrl
+crw------- 1 root root 250, 9 Aug 23 22:21 fmc-adc-0100-0-i-data
+@end smallexample
+
+The actual pathnames depend on the version of @i{udev}, and the support
+library tries both names (the new one shown above, and the older one,
+without a @code{zio} subdirectory).
+Also, please note that a still-newer version of @i{udev} obeys device
+permissions, so you'll have read-only and write-only device files.
+
+
+If more than one board is probed for, you'll have two or more similar
+sets of devices, differing in the @i{dev_id} field, i.e. the
+@code{0100}. The @i{dev_id} field is built using the PCI bus
+and the @i{devfn} octet; the example above refers to slot 0 of bus 1.
+
+
+Device (and channel) attributes can be accessed in the proper @i{sysfs}
+directory. For a card in slot 0 of bus 1 (like shown above), the
+directory is @i{/sys/bus/zio/devices/fmc-adc-0100}:
+
+@smallexample
+corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
+./  ../  name  cset0/  power/  driver@  enable  subsystem@  uevent
+@end smallexample
+
+
+@c --------------------------------------------------------------------------
+@node Device Attributes
+@subsection Device Attributes
+There are not any device-wide attributes.
+
+@c ==========================================================================
+@node The Input-cset
+@section The Input-cset
+
+@c --------------------------------------------------------------------------
+@node Input-cset Attributes
+@subsection Input-cset Attributes
+
+@c ==========================================================================
+@node The Trigger
+@section The Trigger
+
+@c --------------------------------------------------------------------------
+@node Trigger Attributes
+@subsection Trigger Attributes
+
+@c ##########################################################################
+
+
+
+The ADC doesn't allow to read data from a specific channel; the ADC
+allow the driver to read only an interleaved block of samples.
+Neither the ZIO core nor this driver split interleaved data into
+4 different buffer; so, also the driver will return to user-space a
+block of interleaved samples. To read this interleaved block you
+can read directly the interleaved channel @i{chani}
+
+@smallexample
+corinno-test:~# hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/fmc-adc-0100-0-i-data
+fffc
+e474
+8034
+8084
+@end smallexample
+
+
+The graphical representation of the interleaving is in the following
+figure.
+
+
+@float
+@center @image{img/interleaved, 7cm,,ADC interleaved data,pdf}
+@end float
+
+
+@bye
+
+
