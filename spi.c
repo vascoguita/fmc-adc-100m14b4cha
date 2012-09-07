@@ -42,19 +42,19 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 
 	pr_info("%s:%d out %d\n", __func__, __LINE__, tx);
 	/* Put out value in the T0 register*/
-	writel((tx & (num_bits-1)), fa->base + FA_SPI_MEM_OFF + FA_SPI_TX(0));
+	fmc_writel(fa->fmc, (tx & (num_bits-1)), FA_SPI_MEM_OFF + FA_SPI_TX(0));
 	/* Configure SPI controller */
 	ctrl |= FA_SPI_CTRL_ASS | /* Automatic handle ChipSelect*/
 		num_bits; /* Transfer num_bits bits */
-	writel(ctrl, fa->base + FA_SPI_MEM_OFF + FA_SPI_CTRL);
+	fmc_writel(fa->fmc, ctrl, FA_SPI_MEM_OFF + FA_SPI_CTRL);
 	/* Set Chip Select */
-	writel((1 << cs), fa->base + FA_SPI_MEM_OFF + FA_SPI_CTRL_ASS);
+	fmc_writel(fa->fmc, (1 << cs), FA_SPI_MEM_OFF + FA_SPI_CTRL_ASS);
 	/* Start transfer */
 	ctrl |= FA_SPI_CTRL_BUSY;
-	writel(ctrl, fa->base + FA_SPI_MEM_OFF + FA_SPI_CTRL);
+	fmc_writel(fa->fmc, ctrl, FA_SPI_MEM_OFF + FA_SPI_CTRL);
 	/* Wait transfer complete */
 	pr_info("%s:%d\n", __func__, __LINE__);
-	while(readl(fa->base + FA_SPI_MEM_OFF + FA_SPI_CTRL) & FA_SPI_CTRL_BUSY) {
+	while(fmc_readl(fa->fmc, FA_SPI_MEM_OFF + FA_SPI_CTRL) & FA_SPI_CTRL_BUSY) {
 		pr_info("%s:%d\n", __func__, __LINE__);
 		if (jiffies > j) {
 			err = -EIO;
@@ -63,11 +63,11 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 	}
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Transfer compleate, read data */
-	*rx = readl(fa->base + FA_SPI_MEM_OFF + FA_SPI_RX(0)) & (num_bits-1);
+	*rx = fmc_readl(fa->fmc, FA_SPI_MEM_OFF + FA_SPI_RX(0)) & (num_bits-1);
 out:
 	pr_info("%s:%d in %d\n", __func__, __LINE__, *rx);
 	/* Clear Chip Select */
-	writel(0, fa->base + FA_SPI_MEM_OFF + FA_SPI_CTRL_ASS);
+	fmc_writel(fa->fmc, 0, FA_SPI_MEM_OFF + FA_SPI_CTRL_ASS);
 
 	return err;
 }
