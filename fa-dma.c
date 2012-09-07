@@ -49,7 +49,7 @@ static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zio_block *block)
 	int mapbytes;
 	int i;
 
-	dev_dbg(&fa->zdev->head.dev, "Setup dma scatterlist for %d bytes",
+	dev_dbg(&fa->zdev->head.dev, "Setup dma scatterlist for %zu bytes",
 		block->datalen);
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
 		/*
@@ -71,7 +71,7 @@ static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zio_block *block)
 		/* Configure next values */
 		bufp += mapbytes;
 		bytesleft -= mapbytes;
-		pr_debug("sg item (%p(+0x%x), len:%d, left:%d)\n",
+		pr_debug("sg item (%p(+0x%lx), len:%d, left:%d)\n",
 			virt_to_page(bufp), offset_in_page(bufp), mapbytes, bytesleft);
 	}
 
@@ -131,7 +131,7 @@ int zfad_map_dma(struct zio_cset *cset)
 	/* Configure DMA items */
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
 		dev_dbg(&cset->head.dev, "configure DMA item %d"
-			"(addr: 0x%p, len: %d)(dev off: 0x%x)\n",
+			"(addr: 0x%llx len: %d)(dev off: 0x%x)\n",
 			i, sg_dma_address(sg), sg_dma_len(sg),
 			fa->cur_dev_mem);
 		/* Prepare DMA item */
