@@ -23,4 +23,7 @@
 .cproject
 .project
 .settings
-
+# binary
+tools/fau-acq-time
+tools/fau-trg-config
+tools/parport-burst
