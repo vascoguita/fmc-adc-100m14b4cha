@@ -57,12 +57,12 @@
 
 static void ow_writel(struct fa_dev *fa, uint32_t val, unsigned long reg)
 {
-	writel(val, fa->base + FA_OWI_MEM_OFF + reg);
+	fmc_writel(fa->fmc, val, FA_OWI_MEM_OFF + reg);
 }
 
 static uint32_t ow_readl(struct fa_dev *fa, unsigned long reg)
 {
-	return readl(fa->base + FA_OWI_MEM_OFF + reg);
+	return fmc_readl(fa->fmc, FA_OWI_MEM_OFF + reg);
 }
 
 static int ow_reset(struct fa_dev *fa, int port)
