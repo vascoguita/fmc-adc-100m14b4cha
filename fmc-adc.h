@@ -274,11 +274,11 @@ static inline int zfa_common_conf_set(struct fa_dev *fa,
 		return -EINVAL;
 	}
 	/* Read current register*/
-	cur = readl(fa->base + reg->addr);
+	cur = fmc_readl(fa->fmc, reg->addr);
 	val = zio_reg_set(reg, cur, usr_val);
 	/* FIXME re-write usr_val when possible (zio need a patch) */
 	/* If the attribute has a valid address */
-	writel(val, fa->base + reg->addr);
+	fmc_writel(fa->fmc, val, reg->addr);
 	return 0;
 }
 static inline void zfa_common_info_get(struct fa_dev *fa,
@@ -288,7 +288,7 @@ static inline void zfa_common_info_get(struct fa_dev *fa,
 	uint32_t cur;
 
 	/* Read current register*/
-	cur = readl(fa->base + reg->addr);
+	cur = fmc_readl(fa->fmc, reg->addr);
 	/* Return the value */
 	*usr_val = zio_reg_get(reg, cur);
 }
