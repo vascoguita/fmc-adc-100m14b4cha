@@ -35,7 +35,6 @@ int fa_probe(struct fmc_device *fmc)
 {
 	struct fa_modlist *m = NULL;
 	struct fa_dev *fa;
-	struct spec_dev *spec = fmc->carrier_data;
 	int err, i = 0;
 
 	if (strcmp(fmc->carrier_name, "SPEC")) {
@@ -48,9 +47,7 @@ int fa_probe(struct fmc_device *fmc)
 	if (!fa)
 		return -ENOMEM;
 	fmc_set_drvdata(fmc, fa);
-
 	fa->fmc = fmc;
-	fa->base = spec->remap[0];
 
 	/* We first write a new binary (and lm32) within the spec */
 	err = fmc->op->reprogram(fmc, &fa_dev__drv, fa_binaries);

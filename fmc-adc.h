@@ -60,7 +60,6 @@ struct dma_item {
  * @cur_dev_mem: contains the device address to the current block of data in
  *               transmission from device. It is updated for each dma_items
  *               transfer
- * @base: the base address for to access device registers (BAR0)
  */
 struct fa_dev {
 	struct fmc_device	*fmc;
@@ -74,8 +73,6 @@ struct fa_dev {
 	dma_addr_t		dma_list_item;
 	uint32_t		lst_dev_mem;
 	uint32_t		cur_dev_mem;
-
-	unsigned char __iomem	*base;
 
 	/* one-wire */
 	uint8_t ds18_id[8];
