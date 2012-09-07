@@ -273,9 +273,12 @@ static void zfat_irq_dma_done(struct fmc_device *fmc,
 /* Get the last trigger time-stamp from device */
 static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
 {
-	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_SECONDS], &ts->secs);
-	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_COARSE], &ts->ticks);
-	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_FINE], &ts->bins);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_SECONDS],
+			    (uint32_t *)&ts->secs);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_COARSE],
+			    (uint32_t *)&ts->ticks);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_FINE],
+			    (uint32_t *)&ts->bins);
 }
 /*
  * Trigger fires, but ZIO allow only one trigger at time, and the ADC in
