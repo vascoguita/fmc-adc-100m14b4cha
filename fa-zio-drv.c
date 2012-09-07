@@ -131,16 +131,16 @@ const struct zio_reg_desc zfad_regs[] = {
 /* zio device attributes */
 static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES_NBIT, 14),
-	/*
-	 * Sample rate
-	 * ADC acquire always at the maximum sample rate, to make slower
-	 * acquisition you can decimate samples. 0 is a forbidden value, 1
-	 * for the maximum speed.
-	 */
-	ZATTR_REG(zdev, ZATTR_MAXRATE, S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 };
 static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZATTR_EXT_REG("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
+	/*
+	 * sample-decimation
+	 * ADC acquire always at the maximum sample rate, to make "slower"
+	 * acquisition you can decimate samples. 0 is a forbidden value, 1
+	 * for the maximum speed.
+	 */
+	ZATTR_EXT_REG("sample-decimation", S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 
 	/*
 	 * State machine commands
