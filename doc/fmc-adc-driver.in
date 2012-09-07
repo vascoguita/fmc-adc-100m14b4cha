@@ -88,23 +88,29 @@ carrier card.
 @c ==========================================================================
 @node Gateware Dependencies
 @section Gateware Dependencies
-To install the FPGA image in the target system, please follow the
-instruction in the documentation of @i{spec-sw}. To summarize,
-you'll need to place the @t{.bin} file in @file{/lib/firmware/fmc}.
-The default name of the binary file is @t{fmc-adc.bin} and you
-can find the copy of the last tested binary within the source code of
-this driver. Anyway, you are free to use a different binary for the
-ADC and you can load it by specifying the module parameter
-@t{file}.
+
 
 @c ==========================================================================
 @node Gateware Installation
 @section Gateware Installation
 
+To install the FPGA image in the target system, please follow the
+instruction in the documentation of @i{spec-sw}. To summarize,
+you'll need to place the @t{.bin} file in @file{/lib/firmware/fmc}.
+The default name of the binary file is @t{fmc-adc.bin} and you
+can find the copy of the last tested binary within the source code of
+this driver. Anyway, you are free to use a different binary for the your
+ADC and you can load it by specifying the module parameter @t{file}.
+
 @c ==========================================================================
 @node Software Dependencies
 @section Software Dependencies
-@c FIXME
+
+The Kernel version for the development was the 3.4, but this driver
+is also available for kernel 2.6.32 and 2.6.24.
+
+The driver is base on the ZIO framework available on the OpenHardware
+Repository@footnote{@uref{http://www.ohwr.org/projects/zio}}.
 
 @c ==========================================================================
 @node Software Installation
@@ -157,20 +163,22 @@ This is a random list of conventions used in this package
 @end itemize
 
 @c ##########################################################################
-@node Using the Driver Directly
-@chapter Using the Driver Directly
+@node Device Configuration
+@chapter Device Configuration
 
 @c ==========================================================================
-@node Introduction
-@section Introduction
+@node The ZIO Device Structure
+@section The ZIO Device Structure
 
 The reader of this chapter is expected to be confident with basic ZIO
-concepts, available in ZIO documentation @footnote{@uref{http://www.ohwr.org/projects/zio}}.
+concepts, available in ZIO documentation@footnote{@uref{http://www.ohwr.org/projects/zio/documents}}.
 
 
-The device has 1 cset with 5 channels. Channels from 0 to 3
+The device has 1 cset with 4+1 channels. Channels from 0 to 3
 represent che physical channels 1 to 4. The 5th channels
-@i{chani} represent the interleaved acquisition.
+@i{chani} represent a virtual channel created automatically by the
+ZIO framework; this channel represent the interleave acquisition on
+the cset.
 
 @float
 @center @image{img/fmc-adc-hierarchy, 7cm,,FMC ADC ZIO hierarchy, pdf}
@@ -179,13 +187,308 @@ represent che physical channels 1 to 4. The 5th channels
 The overall device (@i{fmc-adc}) has not any particular capabilities because
 the may feature are handled by the internal trigger.
 
+The ADC registers can be accessed in the proper @i{sysfs} directory. For a
+card in slot 0 of bus 1 (like shown above), the directory is 
+@i{/sys/bus/zio/devices/fmc-adc-0100}.
+
+There are not any device-wide attribute, so in the device directory there
+are only the default attributes.
+
+@smallexample
+corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
+./  ../  name  cset0/  power/  driver@  enable  subsystem@  uevent 
+@end smallexample
+
+@c ==========================================================================
+@node The Channel Set
+@section The Channel Set
+
+The ADC has 1 Channel Set named @file{cset0}. It has attributes to handle the
+ADC state machine, the acquisition and the time stamp.
+
+@smallexample
+corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
+./  ../  name  cset0/  power/  driver@  enable  subsystem@  uevent
+corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/cset0/            
+./      chan3/           rst-ch-offset     tstamp-acq-end-s  tstamp-acq-str-s   
+../     chani/           enable            tstamp-acq-end-t  tstamp-acq-str-t   
+name    power/           sample-decimation tstamp-acq-stp-b  uevent             
+chan0/  fsm-command      fsm-state         tstamp-acq-stp-s  current_buffer     
+chan1/  current_trigger  trigger/          tstamp-acq-stp-t                     
+chan2/  resolution-bits  tstamp-acq-end-b  tstamp-acq-str-b  
+@end smallexample
+
+The @b{resolution-bits} attribute is read-only and it returns the
+number of bits of the ADC:
+
+@smallexample
+corinno-test:~# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/resolution-bits
+14
+@end smallexample
+
+The @b{rst-ch-offset} attribute is write-only. When you write on it, the
+driver reset the offset of all channels. 
+
+@smallexample
+corinno-test:~# echo 0 > /sys/bus/zio/devices/fmc-adc-0100/cset0/rst-ch-offset
+@end smallexample
+
+@c --------------------------------------------------------------------------
+@node Sample Decimation
+@subsection Sample Decimation
+
+The ADC always acquire ad 100MSamples/s and this value cannot be changed. If
+you need less samples you can use the @i{sample-decimation} attribute.
+
+The @b{sample-decimation} attribute is read/write. It configures the number
+of sample to drop. You can use value between 1 and 65535.
+
+@smallexample
+corinno-test:~# echo 4 > /sys/bus/zio/devices/fmc-adc-0100/cset0/sample-decimation
+@end smallexample
+
+The value to write on decimation mean the number of sample to acquire for
+each valide samples, for example:
+
+@smallexample
+o -> valid sample 
+x -> dropped sample
+
+decimation = 1
+oooooooooooooooooooo
+decimation = 2
+oxoxoxoxoxoxoxoxoxox
+decimation = 3
+oxxoxxoxxoxxoxxoxxox
+decimation = 4
+oxxxoxxxoxxxoxxxoxxx
+decimation = 5
+oxxxxoxxxxoxxxxoxxxx
+[...]
+@end smallexample
+
+@c ---------------------------------------------------------------------------
+@node The State Machine
+@subsection The State Machine
+
+The acquisition steps are implemented with a @b{state machine}. The driver
+exports to the user-space two attributes to handle it: @i{fsm-state} and
+@i{fsm-command}.
+
+The @b{fsm-state} attribute is read-only and it returns the code of the
+current state of the state machine. In the following example, the state
+machine is in the status @i{idle}
+
+@smallexample
+# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/fsm-state
+1
+@end smallexample
+
+The @b{fsm-command} attribute is write-only. It is used to write a command
+for the state machine. The command available are @i{start} and @i{stop}. The
+correspondent values for these commands are, respectively, 1 and 2.
+
+
+The @i{start} command is used to start the state machine, so to start an
+acquisition. You cannot acquire if you don't start the state machine. To
+start the state machine you can use the following command:
+
+@smallexample
+# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/fsm-command
+@end smallexample
+
+If the state machine started, the green LED @i{ACQ} on the front panel of the
+ADC turns on. If you want to abort the current acquisition you must send the
+@i{stop} command to the state machine.
+
+@smallexample
+# echo 2 > /sys/bus/zio/devices/fmc-adc-0100/cset0/fsm-command
+@end smallexample
+
+When the state machine is stopped, the @i{ACQ} LED turns off. When you send
+a @i{stop} command, the driver flush the memory, so all samples acquired are
+lost.
+
+
+Doing the @i{start} command when the state machine is already started do a
+restart of the state machine and it flush the memory. This is the same
+of following sequence of commands @i{start},@i{stop} and @i{start}.
+
+
+To acquire data you must start the state machine, if you do not start the
+state machine, you cannot acquire data. When an acquisition is completed the
+state machine automatically send a @i{stop} command, so you must start the
+state machine again for the next acquisition. An acquisition is considered
+completed when all stamples, from all shots, are acquired.
+
+
+The ADC mark with a timestamp all these events: state machine start, state
+machine stop and acquisition end. The device split each timestamp in 3
+attributes named: second (s), ticks (t) and bins (b). For example, to read
+the entire timestamp of the state machin start event you should do:
+
+@smallexample
+# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/tstamp-acq-str-s
+# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/tstamp-acq-str-t
+# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/tstamp-acq-str-b
+@end smallexample
+
+Seconds represents the number of second since the epoch; ticks is the
+number of clocks at 125Mhz, the value is between 0 and 125000000 and it
+increments seconds when it overflow. At the moment, the bins register is
+unused.
+
+@c ==========================================================================
+@node The Channels
+@section The Channels
+
+The ADC has 4 input channels. Each channel has two configurable attribute:
+@i{offset} and @i{vref-src}.
+
+The @b{offset} attribute is read/write. It allows to configure the offset of
+the signal on the channel. When you write a value to this attribute, the driver
+apply your value to a DAC which apply an offset to the input signal.
+
+@smallexample
+# echo 50 > /sys/bus/zio/devices/fmc-adc-0100/cset0/chan2/offset
+@end smallexample
+
+The @b{vref-src} attribute is read/write. It allow you to change the Volt
+reference of the ADC; the attribute accepts only 4 value: @i{0} (open range),
+@i{35} ([-100mV; +100mV), @i{17} ([-1V; +1V]), @i{69} ([-10V; +10V]). You
+can active some extra reference with the module parameter
+@i{enable_calibration}, then you can use the calibration reference. You
+should use this option only if you must configure your calibration value.
+
+@smallexample
+# echo 17 > /sys/bus/zio/devices/fmc-adc-0100/cset0/chan2/vref-src
+@end smallexample
+
 
 
 @c ==========================================================================
-@node The device
-@section The device
+@node The Trigger
+@section The Trigger
 
+The ADC has its own @i{zio_trigger_type} and it can not work with any other
+ZIO's trigger. The ADC trigger is named @b{fmc-adc-trg}. We advise you
+against replacing the trigger with another one. The sysfs directory of this
+trigger is the following:
 
+@smallexample
+@end smallexample
+
+On the ADC there are two kind of trigger: hardware and software.
+
+@c ---------------------------------------------------------------------------
+@node Hardware Trigger
+@subsection Hardware Trigger
+
+The @b{hardware trigger} is moved by the hardware, depending on the status of
+the input signals (@i{internal trigger}), or on impulse from an external
+source (@i{external trigger}).
+
+The ZIO's default attribute @b{enable} is directly connected to the enable
+of the hardware trigger on device. So, if you write 1 you enable the hardware
+trigger, if you write 0 you disable the hardware trigger.
+
+@smallexample
+# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/enable
+@end smallexample
+
+The attribute @b{external} can be used to select if you need the internal
+trigger or the external one. You must write 1 to select the external trigger,
+0 to select the internal trigger.
+
+@smallexample
+# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/external
+@end smallexample
+
+With the attribute @b{polarity} you can configure if the trigger fire on a
+positive edge/slope or on a negative edge/slope. To configure positive
+edge/slope you must write 0 on this attribute, otherwise 1 for a negative
+edge/slope.
+
+@smallexample
+# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/polarity
+@end smallexample
+ 
+
+@c ---------------------------------------------------------------------------
+@node Internal Trigger
+@subsubsection Internal Trigger
+
+The @b{internal trigger} is an @i{hardware trigger} and its fire depend on the
+the input signal. 
+You can select which of the four channels is the trigger source of the
+signal and then configure a threshold. When the signal goes above/under the
+threshold, the trigger fire.
+
+To choose a channel as source of trigger you must use the @b{int-channel}
+attribute. You can select one of the input channel by writing its index
+number on the attribute [0; 3]
+
+The attribute @b{int-threshold} is read/write and can be used to select
+the signal threshold.
+
+@c ---------------------------------------------------------------------------
+@node External Trigger
+@subsubsection External Trigger
+
+The @b{external trigger} is an @i{hardware trigger} and its fire depend on
+an external source of impulse. When the pulse arrive, the trigger fires.
+
+@c ---------------------------------------------------------------------------
+@node Software Trigger
+@subsection Software Trigger
+
+The software trigger should be used only for debug purpose. You can enable
+it by writing 1 on the attribute @b{sw-trg-enable}, 0 to disable it. To make
+this trigger fire, you must write in the write-only attribute @b{sw-trg-fire}.
+
+@c ==========================================================================
+@node Attributes
+@section Attributes
+
+Here the list of all the ZIO's attributes within this driver.
+     @multitable @columnfractions .10 .25 .2 .1 .2 .30
+     @headitem Target @tab Name @tab Permission @tab Default @tab Accepted @tab Comment 
+     @c Cset
+     @item Cset @tab @code{enable} @tab rw @tab 1 @tab [0;1]
+     @item Cset @tab @code{resolution-bits} @tab ro @tab 14 @tab -
+     @item Cset @tab @code{fsm-command} @tab wo @tab 2 @tab [1;2]
+     @item Cset @tab @code{fsm-state} @tab r0 @tab - @tab -
+     @item Cset @tab @code{sample-decimation} @tab rw @tab 1 @tab [1;655353]
+     @item Cset @tab @code{rst-ch-offset} @tab wo @tab 0 @tab any
+     @item Cset @tab @code{tstamp-acq-str-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-str-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-str-b} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-stp-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-stp-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-stp-b} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-end-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-end-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-end-b} @tab ro @tab - @tab -
+     @c Channel
+     @item Cset @tab @code{offset} @tab rw @tab 0 @tab [0; 65535] @tab [-Vref; +Vref]
+     @item Cset @tab @code{vref-src} @tab rw @tab 17 @tab [0, 17, 35, 69]
+     @c Trigger
+     @item Trigger @tab @code{enable} @tab rw @tab 1 @tab [0;1]
+     @item Tigger @tab @code{external} @tab rw @tab 1 @tab [0;1]
+     @item Tigger @tab @code{polarity} @tab rw @tab 0 @tab [0;1]
+     @item Tigger @tab @code{int-channel} @tab rw @tab 0 @tab [0;3]
+     @item Tigger @tab @code{int-threshold} @tab rw @tab 0 @tab [0;65535] @tab Complement 2
+     @item Tigger @tab @code{sw-trg-enable} @tab rw @tab 0 @tab [0;1]
+     @item Tigger @tab @code{sw-trg-fire} @tab wo @tab 0 @tab any
+     @item Cset @tab @code{tstamp-trg-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-trg-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-trg-b} @tab ro @tab - @tab -
+     @end multitable
+
+@c ==========================================================================
+@node Reading Data
+@chapter Reading Data
+The driver does not export attributes on the device level
 
 To read data from user-space you must use the char device interface
 @c FIXME update when PF_ZIO will be available
@@ -194,16 +497,8 @@ ZIO documentation).
 
 
 @smallexample
-corinno-test:~# ls -l /dev/zio/
+# ls -l /dev/zio/
 total 0
-crw------- 1 root root 250, 0 Aug 23 22:21 fmc-adc-0100-0-0-ctrl
-crw------- 1 root root 250, 1 Aug 23 22:21 fmc-adc-0100-0-0-data
-crw------- 1 root root 250, 2 Aug 23 22:21 fmc-adc-0100-0-1-ctrl
-crw------- 1 root root 250, 3 Aug 23 22:21 fmc-adc-0100-0-1-data
-crw------- 1 root root 250, 4 Aug 23 22:21 fmc-adc-0100-0-2-ctrl
-crw------- 1 root root 250, 5 Aug 23 22:21 fmc-adc-0100-0-2-data
-crw------- 1 root root 250, 6 Aug 23 22:21 fmc-adc-0100-0-3-ctrl
-crw------- 1 root root 250, 7 Aug 23 22:21 fmc-adc-0100-0-3-data
 crw------- 1 root root 250, 8 Aug 23 22:21 fmc-adc-0100-0-i-ctrl
 crw------- 1 root root 250, 9 Aug 23 22:21 fmc-adc-0100-0-i-data
 @end smallexample
@@ -221,41 +516,6 @@ sets of devices, differing in the @i{dev_id} field, i.e. the
 and the @i{devfn} octet; the example above refers to slot 0 of bus 1.
 
 
-Device (and channel) attributes can be accessed in the proper @i{sysfs}
-directory. For a card in slot 0 of bus 1 (like shown above), the
-directory is @i{/sys/bus/zio/devices/fmc-adc-0100}:
-
-@smallexample
-corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
-./  ../  name  cset0/  power/  driver@  enable  subsystem@  uevent
-@end smallexample
-
-
-@c --------------------------------------------------------------------------
-@node Device Attributes
-@subsection Device Attributes
-There are not any device-wide attributes.
-
-@c ==========================================================================
-@node The Input-cset
-@section The Input-cset
-
-@c --------------------------------------------------------------------------
-@node Input-cset Attributes
-@subsection Input-cset Attributes
-
-@c ==========================================================================
-@node The Trigger
-@section The Trigger
-
-@c --------------------------------------------------------------------------
-@node Trigger Attributes
-@subsection Trigger Attributes
-
-@c ##########################################################################
-
-
-
 The ADC doesn't allow to read data from a specific channel; the ADC
 allow the driver to read only an interleaved block of samples.
 Neither the ZIO core nor this driver split interleaved data into
@@ -264,7 +524,7 @@ block of interleaved samples. To read this interleaved block you
 can read directly the interleaved channel @i{chani}
 
 @smallexample
-corinno-test:~# hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/fmc-adc-0100-0-i-data
+# hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/fmc-adc-0100-0-i-data
 fffc
 e474
 8034
