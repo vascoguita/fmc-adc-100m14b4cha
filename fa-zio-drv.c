@@ -380,7 +380,6 @@ static int zfad_input_cset(struct zio_cset *cset)
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
-	int i;
 
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
@@ -388,9 +387,6 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* be sure to initialize these values for DMA transfer */
 	fa->lst_dev_mem = 0;
 	fa->cur_dev_mem = 0;
-
-	for(i = 0; i < fa->fmc->eeprom_len; i++)
-		pr_info("0x%x 0x%x\n", i, fa->fmc->eeprom[i]);
 
 	return 0;
 }
