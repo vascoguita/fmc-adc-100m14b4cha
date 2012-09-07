@@ -432,7 +432,7 @@ static int zfad_init_cset(struct zio_cset *cset)
 	/* Enable Hardware trigger*/
 	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN], 1);
 	/* Select external trigger (index 0) */
-	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_INT_SEL], 1);
+	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_SEL], 1);
 	cset->ti->zattr_set.ext_zattr[0].value = 1;
 	/* Set UTC seconds from the kernel seconds */
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_UTC_SECONDS], get_seconds());
