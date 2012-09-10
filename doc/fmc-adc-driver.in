@@ -17,17 +17,17 @@
 
 @setchapternewpage off
 
-@set update-month August 2012
+@set update-month September 2012
 @set release 0.8
-@set tagname fine-delay-sw-v1.1
+@set tagname fmc-adc-k3.4-v0.8
 
 @finalout
 
 @titlepage
 @title FMC ADC User's Manual
 @subtitle @value{update-month} -- Release @value{release}
-@subtitle FMC ADC 100M 14 b 4ch hardware and software manual
-@author CERN BE-CO-HT / Federico Vaga
+@subtitle FMC ADC 100M 14 b 4ch software manual
+@author CERN BE-CO-HT / Federico Vaga / Alessandro Rubini
 @end titlepage
 @headings single
 
@@ -40,7 +40,7 @@
 @node Top
 @top Introduction
 
-This is the user manual for the @i{FMC ADC 100M 14b 4cha}
+This is the user manual of the driver for the @i{FMC ADC 100M 14b 4cha}
 board developed on the @b{Open Hardware Repository}
 @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha}}.
 
@@ -60,15 +60,17 @@ following link:
 
 Here a list of the resources that you can find on the project page.
 @table @code 
- @item Document 
-  @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/documents}} contains the @t{.pdf} documentation for every official release.
+ @item Document@footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/documents}} contains the @t{.pdf} documentation for every official release.
 
-@item File
- @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/files}} contains the @t{.tar.gz} file for every official release including the @t{.git} tree.
+@item File@footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/files}} contains the @t{.tar.gz} file for every official release including the @t{.git} tree.
 
-@item Repository
- @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/repository}} contains the git repository of the project @uref{git://ohwr.org/fmc-projects/fmc-adc-100m14b4cha/fmc-adc-100m14b4cha-sw.git}.
+@item Repository@footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/repository}} contains the git repository of the project
 @end table
+
+On the repository the official releases have a tag named @code{fmc-adc-sw-k#ver-v#num} where @i{#num} represent the release version of the driver and
+@i{#ver} the kernel version (e.g @code{fmc-adc-sw-k3.4-v1.0} for the
+release 1.0 on kernel 3.4). These tag are used in releted repository (@i{ZIO},
+@i{spec-sw} and hardware repository).
 
 @c ##########################################################################
 @node Driver Features
@@ -89,6 +91,12 @@ carrier card.
 @node Gateware Dependencies
 @section Gateware Dependencies
 
+This driver has been developed from the FPGA binary included in the package
+as @file{binaries/fmc-adc.bin}.
+
+The driver repository always include the last binary version used during
+development. It can happend that the binary within this package become out
+of dated when new binary is released.
 
 @c ==========================================================================
 @node Gateware Installation
@@ -98,8 +106,8 @@ To install the FPGA image in the target system, please follow the
 instruction in the documentation of @i{spec-sw}. To summarize,
 you'll need to place the @t{.bin} file in @file{/lib/firmware/fmc}.
 The default name of the binary file is @t{fmc-adc.bin} and you
-can find the copy of the last tested binary within the source code of
-this driver. Anyway, you are free to use a different binary for the your
+can find the copy of the last tested binary within the driver repository
+Anyway, you are free to use a different binary for the your
 ADC and you can load it by specifying the module parameter @t{file}.
 
 @c ==========================================================================
@@ -110,7 +118,13 @@ The Kernel version for the development was the 3.4, but this driver
 is also available for kernel 2.6.32 and 2.6.24.
 
 The driver is base on the ZIO framework available on the OpenHardware
-Repository@footnote{@uref{http://www.ohwr.org/projects/zio}}.
+Repository@footnote{@uref{http://www.ohwr.org/projects/zio}}. The version
+being used during development is a development version and tested on Linux
+kernel 3.4, then back-ported to Linux kernel version 2.6.32 and 2.6.24.
+
+The driver is also based ont the @i{spec-sw} driver available on the
+OpenHardware Repository@footnote{@uref{http://www.ohwr.org/projects/spec-sw}}.
+This driver allow to handle FMC devices connected to a SPEC or a SVEC board.
 
 @c ==========================================================================
 @node Software Installation
@@ -132,6 +146,36 @@ are assumed to be already set when running the commands shown.
 
 @end table
 
+To install ZIO you should download it and install the tag (or branch)
+called @i{fmc-adc-sw-k#ver-v#num} according the version that you need.
+In the following example it is shown the installation of the release
+1.0 of this driver on kernel 2.6.32:
+
+The commands here are reported without prompt for easy cut-and-paste.
+@smallexample
+test -d zio/.git || git clone git://ohwr.org/misc/zio.git
+cd zio
+export ZIO=$(/bin/pwd)
+git checkout -b fmc-adc fmc-adc-sw-k2.6.32-v1.0
+make
+sudo make modules_install
+@end smallexample
+
+The procedure for spec-sw is similar:
+
+@smallexample
+test -d spec-sw/.git || \
+git clone git://ohwr.org/fmc-projects/spec/spec-sw.git
+cd spec-sw
+export SPEC_SW=$(/bin/pwd)
+git checkout -b fine-delay fine-delay-sw-v1.1
+cd kernel
+make
+sudo make modules_install
+@end smallexample
+
+Now you can compile this driver with @code{make}. At this point all
+the software modules are ready to be loaded.
 
 @c ==========================================================================
 @node Module Parameters
@@ -143,12 +187,15 @@ or the proper file in @file{/etc/modutils/} .
 
 The following parameters are used:
 @table @code
- @item file=
-  The binary file to use to reprogram the FPGA. The default value for this parameter is @t{fmc/fmc-adc-bin} as seen in @ref{Gateware Installation}
+ @item file=/path/to/binary.bin
+  The binary file to use to reprogram the FPGA. The default value for this
+  parameter is @t{fmc/fmc-adc-bin} as seen in @ref{Gateware Installation}
  @item enable_test_data=1
-  This is for testing purpose. This option enable the testing data, so the ADC doesn't store samples, but fill the memory with sequential number.
+  This is for testing purpose. This option enable the testing data, so the ADC
+  doesn't store samples, but fill the memory with sequential numbers.
  @item enable_calibration=1
-  You should you this if you want to calibrate you ADC. This parameter enable the calibration Volt reference of channels.
+  You should you this if you want to calibrate you ADC. This parameter
+  enable the calibration Volt reference of channels.
 @end table
 
 @c ##########################################################################
@@ -161,6 +208,11 @@ This is a random list of conventions used in this package
  @item All internal symbols in the zio driver begin with @t{zfad_}. The prefix mean: @i{Zio Fmc Adc Driver}.
 
  @item All internal symbols in the zio trigger begin with @t{zfat_}. The prefix mean: @i{Zio Fmc Adc Trigger}.
+ 
+ @item The @file{tools/} directory includes standalone tools that access ZIO
+       directly. Their name begins with @file{fau-} that mean: @i{Fmc Adc User}.
+       There is also a non ZIO tool to generate pulses on the parallel port,
+       so it has a different name pattern.
 
 @end itemize
 
@@ -168,13 +220,16 @@ This is a random list of conventions used in this package
 @node Device Configuration
 @chapter Device Configuration
 
-@c ==========================================================================
-@node The ZIO Device Structure
-@section The ZIO Device Structure
+The driver is designed as a ZIO driver that offers 4 input channels. Since
+the device store only interleaved data, the ZIO framework will create a
+fifth channel which represent the interleaved acquisition.
 
 The reader of this chapter is expected to be confident with basic ZIO
 concepts, available in ZIO documentation@footnote{@uref{http://www.ohwr.org/projects/zio/documents}}.
 
+@c ==========================================================================
+@node The ZIO Device Structure
+@section The ZIO Device Structure
 
 The device has 1 cset with 4+1 channels. Channels from 0 to 3
 represent che physical channels 1 to 4. The 5th channel
@@ -454,19 +509,39 @@ this trigger fire, you must write in the write-only attribute @b{sw-trg-fire}.
 
 The ADC can use both @i{zio-buf-kmalloc} and @i{zio-buf-vmalloc} to store
 the samples. It is not necesarry to develop a dedicated buffer for this device.
+By default the driver is configured to use the @i{zio-buf-vmalloc} buffer.
+
+
+If you want to change the buffer, you can use the @code{current_buffer}
+attribute within the @code{cset0} directory. As explained in the ZIO manual,
+this is a default attribute of the ZIO framework. It allows the user to
+dinamically change the buffer to use. If you want to use the @i{kmalloc}
+buffer you must write:
+
+@smallexample
+# echo kmalloc > /sys/bus/zio/devices/fmc-adc-0100/cset0/current_buffer
+@end smallexample
+
+To restore the @i{vmalloc} buffer:
+
+@smallexample
+# echo vmalloc > /sys/bus/zio/devices/fmc-adc-0100/cset0/current_buffer
+@end smallexample
 
 @c ==========================================================================
 @node Attributes
 @section Attributes
 
-Here the list of all the ZIO's attributes within this driver.
+Here the list of all the ZIO's attributes within this driver. Plese note
+that ZIO framework can handle only 32bit unsigned integer.
+
      @multitable @columnfractions .10 .25 .2 .1 .2 .30
      @headitem Target @tab Name @tab Permission @tab Default @tab Accepted @tab Comment 
      @c Cset
      @item Cset @tab @code{enable} @tab rw @tab 1 @tab [0;1]
      @item Cset @tab @code{resolution-bits} @tab ro @tab 14 @tab -
      @item Cset @tab @code{fsm-command} @tab wo @tab 2 @tab [1;2]
-     @item Cset @tab @code{fsm-state} @tab r0 @tab - @tab -
+     @item Cset @tab @code{fsm-state} @tab ro @tab - @tab -
      @item Cset @tab @code{sample-decimation} @tab rw @tab 1 @tab [1;655353]
      @item Cset @tab @code{rst-ch-offset} @tab wo @tab 0 @tab any
      @item Cset @tab @code{tstamp-acq-str-s} @tab ro @tab - @tab -
@@ -483,12 +558,12 @@ Here the list of all the ZIO's attributes within this driver.
      @item Cset @tab @code{vref-src} @tab rw @tab 17 @tab [0, 17, 35, 69]
      @c Trigger
      @item Trigger @tab @code{enable} @tab rw @tab 1 @tab [0;1]
-     @item Tigger @tab @code{external} @tab rw @tab 1 @tab [0;1]
-     @item Tigger @tab @code{polarity} @tab rw @tab 0 @tab [0;1]
-     @item Tigger @tab @code{int-channel} @tab rw @tab 0 @tab [0;3]
-     @item Tigger @tab @code{int-threshold} @tab rw @tab 0 @tab [0;65535] @tab Complement 2
-     @item Tigger @tab @code{sw-trg-enable} @tab rw @tab 0 @tab [0;1]
-     @item Tigger @tab @code{sw-trg-fire} @tab wo @tab 0 @tab any
+     @item Trigger @tab @code{external} @tab rw @tab 1 @tab [0;1]
+     @item Trigger @tab @code{polarity} @tab rw @tab 0 @tab [0;1]
+     @item Trigger @tab @code{int-channel} @tab rw @tab 0 @tab [0;3]
+     @item Trigger @tab @code{int-threshold} @tab rw @tab 0 @tab [0;65535] @tab Complement 2
+     @item Trigger @tab @code{sw-trg-enable} @tab rw @tab 0 @tab [0;1]
+     @item Trigger @tab @code{sw-trg-fire} @tab wo @tab 0 @tab any
      @item Cset @tab @code{tstamp-trg-s} @tab ro @tab - @tab -
      @item Cset @tab @code{tstamp-trg-t} @tab ro @tab - @tab -
      @item Cset @tab @code{tstamp-trg-b} @tab ro @tab - @tab -
@@ -528,6 +603,8 @@ Neither the ZIO core nor this driver split interleaved data into
 4 different buffer; so, also the driver will return to user-space a
 block of interleaved samples. To read this interleaved block you
 can read directly the interleaved data char device @i{fmc-adc-0100-0-i-data}
+using simple program like @i{hexdump}@footnote{man hexdump if you do not
+know this program}:
 
 @smallexample
 # hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/fmc-adc-0100-0-i-data
@@ -538,13 +615,21 @@ e474
 @end smallexample
 
 
-The graphical representation of the interleaving is in the following
-figure.
+The FMC ADC interleave always all channels, you cannot select which channel
+acquire. So your acquisitions will have this format:
 
 
 @float
 @center @image{img/interleaved, 7cm,,ADC interleaved data,pdf}
 @end float
+
+
+It is suggested to read the ZIO documentation to understand how to read data
+from the ZIO char device interface and the mechanism of control char device
+and data char device. You can use the @b{zio-dump} tool from
+the ZIO package to acquire data and understand the mechanism behind this 
+interface.
+
 
 @c ==========================================================================
 @node Tools
@@ -642,6 +727,53 @@ of the motherboard, the address is @code{378}):
 @example
    ./parport-burst dd00 1000 100
 @end example
+
+@c ##########################################################################
+@node Troubleshooting
+@chapter Troubleshooting
+
+This chapters lists a few errors that may happen and how to deal with
+them.
+
+@menu
+* ZIO Doesn't Compile::         
+* make modules_install misbehaves::            
+@end menu
+
+@c ==========================================================================
+@node ZIO Doesn't Compile
+@section ZIO Doesn't Compile
+
+Compilation of ZIO ma fail with error like:
+
+@smallexample
+   zio-ad788x.c:180: error: implicit declaration of function "spi_async_locked"
+@end smallexample
+
+This happens because the function wasn't there in your older kernel
+version, and your system is configured to enable @code{CONFIG_SPI}.
+
+To fix, please just remove the @i{zio-ad788x} line from
+@code{drivers/Makefile}.
+
+@c ==========================================================================
+@node make modules_install misbehaves
+@section make modules_install misbehaves
+
+The command @i{sudo make modules_install} may place the modules in the wrong
+directory or fail with an error like:
+
+@smallexample
+   make: *** /lib/modules/2.6.37+/build: No such file or directory.
+@end smallexample
+
+This happens when you compiled by setting @code{LINUX=} and your
+@i{sudo} is not propagating the environment to its child processes.
+In this case, you should run this command instead
+
+@smallexample
+   sudo make modules_install  LINUX=$LINUX
+@end smallexample
 
 @bye
 
