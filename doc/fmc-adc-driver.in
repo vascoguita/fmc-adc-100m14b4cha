@@ -145,8 +145,10 @@ The following parameters are used:
 @table @code
  @item file=
   The binary file to use to reprogram the FPGA. The default value for this parameter is @t{fmc/fmc-adc-bin} as seen in @ref{Gateware Installation}
- @item enable_test_data=
+ @item enable_test_data=1
   This is for testing purpose. This option enable the testing data, so the ADC doesn't store samples, but fill the memory with sequential number.
+ @item enable_calibration=1
+  You should you this if you want to calibrate you ADC. This parameter enable the calibration Volt reference of channels.
 @end table
 
 @c ##########################################################################
@@ -175,7 +177,7 @@ concepts, available in ZIO documentation@footnote{@uref{http://www.ohwr.org/proj
 
 
 The device has 1 cset with 4+1 channels. Channels from 0 to 3
-represent che physical channels 1 to 4. The 5th channels
+represent che physical channels 1 to 4. The 5th channel
 @i{chani} represent a virtual channel created automatically by the
 ZIO framework; this channel represent the interleave acquisition on
 the cset.
@@ -447,6 +449,13 @@ it by writing 1 on the attribute @b{sw-trg-enable}, 0 to disable it. To make
 this trigger fire, you must write in the write-only attribute @b{sw-trg-fire}.
 
 @c ==========================================================================
+@node The Buffer
+@section The Buffer
+
+The ADC can use both @i{zio-buf-kmalloc} and @i{zio-buf-vmalloc} to store
+the samples. It is not necesarry to develop a dedicated buffer for this device.
+
+@c ==========================================================================
 @node Attributes
 @section Attributes
 
@@ -486,15 +495,12 @@ Here the list of all the ZIO's attributes within this driver.
      @end multitable
 
 @c ==========================================================================
-@node Reading Data
-@chapter Reading Data
-The driver does not export attributes on the device level
-
-To read data from user-space you must use the char device interface
-@c FIXME update when PF_ZIO will be available
+@node Reading Data with Char Devices
+@chapter Reading Data with Char Devices
+To read data from user-space you can use the ZIO char device interface
 which export 2 char device for each channel (as documented in
-ZIO documentation).
-
+ZIO documentation). The ADC acquire only interleaved samples, so the char
+device interface creates only the char device for the interleaved acquisition.
 
 @smallexample
 # ls -l /dev/zio/
@@ -521,7 +527,7 @@ allow the driver to read only an interleaved block of samples.
 Neither the ZIO core nor this driver split interleaved data into
 4 different buffer; so, also the driver will return to user-space a
 block of interleaved samples. To read this interleaved block you
-can read directly the interleaved channel @i{chani}
+can read directly the interleaved data char device @i{fmc-adc-0100-0-i-data}
 
 @smallexample
 # hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/fmc-adc-0100-0-i-data
@@ -540,6 +546,102 @@ figure.
 @center @image{img/interleaved, 7cm,,ADC interleaved data,pdf}
 @end float
 
+@c ==========================================================================
+@node Tools
+@chapter Tools
+
+The FMC ADC driver is provided with three tools: @i{fau-trg-config}, @i{fau-acq-time} and @i{parport-burst}.
+
+@c ==========================================================================
+@node Trigger Configuration
+@section Trigger Configuration
+
+You can use the tool @b{fau-trg-config} to configure the FMC ADC trigger. The
+tools has many command line parameter that you can use to configure every
+register exporter by the driver. You can read a simple description of the
+program from the program's help.
+
+@smallexample
+$ ./fau-trg-config --help
+
+fau-trg-config [OPTIONS] <DEVICE>
+
+  <DEVICE>: ZIO name of the device to use
+  --pre|-p <value>: number of pre samples
+  --post|-P <value>: number of pre samples
+  --re-enable|-r <value>: number of trigger shots
+  --delay|-d <value>: set the ticks delay of the trigger
+  --threshold|-t <value>: set internal trigger threshold
+  --channel|-c <value>: select the internal channel as trigger
+  --external: set to external trigger. The default is the internal trigger.
+  --negative-edge: set internal trigger polarity to negative edge. The default
+                    is positive edge.
+  --enable-sw-trg: enable the software trigger. By default is disabled.
+  --disable-hw-trg: disable the hardware trigger. By default is enabled
+  --force: force all attribute to the program default
+  --help|-h: show this help
+
+NOTE: The software trigger works only if also hardware trigger is enabled
+@end smallexample
+
+The tool gets the configuration values from the user and it writes these values
+in the correspondent sysfs attributes exported by the driver. For example, if
+you want to configure the trigger to fire with an external pulse and to acquire
+3 shots of 10 pre-samples and 100 post-samples, you must write:
+
+@smallexample
+# ./fau-trg-config --external --pre 10 --post 100 --re-enable 2 fmc-adc-0100
+@end smallexample
+
+The trigger is always active the first time, then you configure it to auto
+re-enable other 2 times; so you acquire 3 shots.
+
+@c ==========================================================================
+@node Acquisition Time
+@section Acquisition Time
+
+You can use the tool @b{fau-acq-time} to get the time spent during the
+acquisition.  You can read a simple description of the
+program from the program's help.
+
+@smallexample
+# ./fau-acq-time 
+
+fau-acq-time [OPTIONS] <DEVICE>
+
+  <DEVICE>: ZIO name of the device to use
+  --last|-l : time between the last trigger and the acquisition end
+  --full|-f : time between the acquisition start and the acquisition end
+  --help|-h : show this help
+
+@end smallexample
+
+The program can return two kind of acquisition time. The first acquisition
+time (@code{--last}) is the time between the last trigger event and the
+acquisition end event, so the time spent during the last shot. The second
+acquisition time (@code{--full}) is the time between the acquisition start
+event and the acquisition end event, so the whole time spent to wait all
+trigger fires (multi shots) and the time to acquire all samples.
+
+@c ==========================================================================
+@node Parallel Port Burst
+@section Parallel Port Burst
+If you have a Parallel Port you can use it to generate bursts of pulses
+with a software program. This is usefull to test external trigger; you can
+connect the parallel port to the external trigger of the FMC ADC and
+generate your trigger fire from an external source.
+
+The program @b{parport-burst}@footnote{This tool is also part
+of the @i{fine-delay} tools.}, part of this package, generates a
+burst according to three command line parameters: the I/O port of
+the data byte of the parallel port, the repeat count and the duration
+of each period. This example makes 1000 pulses of 100 usec each,
+using the physical address of my parallel port (if yours is part
+of the motherboard, the address is @code{378}):
+
+@example
+   ./parport-burst dd00 1000 100
+@end example
 
 @bye
 
