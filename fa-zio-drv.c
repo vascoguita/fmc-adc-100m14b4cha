@@ -172,15 +172,6 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	PARAM_EXT_REG("tstamp-acq-stp-b", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
 };
 static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
-	/*
-	 * The gain value is a value between 0 and 2. These 16bit are
-	 * represented as following:
-	 * bit 15: 2^0
-	 * bit 14: 2^(-1)
-	 * [...]
-	 * bit 0: 2^(-15)
-	 */
-	ZATTR_REG(zdev, ZATTR_GAIN, S_IRUGO | S_IWUGO, ZFA_CHx_GAIN, 0x8000),
 	/* the offset is complement 2 format */
 	ZATTR_REG(zdev, ZATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
 	/*
