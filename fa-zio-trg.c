@@ -431,11 +431,11 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 		return ERR_PTR(-ENOMEM);
 
 	zfat->fa = fa;
-
-	err = fa->fmc->op->irq_request(fa->fmc, zfadc_irq, "fmc-adc", 0);
+	err = fa->fmc->op->irq_request(fa->fmc, zfadc_irq, "fmc-adc",
+				       IRQF_SHARED);
 	if (err) {
-		dev_err(&fa->spec->pdev->dev, "can't request irq %i (err %i)\n",
-				fa->spec->pdev->irq, err);
+		dev_err(zfat->fa->fmc->hwdev, "can't request irq %i (err %i)\n",
+			fa->fmc->irq, err);
 		return ERR_PTR(err);
 	}
 
