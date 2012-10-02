@@ -254,13 +254,111 @@ static void zfad_reset_offset(struct fa_dev *fa)
 	udelay(20);
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
 }
+
+static int zfad_get_range(uint32_t usr_val)
+{
+	switch (usr_val) {
+	case 0x23:
+		return ZFA_100mV;
+		break;
+	case 0x11:
+		return ZFA_1V;
+		break;
+	case 0x45:
+		return ZFA_10V;
+		break;
+	case 0x00:
+		return ZFA_OPEN;
+		break;
+	default:
+		if (!enable_calibration)
+			return -EINVAL;
+		switch (usr_val) {
+		case 0x42:
+			return ZFA_100mV;
+			break;
+		case 0x40:
+			return ZFA_1V;
+			break;
+		case 0x44:
+			return ZFA_10V;
+			break;
+		default:
+			return -EINVAL;
+			break;
+		}
+	}
+
+	return -EINVAL;
+}
+/*
+ * When the input range change, we must calibrate the offset and the gain.
+ */
+static int zfad_calibration(struct fa_dev *fa, struct zio_channel *chan,
+			    uint32_t usr_val)
+{
+	int i, cal_val, range;
+
+	range = zfad_get_range(usr_val);
+	if (range < 0)
+		return range;
+
+	/* Apply the ADC calibration value for the offset */
+	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
+	cal_val = fa->adc_cal_data[range].offset[chan->index];
+	dev_dbg(&chan->head.dev, "offset calibration value 0x%x\n", cal_val);
+	zfa_common_conf_set(fa, &zfad_regs[i], cal_val);
+	/* Apply the ADC calibration value for the gain */
+	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
+	cal_val = fa->adc_cal_data[range].gain[chan->index];
+	dev_dbg(&chan->head.dev, "gain calibration value 0x%x\n", cal_val);
+	zfa_common_conf_set(fa, &zfad_regs[i], cal_val);
+
+	return 0;
+}
+
+/*
+ * Apply user offset to the channel input. Before apply the user offset it must
+ * be corrected with offset and gain calibration value. An open input does not
+ * need any correction.
+ */
+static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
+				  uint32_t usr_val)
+{
+	uint32_t tmp, cal_val, offset, gain, range_reg;
+	int i, range;
+
+	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+	zfa_common_info_get(fa, &zfad_regs[i], &range_reg);
+
+	range = zfad_get_range(range_reg);
+	if (range < 0)
+		return range;
+	if (range != 0) {
+		/* Get calibration offset and gain for DAC */
+		offset = fa->dac_cal_data[range].offset[chan->index];
+		gain = fa->dac_cal_data[range].gain[chan->index];
+
+		/* Calculate calibrater value for DAC */
+		cal_val = (((((usr_val - 0x8000 + offset) << 15) * gain) >> 30));
+		cal_val += 0x8000;
+	} else {	/* Open range */
+		cal_val = usr_val;
+	}
+
+	if (cal_val > 0xFFFF)
+		cal_val = 0xFFFF;
+
+	dev_dbg(&chan->head.dev, "DAC offset calibration value 0x%x\n", cal_val);
+	/* Apply calibrated offset to DAC */
+	return fa_spi_xfer(fa, chan->index, 16, cal_val, &tmp);
+}
 /* set a value to a FMC-ADC registers */
 static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
-		uint32_t usr_val)
+			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	const struct zio_reg_desc *reg;
-	uint32_t tmp;
 	int i, err;
 
 	switch (zattr->priv.addr) {
@@ -268,8 +366,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		enable_auto_start = usr_val;
 		return 0;
 	case ZFA_CHx_OFFSET:
-		err = fa_spi_xfer(fa, to_zio_chan(dev)->index, 16,
-				  usr_val, &tmp);
+		err = zfad_apply_user_offset(fa, to_zio_chan(dev), usr_val);
 		if (err)
 			return err;
 		return 0;
@@ -285,20 +382,10 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		reg = &zfad_regs[zattr->priv.addr];
 		break;
 	case ZFA_CHx_CTL_RANGE:
-		if (usr_val != 0x23 && usr_val != 0x11 &&
-		    usr_val != 0x45 && usr_val != 0x00) {
-			if (!enable_calibration)
-				return -EINVAL;
-			if ((usr_val != 0x40 && usr_val != 0x42 &&
-						usr_val != 0x44))
-				return -EINVAL;
-		}
-		/*
-		 * FIXME every time range change, update gain and offset with
-		 * calibrated values
-		 */
+		err = zfad_calibration(fa, to_zio_chan(dev), usr_val);
+		if (err)
+			return err;
 	case ZFA_CHx_STA:
-	case ZFA_CHx_GAIN:
 		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
 		reg = &zfad_regs[i];
 		break;
@@ -314,7 +401,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 }
 /* get the value of a FMC-ADC register */
 static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
-		uint32_t *usr_val)
+			 uint32_t *usr_val)
 {
 	const struct zio_reg_desc *reg;
 	struct fa_dev *fa = get_zfadc(dev);
@@ -332,7 +419,6 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_CHx_CTL_RANGE:
 	case ZFA_CHx_STA:
-	case ZFA_CHx_GAIN:
 		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
 		reg = &zfad_regs[i];
 		break;
@@ -390,6 +476,12 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* be sure to initialize these values for DMA transfer */
 	fa->lst_dev_mem = 0;
 	fa->cur_dev_mem = 0;
+
+	/*
+	 * Get Calibration Data. ADC calibration value and DAC calibration
+	 * value are consecutive; I can fill both array with a single memcpy
+	 */
+	memcpy(fa->adc_cal_data, fa->fmc->eeprom + FA_CAL_PTR, FA_CAL_LEN);
 
 	return 0;
 }

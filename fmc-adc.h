@@ -27,6 +27,29 @@ extern int enable_auto_start;
 /* ADC DDR memory */
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
 
+
+/* ADC Calibration */
+#define FA_CAL_PTR 0x0100 /* 256 Byte */
+#define FA_CAL_LEN 108
+
+enum fa_input_range {
+	ZFA_10V = 0x0,
+	ZFA_1V,
+	ZFA_100mV,
+	ZFA_OPEN, /* Open Range */
+};
+/*
+ * Calibration item
+ * @offset calibration data for 4 channels
+ * @gain calibration data for 4 channels
+ * @temp calibration data temperature
+ */
+struct fa_calibration_data {
+	uint16_t offset[4];
+	uint16_t gain[4];
+	uint16_t temp;
+};
+
 /* The information about a DMA transfer */
 struct dma_item {
 	uint32_t start_addr;	/* 0x00 */
@@ -80,6 +103,10 @@ struct fa_dev {
 	uint8_t ds18_id[8];
 	unsigned long		next_t;
 	int			temp;	/* temperature: scaled by 4 bits */
+
+	/* Calibration Data */
+	struct fa_calibration_data adc_cal_data[3];
+	struct fa_calibration_data dac_cal_data[3];
 };
 
 extern int zfad_map_dma(struct zio_cset *cset);
