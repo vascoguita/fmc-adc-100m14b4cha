@@ -24,10 +24,8 @@
 
 int enable_auto_start = 0;
 static int enable_test_data = 0;
-static int enable_calibration = 0;
 
 module_param(enable_test_data, int, 0444);
-module_param(enable_calibration, int, 0444);
 
 /* Definition of the fmc-adc registers address - mask - mask offset */
 const struct zio_reg_desc zfad_regs[] = {
@@ -188,9 +186,6 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
 	 * 0x11 (17): 1V range
 	 * 0x45 (69): 10V range
 	 * 0x00 (0): Open input
-	 * 0x42 (66): 100mV range calibration
-	 * 0x40 (64): 1V range calibration
-	 * 0x44 (68): 10V range calibration
 	 */
 	ZATTR_REG(zdev, ZATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
 };
@@ -271,22 +266,7 @@ static int zfad_get_range(uint32_t usr_val)
 		return ZFA_OPEN;
 		break;
 	default:
-		if (!enable_calibration)
-			return -EINVAL;
-		switch (usr_val) {
-		case 0x42:
-			return ZFA_100mV;
-			break;
-		case 0x40:
-			return ZFA_1V;
-			break;
-		case 0x44:
-			return ZFA_10V;
-			break;
-		default:
-			return -EINVAL;
-			break;
-		}
+		break;
 	}
 
 	return -EINVAL;
