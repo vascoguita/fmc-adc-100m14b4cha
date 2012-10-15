@@ -195,9 +195,6 @@ The following parameters are used:
  @item enable_test_data=1
   This is for testing purpose. This option enable the testing data, so the ADC
   doesn't store samples, but fill the memory with sequential numbers.
- @item enable_calibration=1
-  You should you this if you want to calibrate you ADC. This parameter
-  enable the calibration Volt reference of channels.
 @end table
 
 @c ##########################################################################
@@ -421,10 +418,7 @@ apply your value to a DAC which apply an offset to the input signal.
 
 The @b{vref-src} attribute is read/write. It allow you to change the Volt
 reference of the ADC; the attribute accepts only 4 value: @i{0} (open range),
-@i{35} ([-100mV; +100mV), @i{17} ([-1V; +1V]), @i{69} ([-10V; +10V]). You
-can active some extra reference with the module parameter
-@i{enable_calibration}, then you can use the calibration reference. You
-should use this option only if you must configure your calibration value.
+@i{35} ([-100mV; +100mV), @i{17} ([-1V; +1V]), @i{69} ([-10V; +10V]).
 
 @smallexample
 # echo 17 > /sys/bus/zio/devices/fmc-adc-0100/cset0/chan2/vref-src
