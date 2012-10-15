@@ -412,6 +412,14 @@ static irqreturn_t zfadc_irq(int irq, void *ptr)
 	return IRQ_HANDLED;
 }
 
+struct fmc_gpio zfat_gpio_cfg[] = {
+	{
+		.gpio = FMC_GPIO_IRQ(0),
+		.mode = GPIOF_DIR_IN,
+		.irqmode = IRQF_TRIGGER_RISING,
+	}
+};
+
 /* create an instance of the FMC-ADC trigger */
 static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 				 struct zio_cset *cset,
@@ -431,6 +439,11 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 		return ERR_PTR(-ENOMEM);
 
 	zfat->fa = fa;
+
+	/* Configure GPIO for IRQ */
+	fa->fmc->op->gpio_config(fa->fmc, zfat_gpio_cfg,
+				 ARRAY_SIZE(zfat_gpio_cfg));
+	/* Request IRQ */
 	err = fa->fmc->op->irq_request(fa->fmc, zfadc_irq, "fmc-adc",
 				       IRQF_SHARED);
 	if (err) {
