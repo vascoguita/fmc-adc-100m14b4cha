@@ -196,6 +196,11 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
 		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN],
 				    ti->zattr_set.ext_zattr[5].value);
+		/* Automatic start next acquisition */
+		if (enable_auto_start) {
+			dev_dbg(&ti->head.dev, "Automatic start\n");
+			zfad_fsm_command(fa, ZFA_START);
+		}
 		return;
 	}
 

@@ -13,6 +13,8 @@
 
 #define FA_GATEWARE_DEFAULT_NAME "fmc/fmc-adc.bin"
 
+extern int enable_auto_start;
+
 /* ADC register offset */
 #define FA_DMA_MEM_OFF	0x00000
 #define FA_CAR_MEM_OFF	0x30000
@@ -190,6 +192,7 @@ enum zfadc_dregs_enum {
 	/* Other "address" */
 	ZFA_SW_R_NOADDRES_NBIT,
 	ZFA_SW_R_NOADDRES_TEMP,
+	ZFA_SW_R_NOADDERS_AUTO,
 };
 /*
  * ZFA_CHx_MULT
@@ -313,6 +316,8 @@ extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		       uint32_t tx, uint32_t *rx);
 extern int fa_spi_init(struct fa_dev *fd);
 extern void fa_spi_exit(struct fa_dev *fd);
+/* function in fa-zio-drv.c */
+extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 
 #endif /* __KERNEL__ */
 #endif /* _fa_dev_H_ */

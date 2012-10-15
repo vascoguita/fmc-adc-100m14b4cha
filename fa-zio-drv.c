@@ -22,11 +22,13 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
+int enable_auto_start = 0;
 static int enable_test_data = 0;
 static int enable_calibration = 0;
 
 module_param(enable_test_data, int, 0444);
 module_param(enable_calibration, int, 0444);
+
 /* Definition of the fmc-adc registers address - mask - mask offset */
 const struct zio_reg_desc zfad_regs[] = {
 	/* Control registers */
@@ -149,6 +151,12 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 */
 	PARAM_EXT_REG("fsm-command", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
 	/*
+	 * Automatic start acquisition
+	 * 1: enabled
+	 * 0: disabled
+	 */
+	PARAM_EXT_REG("fsm-auto-start", S_IRUGO | S_IWUGO, ZFA_SW_R_NOADDERS_AUTO, 0),
+	/*
 	 * fsm - status of the state machine:
 	 * 1: IDLE
 	 * 2: PRE_TRIG
@@ -202,7 +210,7 @@ static inline int zfad_get_chx_index(unsigned long addr,
 {
 	return addr + ZFA_CHx_MULT  * (1 + chan->index - chan->cset->n_chan);
 }
-static int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
+int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	uint32_t val;
 
@@ -256,6 +264,9 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, err;
 
 	switch (zattr->priv.addr) {
+	case ZFA_SW_R_NOADDERS_AUTO:
+		enable_auto_start = usr_val;
+		return 0;
 	case ZFA_CHx_OFFSET:
 		err = fa_spi_xfer(fa, to_zio_chan(dev)->index, 16,
 				  usr_val, &tmp);
@@ -312,6 +323,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	switch (zattr->priv.addr) {
 	case ZFA_CHx_OFFSET:
 	case ZFA_SW_R_NOADDRES_NBIT:
+	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
