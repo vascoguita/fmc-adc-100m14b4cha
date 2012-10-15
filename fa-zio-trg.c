@@ -200,6 +200,8 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 		if (enable_auto_start) {
 			dev_dbg(&ti->head.dev, "Automatic start\n");
 			zfad_fsm_command(fa, ZFA_START);
+			zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_FMS_CMD],
+					    ZFA_START);
 		}
 		return;
 	}
@@ -229,24 +231,21 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 /* Get irq and clear the register. To clear an interrupt we have to write 1
  * on the handled interrupt. We handle all interrupt so we clear all interrupts
  */
-static uint32_t zfat_get_irq_status(struct zfat_instance *zfat)
+static void zfat_get_irq_status(struct zfat_instance *zfat,
+				uint32_t *irq_status, uint32_t *irq_multi)
 {
 	struct fa_dev *fa = zfat->ti.cset->zdev->priv_d;
-	uint32_t irq_status, irq_multi;
 
-	dev_dbg(&zfat->ti.head.dev, "Get interrupts\n");
 	/* Get current interrupts status */
-	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_SRC], &irq_status);
-	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_MULTI], &irq_multi);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_SRC], irq_status);
+	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_MULTI], irq_multi);
 	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x multi = 0x%x\n",
-			irq_status, irq_multi);
+			*irq_status, *irq_multi);
 	/* Clear current interrupts status */
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_SRC], irq_status);
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MULTI], irq_multi);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_SRC], *irq_status);
+	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MULTI], *irq_multi);
 	/* ack the irq */
 	zfat->fa->fmc->op->irq_ack(zfat->fa->fmc);
-
-	return irq_status | irq_multi;
 }
 
 /*
@@ -366,6 +365,7 @@ static void zfat_irq_acq_end(struct zfat_instance *zfat)
 	struct fa_dev *fa = zfat->ti.cset->zdev->priv_d;
 	uint32_t val;
 
+	dev_dbg(zfat->fa->fmc->hwdev, "Acquisition done\n");
 	/*
 	 * All programmed triggers fire, so the acquisition is ended.
 	 * If the state machine is _idle_ we can start the DMA transfer.
@@ -402,17 +402,27 @@ static irqreturn_t zfadc_irq(int irq, void *ptr)
 	struct fmc_device *fmc = ptr;
 	struct fa_dev *fa = fmc_get_drvdata(fmc);
 	struct zfat_instance *zfat = to_zfat_instance(fa->zdev->cset->ti);
-	uint32_t status;
+	uint32_t status, multi;
 
 	/* irq to handle */
-	status = zfat_get_irq_status(zfat);
+	zfat_get_irq_status(zfat, &status, &multi);
+	/*
+	 * It cannot happen that DMA_DONE is in the multi register.
+	 * It should not happen ...
+	 */
 	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR))
 		zfat_irq_dma_done(fmc, zfat, status);
 
+	/* Fire the trigger for each interrupt */
 	if (status & ZFAT_TRG_FIRE)
 		zfat_irq_trg_fire(zfat);
-
-	if (status & ZFAT_ACQ_END)
+	if (multi & ZFAT_TRG_FIRE)
+		zfat_irq_trg_fire(zfat);
+	/*
+	 * If it is too fast the ACQ_END interrupt can be in the
+	 * multi register
+	 */
+	if ((status | multi) & ZFAT_ACQ_END)
 		zfat_irq_acq_end(zfat);
 	return IRQ_HANDLED;
 }
