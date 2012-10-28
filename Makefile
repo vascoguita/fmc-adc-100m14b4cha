@@ -1,29 +1,33 @@
 
-LINUX ?= /lib/modules/$(shell uname -r)/build
-ZIO ?= $(HOME)/zio
-SPEC_SW ?= $(HOME)/spec-sw
-FMC_BUS ?= $(HOME)/fmc-bus
+.PHONY: all clean modules install modules_install
+.PHONY: gitmodules prereq prereq_install prereq_install_warn
 
-KBUILD_EXTRA_SYMBOLS := $(ZIO)/Module.symvers $(SPEC_SW)/kernel/Module.symvers
+DIRS = kernel tools
 
-ccflags-y = -I$(ZIO)/include -I$(FMC_BUS)/kernel/include -I$(SPEC_SW)/kernel -I$M
+all clean modules install modules_install: gitmodules
+	for d in $(DIRS); do $(MAKE) -C $$d $@ || exit 1; done
+	@if echo $@ | grep -q install; then $(MAKE) prereq_install_warn; fi
 
-ccflags-y += -DDEBUG # temporary
+all modules: prereq
 
-subdirs-ccflags-y = $(ccflags-y)
+#### The following targets are used to manage prerequisite repositories
+gitmodules:
+	@test -d fmc-bus/doc || echo "Checking out submodules"
+	@test -d fmc-bus/doc || git submodule update --init
 
+# The user can override, using environment variables, all these three:
+FMC_BUS ?= fmc-bus
+SPEC_SW ?= spec-sw
+ZIO ?= zio
+SUBMOD = $(FMC_BUS) $(SPEC_SW) $(ZIO)
 
-obj-m := fmc-adc.o
+prereq:
+	for d in $(SUBMOD); do $(MAKE) -C $$d || exit 1; done
 
-fmc-adc-objs =  fa-zio-drv.o 
-fmc-adc-objs += fa-core.o
-fmc-adc-objs += fa-zio-trg.o
-fmc-adc-objs += fa-dma.o
-fmc-adc-objs += onewire.o
-fmc-adc-objs += spi.o
+prereq_install_warn:
+	@test -f .prereq_installed || \
+		echo -e "\n\n\tWARNING: Consider \"make prereq_install\"\n"
 
-
-all: modules
-
-modules_install clean modules:
-	$(MAKE) -C $(LINUX) M=$(shell /bin/pwd) $@
+prereq_install:
+	for d in $(SUBMOD); do $(MAKE) -C $$d modules_install || exit 1; done
+	touch .prereq_installed

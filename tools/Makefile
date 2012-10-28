@@ -9,7 +9,7 @@ hostprogs-y += fau-acq-time
 hostprogs-y += parport-burst
 
 # we are not in the kernel, so we need to piggy-back on "make modules"
-modules: $(hostprogs-y)
+all modules: $(hostprogs-y)
 
 clean:
 	rm -f $(hostprogs-y) *.o *~
