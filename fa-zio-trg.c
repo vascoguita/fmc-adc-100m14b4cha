@@ -105,7 +105,7 @@ static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
-	const struct zio_reg_desc *reg = &zfad_regs[zattr->priv.addr];
+	const struct zio_field_desc *reg = &zfad_regs[zattr->priv.addr];
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
 	uint32_t tmp_val = usr_val;

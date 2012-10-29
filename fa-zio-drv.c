@@ -18,6 +18,7 @@
 #include <linux/zio.h>
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
+#include <linux/zio-utils.h>
 
 #include "spec.h"
 #include "fmc-adc.h"
@@ -28,7 +29,7 @@ static int enable_test_data = 0;
 module_param(enable_test_data, int, 0444);
 
 /* Definition of the fmc-adc registers address - mask - mask offset */
-const struct zio_reg_desc zfad_regs[] = {
+const struct zio_field_desc zfad_regs[] = {
 	/* Control registers */
 	[ZFA_CTL_FMS_CMD] =		{FA_ADC_MEM_OFF + 0x00, 0x0003, 0},
 	[ZFA_CTL_CLK_EN] =		{FA_ADC_MEM_OFF + 0x00, 0x0001, 2},
@@ -338,7 +339,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	const struct zio_reg_desc *reg;
+	const struct zio_field_desc *reg;
 	int i, err;
 
 	switch (zattr->priv.addr) {
@@ -383,7 +384,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
-	const struct zio_reg_desc *reg;
+	const struct zio_field_desc *reg;
 	struct fa_dev *fa = get_zfadc(dev);
 	int i;
 
@@ -468,7 +469,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 
 static int zfad_init_cset(struct zio_cset *cset)
 {
-	const struct zio_reg_desc *reg;
+	const struct zio_field_desc *reg;
 	struct fa_dev *fa = cset->zdev->priv_d;
 	int i;
 

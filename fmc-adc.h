@@ -233,9 +233,6 @@ enum zfadc_dregs_enum {
  */
 #define ZFA_CHx_CH1_DIFF ZFA_CHx_CTL_RANGE - ZFA_CH1_CTL_RANGE
 
-/* Device registers */
-extern const struct zio_reg_desc zfad_regs[];
-
 enum zfa_fsm_cmd {
 	ZFA_NONE =	0x0,
 	ZFA_START =	0x1,
@@ -262,6 +259,7 @@ enum zfat_irq {
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
 #include <linux/zio.h>
 #include <linux/zio-trigger.h>
+#include <linux/zio-utils.h>
 
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
@@ -288,41 +286,40 @@ static inline struct spec_dev *get_spec(struct device *dev)
 	return get_zfadc(dev)->spec;
 }
 
-/* FIXME convert fa_{read|write}_reg to fmc_{writel|readl} when fmc is fixed */
 static inline int zfa_common_conf_set(struct fa_dev *fa,
-				      const struct zio_reg_desc *reg,
+				      const struct zio_field_desc *fld,
 				      uint32_t usr_val)
 {
 	uint32_t cur, val;
 
-	if ((usr_val & (~reg->mask))) {
+	if ((usr_val & (~fld->mask))) {
 		dev_err(fa->fmc->hwdev, "value 0x%x must fit mask 0x%x\n",
-			usr_val, reg->mask);
+			usr_val, fld->mask);
 		return -EINVAL;
 	}
 	/* Read current register*/
-	cur = fmc_readl(fa->fmc, reg->addr);
-	val = zio_reg_set(reg, cur, usr_val);
+	cur = fmc_readl(fa->fmc, fld->addr);
+	val = zio_set_field(fld, cur, usr_val);
 	/* FIXME re-write usr_val when possible (zio need a patch) */
 	/* If the attribute has a valid address */
-	fmc_writel(fa->fmc, val, reg->addr);
+	fmc_writel(fa->fmc, val, fld->addr);
 	return 0;
 }
 static inline void zfa_common_info_get(struct fa_dev *fa,
-				       const struct zio_reg_desc *reg,
+				       const struct zio_field_desc *fld,
 				       uint32_t *usr_val)
 {
 	uint32_t cur;
 
 	/* Read current register*/
-	cur = fmc_readl(fa->fmc, reg->addr);
+	cur = fmc_readl(fa->fmc, fld->addr);
 	/* Return the value */
-	*usr_val = zio_reg_get(reg, cur);
+	*usr_val = zio_get_field(fld, cur);
 }
 
 extern struct zio_trigger_type zfat_type;
 /* Registers lists used in fd-zio-drv.c and fd-zio-trg.c */
-extern const struct zio_reg_desc zfad_regs[];
+extern const struct zio_field_desc zfad_regs[];
 
 
 /* Functions exported by fa-zio.c */
