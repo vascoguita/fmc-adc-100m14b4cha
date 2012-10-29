@@ -177,7 +177,19 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	PARAM_EXT_REG("tstamp-acq-stp-s", S_IRUGO, ZFA_UTC_ACQ_STOP_SECONDS, 0),
 	PARAM_EXT_REG("tstamp-acq-stp-t", S_IRUGO, ZFA_UTC_ACQ_STOP_COARSE, 0),
 	PARAM_EXT_REG("tstamp-acq-stp-b", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
+
+	ZATTR_EXT_REG("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
+	ZATTR_EXT_REG("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
+	ZATTR_EXT_REG("ch3-offset", S_IRUGO | S_IWUGO, ZFA_CH3_OFFSET, 0),
+	ZATTR_EXT_REG("ch4-offset", S_IRUGO | S_IWUGO, ZFA_CH4_OFFSET, 0),
+
+	ZATTR_EXT_REG("ch1-vref", S_IRUGO | S_IWUGO, ZFA_CH1_CTL_RANGE, 0),
+	ZATTR_EXT_REG("ch2-vref", S_IRUGO | S_IWUGO, ZFA_CH2_CTL_RANGE, 0),
+	ZATTR_EXT_REG("ch3-vref", S_IRUGO | S_IWUGO, ZFA_CH3_CTL_RANGE, 0),
+	ZATTR_EXT_REG("ch4-vref", S_IRUGO | S_IWUGO, ZFA_CH4_CTL_RANGE, 0),
 };
+
+/* FIXME Unused until TLV control will be available */
 static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
 	/* the offset is complement 2 format */
 	ZATTR_REG(zdev, ZATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
@@ -342,9 +354,23 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	const struct zio_field_desc *reg;
 	int i, err;
 
+	i = 4; /* FIXME temporary, to get chan number */
 	switch (zattr->priv.addr) {
 	case ZFA_SW_R_NOADDERS_AUTO:
 		enable_auto_start = usr_val;
+		return 0;
+	/* FIXME temporary until TLV control */
+	case ZFA_CH1_OFFSET:
+		i--;
+	case ZFA_CH2_OFFSET:
+		i--;
+	case ZFA_CH3_OFFSET:
+		i--;
+	case ZFA_CH4_OFFSET:
+		i--;
+		err = zfad_apply_user_offset(fa, &to_zio_cset(dev)->chan[i], usr_val);
+		if (err)
+			return err;
 		return 0;
 	case ZFA_CHx_OFFSET:
 		err = zfad_apply_user_offset(fa, to_zio_chan(dev), usr_val);
@@ -362,6 +388,19 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		}
 		reg = &zfad_regs[zattr->priv.addr];
 		break;
+	/* FIXME temporary until TLV control */
+	case ZFA_CH1_CTL_RANGE:
+		i--;
+	case ZFA_CH2_CTL_RANGE:
+		i--;
+	case ZFA_CH3_CTL_RANGE:
+		i--;
+	case ZFA_CH4_CTL_RANGE:
+		i--;
+		err = zfad_calibration(fa, &to_zio_cset(dev)->chan[i], usr_val);
+		if (err)
+			return err;
+		return err;
 	case ZFA_CHx_CTL_RANGE:
 		err = zfad_calibration(fa, to_zio_chan(dev), usr_val);
 		if (err)
@@ -389,6 +428,11 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	int i;
 
 	switch (zattr->priv.addr) {
+	/* FIXME temporary until TLV control */
+	case ZFA_CH1_OFFSET:
+	case ZFA_CH2_OFFSET:
+	case ZFA_CH3_OFFSET:
+	case ZFA_CH4_OFFSET:
 	case ZFA_CHx_OFFSET:
 	case ZFA_SW_R_NOADDRES_NBIT:
 	case ZFA_SW_R_NOADDERS_AUTO:
@@ -514,7 +558,8 @@ static int zfad_init_cset(struct zio_cset *cset)
 /* Device description */
 static struct zio_channel zfad_chan_tmpl = {
 	.zattr_set = {
-		.std_zattr = zfad_chan_std_zattr,
+		/* FIXME usable only when TLV control is available */
+		/*.std_zattr = zfad_chan_std_zattr,*/
 		.ext_zattr = zfad_chan_ext_zattr,
 		.n_ext_attr = ARRAY_SIZE(zfad_chan_ext_zattr),
 	},
