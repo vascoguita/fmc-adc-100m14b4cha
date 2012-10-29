@@ -263,13 +263,15 @@ ADC state machine, the acquisition and the time stamp.
 @smallexample
 corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
 ./  ../  name  cset0/  power/  driver@  enable  subsystem@  uevent
-corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/cset0/            
-./      chan3/           rst-ch-offset     tstamp-acq-end-s  tstamp-acq-str-s   
-../     chani/           enable            tstamp-acq-end-t  tstamp-acq-str-t   
-name    power/           sample-decimation tstamp-acq-stp-b  uevent             
-chan0/  fsm-command      fsm-state         tstamp-acq-stp-s  current_buffer     
-chan1/  current_trigger  trigger/          tstamp-acq-stp-t                     
-chan2/  resolution-bits  tstamp-acq-end-b  tstamp-acq-str-b  
+corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/cset0/
+./	 chani/		  trigger/	     tstamp-acq-str-b
+../	 power/		  sample-decimation  tstamp-acq-str-s
+name	 fsm-command	  tstamp-acq-end-b   tstamp-acq-str-t
+devtype  current_trigger  tstamp-acq-end-s   uevent
+chan0/	 resolution-bits  tstamp-acq-end-t   current_buffer
+chan1/	 rst-ch-offset	  tstamp-acq-stp-b   fsm-auto-start
+chan2/	 enable		  tstamp-acq-stp-s
+chan3/	 fsm-state	  tstamp-acq-stp-t
 @end smallexample
 
 The @b{resolution-bits} attribute is read-only and it returns the
@@ -376,6 +378,12 @@ state machine, you cannot acquire data. When an acquisition is completed the
 state machine automatically send a @i{stop} command, so you must start the
 state machine again for the next acquisition. An acquisition is considered
 completed when all stamples, from all shots, are acquired.
+
+The @b{fsm-auto-start} attribute is read/write. It is used to activate the
+auto-start acquisition option. We said that when an acquisition is over, the
+ADC stops the state machine; if you write 1 in this attribute, the driver sends
+a start command when the acquisition is over. This is useful for a streaming
+acquisition because the driver starts the state machine automatically.
 
 
 The ADC mark with a timestamp all these events: state machine start, state
@@ -556,6 +564,7 @@ that ZIO framework can handle only 32bit unsigned integer.
      @item Cset @tab @code{enable} @tab rw @tab 1 @tab [0;1]
      @item Cset @tab @code{resolution-bits} @tab ro @tab 14 @tab -
      @item Cset @tab @code{fsm-command} @tab wo @tab 2 @tab [1;2]
+     @item Cset @tab @code{fsm-auto-start} @tab rw @tab 0 @tab [0;1]
      @item Cset @tab @code{fsm-state} @tab ro @tab - @tab -
      @item Cset @tab @code{sample-decimation} @tab rw @tab 1 @tab [1;655353]
      @item Cset @tab @code{rst-ch-offset} @tab wo @tab 0 @tab any
