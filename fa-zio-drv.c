@@ -134,7 +134,6 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
 	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES_NBIT, 14),
 };
 static struct zio_attribute zfad_cset_ext_zattr[] = {
-	ZATTR_EXT_REG("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 	/*
 	 * sample-decimation
 	 * ADC acquire always at the maximum sample rate, to make "slower"
@@ -177,6 +176,8 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	PARAM_EXT_REG("tstamp-acq-stp-s", S_IRUGO, ZFA_UTC_ACQ_STOP_SECONDS, 0),
 	PARAM_EXT_REG("tstamp-acq-stp-t", S_IRUGO, ZFA_UTC_ACQ_STOP_COARSE, 0),
 	PARAM_EXT_REG("tstamp-acq-stp-b", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
+	/* Reset all channel offset */
+	PARAM_EXT_REG("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 
 	ZATTR_EXT_REG("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
 	ZATTR_EXT_REG("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
