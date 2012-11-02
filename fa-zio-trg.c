@@ -551,6 +551,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.data_done =		zfat_data_done,
 	.input_fire =		zfat_start_next_dma,
 	.abort =		zfat_abort,
+	.config =		zio_internal_trig_config,
 };
 
 /* Definition of the trigger type */

@@ -583,6 +583,7 @@ static struct zio_cset zfad_cset[] = {
 };
 static struct zio_device zfad_tmpl = {
 	.owner = THIS_MODULE,
+	.config = zio_internal_zdev_config,
 	.s_op = &zfad_s_op,
 	.flags = 0,
 	.cset = zfad_cset,
