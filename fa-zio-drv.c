@@ -663,11 +663,20 @@ int fa_zio_init(struct fa_dev *fa)
 		dev_err(hwdev, "DDR3 Calibration not done\n");
 		return -ENODEV;
 	}
+
+	/* Register our trigger hardware */
+	err = zio_register_trig(&zfat_type, "fmc-adc-trg");
+	if (err) {
+		dev_err(hwdev, "Cannot register ZIO trigger fmc-adc-trig\n");
+		goto out_trg;
+	}
+
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev)) {
 		dev_err(hwdev, "Cannot allocate ZIO device\n");
-		return PTR_ERR(fa->hwzdev);
+		err = PTR_ERR(fa->hwzdev);
+		goto out_allocate;
 	}
 
 	/* Mandatory fields */
@@ -676,13 +685,6 @@ int fa_zio_init(struct fa_dev *fa)
 
 	/* Our dev_id is bus+devfn */
 	dev_id = (pdev->bus->number << 8) | pdev->devfn;
-
-	/* Register our trigger hardware */
-	err = zio_register_trig(&zfat_type, "fmc-adc-trg");
-	if (err) {
-		dev_err(hwdev, "Cannot register ZIO trigger fmc-adc-trig\n");
-		goto out_trg;
-	}
 
 	/* Register the hardware zio_device */
 	err = zio_register_device(fa->hwzdev, "fmc-adc", dev_id);
@@ -693,9 +695,10 @@ int fa_zio_init(struct fa_dev *fa)
 	return 0;
 
 out_dev:
-	zio_unregister_device(fa->hwzdev);
-out_trg:
 	zio_free_device(fa->hwzdev);
+out_allocate:
+	zio_unregister_trig(&zfat_type);
+out_trg:
 	return err;
 }
 
