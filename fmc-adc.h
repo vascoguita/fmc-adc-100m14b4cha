@@ -29,7 +29,7 @@ extern int enable_auto_start;
 
 
 /* ADC Calibration */
-#define FA_CAL_PTR 0x0100 /* 256 Byte */
+#define FA_CAL_PTR 0x0400 /* 1 KByte */
 #define FA_CAL_LEN 108
 
 enum fa_input_range {
@@ -267,13 +267,13 @@ enum zfat_irq {
 static inline struct fa_dev *get_zfadc(struct device *dev)
 {
 	switch (to_zio_head(dev)->zobj_type) {
-		case ZDEV:
+		case ZIO_DEV:
 			return to_zio_dev(dev)->priv_d;
-		case ZCSET:
+		case ZIO_CSET:
 			return to_zio_cset(dev)->zdev->priv_d;
-		case ZCHAN:
+		case ZIO_CHAN:
 			return to_zio_chan(dev)->cset->zdev->priv_d;
-		case ZTI:
+		case ZIO_TI:
 			return to_zio_ti(dev)->cset->zdev->priv_d;
 		default:
 			return NULL;

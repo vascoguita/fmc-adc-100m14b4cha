@@ -39,11 +39,11 @@ struct zfat_block {
 #define to_zfat_instance(_ti) container_of(_ti, struct zfat_instance, ti)
 
 /* zio trigger attributes */
-static DEFINE_ZATTR_STD(TRIG, zfat_std_zattr) = {
+static ZIO_ATTR_DEFINE_STD(ZIO_TRG, zfat_std_zattr) = {
 	/* Number of shots */
-	ZATTR_REG(trig, ZATTR_TRIG_REENABLE, S_IRUGO | S_IWUGO, ZFAT_SHOTS_NB, 0),
-	ZATTR_REG(trig, ZATTR_TRIG_PRE_SAMP, S_IRUGO | S_IWUGO, ZFAT_PRE, 0),
-	ZATTR_REG(trig, ZATTR_TRIG_POST_SAMP, S_IRUGO | S_IWUGO, ZFAT_POST, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_REENABLE, S_IRUGO | S_IWUGO, ZFAT_SHOTS_NB, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_PRE_SAMP, S_IRUGO | S_IWUGO, ZFAT_PRE, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, S_IRUGO | S_IWUGO, ZFAT_POST, 0),
 };
 static struct zio_attribute zfat_ext_zattr[] = {
 	/* Config register */
@@ -51,35 +51,35 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 0: internal (data threshold)
 	 * 1: external (front panel trigger input)
 	 */
-	ZATTR_EXT_REG("external", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_SEL, 0),
+	ZIO_ATTR_EXT("external", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_SEL, 0),
 	/*
 	 * Internal Hardware trigger polarity
 	 * 0: positive edge/slope
 	 * 1: negative edge/slope
 	 */
-	ZATTR_EXT_REG("polarity", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_POL, 0),
+	ZIO_ATTR_EXT("polarity", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_POL, 0),
 	/*
 	 * Channel selection for internal trigger
 	 * 0: channel 1, 1: channel 2, 2: channel 3, 3: channel 4
 	 */
-	ZATTR_EXT_REG("int-channel", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	ZIO_ATTR_EXT("int-channel", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
 	/* Internal trigger threshold value is 2 complement format */
-	ZATTR_EXT_REG("int-threshold", S_IRUGO | S_IWUGO, ZFAT_CFG_THRES, 0),
+	ZIO_ATTR_EXT("int-threshold", S_IRUGO | S_IWUGO, ZFAT_CFG_THRES, 0),
 	/*
 	 * Delay to apply on the trigger in sampling clock period. The default
 	 * clock frequency is 100MHz (period = 10ns)
 	 */
-	ZATTR_EXT_REG("delay", S_IRUGO | S_IWUGO, ZFAT_DLY, 0),
+	ZIO_ATTR_EXT("delay", S_IRUGO | S_IWUGO, ZFAT_DLY, 0),
 
 	/* Software Trigger */
 	/* Enable (1) or disable (0) software trigger */
-	PARAM_EXT_REG("sw-trg-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
-	PARAM_EXT_REG("sw-trg-fire", S_IWUGO, ZFAT_SW, 0),
+	ZIO_PARAM_EXT("sw-trg-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
+	ZIO_PARAM_EXT("sw-trg-fire", S_IWUGO, ZFAT_SW, 0),
 
 	/* last trigger time stamp */
-	PARAM_EXT_REG("tstamp-trg-lst-s", S_IRUGO, ZFA_UTC_TRIG_SECONDS, 0),
-	PARAM_EXT_REG("tstamp-trg-lst-t", S_IRUGO, ZFA_UTC_TRIG_COARSE, 0),
-	PARAM_EXT_REG("tstamp-trg-lst-b", S_IRUGO, ZFA_UTC_TRIG_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-trg-lst-s", S_IRUGO, ZFA_UTC_TRIG_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-trg-lst-t", S_IRUGO, ZFA_UTC_TRIG_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-trg-lst-b", S_IRUGO, ZFA_UTC_TRIG_FINE, 0),
 };
 
 static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
@@ -91,9 +91,9 @@ static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 	if (!addr)
 		return 0;
 
-	pre_t = addr == ZFAT_PRE ? val : ti_zattr[ZATTR_TRIG_PRE_SAMP].value;
-	post_t = addr == ZFAT_POST ? val : ti_zattr[ZATTR_TRIG_POST_SAMP].value;
-	nshot_t = addr == ZFAT_SHOTS_NB ? val : ti_zattr[ZATTR_TRIG_REENABLE].value + 1;
+	pre_t = addr == ZFAT_PRE ? val : ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
+	post_t = addr == ZFAT_POST ? val : ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
+	nshot_t = addr == ZFAT_SHOTS_NB ? val : ti_zattr[ZIO_ATTR_TRIG_REENABLE].value + 1;
 
 	if (((pre_t + post_t) * ti->cset->ssize * nshot_t) >= FA_MAX_ACQ_BYTE) {
 		dev_err(&ti->head.dev, "cannot acquire, device memory overflow\n");
@@ -105,13 +105,13 @@ static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
-	const struct zio_field_desc *reg = &zfad_regs[zattr->priv.addr];
+	const struct zio_field_desc *reg = &zfad_regs[zattr->id];
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
 	uint32_t tmp_val = usr_val;
 	int err = 0;
 
-	switch (zattr->priv.addr) {
+	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
 		/*
 		 * Increase the reenable by 1 to be choerent with the
@@ -124,7 +124,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		++tmp_val;
 	case ZFAT_PRE:
 	case ZFAT_POST:
-		err = zfat_overflow_detection(ti, zattr->priv.addr, tmp_val);
+		err = zfat_overflow_detection(ti, zattr->id, tmp_val);
 		if (err)
 			return err;
 		break;
@@ -135,7 +135,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EPERM;
 		}
 		/* Fire if nsamples!=0 */
-		if (!ti->cset->interleave->current_ctrl->nsamples) {
+		if (!ti->nsamples) {
 			dev_err(dev, "there aren't samples to acquire");
 			return -EINVAL;
 		}
@@ -155,8 +155,8 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 
-	zfa_common_info_get(fa, &zfad_regs[zattr->priv.addr], usr_val);
-	if (zattr->priv.addr == ZFAT_SHOTS_NB)
+	zfa_common_info_get(fa, &zfad_regs[zattr->id], usr_val);
+	if (zattr->id == ZFAT_SHOTS_NB)
 		(*usr_val)--;
 	return 0;
 }
@@ -297,7 +297,6 @@ static void zfat_irq_trg_fire(struct zfat_instance *zfat)
 	struct zio_channel *interleave = ti->cset->interleave;
 	struct zio_buffer_type *zbuf = ti->cset->zbuf;
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
-	struct zio_control *ctrl;
 	struct zio_block *block;
 	struct zfat_block *zfat_block;
 	unsigned long flags;
@@ -310,7 +309,7 @@ static void zfat_irq_trg_fire(struct zfat_instance *zfat)
 	 * n_chan - 1 because of interleaved channel
 	 */
 	size = interleave->current_ctrl->ssize *
-	       interleave->current_ctrl->nsamples * (ti->cset->n_chan - 1);
+	       ti->nsamples * (ti->cset->n_chan - 1);
 	/*
 	 * Immediately update the pointer to the last block of data because if
 	 * block allocation fail, we must ready for the next block. If we don't
@@ -325,31 +324,25 @@ static void zfat_irq_trg_fire(struct zfat_instance *zfat)
 		return;
 	zfat_block->dev_addr = fa->lst_dev_mem - size; /* previous block */
 
-	/* Allocate and update control */
-	ctrl = zio_alloc_control(GFP_ATOMIC);
-	if (!ctrl)
-		goto out;
-	interleave->current_ctrl->seq_num++;
-	zfat_get_time_stamp(fa, &interleave->current_ctrl->tstamp);
-	memcpy(ctrl, interleave->current_ctrl, ZIO_CONTROL_SIZE);
-
 	/* Allocate a new block for DMA transfer */
-	block = zbuf->b_op->alloc_block(interleave->bi, ctrl, size,
-					GFP_ATOMIC);
+	block = zbuf->b_op->alloc_block(interleave->bi, size, GFP_ATOMIC);
 	if (IS_ERR(block)) {
 		dev_err(&ti->cset->head.dev, "can't alloc block\n");
-		goto out_block;
+		goto out;
 	}
-	zfat_block->block = block;
-
+	/* Update the current control: sequence, nsamples and tstamp */
+	interleave->current_ctrl->seq_num++;
+	interleave->current_ctrl->nsamples = ti->nsamples;
+	zfat_get_time_stamp(fa, &interleave->current_ctrl->tstamp);
+	/* Copy the updated control into the block */
+	memcpy(zio_get_ctrl(block), interleave->current_ctrl, ZIO_CONTROL_SIZE);
 	/* Add to the list of prepared blocks */
+	zfat_block->block = block;
 	spin_lock_irqsave(&zfat->lock, flags);
 	list_add_tail(&zfat_block->list, &zfat->list_block);
 	spin_unlock_irqrestore(&zfat->lock, flags);
 	return;
 
-out_block:
-	zio_free_control(ctrl);
 out:
 	kfree(zfat_block);
 }
@@ -506,6 +499,7 @@ static void zfat_data_done(struct zio_cset *cset)
 
 	if (!block)
 		return;
+
 	/* Store block in the ZIO buffer */
 	if (bi->b_op->store_block(bi, block)) { /* may fail, no prob */
 		bi->b_op->free_block(bi, block);
@@ -548,10 +542,9 @@ static const struct zio_trigger_operations zfat_ops = {
 	.create =		zfat_create,
 	.destroy =		zfat_destroy,
 	.change_status =	zfat_change_status,
-	.data_done =		zfat_data_done,
-	.input_fire =		zfat_start_next_dma,
-	.abort =		zfat_abort,
-	.config =		zio_internal_trig_config,
+	.__data_done =		zfat_data_done,
+	.__input_fire =		zfat_start_next_dma,
+	.__abort =		zfat_abort,
 };
 
 /* Definition of the trigger type */

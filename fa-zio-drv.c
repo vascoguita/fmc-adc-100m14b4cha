@@ -130,8 +130,8 @@ const struct zio_field_desc zfad_regs[] = {
 };
 
 /* zio device attributes */
-static DEFINE_ZATTR_STD(ZDEV, zfad_cset_std_zattr) = {
-	ZATTR_REG(zdev, ZATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES_NBIT, 14),
+static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_cset_std_zattr) = {
+	ZIO_ATTR(zdev, ZIO_ATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES_NBIT, 14),
 };
 static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/*
@@ -140,20 +140,20 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * acquisition you can decimate samples. 0 is a forbidden value, 1
 	 * for the maximum speed.
 	 */
-	ZATTR_EXT_REG("sample-decimation", S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
+	ZIO_ATTR_EXT("sample-decimation", S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
 
 	/*
 	 * State machine commands
 	 * 1: start
 	 * 2: stop
 	 */
-	PARAM_EXT_REG("fsm-command", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
+	ZIO_PARAM_EXT("fsm-command", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
 	/*
 	 * Automatic start acquisition
 	 * 1: enabled
 	 * 0: disabled
 	 */
-	PARAM_EXT_REG("fsm-auto-start", S_IRUGO | S_IWUGO, ZFA_SW_R_NOADDERS_AUTO, 0),
+	ZIO_PARAM_EXT("fsm-auto-start", S_IRUGO | S_IWUGO, ZFA_SW_R_NOADDERS_AUTO, 0),
 	/*
 	 * fsm - status of the state machine:
 	 * 1: IDLE
@@ -163,37 +163,37 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * 5: DECR_SHOT
 	 * 7: Illegal
 	 * */
-	PARAM_EXT_REG("fsm-state", S_IRUGO, ZFA_STA_FSM, 0),
+	ZIO_PARAM_EXT("fsm-state", S_IRUGO, ZFA_STA_FSM, 0),
 	/* last acquisition start time stamp */
-	PARAM_EXT_REG("tstamp-acq-str-s", S_IRUGO, ZFA_UTC_ACQ_START_SECONDS, 0),
-	PARAM_EXT_REG("tstamp-acq-str-t", S_IRUGO, ZFA_UTC_ACQ_START_COARSE, 0),
-	PARAM_EXT_REG("tstamp-acq-str-b", S_IRUGO, ZFA_UTC_ACQ_START_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-s", S_IRUGO, ZFA_UTC_ACQ_START_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-t", S_IRUGO, ZFA_UTC_ACQ_START_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-b", S_IRUGO, ZFA_UTC_ACQ_START_FINE, 0),
 	/* last acquisition end time stamp */
-	PARAM_EXT_REG("tstamp-acq-end-s", S_IRUGO, ZFA_UTC_ACQ_END_SECONDS, 0),
-	PARAM_EXT_REG("tstamp-acq-end-t", S_IRUGO, ZFA_UTC_ACQ_END_COARSE, 0),
-	PARAM_EXT_REG("tstamp-acq-end-b", S_IRUGO, ZFA_UTC_ACQ_END_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-s", S_IRUGO, ZFA_UTC_ACQ_END_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-t", S_IRUGO, ZFA_UTC_ACQ_END_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-b", S_IRUGO, ZFA_UTC_ACQ_END_FINE, 0),
 	/* last acquisition stop time stamp */
-	PARAM_EXT_REG("tstamp-acq-stp-s", S_IRUGO, ZFA_UTC_ACQ_STOP_SECONDS, 0),
-	PARAM_EXT_REG("tstamp-acq-stp-t", S_IRUGO, ZFA_UTC_ACQ_STOP_COARSE, 0),
-	PARAM_EXT_REG("tstamp-acq-stp-b", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-s", S_IRUGO, ZFA_UTC_ACQ_STOP_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-t", S_IRUGO, ZFA_UTC_ACQ_STOP_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-b", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
 	/* Reset all channel offset */
-	PARAM_EXT_REG("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
+	ZIO_PARAM_EXT("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 
-	ZATTR_EXT_REG("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
-	ZATTR_EXT_REG("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
-	ZATTR_EXT_REG("ch3-offset", S_IRUGO | S_IWUGO, ZFA_CH3_OFFSET, 0),
-	ZATTR_EXT_REG("ch4-offset", S_IRUGO | S_IWUGO, ZFA_CH4_OFFSET, 0),
+	ZIO_ATTR_EXT("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
+	ZIO_ATTR_EXT("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
+	ZIO_ATTR_EXT("ch3-offset", S_IRUGO | S_IWUGO, ZFA_CH3_OFFSET, 0),
+	ZIO_ATTR_EXT("ch4-offset", S_IRUGO | S_IWUGO, ZFA_CH4_OFFSET, 0),
 
-	ZATTR_EXT_REG("ch1-vref", S_IRUGO | S_IWUGO, ZFA_CH1_CTL_RANGE, 0),
-	ZATTR_EXT_REG("ch2-vref", S_IRUGO | S_IWUGO, ZFA_CH2_CTL_RANGE, 0),
-	ZATTR_EXT_REG("ch3-vref", S_IRUGO | S_IWUGO, ZFA_CH3_CTL_RANGE, 0),
-	ZATTR_EXT_REG("ch4-vref", S_IRUGO | S_IWUGO, ZFA_CH4_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch1-vref", S_IRUGO | S_IWUGO, ZFA_CH1_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch2-vref", S_IRUGO | S_IWUGO, ZFA_CH2_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch3-vref", S_IRUGO | S_IWUGO, ZFA_CH3_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch4-vref", S_IRUGO | S_IWUGO, ZFA_CH4_CTL_RANGE, 0),
 };
 
 /* FIXME Unused until TLV control will be available */
-static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
+static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 	/* the offset is complement 2 format */
-	ZATTR_REG(zdev, ZATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
+	ZIO_ATTR(zdev, ZIO_ATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
 	/*
 	 * in-range
 	 * 0x23 (35): 100mV range
@@ -201,17 +201,17 @@ static DEFINE_ZATTR_STD(ZDEV, zfad_chan_std_zattr) = {
 	 * 0x45 (69): 10V range
 	 * 0x00 (0): Open input
 	 */
-	ZATTR_REG(zdev, ZATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
+		ZIO_ATTR(zdev, ZIO_ATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
 
-	PARAM_EXT_REG("current-value", S_IRUGO, ZFA_CHx_STA, 0),
+	ZIO_PARAM_EXT("current-value", S_IRUGO, ZFA_CHx_STA, 0),
 };
 
 static struct zio_attribute zfad_dev_ext_zattr[] = {
 	/* Get Mezzanine temperature from onewire */
-	PARAM_EXT_REG("temperature", S_IRUGO, ZFA_SW_R_NOADDRES_TEMP, 0),
+	ZIO_PARAM_EXT("temperature", S_IRUGO, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
 /* Calculate correct index for channel from CHx indexes */
 static inline int zfad_get_chx_index(unsigned long addr,
@@ -356,7 +356,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, err;
 
 	i = 4; /* FIXME temporary, to get chan number */
-	switch (zattr->priv.addr) {
+	switch (zattr->id) {
 	case ZFA_SW_R_NOADDERS_AUTO:
 		enable_auto_start = usr_val;
 		return 0;
@@ -387,7 +387,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			dev_err(dev, "max-sample-rate minimum value is 1\n");
 			return -EINVAL;
 		}
-		reg = &zfad_regs[zattr->priv.addr];
+		reg = &zfad_regs[zattr->id];
 		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_RANGE:
@@ -407,7 +407,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		if (err)
 			return err;
 	case ZFA_CHx_STA:
-		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
+		i = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		reg = &zfad_regs[i];
 		break;
 	case ZFA_CTL_FMS_CMD:
@@ -415,7 +415,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		if (err)
 			return err;
 	default:
-		reg = &zfad_regs[zattr->priv.addr];
+		reg = &zfad_regs[zattr->id];
 	}
 
 	return zfa_common_conf_set(fa, reg, usr_val);
@@ -428,7 +428,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	int i;
 
-	switch (zattr->priv.addr) {
+	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 	case ZFA_CH2_OFFSET:
@@ -445,11 +445,11 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_CHx_CTL_RANGE:
 	case ZFA_CHx_STA:
-		i = zfad_get_chx_index(zattr->priv.addr, to_zio_chan(dev));
+		i = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		reg = &zfad_regs[i];
 		break;
 	default:
-		reg = &zfad_regs[zattr->priv.addr];
+		reg = &zfad_regs[zattr->id];
 	}
 
 	zfa_common_info_get(fa, reg, usr_val);
@@ -543,7 +543,7 @@ static int zfad_init_cset(struct zio_cset *cset)
 	/* Trigger registers */
 	/* Set to single shot mode by default */
 	zfa_common_conf_set(fa, &zfad_regs[ZFAT_SHOTS_NB], 1);
-	cset->ti->zattr_set.std_zattr[ZATTR_TRIG_REENABLE].value = 0;
+	cset->ti->zattr_set.std_zattr[ZIO_ATTR_TRIG_REENABLE].value = 0;
 	/* Disable Software trigger*/
 	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 	/* Enable Hardware trigger*/
@@ -571,9 +571,9 @@ static struct zio_cset zfad_cset[] = {
 		.ssize = 2,
 		.n_chan = 4,
 		.chan_template = &zfad_chan_tmpl,
-		.flags =  ZCSET_TYPE_ANALOG |	/* is analog */
+		.flags =  ZIO_CSET_TYPE_ANALOG |	/* is analog */
 			  ZIO_DIR_INPUT |	/* is input */
-			  ZCSET_INTERLEAVE_ONLY,/* interleave only */
+			  ZIO_CSET_INTERLEAVE_ONLY,/* interleave only */
 		.zattr_set = {
 			.std_zattr = zfad_cset_std_zattr,
 			.ext_zattr = zfad_cset_ext_zattr,
@@ -584,7 +584,6 @@ static struct zio_cset zfad_cset[] = {
 };
 static struct zio_device zfad_tmpl = {
 	.owner = THIS_MODULE,
-	.config = zio_internal_zdev_config,
 	.s_op = &zfad_s_op,
 	.flags = 0,
 	.cset = zfad_cset,

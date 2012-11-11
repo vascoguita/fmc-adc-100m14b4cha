@@ -94,8 +94,11 @@ int zfad_map_dma(struct zio_cset *cset)
 	int err;
 
 	pages = zfat_calculate_nents(block);
-	if (!pages)
+	if (!pages) {
+		dev_err(&cset->head.dev, "No pages to transfer (datalen=%li)\n",
+			block->datalen);
 		return -EINVAL;
+	}
 	dev_dbg(&cset->head.dev, "using %d pages for transfer\n", pages);
 
 	/* Create sglists for the transfers */
