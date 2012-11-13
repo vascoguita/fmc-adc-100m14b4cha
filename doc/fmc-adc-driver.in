@@ -4,11 +4,29 @@
 %
 %%%%
 
+%------------------------------------------------------------------------------
+%
+%                         NOTE FOR THE UNAWARE USER
+%                         =========================
+%
+%    This file is a texinfo source. It isn't the binary file of some strange
+%    editor of mine. If you want ASCII, you should "make fmc-adc-driver.txt".
+%
+%------------------------------------------------------------------------------
+
+%
+% This is not a conventional info file...
+% I use three extra features:
+%   - The '%' as a comment marker, if at beginning of line ("\%" -> "%")
+%   - leading blanks are allowed (this is something I can't live without)
+%   - braces are automatically escaped when they appear in example blocks
+%
+
 @comment %**start of header
 @documentlanguage en
 @documentencoding ISO-8859-1
-@setfilename fine-delay.info
-@settitle fine-delay
+@setfilename fmc-adc-driver.info
+@settitle fmc-adc-driver
 @iftex
 @afourpaper
 @end iftex
@@ -17,9 +35,9 @@
 
 @setchapternewpage off
 
-@set update-month September 2012
-@set release 0.8
-@set tagname fmc-adc-k3.4-v0.8
+@set update-month November 2012
+@set release 1.0
+@set tagname fmc-adc-sw1.0
 
 @finalout
 
@@ -72,12 +90,19 @@ On the repository the official releases have a tag named @code{fmc-adc-sw-k#ver-
 release 1.0 on kernel 3.4). These tag are used in releted repository (@i{ZIO},
 @i{spec-sw} and hardware repository).
 
+@b{Note:} If you got this from the repository (as opposed to a named
+@i{tar.gz} or @i{pdf} file) it may happen that you are looking at a later commit
+than the release this manual claims to document.
+It is a fact of life that developers forget
+to re-read and fix documentation while updating the code. In that case,
+please run ``@code{git describe HEAD}'' to ensure where you are.
+
 @c ##########################################################################
 @node Driver Features
 @chapter Driver Features
-This driver is based on the @i{ZIO} framework and the @i{spec-sw}
-driver. It supports initial setup of the board; it allows users to
-manually configure the board, to start and stop acquisitions, to force
+This driver is based on the @i{ZIO} framework, the @i{spec-sw}
+driver and the @i{fmc-bus}. It supports initial setup of the board; it allows
+users to manually configure the board, to start and stop acquisitions, to force
 trigger, to read latest time-stamps and to read acquired samples.
 
 @c ##########################################################################
@@ -123,61 +148,73 @@ Repository@footnote{@uref{http://www.ohwr.org/projects/zio}}. The version
 being used during development is a development version and tested on Linux
 kernel 3.4, then back-ported to Linux kernel version 2.6.32 and 2.6.24.
 
-The driver is also based ont the @i{spec-sw} driver available on the
+The driver is also based on the @i{spec-sw} driver available on the
 OpenHardware Repository@footnote{@uref{http://www.ohwr.org/projects/spec-sw}}.
 This driver allow to handle FMC devices connected to a SPEC or a SVEC board.
+
+Finally, it depends on the @i{fmc-bus} driver available on the OpenHardware
+Repository@footnote{@uref{http://www.ohwr.org/projects/fmc-bus}}.
 
 @c ==========================================================================
 @node Software Installation
 @section Software Installation
-First of all, please note that you need to define the following
-environment variables to be able to compile this driver. All of them
-are assumed to be already set when running the commands shown.
+
+To install this software package, you need to tell it where your
+kernel sources live, so the package can pick the right header files.
+You need to set only one environment variable:
 
 @table @code
 @item LINUX
+
 	The top-level directory of the Linux kernel you are compiling
-        against. This document assumes it is already set.
+        against. If not set, the default may work if you compile in the same
+        host where you expect to run the driver.
 
+@end table
+
+Most likely, this is all you need to set. After this, you can
+run:
+
+@example
+    make
+    sudo make install LINUX=$LINUX
+@end example
+
+In addition to the normal installation procedure for
+@code{fmc-adc.ko} you'll see the following message:
+
+@example
+    WARNING: Consider "make prereq_install"
+@end example
+
+The @i{prerequisite} packages are @i{zio}, @i{fmc-bus} and @i{spec-sw};
+unless you already installed your own preferred version, you are
+expected to install the version this packages suggests. This step
+can be performed by:
+
+@example
+    make
+    sudo make prereq_install LINUX=$LINUX
+@end example
+
+The step is not performed by default to avoid overwriting some
+other versions of the drivers. After @code{make prereq_install},
+the warning message won't be repeated any more if you change this
+driver and @code{make install} again.
+
+In order to compile @i{fine-delay} against a specific version of one
+of the related packages, you can one or more of the following
+environment variables:
+
+
+@table @code
 @item ZIO
-	The top-level directory of the ZIO repository checkout.
-
 @item SPEC_SW
+@item FMC-BUS
 	The top-level directory of the @i{spec-sw} repository checkout.
 
 @end table
 
-To install ZIO you should download it and install the tag (or branch)
-called @i{fmc-adc-sw-k#ver-v#num} according the version that you need.
-In the following example it is shown the installation of the release
-1.0 of this driver on kernel 2.6.32:
-
-The commands here are reported without prompt for easy cut-and-paste.
-@smallexample
-test -d zio/.git || git clone git://ohwr.org/misc/zio.git
-cd zio
-export ZIO=$(/bin/pwd)
-git checkout -b fmc-adc fmc-adc-sw-k2.6.32-v1.0
-make
-sudo make modules_install
-@end smallexample
-
-The procedure for spec-sw is similar:
-
-@smallexample
-test -d spec-sw/.git || \
-git clone git://ohwr.org/fmc-projects/spec/spec-sw.git
-cd spec-sw
-export SPEC_SW=$(/bin/pwd)
-git checkout -b fine-delay fine-delay-sw-v1.1
-cd kernel
-make
-sudo make modules_install
-@end smallexample
-
-Now you can compile this driver with @code{make}. At this point all
-the software modules are ready to be loaded.
-/hyper
 @c ==========================================================================
 @node Module Parameters
 @section Module Parameters
@@ -261,17 +298,18 @@ The ADC has 1 Channel Set named @file{cset0}. It has attributes to handle the
 ADC state machine, the acquisition and the time stamp.
 
 @smallexample
-corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
+# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
 ./  ../  name  cset0/  power/  driver@  enable  subsystem@  uevent
-corinno-test:~# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/cset0/
-./	 chani/		  trigger/	     tstamp-acq-str-b
-../	 power/		  sample-decimation  tstamp-acq-str-s
-name	 fsm-command	  tstamp-acq-end-b   tstamp-acq-str-t
-devtype  current_trigger  tstamp-acq-end-s   uevent
-chan0/	 resolution-bits  tstamp-acq-end-t   current_buffer
-chan1/	 rst-ch-offset	  tstamp-acq-stp-b   fsm-auto-start
-chan2/	 enable		  tstamp-acq-stp-s
-chan3/	 fsm-state	  tstamp-acq-stp-t
+# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/cset0/
+./          fsm-command      sample-decimation  tstamp-acq-str-b
+../         ch4-offset       ch1-vref           tstamp-acq-str-s
+name        current_trigger  tstamp-acq-end-b   tstamp-acq-str-t
+ch2-offset  resolution-bits  tstamp-acq-end-s   ch3-vref
+chan0/      rst-ch-offset    tstamp-acq-end-t   ch4-vref
+chan1/      enable           ch2-vref           ch3-offset
+chan2/      ch1-offset       tstamp-acq-stp-b   uevent
+chani/      fsm-state        tstamp-acq-stp-s   current_buffer
+power/      trigger/         tstamp-acq-stp-t   fsm-auto-start
 @end smallexample
 
 The @b{resolution-bits} attribute is read-only and it returns the
@@ -288,6 +326,44 @@ driver reset the offset of all channels.
 @smallexample
 corinno-test:~# echo 0 > /sys/bus/zio/devices/fmc-adc-0100/cset0/rst-ch-offset
 @end smallexample
+
+@c --------------------------------------------------------------------------
+@node Channel Attributes (offset and vref)
+@subsection Channel Attributes (offset and vref)
+
+This driver requires interleave feature that ZIO doesn't support ufficially and
+it is not complete. To work properly with the proposed interleave feature, the
+driver must defice some channel's attributes within the channel set. So, the
+ADC export offset and volt-reference for each channel in the channel set:
+
+@smallexample
+# ls /sys/bus/zio/devices/fmc-adc-0100/cset0/ | grep ch.-
+ch0-offset
+ch0-vref
+ch1-offset
+ch1-vref
+ch2-offset
+ch2-vref
+ch3-offset
+ch3-vref
+@end smallexample
+
+The @b{*-offset} attribute is read/write. It allows to configure the offset of
+the signal on the channel. When you write a value to this attribute, the driver
+apply your value to a DAC which apply an offset to the input signal.
+
+@smallexample
+# echo 50 > /sys/bus/zio/devices/fmc-adc-0100/cset0/ch0-offset
+@end smallexample
+
+The @b{*-vref} attribute is read/write. It allow you to change the Volt
+reference of the ADC; the attribute accepts only 4 value: @i{0} (open range),
+@i{35} ([-100mV; +100mV), @i{17} ([-1V; +1V]), @i{69} ([-10V; +10V]).
+
+@smallexample
+# echo 17 > /sys/bus/zio/devices/fmc-adc-0100/cset0/ch0-vref
+@end smallexample
+
 
 @c --------------------------------------------------------------------------
 @node Sample Decimation
@@ -382,7 +458,7 @@ completed when all stamples, from all shots, are acquired.
 The @b{fsm-auto-start} attribute is read/write. It is used to activate the
 auto-start acquisition option. We said that when an acquisition is over, the
 ADC stops the state machine; if you write 1 in this attribute, the driver sends
-a start command when the acquisition is over. This is useful for a streaming
+a @i{start} command when the acquisition is over. This is useful for a streaming
 acquisition because the driver starts the state machine automatically.
 
 
@@ -406,31 +482,14 @@ unused.
 @node The Channels
 @section The Channels
 
-The ADC has 4 input channels. Each channel has two configurable attributes:
-@i{offset} and @i{vref-src}, and one attribute with the last acquired sample
-@i{current-value}.
+The ADC has 4 input channels. Each channel has one attribute with the last
+acquired sample @i{current-value}.
 
 @smallexample
 # ls -fF /sys/bus/zio/devices/fmc-adc-0100/cset0/chan0/
-./   name    vref-src       buffer/  uevent
-../  power/  current-value  enable   offset
+./  ../  name  power/  current-value  buffer/  enable  current-control  uevent
 @end smallexample
 
-The @b{offset} attribute is read/write. It allows to configure the offset of
-the signal on the channel. When you write a value to this attribute, the driver
-apply your value to a DAC which apply an offset to the input signal.
-
-@smallexample
-# echo 50 > /sys/bus/zio/devices/fmc-adc-0100/cset0/chan2/offset
-@end smallexample
-
-The @b{vref-src} attribute is read/write. It allow you to change the Volt
-reference of the ADC; the attribute accepts only 4 value: @i{0} (open range),
-@i{35} ([-100mV; +100mV), @i{17} ([-1V; +1V]), @i{69} ([-10V; +10V]).
-
-@smallexample
-# echo 17 > /sys/bus/zio/devices/fmc-adc-0100/cset0/chan2/vref-src
-@end smallexample
 
 The @b{current-value} attribute is read only. It returns the last converted
 value on the channel.
@@ -577,20 +636,21 @@ that ZIO framework can handle only 32bit unsigned integer.
      @item Cset @tab @code{tstamp-acq-end-s} @tab ro @tab - @tab -
      @item Cset @tab @code{tstamp-acq-end-t} @tab ro @tab - @tab -
      @item Cset @tab @code{tstamp-acq-end-b} @tab ro @tab - @tab -
+     @item Cset @tab @code{chN-offset}@footnote{N from 0 to 3} @tab rw @tab 0 @tab [0; 65535] @tab [-Vref; +Vref]
+     @item Cset @tab @code{chN-vref}@footnote{N from 0 to 3} @tab rw @tab 17 @tab [0, 17, 35, 69]
      @c Channel
-     @item Cset @tab @code{offset} @tab rw @tab 0 @tab [0; 65535] @tab [-Vref; +Vref]
-     @item Cset @tab @code{vref-src} @tab rw @tab 17 @tab [0, 17, 35, 69]
+     @item Channel @tab @code{current-value} @tab ro @tab - @tab -
      @c Trigger
      @item Trigger @tab @code{enable} @tab rw @tab 1 @tab [0;1]
      @item Trigger @tab @code{external} @tab rw @tab 1 @tab [0;1]
      @item Trigger @tab @code{polarity} @tab rw @tab 0 @tab [0;1]
      @item Trigger @tab @code{int-channel} @tab rw @tab 0 @tab [0;3]
-     @item Trigger @tab @code{int-threshold} @tab rw @tab 0 @tab [0;65535] @tab Complement 2
+     @item Trigger @tab @code{int-threshold} @tab rw @tab 0 @tab [0;65535] @tab [-Vref; +Vref]
      @item Trigger @tab @code{sw-trg-enable} @tab rw @tab 0 @tab [0;1]
      @item Trigger @tab @code{sw-trg-fire} @tab wo @tab 0 @tab any
-     @item Cset @tab @code{tstamp-trg-s} @tab ro @tab - @tab -
-     @item Cset @tab @code{tstamp-trg-t} @tab ro @tab - @tab -
-     @item Cset @tab @code{tstamp-trg-b} @tab ro @tab - @tab -
+     @item Trigger @tab @code{tstamp-trg-s} @tab ro @tab - @tab -
+     @item Trigger @tab @code{tstamp-trg-t} @tab ro @tab - @tab -
+     @item Trigger @tab @code{tstamp-trg-b} @tab ro @tab - @tab -
      @end multitable
 
 @c ==========================================================================
