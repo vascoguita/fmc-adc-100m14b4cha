@@ -179,15 +179,15 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/* Reset all channel offset */
 	ZIO_PARAM_EXT("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
 
-	ZIO_ATTR_EXT("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
-	ZIO_ATTR_EXT("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
-	ZIO_ATTR_EXT("ch3-offset", S_IRUGO | S_IWUGO, ZFA_CH3_OFFSET, 0),
-	ZIO_ATTR_EXT("ch4-offset", S_IRUGO | S_IWUGO, ZFA_CH4_OFFSET, 0),
+	ZIO_ATTR_EXT("ch0-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
+	ZIO_ATTR_EXT("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
+	ZIO_ATTR_EXT("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH3_OFFSET, 0),
+	ZIO_ATTR_EXT("ch3-offset", S_IRUGO | S_IWUGO, ZFA_CH4_OFFSET, 0),
 
-	ZIO_ATTR_EXT("ch1-vref", S_IRUGO | S_IWUGO, ZFA_CH1_CTL_RANGE, 0),
-	ZIO_ATTR_EXT("ch2-vref", S_IRUGO | S_IWUGO, ZFA_CH2_CTL_RANGE, 0),
-	ZIO_ATTR_EXT("ch3-vref", S_IRUGO | S_IWUGO, ZFA_CH3_CTL_RANGE, 0),
-	ZIO_ATTR_EXT("ch4-vref", S_IRUGO | S_IWUGO, ZFA_CH4_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch0-vref", S_IRUGO | S_IWUGO, ZFA_CH1_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch1-vref", S_IRUGO | S_IWUGO, ZFA_CH2_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch2-vref", S_IRUGO | S_IWUGO, ZFA_CH3_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch3-vref", S_IRUGO | S_IWUGO, ZFA_CH4_CTL_RANGE, 0),
 };
 
 /* FIXME Unused until TLV control will be available */
