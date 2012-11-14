@@ -201,7 +201,7 @@ static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 	 * 0x45 (69): 10V range
 	 * 0x00 (0): Open input
 	 */
-		ZIO_ATTR(zdev, ZIO_ATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
+	ZIO_ATTR(zdev, ZIO_ATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
@@ -262,6 +262,10 @@ static void zfad_reset_offset(struct fa_dev *fa)
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 0);
 	udelay(20);
 	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
+
+	/*
+	 * FIXME update the value with the default value for the selected range
+	 */
 }
 
 static int zfad_get_range(uint32_t usr_val)
@@ -355,7 +359,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	const struct zio_field_desc *reg;
 	int i, err;
 
-	i = 4; /* FIXME temporary, to get chan number */
+	i = fa->zdev->cset->n_chan -1 ; /* -1 because of interleaved channel */
 	switch (zattr->id) {
 	case ZFA_SW_R_NOADDERS_AUTO:
 		enable_auto_start = usr_val;
