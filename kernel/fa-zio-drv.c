@@ -131,7 +131,7 @@ const struct zio_field_desc zfad_regs[] = {
 
 /* zio device attributes */
 static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_cset_std_zattr) = {
-	ZIO_ATTR(zdev, ZIO_ATTR_NBITS, S_IRUGO, ZFA_SW_R_NOADDRES_NBIT, 14),
+	ZIO_ATTR(zdev, ZIO_ATTR_NBITS, ZIO_RO_PERM, ZFA_SW_R_NOADDRES_NBIT, 14),
 };
 static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/*
@@ -140,20 +140,20 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * acquisition you can decimate samples. 0 is a forbidden value, 1
 	 * for the maximum speed.
 	 */
-	ZIO_ATTR_EXT("sample-decimation", S_IRUGO | S_IWUGO, ZFAT_SR_DECI, 1),
+	ZIO_ATTR_EXT("sample-decimation", ZIO_RW_PERM, ZFAT_SR_DECI, 1),
 
 	/*
 	 * State machine commands
 	 * 1: start
 	 * 2: stop
 	 */
-	ZIO_PARAM_EXT("fsm-command", S_IWUGO, ZFA_CTL_FMS_CMD, 0),
+	ZIO_PARAM_EXT("fsm-command", ZIO_WO_PERM, ZFA_CTL_FMS_CMD, 0),
 	/*
 	 * Automatic start acquisition
 	 * 1: enabled
 	 * 0: disabled
 	 */
-	ZIO_PARAM_EXT("fsm-auto-start", S_IRUGO | S_IWUGO, ZFA_SW_R_NOADDERS_AUTO, 0),
+	ZIO_PARAM_EXT("fsm-auto-start", ZIO_RW_PERM, ZFA_SW_R_NOADDERS_AUTO, 0),
 	/*
 	 * fsm - status of the state machine:
 	 * 1: IDLE
@@ -163,37 +163,37 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * 5: DECR_SHOT
 	 * 7: Illegal
 	 * */
-	ZIO_PARAM_EXT("fsm-state", S_IRUGO, ZFA_STA_FSM, 0),
+	ZIO_PARAM_EXT("fsm-state", ZIO_RO_PERM, ZFA_STA_FSM, 0),
 	/* last acquisition start time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-str-s", S_IRUGO, ZFA_UTC_ACQ_START_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-str-t", S_IRUGO, ZFA_UTC_ACQ_START_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-str-b", S_IRUGO, ZFA_UTC_ACQ_START_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-s", ZIO_RO_PERM, ZFA_UTC_ACQ_START_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-t", ZIO_RO_PERM, ZFA_UTC_ACQ_START_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-b", ZIO_RO_PERM, ZFA_UTC_ACQ_START_FINE, 0),
 	/* last acquisition end time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-end-s", S_IRUGO, ZFA_UTC_ACQ_END_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-end-t", S_IRUGO, ZFA_UTC_ACQ_END_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-end-b", S_IRUGO, ZFA_UTC_ACQ_END_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-s", ZIO_RO_PERM, ZFA_UTC_ACQ_END_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-t", ZIO_RO_PERM, ZFA_UTC_ACQ_END_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-b", ZIO_RO_PERM, ZFA_UTC_ACQ_END_FINE, 0),
 	/* last acquisition stop time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-stp-s", S_IRUGO, ZFA_UTC_ACQ_STOP_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-stp-t", S_IRUGO, ZFA_UTC_ACQ_STOP_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-stp-b", S_IRUGO, ZFA_UTC_ACQ_STOP_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-s", ZIO_RO_PERM, ZFA_UTC_ACQ_STOP_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-t", ZIO_RO_PERM, ZFA_UTC_ACQ_STOP_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-b", ZIO_RO_PERM, ZFA_UTC_ACQ_STOP_FINE, 0),
 	/* Reset all channel offset */
-	ZIO_PARAM_EXT("rst-ch-offset", S_IWUGO, ZFA_CTL_DAC_CLR_N, 1),
+	ZIO_PARAM_EXT("rst-ch-offset", ZIO_WO_PERM, ZFA_CTL_DAC_CLR_N, 1),
 
-	ZIO_ATTR_EXT("ch0-offset", S_IRUGO | S_IWUGO, ZFA_CH1_OFFSET, 0),
-	ZIO_ATTR_EXT("ch1-offset", S_IRUGO | S_IWUGO, ZFA_CH2_OFFSET, 0),
-	ZIO_ATTR_EXT("ch2-offset", S_IRUGO | S_IWUGO, ZFA_CH3_OFFSET, 0),
-	ZIO_ATTR_EXT("ch3-offset", S_IRUGO | S_IWUGO, ZFA_CH4_OFFSET, 0),
+	ZIO_ATTR_EXT("ch0-offset", ZIO_RW_PERM, ZFA_CH1_OFFSET, 0),
+	ZIO_ATTR_EXT("ch1-offset", ZIO_RW_PERM, ZFA_CH2_OFFSET, 0),
+	ZIO_ATTR_EXT("ch2-offset", ZIO_RW_PERM, ZFA_CH3_OFFSET, 0),
+	ZIO_ATTR_EXT("ch3-offset", ZIO_RW_PERM, ZFA_CH4_OFFSET, 0),
 
-	ZIO_ATTR_EXT("ch0-vref", S_IRUGO | S_IWUGO, ZFA_CH1_CTL_RANGE, 0),
-	ZIO_ATTR_EXT("ch1-vref", S_IRUGO | S_IWUGO, ZFA_CH2_CTL_RANGE, 0),
-	ZIO_ATTR_EXT("ch2-vref", S_IRUGO | S_IWUGO, ZFA_CH3_CTL_RANGE, 0),
-	ZIO_ATTR_EXT("ch3-vref", S_IRUGO | S_IWUGO, ZFA_CH4_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch0-vref", ZIO_RW_PERM, ZFA_CH1_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch1-vref", ZIO_RW_PERM, ZFA_CH2_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch2-vref", ZIO_RW_PERM, ZFA_CH3_CTL_RANGE, 0),
+	ZIO_ATTR_EXT("ch3-vref", ZIO_RW_PERM, ZFA_CH4_CTL_RANGE, 0),
 };
 
 /* FIXME Unused until TLV control will be available */
 static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 	/* the offset is complement 2 format */
-	ZIO_ATTR(zdev, ZIO_ATTR_OFFSET, S_IRUGO | S_IWUGO, ZFA_CHx_OFFSET, 0),
+	ZIO_ATTR(zdev, ZIO_ATTR_OFFSET, ZIO_RW_PERM, ZFA_CHx_OFFSET, 0),
 	/*
 	 * in-range
 	 * 0x23 (35): 100mV range
@@ -201,17 +201,17 @@ static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 	 * 0x45 (69): 10V range
 	 * 0x00 (0): Open input
 	 */
-	ZIO_ATTR(zdev, ZIO_ATTR_VREFTYPE, S_IRUGO  | S_IWUGO, ZFA_CHx_CTL_RANGE, 0x11),
+	ZIO_ATTR(zdev, ZIO_ATTR_VREFTYPE, ZIO_RW_PERM, ZFA_CHx_CTL_RANGE, 0x11),
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
 
-	ZIO_PARAM_EXT("current-value", S_IRUGO, ZFA_CHx_STA, 0),
+	ZIO_PARAM_EXT("current-value", ZIO_RO_PERM, ZFA_CHx_STA, 0),
 };
 
 static struct zio_attribute zfad_dev_ext_zattr[] = {
 	/* Get Mezzanine temperature from onewire */
-	ZIO_PARAM_EXT("temperature", S_IRUGO, ZFA_SW_R_NOADDRES_TEMP, 0),
+	ZIO_PARAM_EXT("temperature", ZIO_RO_PERM, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
 /* Calculate correct index for channel from CHx indexes */
 static inline int zfad_get_chx_index(unsigned long addr,
