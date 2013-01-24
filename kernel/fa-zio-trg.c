@@ -41,9 +41,9 @@ struct zfat_block {
 /* zio trigger attributes */
 static ZIO_ATTR_DEFINE_STD(ZIO_TRG, zfat_std_zattr) = {
 	/* Number of shots */
-	ZIO_ATTR(trig, ZIO_ATTR_TRIG_REENABLE, S_IRUGO | S_IWUGO, ZFAT_SHOTS_NB, 0),
-	ZIO_ATTR(trig, ZIO_ATTR_TRIG_PRE_SAMP, S_IRUGO | S_IWUGO, ZFAT_PRE, 0),
-	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, S_IRUGO | S_IWUGO, ZFAT_POST, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_REENABLE, ZIO_RW_PERM, ZFAT_SHOTS_NB, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_PRE_SAMP, ZIO_RW_PERM, ZFAT_PRE, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, ZIO_RW_PERM, ZFAT_POST, 0),
 };
 static struct zio_attribute zfat_ext_zattr[] = {
 	/* Config register */
@@ -51,35 +51,35 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 0: internal (data threshold)
 	 * 1: external (front panel trigger input)
 	 */
-	ZIO_ATTR_EXT("external", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_SEL, 0),
+	ZIO_ATTR_EXT("external", ZIO_RW_PERM, ZFAT_CFG_HW_SEL, 0),
 	/*
 	 * Internal Hardware trigger polarity
 	 * 0: positive edge/slope
 	 * 1: negative edge/slope
 	 */
-	ZIO_ATTR_EXT("polarity", S_IRUGO | S_IWUGO, ZFAT_CFG_HW_POL, 0),
+	ZIO_ATTR_EXT("polarity", ZIO_RW_PERM, ZFAT_CFG_HW_POL, 0),
 	/*
 	 * Channel selection for internal trigger
 	 * 0: channel 1, 1: channel 2, 2: channel 3, 3: channel 4
 	 */
-	ZIO_ATTR_EXT("int-channel", S_IRUGO | S_IWUGO, ZFAT_CFG_INT_SEL, 0),
+	ZIO_ATTR_EXT("int-channel", ZIO_RW_PERM, ZFAT_CFG_INT_SEL, 0),
 	/* Internal trigger threshold value is 2 complement format */
-	ZIO_ATTR_EXT("int-threshold", S_IRUGO | S_IWUGO, ZFAT_CFG_THRES, 0),
+	ZIO_ATTR_EXT("int-threshold", ZIO_RW_PERM, ZFAT_CFG_THRES, 0),
 	/*
 	 * Delay to apply on the trigger in sampling clock period. The default
 	 * clock frequency is 100MHz (period = 10ns)
 	 */
-	ZIO_ATTR_EXT("delay", S_IRUGO | S_IWUGO, ZFAT_DLY, 0),
+	ZIO_ATTR_EXT("delay", ZIO_RW_PERM, ZFAT_DLY, 0),
 
 	/* Software Trigger */
 	/* Enable (1) or disable (0) software trigger */
-	ZIO_PARAM_EXT("sw-trg-enable", S_IRUGO | S_IWUGO, ZFAT_CFG_SW_EN, 0),
+	ZIO_PARAM_EXT("sw-trg-enable", ZIO_RW_PERM, ZFAT_CFG_SW_EN, 0),
 	ZIO_PARAM_EXT("sw-trg-fire", S_IWUGO, ZFAT_SW, 0),
 
 	/* last trigger time stamp */
-	ZIO_PARAM_EXT("tstamp-trg-lst-s", S_IRUGO, ZFA_UTC_TRIG_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-trg-lst-t", S_IRUGO, ZFA_UTC_TRIG_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-trg-lst-b", S_IRUGO, ZFA_UTC_TRIG_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-trg-lst-s", ZIO_RO_PERM, ZFA_UTC_TRIG_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-trg-lst-t", ZIO_RO_PERM, ZFA_UTC_TRIG_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-trg-lst-b", ZIO_RO_PERM, ZFA_UTC_TRIG_FINE, 0),
 };
 
 static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
@@ -192,15 +192,15 @@ static void zfat_start_next_dma(struct zio_ti *ti)
 		 * of the trigger. Software trigger depends on the previous
 		 * status taken form zio attributes (index 5 of extended one)
 		 */
-		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN],
+		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN,
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
-		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN],
+		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN,
 				    ti->zattr_set.ext_zattr[5].value);
 		/* Automatic start next acquisition */
 		if (enable_auto_start) {
 			dev_dbg(&ti->head.dev, "Automatic start\n");
 			zfad_fsm_command(fa, ZFA_START);
-			zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_FMS_CMD],
+			zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD,
 					    ZFA_START);
 		}
 		return;
@@ -237,13 +237,13 @@ static void zfat_get_irq_status(struct zfat_instance *zfat,
 	struct fa_dev *fa = zfat->ti.cset->zdev->priv_d;
 
 	/* Get current interrupts status */
-	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_SRC], irq_status);
-	zfa_common_info_get(fa, &zfad_regs[ZFA_IRQ_MULTI], irq_multi);
+	zfa_common_info_get(fa, ZFA_IRQ_SRC, irq_status);
+	zfa_common_info_get(fa, ZFA_IRQ_MULTI, irq_multi);
 	dev_dbg(&zfat->ti.head.dev, "irq status = 0x%x multi = 0x%x\n",
 			*irq_status, *irq_multi);
 	/* Clear current interrupts status */
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_SRC], *irq_status);
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MULTI], *irq_multi);
+	zfa_common_conf_set(fa, ZFA_IRQ_SRC, *irq_status);
+	zfa_common_conf_set(fa, ZFA_IRQ_MULTI, *irq_multi);
 	/* ack the irq */
 	zfat->fa->fmc->op->irq_ack(zfat->fa->fmc);
 }
@@ -277,12 +277,9 @@ static void zfat_irq_dma_done(struct fmc_device *fmc,
 /* Get the last trigger time-stamp from device */
 static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
 {
-	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_SECONDS],
-			    (uint32_t *)&ts->secs);
-	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_COARSE],
-			    (uint32_t *)&ts->ticks);
-	zfa_common_info_get(fa, &zfad_regs[ZFA_UTC_TRIG_FINE],
-			    (uint32_t *)&ts->bins);
+	zfa_common_info_get(fa, ZFA_UTC_TRIG_SECONDS, (uint32_t *)&ts->secs);
+	zfa_common_info_get(fa, ZFA_UTC_TRIG_COARSE, (uint32_t *)&ts->ticks);
+	zfa_common_info_get(fa, ZFA_UTC_TRIG_FINE, (uint32_t *)&ts->bins);
 }
 /*
  * Trigger fires, but ZIO allow only one trigger at time, and the ADC in
@@ -363,14 +360,14 @@ static void zfat_irq_acq_end(struct zfat_instance *zfat)
 	 * All programmed triggers fire, so the acquisition is ended.
 	 * If the state machine is _idle_ we can start the DMA transfer.
 	 */
-	zfa_common_info_get(fa, &zfad_regs[ZFA_STA_FSM],&val);
+	zfa_common_info_get(fa, ZFA_STA_FSM, &val);
 	if (val == ZFA_STATE_IDLE) {
 		/*
 		 * Disable all triggers to prevent fires between
 		 * different DMA transfers required for multi-shots
 		 */
-		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN], 0);
-		zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_SW_EN], 0);
+		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
+		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
 		dev_dbg(&zfat->ti.head.dev, "Start DMA from device\n");
 		zio_fire_trigger(&zfat->ti);
 	} else {
@@ -471,7 +468,7 @@ static void zfat_destroy(struct zio_ti *ti)
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
 	/* Disable all interrupt */
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_NONE);
+	zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_NONE);
 	fa->fmc->op->irq_free(fa->fmc);
 	kfree(zfat);
 }
@@ -485,7 +482,7 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 
-	zfa_common_conf_set(fa, &zfad_regs[ZFAT_CFG_HW_EN], !status);
+	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, !status);
 }
 
 /*
@@ -526,7 +523,7 @@ static void zfat_abort(struct zio_cset *cset)
 	 * any interrupt
 	 */
 	dev_dbg(zfat->fa->fmc->hwdev, "Disable interrupts\n");
-	zfa_common_conf_set(zfat->fa, &zfad_regs[ZFA_IRQ_MASK], ZFAT_NONE);
+	zfa_common_conf_set(zfat->fa, ZFA_IRQ_MASK, ZFAT_NONE);
 	spin_lock_irqsave(&zfat->lock, flags);
 	list_for_each_entry_safe(zfat_block, node, &zfat->list_block, list) {
 		bi->b_op->free_block(bi, zfat_block->block);

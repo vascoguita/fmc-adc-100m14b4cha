@@ -9,6 +9,7 @@
 #define _fa_dev_H_
 
 #include <linux/zio.h>
+#include <linux/zio-utils.h>
 #include "spec.h"
 
 #define FA_GATEWARE_DEFAULT_NAME "fmc/fmc-adc.bin"
@@ -221,6 +222,9 @@ enum zfadc_dregs_enum {
 	ZFA_SW_R_NOADDRES_TEMP,
 	ZFA_SW_R_NOADDERS_AUTO,
 };
+/* Registers lists used in fd-zio-drv.c */
+extern const struct zio_field_desc zfad_regs[];
+
 /*
  * ZFA_CHx_MULT
  * address offset between two registers of the same type on consecutive channel
@@ -287,39 +291,37 @@ static inline struct spec_dev *get_spec(struct device *dev)
 }
 
 static inline int zfa_common_conf_set(struct fa_dev *fa,
-				      const struct zio_field_desc *fld,
+				      enum zfadc_dregs_enum index,
 				      uint32_t usr_val)
 {
 	uint32_t cur, val;
 
-	if ((usr_val & (~fld->mask))) {
+	if ((usr_val & (~zfad_regs[index].mask))) {
 		dev_err(fa->fmc->hwdev, "value 0x%x must fit mask 0x%x\n",
-			usr_val, fld->mask);
+			usr_val, zfad_regs[index].mask);
 		return -EINVAL;
 	}
 	/* Read current register*/
-	cur = fmc_readl(fa->fmc, fld->addr);
-	val = zio_set_field(fld, cur, usr_val);
+	cur = fmc_readl(fa->fmc, zfad_regs[index].addr);
+	val = zio_set_field(&zfad_regs[index], cur, usr_val);
 	/* FIXME re-write usr_val when possible (zio need a patch) */
 	/* If the attribute has a valid address */
-	fmc_writel(fa->fmc, val, fld->addr);
+	fmc_writel(fa->fmc, val, zfad_regs[index].addr);
 	return 0;
 }
 static inline void zfa_common_info_get(struct fa_dev *fa,
-				       const struct zio_field_desc *fld,
+				       enum zfadc_dregs_enum index,
 				       uint32_t *usr_val)
 {
 	uint32_t cur;
 
 	/* Read current register*/
-	cur = fmc_readl(fa->fmc, fld->addr);
+	cur = fmc_readl(fa->fmc, zfad_regs[index].addr);
 	/* Return the value */
-	*usr_val = zio_get_field(fld, cur);
+	*usr_val = zio_get_field(&zfad_regs[index], cur);
 }
 
 extern struct zio_trigger_type zfat_type;
-/* Registers lists used in fd-zio-drv.c and fd-zio-trg.c */
-extern const struct zio_field_desc zfad_regs[];
 
 
 /* Functions exported by fa-zio.c */
