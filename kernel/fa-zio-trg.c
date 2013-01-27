@@ -17,6 +17,7 @@
 #include <linux/zio-sysfs.h>
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
+#include <linux/zio-utils.h>
 
 #include "spec.h"
 #include "fmc-adc.h"
@@ -539,9 +540,9 @@ static const struct zio_trigger_operations zfat_ops = {
 	.create =		zfat_create,
 	.destroy =		zfat_destroy,
 	.change_status =	zfat_change_status,
-	.__data_done =		zfat_data_done,
-	.__input_fire =		zfat_start_next_dma,
-	.__abort =		zfat_abort,
+	.data_done =		zfat_data_done,
+	.arm =			zfat_start_next_dma,
+	.abort =		zfat_abort,
 };
 
 /* Definition of the trigger type */
