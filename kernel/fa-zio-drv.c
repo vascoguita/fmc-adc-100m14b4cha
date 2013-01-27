@@ -219,6 +219,13 @@ static inline int zfad_get_chx_index(unsigned long addr,
 {
 	return addr + ZFA_CHx_MULT  * (1 + chan->index - chan->cset->n_chan);
 }
+
+
+/*
+ * zfad_fsm_command
+ * @fa: the fmc-adc descriptor
+ * @command: the command to apply to FSM
+ */
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	uint32_t val;
@@ -241,22 +248,28 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		}
 	}
 	/*
-	 * When any command occurs we are ready to start a new
-	 * acquisition, so we must abort any previous one.
-	 * If it is STOP, we abort because we abort
-	 * an acquisition.
-	 * If it is START, we abort because if there was a
-	 * previous start but the acquisition end interrupt
-	 * doesn't occurs, START mean RESTART.
-	 * If it is a clean START, the abort has not effects
+	 * When any command occurs we are ready to start a new acquisition, so
+	 * we must abort any previous one. If it is STOP, we abort because we
+	 * abort an acquisition. If it is START, we abort because if there was
+	 * a previous start but the acquisition end interrupt doesn't occurs,
+	 * START mean RESTART. If it is a clean START, the abort has not
+	 * effects
 	 */
-	zio_trigger_abort(fa->zdev->cset);
+	zio_trigger_abort_disable(fa->zdev->cset, 0);
 	if (command == ZFA_START) {
 		dev_dbg(fa->fmc->hwdev, "Enable interrupts\n");
 		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_ALL);
 	}
 	return 0;
 }
+
+
+/*
+ * zfad_reset_offset
+ * @fa: the fmc-adc descriptor
+ *
+ * Reset channel's offsets
+ */
 static void zfad_reset_offset(struct fa_dev *fa)
 {
 	zfa_common_conf_set(fa, ZFA_CTL_DAC_CLR_N, 0);
@@ -268,28 +281,36 @@ static void zfad_reset_offset(struct fa_dev *fa)
 	 */
 }
 
+
+/*
+ * zfad_get_range
+ * @usr_val: range value
+ *
+ * return the enum associated to the range value
+ */
 static int zfad_get_range(uint32_t usr_val)
 {
 	switch (usr_val) {
 	case 0x23:
 		return ZFA_100mV;
-		break;
 	case 0x11:
 		return ZFA_1V;
-		break;
 	case 0x45:
 		return ZFA_10V;
-		break;
 	case 0x00:
 		return ZFA_OPEN;
-		break;
-	default:
-		break;
 	}
 
 	return -EINVAL;
 }
+
+
 /*
+ * zfad_calibration
+ * @fa: the fmc-adc descriptor
+ * @chan: the channel to calibrate
+ * @usr_val: the volt range to set and calibrate
+ *
  * When the input range change, we must calibrate the offset and the gain.
  */
 static int zfad_calibration(struct fa_dev *fa, struct zio_channel *chan,
@@ -315,7 +336,13 @@ static int zfad_calibration(struct fa_dev *fa, struct zio_channel *chan,
 	return 0;
 }
 
+
 /*
+ * zfad_apply_user_offset
+ * @fa: the fmc-adc descriptor
+ * @chan: the channel where apply offset
+ * @usr_val: the offset value to apply
+ *
  * Apply user offset to the channel input. Before apply the user offset it must
  * be corrected with offset and gain calibration value. An open input does not
  * need any correction.
@@ -351,6 +378,8 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	/* Apply calibrated offset to DAC */
 	return fa_spi_xfer(fa, chan->index, 16, cal_val, &tmp);
 }
+
+
 /* set a value to a FMC-ADC registers */
 static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
@@ -497,6 +526,13 @@ static int zfad_input_cset(struct zio_cset *cset)
 	return -EAGAIN; /* data_done on DMA_DONE interrupt */
 }
 
+
+/*
+ * zfad_zio_probe
+ * @zdev: the real zio device
+ *
+ * The device registration completes. Copy the calibration data from the eeprom
+ */
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
@@ -517,6 +553,14 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	return 0;
 }
 
+
+/*
+ * zfad_init_cset
+ * @cset: channel set to initialize
+ *
+ * The initialization stop the FSM to prevent any early trigger fire, then it
+ * force the default value of ADC registers.
+ */
 static int zfad_init_cset(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
