@@ -75,6 +75,9 @@ struct dma_item {
  * @hwzdev: is the pointer to the fake zio_device, used to initialize and
  *          to remove a zio_device
  *
+ * @n_shots: total number of programmed shots for an acquisition
+ * @n_fire: number of trigger fire occurred within an acquisition
+ *
  * DMA variable: these variables are used by the fa-dma.c engine
  * @sgt: scatter/gather table
  * @items: vector of dma_item for a single DMA transfer
@@ -92,6 +95,10 @@ struct fa_dev {
 	struct spec_dev		*spec;
 	struct zio_device	*zdev;
 	struct zio_device	*hwzdev;
+
+	/* Acquisition */
+	unsigned int		n_shots;
+	unsigned int		n_fire;
 
 	/* DMA variable */
 	struct sg_table		sgt;
