@@ -76,7 +76,7 @@ struct dma_item {
  *          to remove a zio_device
  *
  * @n_shots: total number of programmed shots for an acquisition
- * @n_fire: number of trigger fire occurred within an acquisition
+ * @n_fires: number of trigger fire occurred within an acquisition
  *
  * DMA variable: these variables are used by the fa-dma.c engine
  * @sgt: scatter/gather table
@@ -98,7 +98,7 @@ struct fa_dev {
 
 	/* Acquisition */
 	unsigned int		n_shots;
-	unsigned int		n_fire;
+	unsigned int		n_fires;
 
 	/* DMA variable */
 	struct sg_table		sgt;
