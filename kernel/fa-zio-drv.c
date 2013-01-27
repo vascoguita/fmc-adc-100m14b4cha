@@ -225,10 +225,28 @@ static inline int zfad_get_chx_index(unsigned long addr,
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor
  * @command: the command to apply to FSM
+ *
+ * This function check if the command can be done and perform some
+ * preliminary operation before
  */
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	uint32_t val;
+
+	if (command != ZFA_START && command != ZFA_STOP) {
+		dev_err(fa->fmc->hwdev, "Invalid command\n");
+		return -EINVAL;
+	}
+
+	/*
+	 * When any command occurs we are ready to start a new acquisition, so
+	 * we must abort any previous one. If it is STOP, we abort because we
+	 * abort an acquisition. If it is START, we abort because if there was
+	 * a previous start but the acquisition end interrupt doesn't occurs,
+	 * START mean RESTART. If it is a clean START, the abort has not
+	 * effects
+	 */
+	zio_trigger_abort_disable(fa->zdev->cset, 0);
 
 	/* If START, check if we can start */
 	if (command == ZFA_START) {
@@ -246,20 +264,18 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 			"Cannot start acquisition: SerDes not synchronized\n");
 			return -EBUSY;
 		}
-	}
-	/*
-	 * When any command occurs we are ready to start a new acquisition, so
-	 * we must abort any previous one. If it is STOP, we abort because we
-	 * abort an acquisition. If it is START, we abort because if there was
-	 * a previous start but the acquisition end interrupt doesn't occurs,
-	 * START mean RESTART. If it is a clean START, the abort has not
-	 * effects
-	 */
-	zio_trigger_abort_disable(fa->zdev->cset, 0);
-	if (command == ZFA_START) {
+
+		/* Now we can arm the trigger for the incoming acquisition */
+		zio_arm_trigger(fa->zdev->cset->ti);
+
 		dev_dbg(fa->fmc->hwdev, "Enable interrupts\n");
 		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_ALL);
+	} else {
+		dev_dbg(fa->fmc->hwdev, "Disable interrupts\n");
+		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_NONE);
 	}
+
+	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, command);
 	return 0;
 }
 
@@ -444,9 +460,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		reg_index = i;
 		break;
 	case ZFA_CTL_FMS_CMD:
-		err = zfad_fsm_command(fa, usr_val);
-		if (err)
-			return err;
+		return zfad_fsm_command(fa, usr_val);
 	default:
 		reg = &zfad_regs[zattr->id];
 		reg_index = zattr->id;
