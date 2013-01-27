@@ -447,6 +447,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_SW_R_NOADDRES_TEMP:
 		/* Read temperature from onewire */
 		*usr_val = fa_read_temp(fa, 0);
+		*usr_val = ((usr_val) / 16) + ((*usr_val) & 0xf) * 1000 / 16);
 		return 0;
 	case ZFA_CHx_CTL_RANGE:
 	case ZFA_CHx_STA:
