@@ -83,25 +83,7 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	ZIO_PARAM_EXT("tstamp-trg-lst-b", ZIO_RO_PERM, ZFA_UTC_TRIG_FINE, 0),
 };
 
-static int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
-				   uint32_t val)
-{
-	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
-	uint32_t pre_t, post_t, nshot_t;
 
-	if (!addr)
-		return 0;
-
-	pre_t = addr == ZFAT_PRE ? val : ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
-	post_t = addr == ZFAT_POST ? val : ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
-	nshot_t = addr == ZFAT_SHOTS_NB ? val : ti_zattr[ZIO_ATTR_TRIG_REENABLE].value + 1;
-
-	if (((pre_t + post_t) * ti->cset->ssize * nshot_t) >= FA_MAX_ACQ_BYTE) {
-		dev_err(&ti->head.dev, "cannot acquire, device memory overflow\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
 /* set a value to a FMC-ADC trigger register */
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)

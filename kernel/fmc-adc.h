@@ -293,6 +293,35 @@ enum zfat_irq {
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 
+extern struct zio_trigger_type zfat_type;
+
+static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
+					  uint32_t val)
+{
+	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
+	uint32_t pre_t, post_t, nshot_t;
+	size_t size;
+
+	if (!addr)
+		return 0;
+
+	pre_t = addr == ZFAT_PRE ? val : ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
+	post_t = addr == ZFAT_POST ? val : ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
+	if (ti->cset->trig != &zfat_type)
+		nshot_t = 1; /* with any other trigger work in one-shot mode */
+	else
+		nshot_t = addr == ZFAT_SHOTS_NB ? val :
+			  ti_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
+
+	size = ((pre_t + post_t) * ti->cset->ssize * nshot_t) *
+		(ti->cset->n_chan - 1);
+	if (size >= FA_MAX_ACQ_BYTE) {
+		dev_err(&ti->head.dev, "cannot acquire, device memory overflow\n");
+		return -ENOMEM;
+	}
+	return 0;
+}
+
 static inline struct fa_dev *get_zfadc(struct device *dev)
 {
 	switch (to_zio_head(dev)->zobj_type) {
@@ -345,8 +374,6 @@ static inline void zfa_common_info_get(struct fa_dev *fa,
 	/* Return the value */
 	*usr_val = zio_get_field(&zfad_regs[index], cur);
 }
-
-extern struct zio_trigger_type zfat_type;
 
 
 /* Functions exported by fa-zio.c */
