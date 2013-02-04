@@ -192,53 +192,135 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 }
 
 /*
- * Transfer is over for the active block, so store the interleaved block
- * and start the next dma transfer for the next block (if any)
+ * zfat_data_done
+ * @cset: channels set
+ *
+ * Transfer is over for all the active_block. Store all blocks and free
+ * zfad_blocks vector. Here we are storing only blocks
+ * that were filled by a trigger fire. If for some reason the data_done
+ * occurs before the natural end of the acquisition, un-filled block
+ * are not stored
  */
-static void zfat_data_done(struct zio_cset *cset)
+static int zfat_data_done(struct zio_cset *cset)
 {
-	struct zio_block *block = cset->interleave->active_block;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	struct zio_bi *bi = cset->interleave->bi;
+	struct fa_dev *fa = cset->zdev->priv_d;
+	unsigned int i;
 
-	if (!block)
-		return;
+	/* Nothing to store */
+	if (unlikely(!zfad_block))
+		return 0;
 
-	/* Store block in the ZIO buffer */
-	if (bi->b_op->store_block(bi, block)) { /* may fail, no prob */
-		bi->b_op->free_block(bi, block);
-	}
+	if (unlikely(fa->n_fires < fa->n_shots))
+		dev_warn(fa->fmc->hwdev,
+			"Data done occurs before the end. %i blocks lost\n",
+			(fa->n_shots - fa->n_fires));
+
+	/* Store blocks */
+	for(i = 0; i < fa->n_shots; --i)
+		if (likely(i < fa->n_fires)) /* Store filled blocks */
+			bi->b_op->store_block(bi, zfad_block[i].block);
+		else	/* Free un-filled blocks */
+			bi->b_op->free_block(bi, zfad_block[i].block);
+
 	/* Clear active block */
+	fa->n_shots = 0;
+	fa->n_fires = 0;
+	kfree(zfad_block);
 	cset->interleave->active_block = NULL;
-	/* Start next block DMA transfer */
-	zfat_start_next_dma(cset->ti);
+
+	return 0;
 }
 
 /*
- * Abort acquisition empty the list of prepared buffer. If a DMA
- * transfer is active, it will complete only the block that it takes
+ * zfat_arm_trigger
+ * @ti: trigger instance
+ *
+ * The ADC in multi-shot mode need to allocate a block for each programmed shot.
+ * We need a custom arm_trigger to allocate N blocks at times.
  */
-static void zfat_abort(struct zio_cset *cset)
+static int zfat_arm_trigger(struct zio_ti *ti)
 {
-	struct zio_bi *bi = cset->interleave->bi;
-	struct zfat_instance *zfat = to_zfat_instance(cset->ti);
-	struct zfat_block *zfat_block, *node;
-	unsigned long flags;
+	struct zio_channel *interleave = ti->cset->interleave;
+	struct zio_buffer_type *zbuf = ti->cset->zbuf;
+	struct fa_dev *fa = ti->cset->zdev->priv_d;
+	struct zio_block *block;
+	struct zfad_block *zfad_block;
+	unsigned int size, i;
+	int err = 0;
+
+	dev_dbg(&ti->head.dev, "Arming trigger\n");
+	/* Update the current control: sequence, nsamples and tstamp */
+	interleave->current_ctrl->nsamples = ti->nsamples;
+
+	/* Allocate the necessary blocks for multi-shot acquisition */
+	fa->n_shots = ti->zattr_set.std_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
+
+	/* Allocate a new block for DMA transfer */
+	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots,
+			     GFP_ATOMIC);
+	if (!zfad_block)
+		return -ENOMEM;
+
+	interleave->priv_d = zfad_block;
 
 	/*
-	 * Disable all interrupt. We are aborting acquisition, we don't need
-	 * any interrupt
+	 * Calculate the required size to store all channels.
+	 * n_chan - 1 because of interleaved channel
 	 */
-	dev_dbg(zfat->fa->fmc->hwdev, "Disable interrupts\n");
-	zfa_common_conf_set(zfat->fa, ZFA_IRQ_MASK, ZFAT_NONE);
-	spin_lock_irqsave(&zfat->lock, flags);
-	list_for_each_entry_safe(zfat_block, node, &zfat->list_block, list) {
-		bi->b_op->free_block(bi, zfat_block->block);
-		list_del(&zfat_block->list);
-		kfree(zfat_block);
+	size = interleave->current_ctrl->ssize *
+	       ti->nsamples * (ti->cset->n_chan - 1);
+
+	/* Allocate ZIO blocks */
+	for (i = 0; i < fa->n_shots; ++i) {
+		block = zbuf->b_op->alloc_block(interleave->bi, size,
+					        GFP_ATOMIC);
+		if (IS_ERR(block)) {
+			dev_err(&ti->cset->head.dev,
+				"arm trigger fail, cannot allocate block\n");
+			goto out_allocate;
+		}
+		/* Copy the updated control into the block */
+		memcpy(zio_get_ctrl(block), interleave->current_ctrl,
+		       zio_control_size(interleave));
+		/* Add to the vector of prepared blocks */
+		zfad_block[i].block = block;
 	}
-	spin_unlock_irqrestore(&zfat->lock, flags);
-	zfat->fa->cur_dev_mem = 0;
-	zfat->fa->lst_dev_mem = 0;
+
+	err = ti->cset->raw_io(ti->cset);
+	if (err != -EAGAIN && err != 0)
+		goto out_allocate;
+
+	return err;
+
+out_allocate:
+	while(--i)
+		zbuf->b_op->free_block(interleave->bi, zfad_block[i].block);
+
+	kfree(zfad_block);
+	return err;
+}
+
+
+/*
+ * zfat_abort
+ * @cset: channel set to abort
+ *
+ * Abort acquisition empty the list of prepared buffer.
+ */
+static void zfat_abort(struct zio_ti *ti)
+{
+	struct zio_cset *cset = ti->cset;
+	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zio_bi *bi = cset->interleave->bi;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
+	unsigned int i;
+
+	/* Free all blocks */
+	for(i = 0; i < fa->n_shots; ++i)
+		bi->b_op->free_block(bi, zfad_block[i].block);
+	kfree(zfad_block);
 }
 
 static const struct zio_trigger_operations zfat_ops = {
@@ -246,7 +328,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.destroy =		zfat_destroy,
 	.change_status =	zfat_change_status,
 	.data_done =		zfat_data_done,
-	.arm =			zfat_start_next_dma,
+	.arm =			zfat_arm_trigger,
 	.abort =		zfat_abort,
 };
 
