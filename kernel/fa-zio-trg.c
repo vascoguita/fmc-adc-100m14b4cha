@@ -147,16 +147,10 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 	if (!zfat)
 		return ERR_PTR(-ENOMEM);
 
-	/* Trigger registers */
-	/* Set to single shot mode by default */
-
 	/* Disable Software trigger*/
 	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
 	/* Enable Hardware trigger*/
 	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 1);
-	/* Select external trigger (index 0) */
-	zfa_common_conf_set(fa, ZFAT_CFG_HW_SEL, 1);
-	cset->ti->zattr_set.ext_zattr[0].value = 1;
 
 	zfat->fa = fa;
 	zfat->ti.cset = cset;
@@ -169,12 +163,10 @@ static void zfat_destroy(struct zio_ti *ti)
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
-	/* Disable Hardware trigger */
-	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
 	/* Enable Software trigger */
 	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
-	/* Disable all interrupt */
-	zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_NONE);
+	/* Disable Hardware trigger */
+	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
 
 	kfree(zfat);
 }
