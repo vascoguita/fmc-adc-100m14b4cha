@@ -180,6 +180,7 @@ static void zfat_destroy(struct zio_ti *ti)
 }
 
 /*
+ *
  * Enable or disable the hardware trigger. The hardware trigger is the prefered
  * trigger so it correspond to the ZIO enable of the trigger.Status is active
  * low on ZIO but active high on the FMC-ADC, then use '!' on status
@@ -323,6 +324,17 @@ static void zfat_abort(struct zio_ti *ti)
 	kfree(zfad_block);
 }
 
+/* Output it is not supported by this trigger */
+static int zfat_push(struct zio_ti *ti, struct zio_channel *chan,
+		     struct zio_block *block)
+{
+	dev_err(&ti->head.dev, "trigger \"%s\" does not support output",
+		ti->head.name);
+	BUG();
+
+	return -EIO;
+}
+
 static const struct zio_trigger_operations zfat_ops = {
 	.create =		zfat_create,
 	.destroy =		zfat_destroy,
@@ -330,6 +342,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.data_done =		zfat_data_done,
 	.arm =			zfat_arm_trigger,
 	.abort =		zfat_abort,
+	.push_block =		zfat_push,
 };
 
 /* Definition of the trigger type */
