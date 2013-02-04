@@ -88,7 +88,6 @@ static struct zio_attribute zfat_ext_zattr[] = {
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
-	const struct zio_field_desc *reg = &zfad_regs[zattr->id];
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
 	uint32_t tmp_val = usr_val;
@@ -130,7 +129,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	}
 
-	return zfa_common_conf_set(fa, reg, tmp_val);
+	return zfa_common_conf_set(fa, zattr->id, tmp_val);
 }
 /* get the value of a FMC-ADC trigger register */
 static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
@@ -138,9 +137,10 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 
-	zfa_common_info_get(fa, &zfad_regs[zattr->id], usr_val);
+	zfa_common_info_get(fa, zattr->id, usr_val);
 	if (zattr->id == ZFAT_SHOTS_NB)
 		(*usr_val)--;
+
 	return 0;
 }
 static const struct zio_sysfs_operations zfat_s_op = {
