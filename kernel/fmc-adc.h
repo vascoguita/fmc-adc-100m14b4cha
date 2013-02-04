@@ -30,8 +30,8 @@ extern int enable_auto_start;
 
 
 /* ADC Calibration */
-#define FA_CAL_PTR 0x0400 /* 1 KByte */
-#define FA_CAL_LEN 108
+#define FA_CAL_PTR 0x0400 /* Pointer to calibration data in EEPROM (1 KByte) */
+#define FA_CAL_LEN 108 /* Length of the calibration data */
 
 enum fa_input_range {
 	ZFA_10V = 0x0,
@@ -40,7 +40,7 @@ enum fa_input_range {
 	ZFA_OPEN, /* Open Range */
 };
 /*
- * Calibration item
+ * fa_calibration_data: Calibration item
  * @offset calibration data for 4 channels
  * @gain calibration data for 4 channels
  * @temp calibration data temperature
@@ -51,7 +51,18 @@ struct fa_calibration_data {
 	uint16_t temp;
 };
 
-/* The information about a DMA transfer */
+/*
+ * dma_item: The information about a DMA transfer
+ * @start_addr: pointer where start to retrieve data from device memory
+ * @dma_addr_l: low 32bit of the dma address on host memory
+ * @dma_addr_h: high 32bit of the dma address on host memory
+ * @dma_len: number of bytes to transfer from device to host
+ * @next_addr_l: low 32bit of the address of the next memory area to use
+ * @next_addr_h: high 32bit of the address of the next memory area to use
+ * @attribute: dma information about data transferm. At the moment it is used
+ *             only to provide the "last item" bit, direction is fixed to
+ *             device->host
+ */
 struct dma_item {
 	uint32_t start_addr;	/* 0x00 */
 	uint32_t dma_addr_l;	/* 0x04 */
@@ -60,10 +71,6 @@ struct dma_item {
 	uint32_t next_addr_l;	/* 0x10 */
 	uint32_t next_addr_h;	/* 0x14 */
 	uint32_t attribute;	/* 0x18 */
-	/*
-	 * attribute is used only to provide the "last item" bit, direction is
-	 * fixed to device->host
-	 */
 };
 
 /*
