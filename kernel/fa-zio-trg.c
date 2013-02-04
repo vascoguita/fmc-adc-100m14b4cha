@@ -42,7 +42,7 @@ struct zfat_block {
 /* zio trigger attributes */
 static ZIO_ATTR_DEFINE_STD(ZIO_TRG, zfat_std_zattr) = {
 	/* Number of shots */
-	ZIO_ATTR(trig, ZIO_ATTR_TRIG_REENABLE, ZIO_RW_PERM, ZFAT_SHOTS_NB, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_N_SHOTS, ZIO_RW_PERM, ZFAT_SHOTS_NB, 1),
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_PRE_SAMP, ZIO_RW_PERM, ZFAT_PRE, 0),
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, ZIO_RW_PERM, ZFAT_POST, 0),
 };
@@ -95,15 +95,6 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
-		/*
-		 * Increase the reenable by 1 to be choerent with the
-		 * re-enable meaning. On the ADC there is NSHOTS which
-		 * is the number of shots to do, so to do 1 shot this
-		 * register must be set to 1. ZIO use re-enable to do
-		 * multiple shots, so 1 mean one more shot after the
-		 * first one.
-		 */
-		++tmp_val;
 	case ZFAT_PRE:
 	case ZFAT_POST:
 		err = zfat_overflow_detection(ti, zattr->id, tmp_val);
@@ -138,8 +129,6 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 
 	zfa_common_info_get(fa, zattr->id, usr_val);
-	if (zattr->id == ZFAT_SHOTS_NB)
-		(*usr_val)--;
 
 	return 0;
 }
