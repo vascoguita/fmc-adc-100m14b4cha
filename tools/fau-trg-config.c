@@ -39,7 +39,7 @@ const char *attribute[] = {
 	[FAU_TRG_EN] = "/cset0/trigger/enable",
 	[FAU_TRG_PRE] = "/cset0/trigger/pre-samples",
 	[FAU_TRG_PST] = "/cset0/trigger/post-samples",
-	[FAU_TRG_RE_EN] = "/cset0/trigger/re-enable",
+	[FAU_TRG_RE_EN] = "/cset0/trigger/nshots",
 	[FAU_TRG_EXT] = "/cset0/trigger/external",
 	[FAU_SW_TRG_EN] = "/cset0/trigger/sw-trg-enable",
 	[FAU_TRG_DLY] = "/cset0/trigger/delay",
@@ -75,7 +75,7 @@ static void fau_help()
 	printf("  <DEVICE>: ZIO name of the device to use\n");
 	printf("  --pre|-p <value>: number of pre samples\n");
 	printf("  --post|-P <value>: number of pre samples\n");
-	printf("  --re-enable|-r <value>: number of trigger shots\n");
+	printf("  --nshots|-n <value>: number of trigger shots\n");
 	printf("  --delay|-d <value>: set the ticks delay of the trigger\n");
 	printf("  --threshold|-t <value>: set internal trigger threshold\n");
 	printf("  --channel|-c <value>: select the internal channel as "
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	static struct option options[] = {
 		{"pre",required_argument, 0, 'p'},
 		{"post",required_argument, 0, 'P'},
-		{"re-enable",required_argument, 0, 'r'},
+		{"nshots",required_argument, 0, 'n'},
 		{"delay",required_argument, 0, 'd'},
 		{"threshold",required_argument, 0, 't'},
 		{"negative-edge",no_argument, &attrval[FAU_TRG_POL], 1},
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while( (c = getopt_long(argc, argv, "p:P:r:d:t:c:h",
+	while( (c = getopt_long(argc, argv, "p:P:n:d:t:c:h",
 						options, &opt_index)) >=0 ){
 		if (!c) {
 			argcd++;
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 		case 'P':
 			attrval[FAU_TRG_PST] = atoi(optarg);
 			break;
-		case 'r':
+		case 'n':
 			attrval[FAU_TRG_RE_EN] = atoi(optarg);
 			break;
 		case 'd':
