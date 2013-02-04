@@ -370,7 +370,7 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	int i, range;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
-	zfa_common_info_get(fa, &zfad_regs[i], &range_reg);
+	zfa_common_info_get(fa, i, &range_reg);
 
 	range = zfad_get_range(range_reg);
 	if (range < 0)
@@ -401,11 +401,11 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	const struct zio_field_desc *reg;
 	int i, err, reg_index;
 
+	reg_index = zattr->id;
 	i = fa->zdev->cset->n_chan -1 ; /* -1 because of interleaved channel */
-	switch (zattr->id) {
+	switch (reg_index) {
 	case ZFA_SW_R_NOADDERS_AUTO:
 		enable_auto_start = usr_val;
 		return 0;
@@ -436,7 +436,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			dev_err(dev, "max-sample-rate minimum value is 1\n");
 			return -EINVAL;
 		}
-		reg = &zfad_regs[zattr->id];
 		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_RANGE:
@@ -456,25 +455,21 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		if (err)
 			return err;
 	case ZFA_CHx_STA:
-		i = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
-		reg_index = i;
+		reg_index = zfad_get_chx_index(reg_index, to_zio_chan(dev));
 		break;
 	case ZFA_CTL_FMS_CMD:
 		return zfad_fsm_command(fa, usr_val);
-	default:
-		reg = &zfad_regs[zattr->id];
-		reg_index = zattr->id;
 	}
 
 	return zfa_common_conf_set(fa, reg_index, usr_val);
 }
+
 /* get the value of a FMC-ADC register */
 static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
-	const struct zio_field_desc *reg;
 	struct fa_dev *fa = get_zfadc(dev);
-	int i, reg_index;
+	int reg_index;
 
 	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
@@ -582,7 +577,7 @@ static int zfad_init_cset(struct zio_cset *cset)
 
 	dev_dbg(&cset->head.dev, "%s:%d", __func__, __LINE__);
 	/* Force stop FSM to prevent early trigger fire */
-	zfa_common_conf_set(fa, &zfad_regs[ZFA_CTL_FMS_CMD], ZFA_STOP);
+	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
 	/* Initialize channels gain to 1 and range to 1V */
 	for (i = 0; i < 4; ++i) {
 		zfa_common_conf_set(fa, ZFA_CH1_GAIN + (i * ZFA_CHx_MULT),
@@ -708,7 +703,7 @@ int fa_zio_init(struct fa_dev *fa)
 	/* Wait 50ms, so device has time to calibrate */
 	mdelay(50);
 	/* Verify that the FMC is plugged (0 is plugged) */
-	zfa_common_info_get(fa, &zfad_regs[ZFA_CAR_FMC_PRES], &val);
+	zfa_common_info_get(fa, ZFA_CAR_FMC_PRES, &val);
 	if (val) {
 		dev_err(hwdev, "No FCM ADC plugged\n");
 		return -ENODEV;
