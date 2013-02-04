@@ -87,6 +87,10 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
+		if (!tmp_val) {
+			dev_err(dev, "nshots cannot be 0\n");
+			return -EINVAL;
+		}
 	case ZFAT_PRE:
 	case ZFAT_POST:
 		err = zfat_overflow_detection(ti, zattr->id, tmp_val);
@@ -249,6 +253,12 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 
 	/* Allocate the necessary blocks for multi-shot acquisition */
 	fa->n_shots = ti->zattr_set.std_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
+	dev_dbg(&ti->head.dev, "programmed shot %i\n", fa->n_shots);
+
+	if (!fa->n_shots) {
+		dev_err(&ti->head.dev, "Cannot arm trigger.No programmed shots\n");
+		return -EINVAL;
+	}
 
 	/* Allocate a new block for DMA transfer */
 	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots,
