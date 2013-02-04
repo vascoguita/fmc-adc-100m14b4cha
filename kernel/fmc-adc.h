@@ -84,13 +84,9 @@ struct dma_item {
  *
  * @n_shots: total number of programmed shots for an acquisition
  * @n_fires: number of trigger fire occurred within an acquisition
+ * @n_trans: number of DMA transfer done for an acquisition
  *
- * DMA variable: these variables are used by the fa-dma.c engine
- * @sgt: scatter/gather table
- * @items: vector of dma_item for a single DMA transfer
- * @dma_list_item: contains the address of items mapped for DMA access. The
- *                 device will access items to retrive information about the
- *                 DMA items to transfer.
+ * @n_dma_err: number of errors
  * @lst_dev_mem: contains the device address where last block is stored.
  *               FIXME when it reset?
  * @cur_dev_mem: contains the device address to the current block of data in
@@ -106,11 +102,11 @@ struct fa_dev {
 	/* Acquisition */
 	unsigned int		n_shots;
 	unsigned int		n_fires;
+	unsigned int		n_trans;
 
+	/* Statistic informations */
+	unsigned int		n_dma_err;
 	/* DMA variable */
-	struct sg_table		sgt;
-	struct dma_item		*items;
-	dma_addr_t		dma_list_item;
 	uint32_t		lst_dev_mem;
 	uint32_t		cur_dev_mem;
 
@@ -124,8 +120,23 @@ struct fa_dev {
 	struct fa_calibration_data dac_cal_data[3];
 };
 
-extern int zfad_map_dma(struct zio_cset *cset);
-extern void zfad_unmap_dma(struct zio_cset *cset);
+/*
+ *
+ */
+struct zfad_block {
+	struct zio_block *block;
+	unsigned int dev_addr;
+
+	struct sg_table	sgt;
+	struct dma_item	*items;
+	dma_addr_t	dma_list_item;
+	uint32_t	dev_mem_ptr;
+};
+
+extern int zfad_map_dma(struct zio_cset *cset,
+			struct zfad_block *zfad_block);
+extern void zfad_unmap_dma(struct zio_cset *cset,
+			   struct zfad_block *zfad_block);
 
 /* Device registers */
 enum zfadc_dregs_enum {
