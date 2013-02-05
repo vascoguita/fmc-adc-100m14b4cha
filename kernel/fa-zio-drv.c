@@ -820,6 +820,14 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 	zfat_get_irq_status(fa, &status, &multi);
 	if (!status)
 		return IRQ_NONE;
+	if (unlikely((status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) &&
+	    (status & (ZFAT_TRG_FIRE | ZFAT_ACQ_END)))) {
+		WARN(1, "Cannot handle trigger interrupt and DMA interrupt at "
+			"the same time\n");
+		/* Stop Acquisition, ADC it is not working properly */
+		zfad_fsm_command(fa, ZFA_STOP);
+		return IRQ_NONE;
+	}
 	/*
 	 * It cannot happen that DMA_DONE is in the multi register.
 	 * It should not happen ...
