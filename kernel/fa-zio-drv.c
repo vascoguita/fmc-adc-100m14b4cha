@@ -704,8 +704,6 @@ static void zfat_irq_dma_done(struct zio_cset *cset, int status)
 		dev_err(fa->fmc->hwdev,
 			"DMA error (status 0x%x). All acquisition lost\n", val);
 		zio_trigger_abort_disable(cset, 0);
-		/* Stop the acquisition */
-		zfad_fsm_command(fa, ZFA_STOP);
 		fa->n_dma_err++;
 	}
 }
