@@ -13,7 +13,7 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
-static struct fmc_driver fa_dev__drv;
+static struct fmc_driver fa_dev_drv;
 static char *fa_binaries = FA_GATEWARE_DEFAULT_NAME;
 module_param_named(file, fa_binaries, charp, 0444);
 
@@ -50,7 +50,7 @@ int fa_probe(struct fmc_device *fmc)
 	fa->fmc = fmc;
 
 	/* We first write a new binary (and lm32) within the spec */
-	err = fmc->op->reprogram(fmc, &fa_dev__drv, fa_binaries);
+	err = fmc->op->reprogram(fmc, &fa_dev_drv, fa_binaries);
 	if (err) {
 		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
 				fa_binaries, err);
@@ -84,7 +84,7 @@ int fa_remove(struct fmc_device *fmc)
 	devm_kfree(&fmc->dev, fa);
 	return 0;
 }
-static struct fmc_driver fa_dev__drv = {
+static struct fmc_driver fa_dev_drv = {
 	.version = FMC_VERSION,
 	.driver.name = KBUILD_MODNAME,
 	.probe = fa_probe,
@@ -97,13 +97,13 @@ static int fa_init(void)
 	int ret;
 
 	pr_debug("%s\n",__func__);
-	ret = fmc_driver_register(&fa_dev__drv);
+	ret = fmc_driver_register(&fa_dev_drv);
 	if (ret)
 		return ret;
 
 	ret = fa_zio_register();
 	if (ret) {
-		fmc_driver_unregister(&fa_dev__drv);
+		fmc_driver_unregister(&fa_dev_drv);
 		return ret;
 	}
 	return 0;
@@ -112,7 +112,7 @@ static int fa_init(void)
 static void fa_exit(void)
 {
 	fa_zio_unregister();
-	fmc_driver_unregister(&fa_dev__drv);
+	fmc_driver_unregister(&fa_dev_drv);
 }
 
 module_init(fa_init);
