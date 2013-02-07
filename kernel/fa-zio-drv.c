@@ -165,17 +165,26 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * */
 	ZIO_PARAM_EXT("fsm-state", ZIO_RO_PERM, ZFA_STA_FSM, 0),
 	/* last acquisition start time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-str-s", ZIO_RO_PERM, ZFA_UTC_ACQ_START_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-str-t", ZIO_RO_PERM, ZFA_UTC_ACQ_START_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-str-b", ZIO_RO_PERM, ZFA_UTC_ACQ_START_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-s", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-t", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-str-b", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_FINE, 0),
 	/* last acquisition end time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-end-s", ZIO_RO_PERM, ZFA_UTC_ACQ_END_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-end-t", ZIO_RO_PERM, ZFA_UTC_ACQ_END_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-end-b", ZIO_RO_PERM, ZFA_UTC_ACQ_END_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-s", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-t", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-b", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_FINE, 0),
 	/* last acquisition stop time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-stp-s", ZIO_RO_PERM, ZFA_UTC_ACQ_STOP_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-stp-t", ZIO_RO_PERM, ZFA_UTC_ACQ_STOP_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-stp-b", ZIO_RO_PERM, ZFA_UTC_ACQ_STOP_FINE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-s", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-t", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_COARSE, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-b", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_FINE, 0),
 	/* Reset all channel offset */
 	ZIO_PARAM_EXT("rst-ch-offset", ZIO_WO_PERM, ZFA_CTL_DAC_CLR_N, 1),
 
@@ -381,7 +390,7 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 		gain = fa->dac_cal_data[range].gain[chan->index];
 
 		/* Calculate calibrater value for DAC */
-		cal_val = (((((usr_val - 0x8000 + offset) << 15) * gain) >> 30));
+		cal_val = ((((usr_val - 0x8000 + offset) << 15) * gain) >> 30);
 		cal_val += 0x8000;
 	} else {	/* Open range */
 		cal_val = usr_val;
@@ -390,7 +399,7 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (cal_val > 0xFFFF)
 		cal_val = 0xFFFF;
 
-	dev_dbg(&chan->head.dev, "DAC offset calibration value 0x%x\n", cal_val);
+	dev_dbg(&chan->head.dev, "DAC offset calibration 0x%x\n", cal_val);
 	/* Apply calibrated offset to DAC */
 	return fa_spi_xfer(fa, chan->index, 16, cal_val, &tmp);
 }
@@ -422,7 +431,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 	case ZFA_CH4_OFFSET:
 		i--;
-		err = zfad_apply_user_offset(fa, &to_zio_cset(dev)->chan[i], usr_val);
+		err = zfad_apply_user_offset(fa, &to_zio_cset(dev)->chan[i],
+					     usr_val);
 		if (err)
 			return err;
 		return 0;

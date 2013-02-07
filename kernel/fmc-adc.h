@@ -297,8 +297,10 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 	if (!addr)
 		return 0;
 
-	pre_t = addr == ZFAT_PRE ? val : ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
-	post_t = addr == ZFAT_POST ? val : ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
+	pre_t = addr == ZFAT_PRE ? val :
+			ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
+	post_t = addr == ZFAT_POST ? val :
+			ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
 	if (ti->cset->trig != &zfat_type)
 		nshot_t = 1; /* with any other trigger work in one-shot mode */
 	else
@@ -308,7 +310,7 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 	size = ((pre_t + post_t) * ti->cset->ssize * nshot_t) *
 		(ti->cset->n_chan - 1);
 	if (size >= FA_MAX_ACQ_BYTE) {
-		dev_err(&ti->head.dev, "cannot acquire, device memory overflow\n");
+		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
 		return -ENOMEM;
 	}
 	return 0;

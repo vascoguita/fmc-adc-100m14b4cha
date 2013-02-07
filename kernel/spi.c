@@ -23,6 +23,8 @@
 #define FA_SPI_DIV 0x14
 #define FA_SPI_CS 0x18
 
+#define FA_SPI_REG(_off) (FA_SPI_MEM_OFF + _off)
+
 /* SPI control register fields mask */
 #define FA_SPI_CTRL_BUF		0x007F
 #define FA_SPI_CTRL_BUSY	0x0100
@@ -45,14 +47,14 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 	/* Configure SPI controller */
 	ctrl |= FA_SPI_CTRL_ASS | /* Automatic handle ChipSelect*/
 		num_bits; /* Transfer num_bits bits */
-	fmc_writel(fa->fmc, ctrl, FA_SPI_MEM_OFF + FA_SPI_CTRL);
+	fmc_writel(fa->fmc, ctrl, FA_SPI_REG(FA_SPI_CTRL));
 	/* Set Chip Select */
-	fmc_writel(fa->fmc, (1 << cs), FA_SPI_MEM_OFF + FA_SPI_CTRL_ASS);
+	fmc_writel(fa->fmc, (1 << cs), FA_SPI_REG(FA_SPI_CTRL_ASS));
 	/* Start transfer */
 	ctrl |= FA_SPI_CTRL_BUSY;
-	fmc_writel(fa->fmc, ctrl, FA_SPI_MEM_OFF + FA_SPI_CTRL);
+	fmc_writel(fa->fmc, ctrl, FA_SPI_REG(FA_SPI_CTRL));
 	/* Wait transfer complete */
-	while(fmc_readl(fa->fmc, FA_SPI_MEM_OFF + FA_SPI_CTRL) & FA_SPI_CTRL_BUSY) {
+	while(fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_CTRL)) & FA_SPI_CTRL_BUSY) {
 		if (jiffies > j) {
 			dev_err(&fa->fmc->dev, "SPI transfer error\n");
 			err = -EIO;
@@ -60,12 +62,12 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		}
 	}
 	/* Transfer compleate, read data */
-	*rx = fmc_readl(fa->fmc, FA_SPI_MEM_OFF + FA_SPI_RX(0)) & (num_bits-1);
+	*rx = fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_RX(0))) & (num_bits-1);
 	dev_dbg(&fa->fmc->dev, "SPI transfer CS %d, NBIT %d, TX 0x%x RX 0x%x\n",
 		cs, num_bits, tx, *rx);
 out:
 	/* Clear Chip Select */
-	fmc_writel(fa->fmc, 0, FA_SPI_MEM_OFF + FA_SPI_CTRL_ASS);
+	fmc_writel(fa->fmc, 0, FA_SPI_REG(FA_SPI_CTRL_ASS));
 
 	return err;
 }

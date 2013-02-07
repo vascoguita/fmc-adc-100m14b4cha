@@ -266,7 +266,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_dbg(&ti->head.dev, "programmed shot %i\n", fa->n_shots);
 
 	if (!fa->n_shots) {
-		dev_err(&ti->head.dev, "Cannot arm trigger.No programmed shots\n");
+		dev_err(&ti->head.dev, "Cannot arm. No programmed shots\n");
 		return -EINVAL;
 	}
 

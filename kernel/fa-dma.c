@@ -51,7 +51,8 @@ static int zfat_calculate_nents(struct zio_block *block)
  *
  * Initialize each element of the scatter list
  */
-static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zfad_block *zfad_block)
+static void zfad_setup_dma_scatter(struct fa_dev *fa,
+				   struct zfad_block *zfad_block)
 {
 	struct scatterlist *sg;
 	int bytesleft = zfad_block->block->datalen;
@@ -82,7 +83,8 @@ static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zfad_block *zfad_bl
 		bufp += mapbytes;
 		bytesleft -= mapbytes;
 		pr_debug("sg item (%p(+0x%lx), len:%d, left:%d)\n",
-			virt_to_page(bufp), offset_in_page(bufp), mapbytes, bytesleft);
+			 virt_to_page(bufp), offset_in_page(bufp),
+			 mapbytes, bytesleft);
 	}
 
 	WARN(bytesleft, "Something Wrong");
@@ -139,8 +141,8 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block)
 	/* Setup the scatter list for the provided block */
 	zfad_setup_dma_scatter(fa, zfad_block);
 	/* Map DMA buffers */
-	sglen = dma_map_sg(fa->fmc->hwdev, zfad_block->sgt.sgl, zfad_block->sgt.nents,
-			   DMA_FROM_DEVICE);
+	sglen = dma_map_sg(fa->fmc->hwdev, zfad_block->sgt.sgl,
+			   zfad_block->sgt.nents, DMA_FROM_DEVICE);
 	if (!sglen) {
 		dev_err(fa->fmc->hwdev, "cannot map dma memory\n");
 		goto out_map;
