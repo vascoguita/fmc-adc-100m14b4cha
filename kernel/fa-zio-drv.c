@@ -740,7 +740,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		dev_err(fa->fmc->hwdev, "Invalid fire, skip\n");
 		return;
 	}
-	pr_info("%s:%d %p\n", __func__, __LINE__, zfad_block);
+
 	/* Get control from pre-allocated block */
 	ctrl = zio_get_ctrl(zfad_block[fa->n_fires].block);
 	/* Update timestamp */
