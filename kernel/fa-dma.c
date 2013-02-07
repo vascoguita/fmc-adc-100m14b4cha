@@ -21,6 +21,12 @@
 #include "spec.h"
 #include "fmc-adc.h"
 
+
+/*
+ * zfat_calculate_nents
+ *
+ * It calculates the number of necessary nents
+ */
 static int zfat_calculate_nents(struct zio_block *block)
 {
 	int bytesleft = block->datalen;
@@ -40,7 +46,11 @@ static int zfat_calculate_nents(struct zio_block *block)
 	return nents;
 }
 
-/* Initialize each element of the scatter list */
+/*
+ * zfad_setup_dma_scatter
+ *
+ * Initialize each element of the scatter list
+ */
 static void zfad_setup_dma_scatter(struct fa_dev *fa, struct zfad_block *zfad_block)
 {
 	struct scatterlist *sg;

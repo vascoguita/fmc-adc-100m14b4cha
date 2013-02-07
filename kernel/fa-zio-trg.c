@@ -76,7 +76,11 @@ static struct zio_attribute zfat_ext_zattr[] = {
 };
 
 
-/* set a value to a FMC-ADC trigger register */
+/*
+ * zfat_conf_set
+ *
+ * set a value to a FMC-ADC trigger register
+ */
 static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
@@ -118,7 +122,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 
 	return zfa_common_conf_set(fa, zattr->id, tmp_val);
 }
-/* get the value of a FMC-ADC trigger register */
+
+
+/* zfat_info_get
+ *
+ * get the value of a FMC-ADC trigger register
+ */
 static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
@@ -196,7 +205,7 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
  * zfad_blocks vector. Here we are storing only blocks
  * that were filled by a trigger fire. If for some reason the data_done
  * occurs before the natural end of the acquisition, un-filled block
- * are not stored
+ * are not stored.
  */
 static int zfat_data_done(struct zio_cset *cset)
 {

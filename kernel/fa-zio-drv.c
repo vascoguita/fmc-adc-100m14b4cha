@@ -396,7 +396,11 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 }
 
 
-/* set a value to a FMC-ADC registers */
+/*
+ * zfad_conf_set
+ *
+ * set a value to a FMC-ADC registers
+ */
 static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
@@ -464,7 +468,11 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	return zfa_common_conf_set(fa, reg_index, usr_val);
 }
 
-/* get the value of a FMC-ADC register */
+/*
+ * zfad_info_get
+ *
+ * get a register value from FMC-ADC.
+ */
 static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
@@ -563,7 +571,7 @@ static int zfad_input_cset(struct zio_cset *cset)
  * zfad_stop_cset
  * @cset: channel set to stop
  *
- * Stop an acquisition
+ * Stop an acquisition, reset indexes and disable interrupts
  */
 static void zfad_stop_cset(struct zio_cset *cset)
 {
@@ -624,6 +632,7 @@ static void zfat_get_irq_status(struct fa_dev *fa,
 
 /*
  * zfad_start_dma
+ *
  * When all data from all triggers are ready, this function start DMA.
  * We get the first block from the list and start the acquisition on it.
  * When the DMA will end, the interrupt handler will invoke again this function
@@ -680,7 +689,8 @@ static void zfad_start_dma(struct zio_cset *cset)
 
 /*
  * zfat_irq_dma_done
- * The DMA is finish due to an error or not. We must handle both the condition.
+ *
+ * The DMA finished due to an error or not. We must handle both the condition.
  * If DMA aborted by an error we abort the acquisition, so we lost all the data.
  * If the DMA complete successfully, we can call zio_trigger_data_done which
  * will complete the transfer
@@ -709,7 +719,11 @@ static void zfat_irq_dma_done(struct zio_cset *cset, int status)
 }
 
 
-/* Get the last trigger time-stamp from device */
+/*
+ * zfat_get_time_stamp
+ *
+ * Get the last trigger time-stamp from device
+ */
 static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
 {
 	zfa_common_info_get(fa, ZFA_UTC_TRIG_SECONDS, (uint32_t *)&ts->secs);
@@ -722,9 +736,9 @@ static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
  * zfat_irq_trg_fire
  * @fa: fmc-adc descriptor
  *
- * Trigger fires. This function store the timestamp in the current_ctrl and
+ * Trigger fires. This function stores the time-stamp in the current_ctrl and
  * in the pre-allocated block. Then it increments the sequence number both in
- * current_ctrl and int the pre-allocated block;
+ * current_ctrl and in the pre-allocated block.
  */
 static void zfat_irq_trg_fire(struct zio_cset *cset)
 {
@@ -762,7 +776,6 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
  *
  * The ADC end the acquisition, so, if the state machine is idle, we can
  * retrieve data from the ADC DDR memory.
- * FIXME maybe here reset cur|lst_dev_mem
  */
 static void zfat_irq_acq_end(struct zio_cset *cset)
 {
@@ -801,11 +814,10 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
  * The different irq status are handled in different if statement. At the end
  * of the if statement we don't call return because it is possible that there
  * are others irq to handle. The order of irq handlers is based on the
- * possibility to have many irq rise at the same time. It is possible that
+ * possibility to have many irq rised at the same time. It is possible that
  * ZFAT_TRG_FIRE and ZFAT_ACQ_END happens simultaneously, so we handle FIRE
- * before END. If ZFAT_DMA_DONE happens with ZFAT_TRG_FIRE and ZFAT_ACQ_END, we
- * handle DMA_DONE before the other because we must conclude a previous
- * acquisition before start a new one
+ * before END. It should be impossible to have simultaneously both DMA
+ * interrupts and acquisition interrupts active at the same time.
  */
 static irqreturn_t zfad_irq(int irq, void *ptr)
 {
@@ -967,6 +979,7 @@ static int zfad_init_cset(struct zio_cset *cset)
 	return 0;
 }
 
+
 /* Device description */
 static struct zio_channel zfad_chan_tmpl = {
 	.zattr_set = {
@@ -1026,19 +1039,35 @@ static struct zio_driver fa_zdrv = {
 	.remove = zfad_zio_remove,
 };
 
-/* Register and unregister are used to set up the template driver */
+
+/*
+ * fa_zio_unregister
+ *
+ * It is a simple wrapper invoked by module_init to register this zio driver
+ */
 int fa_zio_register(void)
 {
 	return zio_register_driver(&fa_zdrv);
 }
 
+
+/*
+ * fa_zio_unregister
+ *
+ * It is a simple wrapper invoked by module_exit to unregister this zio driver
+ */
 void fa_zio_unregister(void)
 {
 	zio_unregister_driver(&fa_zdrv);
 }
 
 
-/* Init and exit are called for each FMC-ADC card we have */
+/*
+ * fa_zio_init
+ *
+ * It checks if we can register this device.  If it is possibile, the function
+ * registers both device and trigger. The FMC probe invokes this function.
+ */
 int fa_zio_init(struct fa_dev *fa)
 {
 	struct device *hwdev = fa->fmc->hwdev;
@@ -1115,6 +1144,12 @@ out_trg:
 	return err;
 }
 
+/*
+ * fa_zio_exit
+ *
+ * It removes both device and trigger form the ZIO framework. The FMC remove
+ * invokes this function.
+ */
 void fa_zio_exit(struct fa_dev *fa)
 {
 	zio_unregister_device(fa->hwzdev);
