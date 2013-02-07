@@ -217,13 +217,8 @@ static int zfat_data_done(struct zio_cset *cset)
 	dev_dbg(fa->fmc->hwdev, "Data done\n");
 
 	/* Nothing to store */
-	if (unlikely(!zfad_block))
+	if (!zfad_block)
 		return 0;
-
-	if (unlikely(fa->n_fires < fa->n_shots))
-		dev_warn(fa->fmc->hwdev,
-			"Data done occurs before the end. %i blocks lost\n",
-			(fa->n_shots - fa->n_fires));
 
 	/* Store blocks */
 	for(i = 0; i < fa->n_shots; ++i)
@@ -232,7 +227,7 @@ static int zfat_data_done(struct zio_cset *cset)
 				i + 1, fa->n_shots);
 			bi->b_op->store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
-			dev_dbg(fa->fmc->hwdev, "Free empty block\n");
+			dev_dbg(fa->fmc->hwdev, "Free un-acquired block\n");
 			bi->b_op->free_block(bi, zfad_block[i].block);
 		}
 	/* Clear active block */

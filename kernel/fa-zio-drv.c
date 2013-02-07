@@ -788,21 +788,22 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	 * If the state machine is _idle_ we can start the DMA transfer.
 	 */
 	zfa_common_info_get(fa, ZFA_STA_FSM, &val);
-	if (val == ZFA_STATE_IDLE) {
-		/*
-		 * Disable all triggers to prevent fires between
-		 * different DMA transfers required for multi-shots
-		 */
-		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
-		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
-		/* Start DMA acquisition */
-		zfad_start_dma(cset);
-	} else {
+	if (val != ZFA_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
 		dev_warn(fa->fmc->hwdev,
 			 "Can't start DMA on the last acquisition, "
 			 "it will be done on the next acquisition end\n");
+		return;
 	}
+
+	/*
+	 * Disable all triggers to prevent fires between
+	 * different DMA transfers required for multi-shots
+	 */
+	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
+	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
+	/* Start DMA acquisition */
+	zfad_start_dma(cset);
 }
 
 
@@ -842,8 +843,10 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 	 * It cannot happen that DMA_DONE is in the multi register.
 	 * It should not happen ...
 	 */
-	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR))
+	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) {
 		zfat_irq_dma_done(cset, status);
+		return IRQ_HANDLED;
+	}
 
 	/* Fire the trigger for each interrupt */
 	if (status & ZFAT_TRG_FIRE)
