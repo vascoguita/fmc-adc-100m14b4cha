@@ -87,11 +87,6 @@ struct dma_item {
  * @n_trans: number of DMA transfer done for an acquisition
  *
  * @n_dma_err: number of errors
- * @lst_dev_mem: contains the device address where last block is stored.
- *               FIXME when it reset?
- * @cur_dev_mem: contains the device address to the current block of data in
- *               transmission from device. It is updated for each dma_items
- *               transfer
  */
 struct fa_dev {
 	struct fmc_device	*fmc;
@@ -106,9 +101,6 @@ struct fa_dev {
 
 	/* Statistic informations */
 	unsigned int		n_dma_err;
-	/* DMA variable */
-	uint32_t		lst_dev_mem;
-	uint32_t		cur_dev_mem;
 
 	/* one-wire */
 	uint8_t ds18_id[8];

@@ -591,9 +591,6 @@ static void zfad_stop_cset(struct zio_cset *cset)
 	fa->n_fires = 0;
 	/* Clear active block */
 	cset->interleave->active_block = NULL;
-	/* Clear DMA pointer */
-	fa->cur_dev_mem = 0;
-	fa->lst_dev_mem = 0;
 
 	/* If the user is using a software trigger, then free zfad_block */
 	if (cset->trig != &zfat_type) {
@@ -894,9 +891,6 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
-	/* be sure to initialize these values for DMA transfer */
-	fa->lst_dev_mem = 0;
-	fa->cur_dev_mem = 0;
 
 	/*
 	 * Get Calibration Data. ADC calibration value and DAC calibration

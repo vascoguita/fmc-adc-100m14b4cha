@@ -151,8 +151,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block)
 	for_each_sg(zfad_block->sgt.sgl, sg, zfad_block->sgt.nents, i) {
 		dev_dbg(&cset->head.dev, "configure DMA item %d"
 			"(addr: 0x%llx len: %d)(dev off: 0x%x)\n",
-			i, sg_dma_address(sg), sg_dma_len(sg),
-			fa->cur_dev_mem);
+			i, sg_dma_address(sg), sg_dma_len(sg), dev_mem_ptr);
 		/* Prepare DMA item */
 		items[i].start_addr = dev_mem_ptr;
 		items[i].dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
