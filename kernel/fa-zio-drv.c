@@ -15,12 +15,13 @@
 #include <linux/time.h>
 #include <linux/delay.h>
 
+#include <linux/fmc.h>
+
 #include <linux/zio.h>
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
 #include <linux/zio-utils.h>
 
-#include "spec.h"
 #include "fmc-adc.h"
 
 int enable_auto_start = 0;
@@ -1078,9 +1079,7 @@ void fa_zio_unregister(void)
 int fa_zio_init(struct fa_dev *fa)
 {
 	struct device *hwdev = fa->fmc->hwdev;
-	struct spec_dev *spec = fa->fmc->carrier_data;
-	struct pci_dev *pdev = spec->pdev;
-	uint32_t dev_id, val;
+	uint32_t val;
 	int err;
 
 	/* Check if hardware supports 64-bit DMA */
@@ -1132,11 +1131,8 @@ int fa_zio_init(struct fa_dev *fa)
 	fa->hwzdev->owner = THIS_MODULE;
 	fa->hwzdev->priv_d = fa;
 
-	/* Our dev_id is bus+devfn */
-	dev_id = (pdev->bus->number << 8) | pdev->devfn;
-
 	/* Register the hardware zio_device */
-	err = zio_register_device(fa->hwzdev, "fmc-adc", dev_id);
+	err = zio_register_device(fa->hwzdev, "fmc-adc", fa->fmc->device_id);
 	if (err) {
 		dev_err(hwdev, "Cannot register ZIO device fmc-adc\n");
 		goto out_dev;

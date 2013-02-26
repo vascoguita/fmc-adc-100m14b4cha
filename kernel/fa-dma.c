@@ -14,11 +14,12 @@
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 
+#include <linux/fmc.h>
+
 #include <linux/zio.h>
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
 
-#include "spec.h"
 #include "fmc-adc.h"
 
 

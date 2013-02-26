@@ -10,7 +10,9 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include "spec.h"
+
+#include <linux/fmc.h>
+
 #include "fmc-adc.h"
 
 static struct fmc_driver fa_dev_drv;
@@ -37,10 +39,6 @@ int fa_probe(struct fmc_device *fmc)
 	struct fa_dev *fa;
 	int err, i = 0;
 
-	if (strcmp(fmc->carrier_name, "SPEC")) {
-		dev_err(fmc->hwdev, "ADC work only on spec\n");
-		return -EINVAL;
-	}
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
 	fa = devm_kzalloc(&fmc->dev, sizeof(struct fa_dev), GFP_KERNEL);
@@ -49,7 +47,7 @@ int fa_probe(struct fmc_device *fmc)
 	fmc_set_drvdata(fmc, fa);
 	fa->fmc = fmc;
 
-	/* We first write a new binary (and lm32) within the spec */
+	/* We first write a new binary (and lm32) within the carrier */
 	err = fmc->op->reprogram(fmc, &fa_dev_drv, fa_binaries);
 	if (err) {
 		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",

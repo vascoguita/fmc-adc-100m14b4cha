@@ -7,10 +7,12 @@
 
 #ifndef _fa_dev_H_
 #define _fa_dev_H_
+#include <linux/scatterlist.h>
+
+#include <linux/fmc.h>
 
 #include <linux/zio.h>
 #include <linux/zio-utils.h>
-#include "spec.h"
 
 #define FA_GATEWARE_DEFAULT_NAME "fmc/fmc-adc.bin"
 
@@ -77,7 +79,6 @@ struct dma_item {
  * fa_dev: is the descriptor of the FMC ADC mezzanine
  *
  * @fmc: the pointer to the fmc_device generic structure
- * @spec: this driver depends on spec (FIXME no svec at the moment)
  * @zdev: is the pointer to the real zio_device in use
  * @hwzdev: is the pointer to the fake zio_device, used to initialize and
  *          to remove a zio_device
@@ -90,7 +91,6 @@ struct dma_item {
  */
 struct fa_dev {
 	struct fmc_device	*fmc;
-	struct spec_dev		*spec;
 	struct zio_device	*zdev;
 	struct zio_device	*hwzdev;
 
@@ -331,11 +331,6 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 			return NULL;
 	}
 	return NULL;
-}
-
-static inline struct spec_dev *get_spec(struct device *dev)
-{
-	return get_zfadc(dev)->spec;
 }
 
 static inline int zfa_common_conf_set(struct fa_dev *fa,
