@@ -215,7 +215,6 @@ static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
-
 	ZIO_PARAM_EXT("current-value", ZIO_RO_PERM, ZFA_CHx_STA, 0),
 };
 
@@ -788,19 +787,26 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 static void zfat_irq_acq_end(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	uint32_t val;
+	uint32_t val = 0;
+	int try = 5;
 
 	dev_dbg(fa->fmc->hwdev, "Acquisition done\n");
 	/*
 	 * All programmed triggers fire, so the acquisition is ended.
 	 * If the state machine is _idle_ we can start the DMA transfer.
+	 * If the state machine it is not idle, try again 5 times
 	 */
-	zfa_common_info_get(fa, ZFA_STA_FSM, &val);
+	while (try-- && val != ZFA_STATE_IDLE) {
+		//udelay(2);
+		zfa_common_info_get(fa, ZFA_STA_FSM, &val);
+	}
+
 	if (val != ZFA_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
 		dev_warn(fa->fmc->hwdev,
 			 "Can't start DMA on the last acquisition, "
-			 "it will be done on the next acquisition end\n");
+			 "State Machine is not IDLE (status:%d)\n", val);
+		zio_trigger_abort_disable(cset, 0);
 		return;
 	}
 
