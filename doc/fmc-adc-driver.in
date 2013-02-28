@@ -76,7 +76,7 @@ following link:
 @uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw}
 
 
-Here a list of the resources that you can find on the project page.
+Here a list of resources that you can find on the project page.
 @table @code 
  @item Document@footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/documents}} contains the @t{.pdf} documentation for every official release.
 
@@ -85,25 +85,24 @@ Here a list of the resources that you can find on the project page.
 @item Repository@footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/repository}} contains the git repository of the project
 @end table
 
-On the repository the official releases have a tag named @code{fmc-adc-sw-k#ver-v#num} where @i{#num} represent the release version of the driver and
-@i{#ver} the kernel version (e.g @code{fmc-adc-sw-k3.4-v1.0} for the
-release 1.0 on kernel 3.4). These tag are used in releted repository (@i{ZIO},
-@i{spec-sw} and hardware repository).
+On the repository the official releases have a tag named 
+@code{fmc-adc-sw-v#maj.#min} where @i{#maj} represent the major release
+version of the driver and @i{#min} the minor one (e.g @code{fmc-adc-sw-v1.2}).
 
 @b{Note:} If you got this from the repository (as opposed to a named
 @i{tar.gz} or @i{pdf} file) it may happen that you are looking at a later commit
 than the release this manual claims to document.
-It is a fact of life that developers forget
-to re-read and fix documentation while updating the code. In that case,
-please run ``@code{git describe HEAD}'' to ensure where you are.
+It is a fact of life that developers forget to re-read and fix documentation
+while updating the code. In that case, please run ``@code{git describe HEAD}''
+to ensure where you are.
 
 @c ##########################################################################
 @node Driver Features
 @chapter Driver Features
-This driver is based on the @i{ZIO} framework, the @i{spec-sw}
-driver and the @i{fmc-bus}. It supports initial setup of the board; it allows
-users to manually configure the board, to start and stop acquisitions, to force
-trigger, to read latest time-stamps and to read acquired samples.
+This driver is based on the @i{ZIO} framework and the @i{fmc-bus}. It supports
+initial setup of the board; it allows users to manually configure the board,
+to start and stop acquisitions, to force trigger, to read latest time-stamps
+and to read acquired samples.
 
 @c ##########################################################################
 @node Installation
@@ -128,8 +127,10 @@ of dated when new binary is released.
 @section Gateware Installation
 
 To install the FPGA image in the target system, please follow the
-instruction in the documentation of @i{spec-sw}. To summarize,
-you'll need to place the @t{.bin} file in @file{/lib/firmware/}.
+instruction in the documentation of @i{spec-sw} (version 2.1 or later),
+or the one for your specific FMC carrier.
+
+To summarize, you'll need to place the @t{.bin} file in @file{/lib/firmware/}.
 By default, the driver looks for @t{fmc/fmc-adc.bin}@footnote{the full
 path will be @file{/lib/firmware/fmc/fmc-adc.bin}}. You
 can find the copy of the last tested binary within the driver repository.
@@ -140,20 +141,23 @@ ADC and you can load it by specifying the module parameter @t{file}.
 @node Software Dependencies
 @section Software Dependencies
 
-The Kernel version for the development was the 3.4, but this driver
-is also available for kernel 2.6.32 and 2.6.24.
+The kernel versions used during development is 3.4.  Everything used here is 
+known to at least compile with version 2.6.32,
 
 The driver is base on the ZIO framework available on the OpenHardware
 Repository@footnote{@uref{http://www.ohwr.org/projects/zio}}. The version
 being used during development is a development version and tested on Linux
 kernel 3.4, then back-ported to Linux kernel version 2.6.32 and 2.6.24.
 
-The driver is also based on the @i{spec-sw} driver available on the
-OpenHardware Repository@footnote{@uref{http://www.ohwr.org/projects/spec-sw}}.
-This driver allow to handle FMC devices connected to a SPEC or a SVEC board.
+The driver is also based on the @i{fmc-bus} available on the OpenHardware
+Repository@footnote{@uref{http://www.ohwr.org/projects/fmc-bus}}. This bus
+allows to handle FMC devices connected to a SPEC or a SVEC board (or whatever
+else).
 
-Finally, it depends on the @i{fmc-bus} driver available on the OpenHardware
-Repository@footnote{@uref{http://www.ohwr.org/projects/fmc-bus}}.
+Both packages are currently checked out as @i{git submodules} of this package,
+and each of them is retrieved at the right version to be compatible with this
+driver.  This means you may just ignore software dependencies and everything
+should work.
 
 @c ==========================================================================
 @node Software Installation
@@ -180,14 +184,14 @@ run:
     sudo make install LINUX=$LINUX
 @end example
 
-In addition to the normal installation procedure for
-@code{fmc-adc.ko} you'll see the following message:
+In addition to the normal installation procedure for @code{fmc-adc.ko}
+you'll see the following message:
 
 @example
     WARNING: Consider "make prereq_install"
 @end example
 
-The @i{prerequisite} packages are @i{zio}, @i{fmc-bus} and @i{spec-sw};
+The @i{prerequisite} packages are @i{zio} and @i{fmc-bus};
 unless you already installed your own preferred version, you are
 expected to install the version this packages suggests. This step
 can be performed by:
@@ -202,16 +206,17 @@ other versions of the drivers. After @code{make prereq_install},
 the warning message won't be repeated any more if you change this
 driver and @code{make install} again.
 
-In order to compile @i{fine-delay} against a specific version of one
-of the related packages, you can one or more of the following
+@c FIXME how to load the driver, look at fine-delay manual
+
+In order to compile @i{fmc-adc} against a specific version of one
+of the related packages, you can use one or more of the following
 environment variables:
 
 
 @table @code
 @item ZIO
-@item SPEC_SW
 @item FMC-BUS
-	The top-level directory of the @i{spec-sw} repository checkout.
+	The top-level directory of the @i{fmc-bus}/@i{zio} repository checkout.
 
 @end table
 
@@ -227,30 +232,69 @@ The following parameters are used:
 @table @code
  @item file=/path/to/binary.bin
   The binary file to use to reprogram the FPGA. The default value for this
-  parameter is @t{fmc/fmc-adc-bin} as seen in @ref{Gateware Installation}.
+  parameter is @t{fmc/fmc-adc.bin} as seen in @ref{Gateware Installation}.
   The path to binary is the relative path from @file{/lib/firmware}
  @item enable_test_data=1
-  This is for testing purpose. This option enable the testing data, so the ADC
+  This is for testing purpose. This option enables the testing data, so the ADC
   doesn't store samples, but fill the memory with sequential numbers.
 @end table
 
 @c ##########################################################################
+@node About Source Code
+@chapter About Source Code
+
+@c ==========================================================================
+@node Source Code Organization
+@section Source Code Organization
+
+The source code for the ADC driver and tools is splitted in three directory:
+@itemize @bullet
+ @item @file{kernel/}: this directory contains all source files to build the
+       driver module. Each file represents a feature of the complete driver.
+ @item @file{lib/}: this directory contains all source files to build the
+       userspace library.
+ @item @file{tools/}: this directory includes standalone tools that access the
+       ADC driver directly. Their name begins with @file{fau-} that mean:
+       @i{Fmc Adc User}. There is also a non ZIO tool to generate pulses on the
+       parallel port, so it has a different name pattern.
+@end itemize
+
+@c ==========================================================================
 @node Source Code Conventions
-@chapter Source Code Conventions
+@section Source Code Conventions
+
 This is a random list of conventions used in this package
 
 @itemize @bullet
- @item All the internal symbols used in the whole driver begin with the prefix @t{fa_}. The prefix mean: @i{Fmc Adc}.
- @item All internal symbols in the zio driver begin with @t{zfad_}. The prefix mean: @i{Zio Fmc Adc Driver}.
-
- @item All internal symbols in the zio trigger begin with @t{zfat_}. The prefix mean: @i{Zio Fmc Adc Trigger}.
- 
- @item The @file{tools/} directory includes standalone tools that access ZIO
-       directly. Their name begins with @file{fau-} that mean: @i{Fmc Adc User}.
-       There is also a non ZIO tool to generate pulses on the parallel port,
-       so it has a different name pattern.
-
+ @item All the internal symbols used in the whole driver begin with the prefix
+       @t{fa_}. The prefix mean: @i{Fmc Adc}.
+ @item All internal symbols in the zio driver begin with @t{zfad_}. The prefix
+       mean: @i{Zio Fmc Adc Driver}.
+ @item All internal symbols in the zio trigger begin with @t{zfat_}. The prefix
+       mean: @i{Zio Fmc Adc Trigger}.
 @end itemize
+
+@c ==========================================================================
+@node Source Code Overview
+@section Source Code Overview
+
+To better understand the source code, please see the state machine image and
+the call graph image.
+
+Here the representation of the ADC state machine, and how it interact with the
+driver.
+
+@float
+@center @image{img/fmc-adc-fsm, 15cm,,FMC ADC State Machine, pdf}
+@end float
+
+Here the graphical rapresentation of the functions call in the driver and how
+the driver interact with the ZIO framework and the FMC bus. The image is large,
+so please get the full scale image from the project website.
+
+@float
+@center @image{img/fmc-adc-call, 15cm,,FMC ADC Call Graph, pdf}
+@end float
 
 @c ##########################################################################
 @node Device Configuration
@@ -719,7 +763,8 @@ interface.
 @node Tools
 @chapter Tools
 
-The FMC ADC driver is provided with three tools: @i{fau-trg-config}, @i{fau-acq-time} and @i{parport-burst}.
+The FMC ADC driver is provided with three tools: @i{fau-trg-config},
+@i{fau-acq-time} and @i{parport-burst}.
 
 @c ==========================================================================
 @node Trigger Configuration
