@@ -68,7 +68,7 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	/* Software Trigger */
 	/* Enable (1) or disable (0) software trigger */
 	ZIO_PARAM_EXT("sw-trg-enable", ZIO_RW_PERM, ZFAT_CFG_SW_EN, 0),
-	ZIO_PARAM_EXT("sw-trg-fire", S_IWUGO, ZFAT_SW, 0),
+	ZIO_PARAM_EXT("sw-trg-fire", ZIO_WO_PERM, ZFAT_SW, 0),
 
 	/* last trigger time stamp */
 	ZIO_PARAM_EXT("tstamp-trg-lst-s", ZIO_RO_PERM, ZFA_UTC_TRIG_SECONDS, 0),
