@@ -1,9 +1,11 @@
 # This is not a kbuild Makefile. It is a plain Makefile so it can be copied
+ZIO ?= ../zio
 
 LIB = libfmcadc.a
-LOBJ := fa-init.o
+LOBJ := fmcadc-lib-route.o
+LOBJ += fmcadc-lib-zio.o
 
-CFLAGS = -Wall -ggdb -O2 -I../kernel -I../zio/include
+CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include
 LDFLAGS = -L. -lfmcadc
 
 modules all: lib

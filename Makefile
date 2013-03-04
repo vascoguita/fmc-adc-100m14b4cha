@@ -2,7 +2,7 @@
 .PHONY: all clean modules install modules_install
 .PHONY: gitmodules prereq prereq_install prereq_install_warn
 
-DIRS = kernel tools
+DIRS = kernel tools lib
 
 all clean modules install modules_install: gitmodules
 	for d in $(DIRS); do $(MAKE) -C $$d $@ || exit 1; done
