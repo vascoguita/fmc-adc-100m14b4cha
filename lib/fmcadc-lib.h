@@ -21,7 +21,7 @@ enum fmcadc_supported_board {
 };
 
 extern const struct fmcadc_board_type
-		*fmcadc_board_type[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX];
+		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX];
 /*
  * @data buffer with samples
  * @metadata it describe the buffer; it depends on the board_type in use.

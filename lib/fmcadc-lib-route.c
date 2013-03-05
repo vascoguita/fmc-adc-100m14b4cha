@@ -22,7 +22,7 @@
 #include "fmcadc-lib.h"
 
 const struct fmcadc_board_type
-		*fmcadc_board_type[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX] = {
+		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX] = {
 	&fmcadc_100ms_4ch_14bit,
 };
 
@@ -39,16 +39,18 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 
 	/* Look in the list of supported board if the "name" board is there */
 	for (i = 0; i < __FMCADC_SUPPORTED_BOARDS_LAST_INDEX; ++i) {
-		if (!strcmp(name, fmcadc_board_type[i]->name)) {
+		if (!strcmp(name, fmcadc_board_types[i]->name)) {
 			found = 1;
 			break;
 		}
 	}
+	if (!found)
+		return NULL;
 
 	/* The library supports this board */
-	if (fmcadc_board_type[i]->fa_op && fmcadc_board_type[i]->fa_op->open) {
-		dev = fmcadc_board_type[i]->fa_op->open(fmcadc_board_type[i],
-							dev_id, details);
+	if (fmcadc_board_types[i]->fa_op && fmcadc_board_types[i]->fa_op->open) {
+		dev = fmcadc_board_types[i]->fa_op->open(fmcadc_board_types[i],
+							 dev_id, details);
 	} else {
 		errno = EINVAL;
 	}
