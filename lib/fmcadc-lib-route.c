@@ -43,9 +43,9 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 			continue;
 
 		/* The library supports this board */
-		if (fmcadc_board_type[i]->open) {
-			dev = fmcadc_board_type[i]->open(fmcadc_board_type[i],
-							 dev_id, details);
+		if (fmcadc_board_type[i]->fa_op->open) {
+			dev = fmcadc_board_type[i]->fa_op->open(fmcadc_board_type[i],
+								dev_id, details);
 		}
 		break;
 	}
@@ -70,8 +70,8 @@ int fmcadc_close(struct fmcadc_dev *dev)
 		return -1;
 	}
 
-	if (b->close) {
-		return b->close(dev);
+	if (b->fa_op->close) {
+		return b->fa_op->close(dev);
 	} else {
 		errno = FMCADC_ENOP;
 		return -1;
@@ -90,8 +90,8 @@ int fmcadc_acq_start(struct fmcadc_dev *dev,
 		return -1;
 	}
 
-	if (b->start_acquisition) {
-		return b->start_acquisition(dev, flags, timeout);
+	if (b->fa_op->start_acquisition) {
+		return b->fa_op->start_acquisition(dev, flags, timeout);
 	} else {
 		errno = FMCADC_ENOP;
 		return -1;
@@ -107,8 +107,8 @@ int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 		return -1;
 	}
 
-	if (b->stop_acquisition) {
-		return b->stop_acquisition(dev, flags);
+	if (b->fa_op->stop_acquisition) {
+		return b->fa_op->stop_acquisition(dev, flags);
 	} else {
 		errno = FMCADC_ENOP;
 		return -1;
@@ -133,9 +133,9 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 		return -1;
 	}
 
-	if (b->apply_config) {
+	if (b->fa_op->apply_config) {
 		/* Apply config */
-		return b->apply_config(dev, flags, conf);
+		return b->fa_op->apply_config(dev, flags, conf);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
@@ -162,9 +162,9 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 		return -1;
 	}
 
-	if (b->retrieve_config) {
+	if (b->fa_op->retrieve_config) {
 		/* Apply config */
-		return b->retrieve_config(dev, conf);
+		return b->fa_op->retrieve_config(dev, conf);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
@@ -186,8 +186,8 @@ int fmcadc_request_buffer(struct fmcadc_dev *dev,
 		return -1;
 	}
 
-	if (b->request_buffer) {
-		return b->request_buffer(dev, buf, flags, timeout);
+	if (b->fa_op->request_buffer) {
+		return b->fa_op->request_buffer(dev, buf, flags, timeout);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
@@ -204,8 +204,8 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
 		return -1;
 	}
 
-	if (b->release_buffer) {
-		return b->release_buffer(dev, buf);
+	if (b->fa_op->release_buffer) {
+		return b->fa_op->release_buffer(dev, buf);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
@@ -247,8 +247,8 @@ char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum)
 		goto out;
 	}
 
-	if (!str && b->strerror)
-		str = b->strerror(errnum);
+	if (!str && b->fa_op->strerror)
+		str = b->fa_op->strerror(errnum);
 	if (!str)
 		str = strerror(errnum);
 out:

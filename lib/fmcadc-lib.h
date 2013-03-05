@@ -256,22 +256,10 @@ extern char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum);
 extern char *fmcadc_get_driver_type(struct fmcadc_dev *dev);
 
 #ifdef FMCADCLIB_INTERNAL
-/* Internal structure (ZIO specific) */
-struct __fmcadc_dev_zio {
-	const struct fmcadc_board_type *board_type; /* It *MUST* be the first field */
-	int fdc;
-	int fdd;
-	int dev_id;
-	char *devbase;
-	char *sysbase;
-};
-
 /*
- * @name name of the board type, for example "fmc-adc-100MS"
- * @devname name of the device in Linux
- * @driver_type: the kind of driver that hanlde this kind of board (e.g. ZIO)
- * @capabilities bitmask of device capabilities for trigger, channel
- *               acquisition
+ * fmcadc_op: it describes the set of operation that a device library should
+ * 	      support
+ *
  * @start_acquisition start the acquisition
  *	@dev: device where to start acquiring
  *	@flags:
@@ -312,13 +300,7 @@ struct __fmcadc_dev_zio {
  *	@dev: device that generate the buffer
  *	@buf: buffer to release
  */
-struct fmcadc_board_type {
-	char *name;
-	char *devname;
-	char *driver_type;
-	uint32_t capabilities[FMCADC_CONF_TYPE_LAST_INDEX];
-
-	/* * * * Board Operations * * * */
+struct fmcadc_op {
 	/* Handle board */
 	struct fmcadc_dev *(*open)(const struct fmcadc_board_type *dev,
 				   unsigned int dev_id,
@@ -345,6 +327,22 @@ struct fmcadc_board_type {
 	int (*release_buffer)(struct fmcadc_dev *dev,
 			      struct fmcadc_buffer *buf);
 	char *(*strerror)(int errnum);
+};
+/*
+ * This structure describes the board supported by the library
+ * @name name of the board type, for example "fmc-adc-100MS"
+ * @devname name of the device in Linux
+ * @driver_type: the kind of driver that hanlde this kind of board (e.g. ZIO)
+ * @capabilities bitmask of device capabilities for trigger, channel
+ *               acquisition
+ * @fa_op pointer to a set of operations
+ */
+struct fmcadc_board_type {
+	char *name;
+	char *devname;
+	char *driver_type;
+	uint32_t capabilities[FMCADC_CONF_TYPE_LAST_INDEX];
+	struct fmcadc_op *fa_op;
 };
 
 /* Definition of board types */
