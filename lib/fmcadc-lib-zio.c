@@ -28,6 +28,9 @@
 #define ZIO_DEV_PATH "/dev/zio"
 #define ZIO_SYS_PATH "/sys/bus/zio/devices"
 
+#define FMCADC_CONF_GET 0
+#define FMCADC_CONF_SET 1
+
 /* Internal structure (ZIO specific) */
 struct __fmcadc_dev_zio {
 	unsigned int cset;
@@ -453,7 +456,7 @@ static int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
-	return fmcadc_zio_config(fa, flags, conf, 0);
+	return fmcadc_zio_config(fa, flags, conf, FMCADC_CONF_SET);
 }
 
 static int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
@@ -461,7 +464,7 @@ static int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
-	return fmcadc_zio_config(fa, 0, conf, 1);
+	return fmcadc_zio_config(fa, 0, conf, FMCADC_CONF_GET);
 }
 
 /* * * * * * * * * * * * * * * * * Handle buffer * * * * * * * * * * * * * * */
