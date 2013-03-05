@@ -110,7 +110,7 @@ static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 					  unsigned int dev_id,
 					  unsigned int details)
 {
-	struct __fmcadc_dev_zio *fa;
+	struct __fmcadc_dev_zio *fa = NULL;
 	struct stat st;
 	char *syspath, *devpath, fname[128];
 	int udev_zio_dir = 1;
@@ -140,7 +140,8 @@ static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 			dev->devname, dev_id);
 
 	/* Path exists, so device is there */
-	fa = malloc(sizeof(struct __fmcadc_dev_zio));
+
+	fa = malloc(sizeof *fa);
 	if (!fa) {
 		goto out_fa_alloc;
 	}
@@ -154,10 +155,10 @@ static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 	sprintf(fname, "%s-0-i-data", fa->devbase);
 	fa->fdd = open(fname, O_RDONLY);
 	if (fa->fdc < 0 || fa->fdd < 0)
-		goto out_fa_open:
+	    goto out_fa_open;
 
-	fa->board_type = dev;
-	return (void *) fa;
+	fa->gid.board = dev;
+	return (void *) &fa->gid;
 
 out_fa_open:
 	free(fa);
@@ -176,7 +177,7 @@ static struct fmcadc_dev *fmcadc_zio_open_by_lun(char *name, int lun)
 }
 static int fmcadc_zio_close(struct fmcadc_dev *dev)
 {
-	struct __fmcadc_dev_zio *fa = (void *) dev;
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
 	/* If char device are open, close it */
 	if (fa->fdc >= 0)
@@ -198,7 +199,7 @@ static int fmcadc_zio_close(struct fmcadc_dev *dev)
 static int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 		unsigned int flags, struct timeval *timeout)
 {
-	struct __fmcadc_dev_zio *fa = (void *) dev;
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	uint32_t cmd;
 	fd_set set;
 	int err;
@@ -230,7 +231,7 @@ static int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 static int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
 		unsigned int flags)
 {
-	struct __fmcadc_dev_zio *fa = (void *) dev;
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	uint32_t cmd = 2;
 
 	return fa_zio_sysfs_set(fa, "cset0/fsm-command", &cmd);
@@ -450,7 +451,7 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 static int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 		struct fmcadc_conf *conf)
 {
-	struct __fmcadc_dev_zio *fa = (void *) dev;
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
 	return fmcadc_zio_config(fa, flags, conf, 0);
 }
@@ -458,7 +459,7 @@ static int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 static int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
 		struct fmcadc_conf *conf)
 {
-	struct __fmcadc_dev_zio *fa = (void *) dev;
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
 	return fmcadc_zio_config(fa, 0, conf, 1);
 }

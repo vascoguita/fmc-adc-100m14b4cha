@@ -345,6 +345,13 @@ struct fmcadc_board_type {
 	struct fmcadc_op *fa_op;
 };
 
+/*
+ * Generic Instance Descriptor
+ */
+struct fmcadc_gid {
+	const struct fmcadc_board_type *board;
+};
+
 /* Definition of board types */
 extern struct fmcadc_board_type fmcadc_100ms_4ch_14bit;
 
