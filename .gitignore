@@ -29,3 +29,5 @@
 tools/fau-acq-time
 tools/fau-trg-config
 tools/parport-burst
+lib/demo/fald-simple-acq
+
