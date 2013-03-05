@@ -31,7 +31,7 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 			       unsigned int details)
 {
 	struct fmcadc_dev *dev = NULL;
-	int i;
+	int i, found = 0;
 
 	/* name cannot be NULL */
 	if (!name)
@@ -39,18 +39,20 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 
 	/* Look in the list of supported board if the "name" board is there */
 	for (i = 0; i < __FMCADC_SUPPORTED_BOARDS_LAST_INDEX; ++i) {
-		if (strcmp(name, fmcadc_board_type[i]->name))
-			continue;
-
-		/* The library supports this board */
-		if (fmcadc_board_type[i]->fa_op->open) {
-			dev = fmcadc_board_type[i]->fa_op->open(fmcadc_board_type[i],
-								dev_id, details);
+		if (!strcmp(name, fmcadc_board_type[i]->name)) {
+			found = 1;
+			break;
 		}
-		break;
 	}
 
-	/* Device not supported */
+	/* The library supports this board */
+	if (fmcadc_board_type[i]->fa_op && fmcadc_board_type[i]->fa_op->open) {
+		dev = fmcadc_board_type[i]->fa_op->open(fmcadc_board_type[i],
+							dev_id, details);
+	} else {
+		errno = EINVAL;
+	}
+
 	return dev;
 }
 struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun)
