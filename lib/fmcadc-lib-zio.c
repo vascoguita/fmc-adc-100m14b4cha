@@ -342,8 +342,7 @@ static int fmcadc_zio_config_acq(struct __fmcadc_dev_zio *fa,
 		}
 		break;
 	default:
-		/* Invalid parameter */
-		errno = EINVAL;
+		errno = FMCADC_ENOCAP;
 		return -1;
 	}
 }
