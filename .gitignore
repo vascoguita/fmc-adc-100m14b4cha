@@ -1,3 +1,4 @@
+.*
 *~
 .*cmd
 .*ersions
@@ -16,6 +17,7 @@
 *.blg
 *.dvi
 *.out
+*.a
 \#*\#
 *.sh
 # eclipse files
