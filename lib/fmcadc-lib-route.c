@@ -26,7 +26,12 @@ const struct fmcadc_board_type
 	&fmcadc_100ms_4ch_14bit,
 };
 
-/* Handle board */
+
+/* * * * * * * * * * * * * * * * * Handle Device * * * * * * * * * * * * * */
+/* fmcadc_open
+ * @name: name of the device type to open
+ * @dev_id: device identificator of a particular device connected to the system
+ */
 struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 			       unsigned int details)
 {
@@ -44,19 +49,29 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 			break;
 		}
 	}
-	if (!found)
-		return NULL;
+	if (!found) {
+		errno = ENODEV;
+		return NULL; /* Not found */
+	}
 
 	/* The library supports this board */
 	if (fmcadc_board_types[i]->fa_op && fmcadc_board_types[i]->fa_op->open) {
 		dev = fmcadc_board_types[i]->fa_op->open(fmcadc_board_types[i],
 							 dev_id, details);
 	} else {
-		errno = EINVAL;
+		errno = FMCADC_ENOP;
 	}
 
 	return dev;
 }
+
+/*
+ * fmcadc_open_by_lun
+ * @name: name of the device type to open
+ * @lun: Logical Unit Number of the device
+ *
+ * TODO
+ */
 struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun)
 {
 	if (!name)
@@ -64,6 +79,11 @@ struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun)
 
 	return NULL;
 }
+
+/*
+ * fmcadc_close
+ * @dev: the device to close
+ */
 int fmcadc_close(struct fmcadc_dev *dev)
 {
 	struct fmcadc_gid *b = (void *)dev;
@@ -81,7 +101,18 @@ int fmcadc_close(struct fmcadc_dev *dev)
 		return -1;
 	}
 }
-/* Handle acquisition */
+
+
+/* * * * * * * * * * * * * * * Handle Acquisition * * * * * * * * * * * * * */
+/*
+ * fmcadc_acq_start
+ * @dev: device where to start acquiring
+ * @flags:
+ * @timeout: it can be used to specify how much time wait that acquisition is
+ *           over. This value follow the select() policy: NULL to wait until
+ *           acquisition is over; {0, 0} to return immediately without wait;
+ *           {x, y} to wait acquisition end for a specified time
+ */
 int fmcadc_acq_start(struct fmcadc_dev *dev,
 			     unsigned int flags,
 			     struct timeval *timeout)
@@ -101,6 +132,12 @@ int fmcadc_acq_start(struct fmcadc_dev *dev,
 		return -1;
 	}
 }
+
+/*
+ * fmcadc_acq_stop
+ * @dev: device where to stop acquisition
+ * @flags:
+ */
 int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 {
 	struct fmcadc_gid *b = (void *)dev;
@@ -119,7 +156,14 @@ int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 	}
 }
 
-/* Handle configuration */
+
+/* * * * * * * * * * * * * * Handle Configuration * * * * * * * * * * * * * */
+/*
+ * fmcadc_apply_config
+ * @dev: device to configure
+ * @flags:
+ * @conf: configuration to apply on device.
+ */
 int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			struct fmcadc_conf *conf)
 {
@@ -152,6 +196,14 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 		return -1;
 	}
 }
+
+/*
+ * fmcadc_retrieve_config
+ * @dev: device where retireve configuration
+ * @flags:
+ * @conf: configuration to retrieve. The mask tell which value acquire, then
+ *        the library will acquire and set the value in the "value" array
+ */
 int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 {
 	struct fmcadc_gid *b = (void *)dev;
@@ -182,7 +234,16 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 	}
 }
 
-/* Handle buffers */
+/*
+ * fmcadc_request_buffer
+ * @dev: device where look for a buffer
+ * @buf: where store the buffer. The user must allocate this structure.
+ * @flags:
+ * @timeout: it can be used to specify how much time wait that a buffer is
+ *           ready. This value follow the select() policy: NULL to wait until
+ *           acquisition is over; {0, 0} to return immediately without wait;
+ *           {x, y} to wait acquisition end for a specified time
+ */
 int fmcadc_request_buffer(struct fmcadc_dev *dev,
 			  struct fmcadc_buffer *buf,
 			  unsigned int flags,
@@ -204,6 +265,12 @@ int fmcadc_request_buffer(struct fmcadc_dev *dev,
 		return -1;
 	}
 }
+
+/*
+ * fmcadc_release_buffer
+ * @dev: device that generate the buffer
+ * @buf: buffer to release
+ */
 int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
 {
 	struct fmcadc_gid *b = (void *)dev;
@@ -223,6 +290,13 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
 	}
 }
 
+
+/* * * * * * * * * * * * * * * * Utilities * * * * * * * * * * * * * * * * */
+/*
+ * fmcadc_strerror
+ * @dev: device for which you want to know the meaning of the error
+ * @errnum: error number
+ */
 char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum)
 {
 	struct fmcadc_gid *b = (void *)dev;
