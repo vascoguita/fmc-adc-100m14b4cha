@@ -43,13 +43,22 @@ struct __fmcadc_dev_zio {
 	struct fmcadc_gid gid;
 };
 
+/*
+ * offsetof and container_of come from kernel.h header file
+ */
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 #define to_dev_zio(_dev) (container_of(dev, struct __fmcadc_dev_zio, gid))
 
-/* * * * * * * * * ZIO specific function * * * * * * * * * * */
+
+/* * * * * * * * * * * * * * * * ZIO specific function * * * * * * * * * * * */
+/*
+ * __fa_zio_sysfs_get
+ * @path: path to the sysfs attribute
+ * @resp: value returned by the sysfs attribute
+ */
 static int __fa_zio_sysfs_get(char *path, uint32_t *resp)
 {
 	FILE *f = fopen(path, "r");
@@ -67,6 +76,11 @@ static int __fa_zio_sysfs_get(char *path, uint32_t *resp)
 	return 0;
 }
 
+/*
+ * __fa_zio_sysfs_set
+ * @path: path to the sysfs attribute
+ * @value: value to set in the sysfs attribute
+ */
 static int __fa_zio_sysfs_set(char *path, uint32_t *value)
 {
 	char s[16];
@@ -86,7 +100,12 @@ static int __fa_zio_sysfs_set(char *path, uint32_t *value)
 	return -1;
 }
 
-/* And these two for the board structure */
+/*
+ * fa_zio_sysfs_get
+ * @fa: device owner of the attribute
+ * @name: relative path to the sysfs attribute within the device
+ * @resp: value returned by the sysfs attribute
+ */
 static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *resp)
 {
@@ -96,6 +115,12 @@ static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 	return __fa_zio_sysfs_get(pathname, resp);
 }
 
+/*
+ * fa_zio_sysfs_set
+ * @fa: device owner of the attribute
+ * @name: relative path to the sysfs attribute within the device
+ * @value: value to set in the sysfs attribute
+ */
 static int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *value)
 {
@@ -105,10 +130,11 @@ static int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 	return __fa_zio_sysfs_set(pathname, value);
 }
 
-static int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
-		unsigned int flags);
 
-/* * * * * * * * * * * * * * * * Handle board * * * * * * * * * * * * * * * */
+/* * * * * * * * * *  Library Operations Implementation * * * * * * * * * * */
+static int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
+				       unsigned int flags);
+
 static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 					  unsigned int dev_id,
 					  unsigned int details)
@@ -484,6 +510,7 @@ static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 	return -1;
 }
 
+/* * * * * * * * * * * * * * * * * Boards definition * * * * * * * * * * * * */
 #define FMCADC_ZIO_TRG_MASK (1 << FMCADC_CONF_TRG_SOURCE) |      \
 			    (1 << FMCADC_CONF_TRG_SOURCE_CHAN) | \
 			    (1 << FMCADC_CONF_TRG_THRESHOLD) |   \
