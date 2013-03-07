@@ -68,25 +68,29 @@ const struct zio_field_desc zfad_regs[] = {
 		/* Sample counter */
 	[ZFAT_CNT] =			{FA_ADC_MEM_OFF + 0x28, 0xFFFFFFFF, 0},
 	/* Channel 1 */
-	[ZFA_CH1_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x2C, 0x007F, 0},
+	[ZFA_CH1_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x2C, 0x0073, 0},
 	[ZFA_CH1_STA] =			{FA_ADC_MEM_OFF + 0x30, 0xFFFF, 0},
 	[ZFA_CH1_GAIN] =		{FA_ADC_MEM_OFF + 0x34, 0xFFFF, 0},
 	[ZFA_CH1_OFFSET] =		{FA_ADC_MEM_OFF + 0x38, 0xFFFF, 0},
+	[ZFA_CH1_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x2C, 0x0001, 3},
 	/* Channel 2 */
-	[ZFA_CH2_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x3C, 0x007F, 0},
+	[ZFA_CH2_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x3C, 0x0073, 0},
 	[ZFA_CH2_STA] =			{FA_ADC_MEM_OFF + 0x40, 0xFFFF, 0},
 	[ZFA_CH2_GAIN] =		{FA_ADC_MEM_OFF + 0x44, 0xFFFF, 0},
 	[ZFA_CH2_OFFSET] =		{FA_ADC_MEM_OFF + 0x48, 0xFFFF, 0},
+	[ZFA_CH2_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x3C, 0x0001, 3},
 	/* Channel 3 */
-	[ZFA_CH3_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x4C, 0x007F, 0},
+	[ZFA_CH3_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x4C, 0x0073, 0},
 	[ZFA_CH3_STA] =			{FA_ADC_MEM_OFF + 0x50, 0xFFFF, 0},
 	[ZFA_CH3_GAIN] =		{FA_ADC_MEM_OFF + 0x54, 0xFFFF, 0},
 	[ZFA_CH3_OFFSET] =		{FA_ADC_MEM_OFF + 0x58, 0xFFFF, 0},
+	[ZFA_CH3_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x4C, 0x0001, 3},
 	/* Channel 4 */
-	[ZFA_CH4_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x5C, 0x007F, 0},
+	[ZFA_CH4_CTL_RANGE] =		{FA_ADC_MEM_OFF + 0x5C, 0x0073, 0},
 	[ZFA_CH4_STA] =			{FA_ADC_MEM_OFF + 0x60, 0xFFFF, 0},
 	[ZFA_CH4_GAIN] =		{FA_ADC_MEM_OFF + 0x64, 0xFFFF, 0},
 	[ZFA_CH4_OFFSET] =		{FA_ADC_MEM_OFF + 0x68, 0xFFFF, 0},
+	[ZFA_CH4_CTL_TERM] =		{FA_ADC_MEM_OFF + 0x5C, 0x0001, 3},
 	/* DMA */
 	[ZFA_DMA_CTL_SWP] =		{FA_DMA_MEM_OFF + 0x00, 0x0003, 2},
 	[ZFA_DMA_CTL_ABORT] =		{FA_DMA_MEM_OFF + 0x00, 0x0001, 1},
@@ -198,6 +202,11 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("ch1-vref", ZIO_RW_PERM, ZFA_CH2_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch2-vref", ZIO_RW_PERM, ZFA_CH3_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch3-vref", ZIO_RW_PERM, ZFA_CH4_CTL_RANGE, 0),
+
+	ZIO_ATTR_EXT("ch0-50ohm-term", ZIO_RW_PERM, ZFA_CH1_CTL_TERM, 0),
+	ZIO_ATTR_EXT("ch1-50ohm-term", ZIO_RW_PERM, ZFA_CH2_CTL_TERM, 0),
+	ZIO_ATTR_EXT("ch2-50ohm-term", ZIO_RW_PERM, ZFA_CH3_CTL_TERM, 0),
+	ZIO_ATTR_EXT("ch3-50ohm-term", ZIO_RW_PERM, ZFA_CH4_CTL_TERM, 0),
 };
 
 /* FIXME Unused until TLV control will be available */
@@ -215,6 +224,7 @@ static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 };
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
+	/*ZIO_ATTR(zdev, "50ohm-termination", ZIO_RW_PERM, ZFA_CHx_CTL_TERM, 0x11),*/
 	ZIO_PARAM_EXT("current-value", ZIO_RO_PERM, ZFA_CHx_STA, 0),
 };
 
@@ -452,6 +462,19 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		}
 		break;
 	/* FIXME temporary until TLV control */
+	case ZFA_CH1_CTL_TERM:
+	case ZFA_CH2_CTL_TERM:
+	case ZFA_CH3_CTL_TERM:
+	case ZFA_CH4_CTL_TERM:
+	case ZFA_CHx_CTL_TERM:
+		if (usr_val != 0 && usr_val != 1) {
+			dev_err(dev, "50 Ohm termination can be activated (1) "
+				     "or deactivated (0)\n");
+			return -EINVAL;
+		}
+		break;
+
+	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_RANGE:
 		i--;
 	case ZFA_CH2_CTL_RANGE:
@@ -505,6 +528,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		*usr_val = fa_read_temp(fa, 0);
 		*usr_val = ((*usr_val) / 16) + (((*usr_val) & 0xf) * 1000 / 16);
 		return 0;
+	case ZFA_CHx_CTL_TERM:
 	case ZFA_CHx_CTL_RANGE:
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
