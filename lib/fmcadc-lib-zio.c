@@ -207,6 +207,10 @@ static int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 	fd_set set;
 	int err;
 
+	if (fa->fdc < 0) {
+		errno = EIO;
+		return -1;
+	}
 
 	cmd = 1;
 	err = fa_zio_sysfs_set(fa, "cset0/fsm-command", &cmd);
