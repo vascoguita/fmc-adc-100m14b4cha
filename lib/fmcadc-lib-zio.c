@@ -22,11 +22,15 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <linux/zio-user.h>
+
 #define FMCADCLIB_INTERNAL
 #include "fmcadc-lib.h"
 
 #define ZIO_DEV_PATH "/dev/zio"
 #define ZIO_SYS_PATH "/sys/bus/zio/devices"
+
+#define FMCADC_NCHAN 4
 
 #define FMCADC_CONF_GET 0
 #define FMCADC_CONF_SET 1
@@ -498,16 +502,115 @@ static int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
 }
 
 /* * * * * * * * * * * * * * * * * Handle buffer * * * * * * * * * * * * * * */
+static struct zio_control *fmcadc_zio_read_ctrl(struct __fmcadc_dev_zio *fa)
+{
+	struct zio_control *ctrl;
+	int i;
+
+	ctrl = malloc(sizeof(struct zio_control));
+	if (!ctrl)
+		return NULL;
+
+	i = read(fa->fdc, ctrl, sizeof(struct zio_control));
+	switch (i) {
+	case -1:
+		fprintf(stderr, "control read: %s\n",
+			strerror(errno));
+		return NULL;
+	case 0:
+		fprintf(stderr, "control read: unexpected EOF\n");
+		return NULL;
+	default:
+		fprintf(stderr, "ctrl read: %i bytes (expected %i)\n",
+			i, sizeof(ctrl));
+		return NULL;
+	case sizeof(struct zio_control):
+		break; /* ok */
+	}
+
+	return ctrl;
+}
+static void fmcadc_zio_release_ctrl(struct zio_control *ctrl)
+{
+	free(ctrl);
+}
+
+static void *fmcadc_zio_read_data(struct __fmcadc_dev_zio *fa,
+				  unsigned int datalen)
+{
+	void *data;
+	int i;
+
+	data = malloc(datalen);
+	if (!data)
+		return NULL;
+
+	i = read(fa->fdd, data, datalen);
+	if (i > 0 && i <= datalen){
+		if (i < datalen)
+			fprintf(stderr, "data read: %i bytes (expected %i)\n",
+				i, datalen);
+		return data;
+	} else {
+		if (i == 0)
+			fprintf(stderr, "data read: unexpected EOF\n");
+		else
+			fprintf(stderr, "data read: %s\n", strerror(errno));
+		return NULL;
+	}
+}
+static void fmcadc_zio_release_data(void *data)
+{
+	free(data);
+}
+
 static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 		struct fmcadc_buffer *buf, unsigned int flags,
 		struct timeval *timeout)
 {
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	struct zio_control *ctrl;
+	void *data;
+	fd_set set;
+	int err;
+	unsigned int len;
+
+	/* So, first sample and blocking read. Wait.. */
+	FD_ZERO(&set);
+	FD_SET(fa->fdc, &set);
+	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
+	if (err == 0) {
+		errno = EAGAIN;
+		return -1;
+	} else if (err < 0) {
+		return err;
+	}
+
+	/* Ready to read */
+	ctrl = fmcadc_zio_read_ctrl(fa);
+	if (!ctrl)
+		goto out_ctrl;
+
+	len = (ctrl->nsamples * ctrl->ssize) * FMCADC_NCHAN;
+	data = fmcadc_zio_read_data(fa, len);
+	if (!data)
+		goto out_data;
+
+	buf->data = data;
+	buf->metadata = (void *) ctrl;
+	return 0;
+
+out_data:
+	fmcadc_zio_release_ctrl(ctrl);
+out_ctrl:
 	return -1;
 }
 static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 		struct fmcadc_buffer *buf)
 {
-	return -1;
+	fmcadc_zio_release_ctrl(buf->metadata);
+	fmcadc_zio_release_data(buf->data);
+	return 0;
 }
 
 /* * * * * * * * * * * * * * * * * Boards definition * * * * * * * * * * * * */
