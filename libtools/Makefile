@@ -5,6 +5,7 @@ CFLAGS = -Wall -ggdb -O2 -I$(LIBADC) -I$(ZIO)/include
 LDFLAGS = -static -L$(LIBADC) -lfmcadc
 
 DEMOS := fald-simple-acq
+DEMOS += fald-simple-get-conf
 
 all: demo
 
