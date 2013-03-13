@@ -52,10 +52,9 @@ struct __fmcadc_dev_zio {
  */
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define container_of(ptr, type, member) ({			\
-	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+	const typeof( ((type *)0)->member ) *__mptr = ((void *)ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
-#define to_dev_zio(_dev) (container_of(dev, struct __fmcadc_dev_zio, gid))
-
+#define to_dev_zio(dev) (container_of(dev, struct __fmcadc_dev_zio, gid))
 
 /* * * * * * * * * * * * * * * * ZIO specific function * * * * * * * * * * * */
 /*
