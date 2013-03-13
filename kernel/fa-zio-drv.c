@@ -128,10 +128,10 @@ const struct zio_field_desc zfad_regs[] = {
 	[ZFA_UTC_ACQ_END_COARSE] =	{FA_UTC_MEM_OFF + 0x40, ~0x0, 0},
 	[ZFA_UTC_ACQ_END_FINE] =	{FA_UTC_MEM_OFF + 0x44, ~0x0, 0},
 	/* Carrier CSR */
-	[ZFA_CAR_FMC_PRES] =		{FA_CAR_MEM_OFF + 0x0C, 0x1, 0},
-	[ZFA_CAR_P2L_PLL] =		{FA_CAR_MEM_OFF + 0x0C, 0x1, 1},
-	[ZFA_CAR_SYS_PLL] =		{FA_CAR_MEM_OFF + 0x0C, 0x1, 2},
-	[ZFA_CAR_DDR_CAL] =		{FA_CAR_MEM_OFF + 0x0C, 0x1, 3},
+	[ZFA_CAR_FMC_PRES] =		{FA_CAR_MEM_OFF + 0x04, 0x1, 0},
+	[ZFA_CAR_P2L_PLL] =		{FA_CAR_MEM_OFF + 0x04, 0x1, 1},
+	[ZFA_CAR_SYS_PLL] =		{FA_CAR_MEM_OFF + 0x04, 0x1, 2},
+	[ZFA_CAR_DDR_CAL] =		{FA_CAR_MEM_OFF + 0x04, 0x1, 3},
 };
 
 /* zio device attributes */

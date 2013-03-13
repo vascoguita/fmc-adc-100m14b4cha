@@ -14,18 +14,17 @@
 #include <linux/zio.h>
 #include <linux/zio-utils.h>
 
-#define FA_GATEWARE_DEFAULT_NAME "fmc/fmc-adc.bin"
-
+#define FA_GATEWARE_DEFAULT_NAME "fmc/spec-fmc-adc-v1.0.bin"
 extern int enable_auto_start;
 
 /* ADC register offset */
-#define FA_DMA_MEM_OFF	0x00000
-#define FA_CAR_MEM_OFF	0x30000
-#define FA_UTC_MEM_OFF	0x40000
-#define FA_IRQ_MEM_OFF	0x50000
-#define FA_SPI_MEM_OFF	0x70000
-#define FA_ADC_MEM_OFF	0x90000
-#define FA_OWI_MEM_OFF	0XA0000 /* one-wire */
+#define FA_DMA_MEM_OFF	0x01000
+#define FA_CAR_MEM_OFF	0x01300
+#define FA_UTC_MEM_OFF	0x01400
+#define FA_IRQ_MEM_OFF	0x01500
+#define FA_SPI_MEM_OFF	0x01700
+#define FA_ADC_MEM_OFF	0x01900
+#define FA_OWI_MEM_OFF	0X01A00 /* one-wire */
 
 /* ADC DDR memory */
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
