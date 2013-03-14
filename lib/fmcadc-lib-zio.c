@@ -591,7 +591,7 @@ static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 	if (!ctrl)
 		goto out_ctrl;
 
-	len = (ctrl->nsamples * ctrl->ssize) * FMCADC_NCHAN;
+	len = (ctrl->nsamples * ctrl->ssize);
 	data = fmcadc_zio_read_data(fa, len);
 	if (!data)
 		goto out_data;

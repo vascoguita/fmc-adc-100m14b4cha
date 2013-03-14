@@ -281,10 +281,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 
 	/*
 	 * Calculate the required size to store all channels.
-	 * n_chan - 1 because of interleaved channel
+	 * This is an interleaved acquisition, so nsamples represents the
+	 * number of sample on all channels (n_chan * chan_samples)
 	 */
-	size = interleave->current_ctrl->ssize *
-	       ti->nsamples * (ti->cset->n_chan - 1);
+	size = interleave->current_ctrl->ssize * ti->nsamples;
 
 	dev_mem_ptr = 0;
 	/* Allocate ZIO blocks */
@@ -303,6 +303,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		zfad_block[i].block = block;
 		zfad_block[i].dev_mem_ptr = dev_mem_ptr;
 		dev_mem_ptr += size;
+		pr_info("next dev_mem_ptr 0x%x (+%d)", dev_mem_ptr, size);
 	}
 
 	err = ti->cset->raw_io(ti->cset);
