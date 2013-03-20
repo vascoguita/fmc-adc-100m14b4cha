@@ -287,10 +287,10 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		/* Now we can arm the trigger for the incoming acquisition */
 		zio_arm_trigger(fa->zdev->cset->ti);
 
-		dev_dbg(fa->fmc->hwdev, "Enable interrupts\n");
+		dev_dbg(fa->fmc->hwdev, "FSM START Command, Enable interrupts\n");
 		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_ALL);
 	} else {
-		dev_dbg(fa->fmc->hwdev, "Disable interrupts\n");
+		dev_dbg(fa->fmc->hwdev, "FSM STOP Command, Disable interrupts\n");
 		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_NONE);
 	}
 
@@ -357,6 +357,8 @@ static int zfad_calibration(struct fa_dev *fa, struct zio_channel *chan,
 	if (range < 0)
 		return range;
 
+	dev_dbg(&chan->head.dev, "Set offset and gain for range 0x%x (%d)\n",
+			usr_val, range);
 	/* Apply the ADC calibration value for the offset */
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
 	cal_val = fa->adc_cal_data[range].offset[chan->index];

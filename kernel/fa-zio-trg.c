@@ -228,7 +228,9 @@ static int zfat_data_done(struct zio_cset *cset)
 				i + 1, fa->n_shots);
 			bi->b_op->store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
-			dev_dbg(fa->fmc->hwdev, "Free un-acquired block\n");
+			dev_dbg(fa->fmc->hwdev, "Free un-acquired block %d/%d "
+					"(received %d shots)\n",
+					i + 1, fa->n_shots, fa->n_fires);
 			bi->b_op->free_block(bi, zfad_block[i].block);
 		}
 	/* Clear active block */
@@ -335,6 +337,7 @@ static void zfat_abort(struct zio_ti *ti)
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	unsigned int i;
 
+	dev_dbg(&ti->head.dev, "Aborting trigger");
 	/* Free all blocks */
 	for(i = 0; i < fa->n_shots; ++i)
 		bi->b_op->free_block(bi, zfad_block[i].block);
