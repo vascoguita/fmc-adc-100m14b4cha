@@ -656,9 +656,6 @@ static void zfat_get_irq_status(struct fa_dev *fa,
 	/* Clear current interrupts status */
 	zfa_common_conf_set(fa, ZFA_IRQ_SRC, *irq_status);
 	zfa_common_conf_set(fa, ZFA_IRQ_MULTI, *irq_multi);
-
-	/* ack the irq */
-	fa->fmc->op->irq_ack(fa->fmc);
 }
 
 /*
@@ -869,6 +866,10 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 	zfat_get_irq_status(fa, &status, &multi);
 	if (!status)
 		return IRQ_NONE;
+
+	/* ack the irq */
+	fa->fmc->op->irq_ack(fa->fmc);
+
 	if (unlikely((status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) &&
 	    (status & (ZFAT_TRG_FIRE | ZFAT_ACQ_END)))) {
 		WARN(1, "Cannot handle trigger interrupt and DMA interrupt at "
