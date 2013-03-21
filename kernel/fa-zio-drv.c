@@ -266,6 +266,9 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	 * effects
 	 */
 	zio_trigger_abort_disable(fa->zdev->cset, 0);
+	/* Reset counters */
+	fa->n_shots = 0;
+	fa->n_fires = 0;
 
 	/* If START, check if we can start */
 	if (command == ZFA_START) {
