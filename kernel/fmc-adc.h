@@ -250,7 +250,7 @@ extern const struct zio_field_desc zfad_regs[];
  * ZFA_CHx_MULT
  * address offset between two registers of the same type on consecutive channel
  */
-#define ZFA_CHx_MULT 4
+#define ZFA_CHx_MULT 5
 /*
  * ZFA_CHx_CH1_DIFF
  * index difference between fake register index CHx and the first channel
