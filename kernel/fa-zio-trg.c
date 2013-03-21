@@ -202,7 +202,7 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
  * zfat_data_done
  * @cset: channels set
  *
- * Transfer is over for all the active_block. Store all blocks and free
+ * Transfer is over for all blocks. Store all blocks and free
  * zfad_blocks vector. Here we are storing only blocks
  * that were filled by a trigger fire. If for some reason the data_done
  * occurs before the natural end of the acquisition, un-filled block
@@ -237,7 +237,7 @@ static int zfat_data_done(struct zio_cset *cset)
 	fa->n_shots = 0;
 	fa->n_fires = 0;
 	kfree(zfad_block);
-	cset->interleave->active_block = NULL;
+	cset->interleave->priv_d = NULL;
 
 	return 0;
 }
@@ -342,6 +342,7 @@ static void zfat_abort(struct zio_ti *ti)
 	for(i = 0; i < fa->n_shots; ++i)
 		bi->b_op->free_block(bi, zfad_block[i].block);
 	kfree(zfad_block);
+	cset->interleave->priv_d = NULL;
 }
 
 /* Output it is not supported by this trigger */
