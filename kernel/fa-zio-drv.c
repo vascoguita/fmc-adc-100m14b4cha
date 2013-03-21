@@ -610,31 +610,23 @@ static int zfad_input_cset(struct zio_cset *cset)
  * zfad_stop_cset
  * @cset: channel set to stop
  *
- * Stop an acquisition, reset indexes and disable interrupts
+ * Stop an acquisition, reset indexes and disable interrupts. This function
+ * is useful only if the driver is using a software trigger.
  */
 static void zfad_stop_cset(struct zio_cset *cset)
 {
 
 	struct fa_dev *fa = cset->zdev->priv_d;
-	/* Force the acquisition to stop */
-	zfad_fsm_command(fa, ZFA_STOP);
-	/*
-	 * Disable all interrupt. We are aborting acquisition, we don't need
-	 * any interrupt
-	 */
-	dev_dbg(fa->fmc->hwdev, "Disable interrupts\n");
-	zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_NONE);
 
-	/* reset counters */
-	fa->n_shots = 0;
-	fa->n_fires = 0;
-	/* Clear active block */
-	cset->interleave->active_block = NULL;
-
-	/* If the user is using a software trigger, then free zfad_block */
+	/* If the user is using a software trigger */
 	if (cset->trig != &zfat_type) {
+		/* Force the acquisition to stop */
+		zfad_fsm_command(fa, ZFA_STOP);
+		/* Release zfad_block */
 		kfree(cset->interleave->priv_d);
 		cset->interleave->priv_d = NULL;
+		/* Clear active block */
+		cset->interleave->active_block = NULL;
 	}
 }
 /* * * * * * * * * * * * * IRQ functions handler * * * * * * * * * * * * * * */
