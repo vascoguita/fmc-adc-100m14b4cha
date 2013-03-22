@@ -980,17 +980,12 @@ static int zfad_init_cset(struct zio_cset *cset)
 	dev_dbg(&cset->head.dev, "%s:%d", __func__, __LINE__);
 	/* Force stop FSM to prevent early trigger fire */
 	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
-	/* Initialize channels gain to 1 and range to 1V */
-	for (i = 0; i < 4; ++i) {
-		zfa_common_conf_set(fa, ZFA_CH1_GAIN + (i * ZFA_CHx_MULT),
-				    0x8000);
-		zfa_common_conf_set(fa, ZFA_CH1_CTL_RANGE + (i * ZFA_CHx_MULT),
-				    0x0011);
-	}
+	/* Initialize channels to use 1V range */
+	for (i = 0; i < 4; ++i)
+		zfad_calibration(fa, &cset->chan[i], 0x11);
+
 	/* Enable mezzanine clock */
 	zfa_common_conf_set(fa, ZFA_CTL_CLK_EN, 1);
-	/* Reset channel offset to mid-scale */
-	zfad_reset_offset(fa);
 	/* Set DMA to transfer data from device to host */
 	zfa_common_conf_set(fa, ZFA_DMA_BR_DIR, 0);
 	/* Set decimation to minimum */
