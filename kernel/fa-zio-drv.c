@@ -303,24 +303,6 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 
 
 /*
- * zfad_reset_offset
- * @fa: the fmc-adc descriptor
- *
- * Reset channel's offsets
- */
-static void zfad_reset_offset(struct fa_dev *fa)
-{
-	zfa_common_conf_set(fa, ZFA_CTL_DAC_CLR_N, 0);
-	udelay(20);
-	zfa_common_conf_set(fa, ZFA_CTL_DAC_CLR_N, 1);
-
-	/*
-	 * FIXME update the value with the default value for the selected range
-	 */
-}
-
-
-/*
  * zfad_get_range
  * @usr_val: range value
  *
@@ -417,6 +399,21 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	dev_dbg(&chan->head.dev, "DAC offset calibration 0x%x\n", cal_val);
 	/* Apply calibrated offset to DAC */
 	return fa_spi_xfer(fa, chan->index, 16, cal_val, &tmp);
+}
+
+
+/*
+ * zfad_reset_offset
+ * @fa: the fmc-adc descriptor
+ *
+ * Reset channel's offsets
+ */
+static void zfad_reset_offset(struct fa_dev *fa)
+{
+	int i;
+
+	for (i = 0; i < fa->zdev->cset->n_chan; ++i)
+		zfad_apply_user_offset(fa, &fa->zdev->cset->chan[i], 0);
 }
 
 
@@ -976,6 +973,8 @@ static int zfad_init_cset(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	int i;
+
+	fa->zdev = cset->zdev; /* FIXME remove on future ZIO update */
 
 	dev_dbg(&cset->head.dev, "%s:%d", __func__, __LINE__);
 	/* Force stop FSM to prevent early trigger fire */
