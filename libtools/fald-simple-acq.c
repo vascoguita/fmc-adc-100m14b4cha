@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 		{"threshold",required_argument, 0, 't'},
 		{"src-channel",required_argument, 0, 'c'},
 		{"external", no_argument, &trgval[FMCADC_CONF_TRG_SOURCE], 1},
+		{"negative-edge", no_argument, &trgval[FMCADC_CONF_TRG_POLARITY], 1},
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
@@ -132,6 +133,12 @@ int main(int argc, char *argv[])
 	printf("Configuring trigger ...\n");
 	/* Configure trigger parameter */
 	trg.type = FMCADC_CONF_TYPE_TRG;
+	/* Set internal/external trigger according to trgval flag */
+	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE,
+					trgval[FMCADC_CONF_TRG_SOURCE]);
+	/* Set trigger polarity negative/positive according to trgval flag */
+	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY,
+					trgval[FMCADC_CONF_TRG_POLARITY]);
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err) {
 		printf("Cannot apply trigger configuration: (%d) %s\n",
