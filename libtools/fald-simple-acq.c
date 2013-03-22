@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY,
 					trgval[FMCADC_CONF_TRG_POLARITY]);
 	err = fmcadc_apply_config(adc, 0 , &trg);
-	if (err) {
+	if (err && errno != FMCADC_ENOMASK) {
 		printf("Cannot apply trigger configuration: (%d) %s\n",
 			errno, fmcadc_strerror(adc, errno));
 		exit(1);
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 	/* Configure acquisition parameter */
 	acq.type = FMCADC_CONF_TYPE_ACQ;
 	err = fmcadc_apply_config(adc, 0 , &acq);
-	if (err) {
+	if (err && errno != FMCADC_ENOMASK) {
 		printf("Cannot apply acquisition configuration: (%d) %s\n",
 			errno, fmcadc_strerror(adc, errno));
 		exit(1);

@@ -175,9 +175,10 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 		errno = EINVAL;
 		return -1;
 	}
-	if (!conf->flags)
-		return 0; /* Nothing to do */
-
+	if (!conf->mask) {
+		errno = FMCADC_ENOMASK;
+		return -1; /* Nothing to do */
+	}
 	cap_mask = b->board->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
@@ -214,7 +215,10 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 		errno = EINVAL;
 		return -1;
 	}
-
+	if (!conf->mask) {
+		errno = FMCADC_ENOMASK;
+		return -1; /* Nothing to do */
+	}
 	cap_mask = b->board->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
@@ -307,7 +311,7 @@ char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum)
 		return NULL;
 	}
 
-	if (errnum >= FMCADC_ENOP && errnum <= FMCADC_ENOCHAN) {
+	if (errnum >= FMCADC_ENOP && errnum <= FMCADC_ENOMASK) {
 		switch (errnum) {
 		case FMCADC_ENOP:
 			str = "Operation not supported";
@@ -326,6 +330,9 @@ char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum)
 			break;
 		case FMCADC_ENOCHAN:
 			str = "Invalid channel";
+			break;
+		case FMCADC_ENOMASK:
+			str = "Missing configuration mask";
 			break;
 		}
 		goto out;

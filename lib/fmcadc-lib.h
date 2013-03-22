@@ -12,6 +12,7 @@
 #define FMCADC_ENOGET 1027
 #define FMCADC_ENOSET 1028
 #define FMCADC_ENOCHAN 1029
+#define FMCADC_ENOMASK 1030
 
 struct fmcadc_dev;
 
