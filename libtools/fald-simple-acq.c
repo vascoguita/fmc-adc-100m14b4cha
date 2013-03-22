@@ -28,7 +28,7 @@ static void fald_help()
 	printf("  --delay|-d <value>: set the ticks delay of the trigger\n");
 	printf("  --threshold|-t <value>: set internal trigger threshold\n");
 	printf("  --channel|-c <value>: select the internal channel as "
-	       "trigger\n");
+	       "trigger (0-based index)\n");
 	printf("  --external: set to external trigger. The default is the "
 	       "internal trigger.\n");
 	printf("  --negative-edge: set internal trigger polarity to negative "
