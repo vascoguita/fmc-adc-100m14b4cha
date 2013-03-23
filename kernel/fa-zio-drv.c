@@ -735,7 +735,7 @@ static void zfat_irq_dma_done(struct zio_cset *cset, int status)
 		zfa_common_info_get(fa, ZFA_DMA_STA, &val);
 		dev_err(fa->fmc->hwdev,
 			"DMA error (status 0x%x). All acquisition lost\n", val);
-		zio_trigger_abort_disable(cset, 0);
+		zfad_fsm_command(fa, ZFA_STOP);
 		fa->n_dma_err++;
 	}
 }
@@ -772,8 +772,8 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 	dev_dbg(fa->fmc->hwdev, "Trigger fire %i/%i\n",
 		fa->n_fires + 1, fa->n_shots);
 	if (fa->n_fires >= fa->n_shots) {
-		WARN(1, "Invalid Fire");
-		dev_err(fa->fmc->hwdev, "Invalid fire, skip\n");
+		WARN(1, "Invalid Fire, STOP acquisition");
+		zfad_fsm_command(fa, ZFA_STOP);
 		return;
 	}
 
@@ -821,7 +821,7 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 		dev_warn(fa->fmc->hwdev,
 			 "Can't start DMA on the last acquisition, "
 			 "State Machine is not IDLE (status:%d)\n", val);
-		zio_trigger_abort_disable(cset, 0);
+		zfad_fsm_command(fa, ZFA_STOP);
 		return;
 	}
 
@@ -982,6 +982,7 @@ static int zfad_init_cset(struct zio_cset *cset)
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i)
 		zfad_calibration(fa, &cset->chan[i], 0x11);
+	zfad_reset_offset(fa);
 
 	/* Enable mezzanine clock */
 	zfa_common_conf_set(fa, ZFA_CTL_CLK_EN, 1);
