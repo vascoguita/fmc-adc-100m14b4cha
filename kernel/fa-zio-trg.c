@@ -181,6 +181,12 @@ static void zfat_destroy(struct zio_ti *ti)
 	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
 	/* Disable Hardware trigger */
 	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
+	/* Other triggers cannot use pre-samples */
+	zfa_common_conf_set(fa, ZFAT_PRE, 0);
+	/* Reset post samples */
+	zfa_common_conf_set(fa, ZFAT_POST, 0);
+	/* Other triggers can handle only 1 shot */
+	zfa_common_conf_set(fa, ZFAT_SHOTS_NB, 1);
 
 	kfree(zfat);
 }
