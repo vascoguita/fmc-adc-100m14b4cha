@@ -112,11 +112,16 @@ struct fa_dev {
 };
 
 /*
- *
+ * zfad_block
+ * @block is zio_block which contains data and metadata from a single shot
+ * @sgt is the scatter/gather table that describe the DMA acquisition
+ * @item a list on dma_item to describe
+ * @dma_list_item is a DMA address pointer to the dma_item list
+ * @dev_mem_ptr is pointer to the ADC internal memory. It points to the first
+ *              samples of the stored shot
  */
 struct zfad_block {
 	struct zio_block *block;
-	unsigned int dev_addr;
 
 	struct sg_table	sgt;
 	struct dma_item	*items;
