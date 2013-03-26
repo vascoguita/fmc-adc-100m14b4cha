@@ -263,9 +263,17 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	 * abort an acquisition. If it is START, we abort because if there was
 	 * a previous start but the acquisition end interrupt doesn't occurs,
 	 * START mean RESTART. If it is a clean START, the abort has not
-	 * effects
+	 * effects.
+	 *
+	 * This is done only if ADC is using its own trigger, otherwise it is
+	 * not necessary.
+	 *
+	 * The case of fmc-adc-trg is optimized because is the most common
+	 * case
 	 */
-	zio_trigger_abort_disable(fa->zdev->cset, 0);
+	if (likely(fa->zdev->cset->trig == &zfat_type || command == ZFA_STOP))
+		zio_trigger_abort_disable(fa->zdev->cset, 0);
+
 	/* Reset counters */
 	fa->n_shots = 0;
 	fa->n_fires = 0;
@@ -548,6 +556,47 @@ static const struct zio_sysfs_operations zfad_s_op = {
 	.info_get = zfad_info_get,
 };
 
+
+/*
+ * zfad_input_cset_software
+ * @fa the adc instance to use
+ * @cset channel set to acquire
+ *
+ * If the user is using the ADC trigger, then it can do a multi-shot
+ * acquisition.
+ * If the user is using a software trigger, it cannot do multi-shot.
+ * The generic arm trigger used by software trigger returns a
+ * zio_block. We must convert it into a zfad_block to perform DMA
+ */
+static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
+{
+	struct zfad_block *tmp;
+	int err;
+
+	/* Check if device memory allows this acquisition */
+	err = zfat_overflow_detection(cset->ti, ZFAT_POST, cset->ti->nsamples);
+	if (err)
+		return err;
+	tmp = kzalloc(sizeof(struct zfad_block), GFP_ATOMIC);
+	if (!tmp)
+		return -ENOMEM;
+	tmp->block = cset->interleave->active_block;
+	cset->interleave->priv_d = tmp;
+	tmp->dev_mem_ptr = 0; /* Always the first block */
+
+	/* Configure post samples */
+	zfa_common_conf_set(fa, ZFAT_POST, cset->ti->nsamples);
+	/* Start the acquisition */
+	zfad_fsm_command(fa, ZFA_START);
+
+	fa->n_shots = 1;
+	/* Fire software trigger */
+	zfa_common_conf_set(fa, ZFAT_SW, 1);
+
+	return -EAGAIN;
+}
+
+
 /*
  * zfad_input_cset
  * @cset: channel set to acquire
@@ -567,37 +616,9 @@ static int zfad_input_cset(struct zio_cset *cset)
 		return -EINVAL;
 	}
 
-	/*
-	 * If the user is using the ADC trigger, then it can do a multi-shot
-	 * acquisition.
-	 * If the user is using a software trigger, it cannot do multi-shot.
-	 * The generic arm trigger used by software trigger returns a
-	 * zio_block. We must convert it into a zfad_block to perform DMA
-	 */
-	if (cset->trig != &zfat_type) {
-		struct zfad_block *tmp;
-		int err;
-
-		/* Check if device memory allows this acquisition */
-		err = zfat_overflow_detection(cset->ti, ZFAT_POST,
-					      cset->ti->nsamples);
-		if (err)
-			return err;
-
-		tmp = kmalloc(sizeof(struct zfad_block), GFP_ATOMIC);
-		if (!tmp)
-			return -ENOMEM;
-		tmp->block = cset->interleave->active_block;
-		cset->interleave->priv_d = tmp;
-
-		fa->n_shots = 1;
-		/* Configure post samples */
-		zfa_common_conf_set(fa, ZFAT_POST, cset->ti->nsamples);
-
-		/* Start the acquisition */
-		zfad_fsm_command(fa, ZFA_START);
-		/* Fire software trigger */
-		zfa_common_conf_set(fa, ZFAT_SW, 1);
+	/* If not the fmc-adc-trg, then is a ZIO software trigger */
+	if (unlikely(cset->trig != &zfat_type)) {
+		return zfad_input_cset_software(fa, cset);
 	}
 
 	return -EAGAIN; /* data_done on DMA_DONE interrupt */
@@ -690,6 +711,7 @@ static void zfad_start_dma(struct zio_cset *cset)
 			zfa_common_conf_set(fa, ZFAT_CFG_SW_EN,
 					    ti->zattr_set.ext_zattr[5].value);
 		} else {
+			dev_dbg(&cset->head.dev, "Software acquisition over");
 			zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
 		}
 
