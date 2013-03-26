@@ -917,12 +917,13 @@ struct fmc_gpio zfat_gpio_cfg[] = {
  * zfad_zio_probe
  * @zdev: the real zio device
  *
- * The device registration completes. Copy the calibration data from the eeprom
+ * The device registration completes. Copy the calibration data from the
+ * eeprom and initialize some registers
  */
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
-	int err = 0;
+	int err = 0, i;
 
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
@@ -944,6 +945,37 @@ static int zfad_zio_probe(struct zio_device *zdev)
 		dev_err(fa->fmc->hwdev, "can't request irq %i (err %i)\n",
 			fa->fmc->irq, err);
 
+	/* Force stop FSM to prevent early trigger fire */
+	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
+	/* Initialize channels to use 1V range */
+	for (i = 0; i < 4; ++i)
+		zfad_calibration(fa, &zdev->cset->chan[i], 0x11);
+	zfad_reset_offset(fa);
+
+	/* Enable mezzanine clock */
+	zfa_common_conf_set(fa, ZFA_CTL_CLK_EN, 1);
+	/* Set DMA to transfer data from device to host */
+	zfa_common_conf_set(fa, ZFA_DMA_BR_DIR, 0);
+	/* Set decimation to minimum */
+	zfa_common_conf_set(fa, ZFAT_SR_DECI, 1);
+	/* Set test data register */
+	zfa_common_conf_set(fa, ZFA_CTL_TEST_DATA_EN, enable_test_data);
+	/* Set to single shot mode by default */
+	zfa_common_conf_set(fa, ZFAT_SHOTS_NB, 1);
+	if (zdev->cset->ti->cset->trig == &zfat_type) {
+		/* Select external trigger (index 0) */
+		zfa_common_conf_set(fa, ZFAT_CFG_HW_SEL, 1);
+		zdev->cset->ti->zattr_set.ext_zattr[0].value = 1;
+	} else {
+		/* Enable Software trigger*/
+		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
+		/* Disable Hardware trigger*/
+		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
+	}
+
+	/* Set UTC seconds from the kernel seconds */
+	zfa_common_conf_set(fa, ZFA_UTC_SECONDS, get_seconds());
+
 	return err;
 }
 
@@ -958,55 +990,6 @@ static int zfad_zio_remove(struct zio_device *zdev)
 	struct fa_dev *fa = zdev->priv_d;
 
 	fa->fmc->op->irq_free(fa->fmc);
-	return 0;
-}
-
-
-/*
- * zfad_init_cset
- * @cset: channel set to initialize
- *
- * The initialization stop the FSM to prevent any early trigger fire, then it
- * force the default value of ADC registers.
- */
-static int zfad_init_cset(struct zio_cset *cset)
-{
-	struct fa_dev *fa = cset->zdev->priv_d;
-	int i;
-
-	fa->zdev = cset->zdev; /* FIXME remove on future ZIO update */
-
-	dev_dbg(&cset->head.dev, "%s:%d", __func__, __LINE__);
-	/* Force stop FSM to prevent early trigger fire */
-	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
-	/* Initialize channels to use 1V range */
-	for (i = 0; i < 4; ++i)
-		zfad_calibration(fa, &cset->chan[i], 0x11);
-	zfad_reset_offset(fa);
-
-	/* Enable mezzanine clock */
-	zfa_common_conf_set(fa, ZFA_CTL_CLK_EN, 1);
-	/* Set DMA to transfer data from device to host */
-	zfa_common_conf_set(fa, ZFA_DMA_BR_DIR, 0);
-	/* Set decimation to minimum */
-	zfa_common_conf_set(fa, ZFAT_SR_DECI, 1);
-	/* Set test data register */
-	zfa_common_conf_set(fa, ZFA_CTL_TEST_DATA_EN, enable_test_data);
-	/* Set to single shot mode by default */
-	zfa_common_conf_set(fa, ZFAT_SHOTS_NB, 1);
-	if (cset->ti->cset->trig == &zfat_type) {
-		/* Select external trigger (index 0) */
-		zfa_common_conf_set(fa, ZFAT_CFG_HW_SEL, 1);
-		cset->ti->zattr_set.ext_zattr[0].value = 1;
-	} else {
-		/* Enable Software trigger*/
-		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
-		/* Disable Hardware trigger*/
-		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
-	}
-
-	/* Set UTC seconds from the kernel seconds */
-	zfa_common_conf_set(fa, ZFA_UTC_SECONDS, get_seconds());
 	return 0;
 }
 
@@ -1035,7 +1018,6 @@ static struct zio_cset zfad_cset[] = {
 			.ext_zattr = zfad_cset_ext_zattr,
 			.n_ext_attr = ARRAY_SIZE(zfad_cset_ext_zattr),
 		},
-		.init = zfad_init_cset,
 	}
 };
 static struct zio_device zfad_tmpl = {
