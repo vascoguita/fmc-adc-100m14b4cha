@@ -761,6 +761,9 @@ static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
  * Trigger fires. This function stores the time-stamp in the current_ctrl and
  * in the pre-allocated block. Then it increments the sequence number both in
  * current_ctrl and in the pre-allocated block.
+ *
+ * If the device is working in single-shot mode, once the trigger fire
+ * interrupt occurs we must fix the dev_mem_addr of the block.
  */
 static void zfat_irq_trg_fire(struct zio_cset *cset)
 {
@@ -768,6 +771,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = interleave->priv_d;
 	struct zio_control *ctrl;
+	uint32_t fixed_mem_ptr, trg_pos, pre_samp;
 
 	dev_dbg(fa->fmc->hwdev, "Trigger fire %i/%i\n",
 		fa->n_fires + 1, fa->n_shots);
@@ -775,6 +779,19 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		WARN(1, "Invalid Fire, STOP acquisition");
 		zfad_fsm_command(fa, ZFA_STOP);
 		return;
+	}
+
+	/* Fix dev_mem_addr in single-shot mode */
+	if (fa->n_shots == 1) {
+		pre_samp = cset->trig->zattr_set
+				.std_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
+		/* Get trigger position in DDR */
+		zfa_common_info_get(fa, ZFAT_POS, &trg_pos);
+		/* translate from sample count to memory offset */
+		fixed_mem_ptr = (trg_pos - pre_samp) * cset->ssize;
+		fixed_mem_ptr *= cset->n_chan;
+
+		zfad_block[fa->n_fires].dev_mem_ptr = fixed_mem_ptr;
 	}
 
 	/* Get control from pre-allocated block */
