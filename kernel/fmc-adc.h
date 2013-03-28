@@ -14,7 +14,7 @@
 #include <linux/zio.h>
 #include <linux/zio-utils.h>
 
-#define FA_GATEWARE_DEFAULT_NAME "fmc/spec-fmc-adc-v1.0.bin"
+#define FA_GATEWARE_DEFAULT_NAME "fmc/spec-fmc-adc-v1.1.bin"
 extern int enable_auto_start;
 
 /* ADC register offset */
