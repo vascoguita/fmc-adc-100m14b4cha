@@ -84,9 +84,12 @@ struct dma_item {
  *
  * @n_shots: total number of programmed shots for an acquisition
  * @n_fires: number of trigger fire occurred within an acquisition
- * @n_trans: number of DMA transfer done for an acquisition
  *
  * @n_dma_err: number of errors
+ *
+ * @sgt is the scatter/gather table that describe the DMA acquisition
+ * @item a list on dma_item to describe
+ * @dma_list_item is a DMA address pointer to the dma_item list
  */
 struct fa_dev {
 	struct fmc_device	*fmc;
@@ -96,7 +99,6 @@ struct fa_dev {
 	/* Acquisition */
 	unsigned int		n_shots;
 	unsigned int		n_fires;
-	unsigned int		n_trans;
 
 	/* Statistic informations */
 	unsigned int		n_dma_err;
@@ -109,28 +111,29 @@ struct fa_dev {
 	/* Calibration Data */
 	struct fa_calibration_data adc_cal_data[3];
 	struct fa_calibration_data dac_cal_data[3];
+
+	/* DMA attributes */
+	struct sg_table	sgt;
+	struct dma_item	*items;
+	dma_addr_t	dma_list_item;
 };
 
 /*
  * zfad_block
  * @block is zio_block which contains data and metadata from a single shot
- * @sgt is the scatter/gather table that describe the DMA acquisition
- * @item a list on dma_item to describe
- * @dma_list_item is a DMA address pointer to the dma_item list
  * @dev_mem_ptr is pointer to the ADC internal memory. It points to the first
  *              samples of the stored shot
+ * @first_nent is the index of the first nent used for this block
  */
 struct zfad_block {
 	struct zio_block *block;
-
-	struct sg_table	sgt;
-	struct dma_item	*items;
-	dma_addr_t	dma_list_item;
 	uint32_t	dev_mem_ptr;
+	unsigned int first_nent;
 };
 
 extern int zfad_map_dma(struct zio_cset *cset,
-			struct zfad_block *zfad_block);
+			struct zfad_block *zfad_block,
+			unsigned int n_blocks);
 extern void zfad_unmap_dma(struct zio_cset *cset,
 			   struct zfad_block *zfad_block);
 

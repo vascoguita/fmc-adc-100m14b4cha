@@ -673,93 +673,100 @@ static void zfat_get_irq_status(struct fa_dev *fa,
 	zfa_common_conf_set(fa, ZFA_IRQ_MULTI, *irq_multi);
 }
 
-/*
- * zfad_start_dma
+
+/**
+ * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
+ * from the ADC to the host memory.
  *
- * When all data from all triggers are ready, this function start DMA.
- * We get the first block from the list and start the acquisition on it.
- * When the DMA will end, the interrupt handler will invoke again this function
- * until the list is empty
+ * @param cset
  */
-static void zfad_start_dma(struct zio_cset *cset)
+static void zfad_dma_start(struct zio_cset *cset)
+{
+	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zio_channel *interleave = cset->interleave;
+	struct zfad_block *zfad_block = interleave->priv_d;
+	int err;
+
+	/* Map ZIO block for DMA acquisition */
+	err = zfad_map_dma(cset, zfad_block, fa->n_shots);
+	if (err)
+		return;
+
+	/* Start DMA transefer */
+	zfa_common_conf_set(fa, ZFA_DMA_CTL_START, 1);
+	dev_dbg(fa->fmc->hwdev, "Start DMA transfer\n");
+}
+
+/**
+ * It completes a DMA transfer.
+ * It tells to the ZIO framework that all blocks are done. Then, it re-enable
+ * the trigger for the next acquisition. If the device is configured for
+ * continuous acquisition, the function automatically start the next
+ * acquisition
+ *
+ * @param cset
+ */
+static void zfad_dma_done(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zio_channel *interleave = cset->interleave;
 	struct zfad_block *zfad_block = interleave->priv_d;
 	struct zio_ti *ti = cset->ti;
-	int err;
 
-	if (fa->n_trans == fa->n_fires) {
-		/*
-		 * All DMA transfers done! Inform the trigger about this, so
-		 * it can store blocks into the buffer
-		 */
-		zio_trigger_data_done(cset);
-		dev_dbg(fa->fmc->hwdev, "%i blocks transfered\n", fa->n_trans);
-		fa->n_trans = 0;
-		/*
-		 * we can safely re-enable triggers.
-		 * Hardware trigger depends on the enable status
-		 * of the trigger. Software trigger depends on the previous
-		 * status taken form zio attributes (index 5 of extended one)
-		 * If the user is using a software trigger, enable the software
-		 * trigger.
-		 */
-		if (cset->trig == &zfat_type) {
-			zfa_common_conf_set(fa, ZFAT_CFG_HW_EN,
-					    (ti->flags & ZIO_STATUS ? 0 : 1));
-			zfa_common_conf_set(fa, ZFAT_CFG_SW_EN,
-					    ti->zattr_set.ext_zattr[5].value);
-		} else {
-			dev_dbg(&cset->head.dev, "Software acquisition over");
-			zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
-		}
+	zfad_unmap_dma(cset, zfad_block);
 
-		/* Automatic start next acquisition */
-		if (enable_auto_start) {
-			dev_dbg(fa->fmc->hwdev, "Automatic start\n");
-			zfad_fsm_command(fa, ZFA_START);
-		}
+	/*
+	 * All DMA transfers done! Inform the trigger about this, so
+	 * it can store blocks into the buffer
+	 */
+	zio_trigger_data_done(cset);
+	dev_dbg(fa->fmc->hwdev, "%i blocks transfered\n", fa->n_shots);
+
+	/*
+	 * we can safely re-enable triggers.
+	 * Hardware trigger depends on the enable status
+	 * of the trigger. Software trigger depends on the previous
+	 * status taken form zio attributes (index 5 of extended one)
+	 * If the user is using a software trigger, enable the software
+	 * trigger.
+	 */
+	if (cset->trig == &zfat_type) {
+		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN,
+				    (ti->flags & ZIO_STATUS ? 0 : 1));
+		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN,
+				    ti->zattr_set.ext_zattr[5].value);
 	} else {
-		err = zfad_map_dma(cset, &zfad_block[fa->n_trans++]);
-		if (err)
-			return;
+		dev_dbg(&cset->head.dev, "Software acquisition over");
+		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
+	}
 
-		/* Start DMA transefer */
-		zfa_common_conf_set(fa, ZFA_DMA_CTL_START, 1);
-		dev_dbg(fa->fmc->hwdev, "Start DMA transfer\n");
+	/* Automatic start next acquisition */
+	if (enable_auto_start) {
+		dev_dbg(fa->fmc->hwdev, "Automatic start\n");
+		zfad_fsm_command(fa, ZFA_START);
 	}
 }
 
-/*
- * zfat_irq_dma_done
+
+/**
+ * It handles the error condition of a DMA transfer.
+ * The function turn off the state machine by sending the STOP command
  *
- * The DMA finished due to an error or not. We must handle both the condition.
- * If DMA aborted by an error we abort the acquisition, so we lost all the data.
- * If the DMA complete successfully, we can call zio_trigger_data_done which
- * will complete the transfer
+ * @param cset
  */
-static void zfat_irq_dma_done(struct zio_cset *cset, int status)
+static void zfad_dma_error(struct zio_cset *cset)
 {
-	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	uint32_t val;
 
-	/* unmap previous acquisition in any */
-	if (fa->n_trans > 0)
-		zfad_unmap_dma(cset, &zfad_block[fa->n_trans - 1]);
+	zfad_unmap_dma(cset, zfad_block);
 
-	if (status & ZFAT_DMA_DONE) { /* DMA done*/
-		dev_dbg(fa->fmc->hwdev, "DMA transfer done\n");
-
-		zfad_start_dma(cset);
-	} else {	/* DMA error */
-		zfa_common_info_get(fa, ZFA_DMA_STA, &val);
-		dev_err(fa->fmc->hwdev,
-			"DMA error (status 0x%x). All acquisition lost\n", val);
-		zfad_fsm_command(fa, ZFA_STOP);
-		fa->n_dma_err++;
-	}
+	zfa_common_info_get(fa, ZFA_DMA_STA, &val);
+	dev_err(fa->fmc->hwdev,
+		"DMA error (status 0x%x). All acquisition lost\n", val);
+	zfad_fsm_command(fa, ZFA_STOP);
+	fa->n_dma_err++;
 }
 
 
@@ -845,6 +852,11 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	int try = 5;
 
 	dev_dbg(fa->fmc->hwdev, "Acquisition done\n");
+	if (fa->n_fires != fa->n_shots) {
+		dev_err(fa->fmc->hwdev,
+			"Expected %i trigger fires, but %i occurs\n",
+			fa->n_shots, fa->n_fires);
+	}
 	/*
 	 * All programmed triggers fire, so the acquisition is ended.
 	 * If the state machine is _idle_ we can start the DMA transfer.
@@ -870,8 +882,9 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	 */
 	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
 	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
-	/* Start DMA acquisition */
-	zfad_start_dma(cset);
+
+	/* Start the DMA transfer */
+	zfad_dma_start(cset);
 }
 
 
@@ -915,8 +928,11 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 	 * It cannot happen that DMA_DONE is in the multi register.
 	 * It should not happen ...
 	 */
-	if (status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) {
-		zfat_irq_dma_done(cset, status);
+	if (status & ZFAT_DMA_DONE) {
+		zfad_dma_done(cset);
+	}
+	if (unlikely((status | multi) & ZFAT_DMA_ERR)) {
+		zfad_dma_error(cset);
 		return IRQ_HANDLED;
 	}
 
