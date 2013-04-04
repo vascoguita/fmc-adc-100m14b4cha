@@ -907,22 +907,22 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 	struct fa_dev *fa = fmc_get_drvdata(fmc);
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t status, multi;
+	int max_try = 10;
 
 	/* irq to handle */
 	zfat_get_irq_status(fa, &status, &multi);
 	if (!status)
 		return IRQ_NONE;
 
-	/* ack the irq */
-	fa->fmc->op->irq_ack(fa->fmc);
-
+irq_handler:
+	dev_dbg(fa->fmc->hwdev, "Handle ADC interrupts\n");
 	if (unlikely((status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) &&
 	    (status & (ZFAT_TRG_FIRE | ZFAT_ACQ_END)))) {
 		WARN(1, "Cannot handle trigger interrupt and DMA interrupt at "
 			"the same time\n");
 		/* Stop Acquisition, ADC it is not working properly */
 		zfad_fsm_command(fa, ZFA_STOP);
-		return IRQ_NONE;
+		return IRQ_HANDLED;
 	}
 	/*
 	 * It cannot happen that DMA_DONE is in the multi register.
@@ -933,7 +933,6 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 	}
 	if (unlikely((status | multi) & ZFAT_DMA_ERR)) {
 		zfad_dma_error(cset);
-		return IRQ_HANDLED;
 	}
 
 	/* Fire the trigger for each interrupt */
@@ -943,10 +942,24 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 		zfat_irq_trg_fire(cset);
 	/*
 	 * If it is too fast the ACQ_END interrupt can be in the
-	 * multi register
+	 * multi register.
 	 */
 	if ((status | multi) & ZFAT_ACQ_END)
 		zfat_irq_acq_end(cset);
+
+	/* ack the irq */
+	fa->fmc->op->irq_ack(fa->fmc);
+
+	/*
+	 * Read again the interrupt status. It can happen that an interrupt
+	 * is raised while we was processing a previous interrupt. If there
+	 * are new active interrupts, then handle them.
+	 * This handler cannot monopolize the processor, so it check for
+	 * new interrupts only 'max_try' times.
+	 */
+	zfat_get_irq_status(fa, &status, &multi);
+	if ((status || multi) && --max_try)
+		goto irq_handler;
 
 	return IRQ_HANDLED;
 }
