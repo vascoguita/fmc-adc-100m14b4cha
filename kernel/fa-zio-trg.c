@@ -262,9 +262,9 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
-	unsigned int size, i;
+	unsigned int size;
 	uint32_t dev_mem_ptr;
-	int err = 0;
+	int i, err = 0;
 
 	dev_dbg(&ti->head.dev, "Arming trigger\n");
 	/* Update the current control: sequence, nsamples and tstamp */
@@ -299,9 +299,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	for (i = 0; i < fa->n_shots; ++i) {
 		block = zbuf->b_op->alloc_block(interleave->bi, size,
 					        GFP_ATOMIC);
-		if (IS_ERR(block)) {
+		if (!block) {
 			dev_err(&ti->cset->head.dev,
 				"arm trigger fail, cannot allocate block\n");
+			err = -ENOMEM;
 			goto out_allocate;
 		}
 		/* Copy the updated control into the block */
@@ -311,7 +312,8 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		zfad_block[i].block = block;
 		zfad_block[i].dev_mem_ptr = dev_mem_ptr;
 		dev_mem_ptr += size;
-		pr_info("next dev_mem_ptr 0x%x (+%d)", dev_mem_ptr, size);
+		dev_dbg(&ti->cset->head.dev, "next dev_mem_ptr 0x%x (+%d)",
+			dev_mem_ptr, size);
 	}
 
 	err = ti->cset->raw_io(ti->cset);
@@ -321,10 +323,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	return err;
 
 out_allocate:
-	while(--i)
+	while((--i) >= 0)
 		zbuf->b_op->free_block(interleave->bi, zfad_block[i].block);
-
 	kfree(zfad_block);
+	interleave->priv_d = NULL;
 	return err;
 }
 
