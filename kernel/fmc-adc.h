@@ -31,7 +31,7 @@ extern int enable_auto_start;
 
 
 /* ADC Calibration */
-#define FA_CAL_PTR 0x0400 /* Pointer to calibration data in EEPROM (1 KByte) */
+#define FA_CAL_PTR 0x0100 /* Pointer to calibration data in EEPROM (256 Byte) */
 #define FA_CAL_LEN 108 /* Length of the calibration data */
 
 enum fa_input_range {
