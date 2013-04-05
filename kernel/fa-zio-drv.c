@@ -297,6 +297,18 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 
 		/* Now we can arm the trigger for the incoming acquisition */
 		zio_arm_trigger(fa->zdev->cset->ti);
+		/*
+		 *  FIXME maybe zio_arm_trigger() can return an error when it
+		 * is not able to arm a trigger.
+		 *
+		 * It returns -EPERM, but the error can be -ENOMEM or -EINVAL
+		 * from zfat_arm_trigger() or zfad_input_cset()
+		 */
+		if (!(fa->zdev->cset->ti->flags & ZIO_TI_ARMED)) {
+			dev_err(fa->fmc->hwdev,
+				"Trigger not armed, cannot start acquisition\n");
+			return -EPERM;
+		}
 
 		dev_dbg(fa->fmc->hwdev, "FSM START Command, Enable interrupts\n");
 		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_ALL);
@@ -607,6 +619,7 @@ static int zfad_input_cset(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
+	dev_dbg(fa->fmc->hwdev, "Ready to acquire\n");
 	/* ZIO should configure only the interleaved channel */
 	if (!cset->interleave)
 		return -EINVAL;
