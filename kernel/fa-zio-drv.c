@@ -405,7 +405,8 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 		/* Get calibration offset and gain for DAC */
 		offset = fa->dac_cal_data[range].offset[chan->index];
 		gain = fa->dac_cal_data[range].gain[chan->index];
-
+		dev_dbg(&chan->head.dev, "Appling offset (%d, 0x%x, 0x%x, 0x%x)\n",
+			chan->index, range, gain, offset);
 		/* Calculate calibrater value for DAC */
 		cal_val = ((((usr_val - 0x8000 + offset) << 15) * gain) >> 30);
 		cal_val += 0x8000;
@@ -448,6 +449,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	int i, err, reg_index;
 
+	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
+		usr_val, zattr->attr.attr.name);
 	reg_index = zattr->id;
 	i = fa->zdev->cset->n_chan -1 ; /* -1 because of interleaved channel */
 	switch (reg_index) {
@@ -560,7 +563,8 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	}
 
 	zfa_common_info_get(fa, reg_index, usr_val);
-
+	dev_dbg(dev, "Reading %d from the sysfs attribute %s (%d)\n",
+		*usr_val, zattr->attr.attr.name, reg_index);
 	return 0;
 }
 static const struct zio_sysfs_operations zfad_s_op = {
@@ -832,6 +836,9 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		/* translate from sample count to memory offset */
 		fixed_mem_ptr = (trg_pos - pre_samp) * cset->ssize;
 		fixed_mem_ptr *= cset->n_chan;
+		dev_dbg(fa->fmc->hwdev,
+			"Trigger position: %i samples %i bytes\n",
+			trg_pos, fixed_mem_ptr);
 
 		zfad_block[fa->n_fires].dev_mem_ptr = fixed_mem_ptr;
 	}

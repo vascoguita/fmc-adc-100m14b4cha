@@ -90,6 +90,8 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	uint32_t tmp_val = usr_val;
 	int err = 0;
 
+	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
+		usr_val, zattr->attr.attr.name);
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
 		if (!tmp_val) {
@@ -135,6 +137,9 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 
 	zfa_common_info_get(fa, zattr->id, usr_val);
+
+	dev_dbg(dev, "Reading %d from the sysfs attribute %s\n",
+		*usr_val, zattr->attr.attr.name);
 
 	return 0;
 }
@@ -221,7 +226,7 @@ static int zfat_data_done(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	unsigned int i;
 
-	dev_dbg(fa->fmc->hwdev, "Data done\n");
+	dev_dbg(&cset->head.dev, "Data done\n");
 
 	/* Nothing to store */
 	if (!zfad_block)
@@ -230,11 +235,11 @@ static int zfat_data_done(struct zio_cset *cset)
 	/* Store blocks */
 	for(i = 0; i < fa->n_shots; ++i)
 		if (likely(i < fa->n_fires)) {/* Store filled blocks */
-			dev_dbg(fa->fmc->hwdev, "Store Block %i/%i\n",
+			dev_dbg(&cset->head.dev, "Store Block %i/%i\n",
 				i + 1, fa->n_shots);
 			bi->b_op->store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
-			dev_dbg(fa->fmc->hwdev, "Free un-acquired block %d/%d "
+			dev_dbg(&cset->head.dev, "Free un-acquired block %d/%d "
 					"(received %d shots)\n",
 					i + 1, fa->n_shots, fa->n_fires);
 			bi->b_op->free_block(bi, zfad_block[i].block);
@@ -297,6 +302,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_mem_ptr = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
+		dev_dbg(&ti->cset->head.dev, "Allocating block %d ...\n", i);
 		block = zbuf->b_op->alloc_block(interleave->bi, size,
 					        GFP_ATOMIC);
 		if (!block) {
