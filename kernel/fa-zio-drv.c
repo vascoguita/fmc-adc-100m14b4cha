@@ -518,7 +518,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		err = zfad_calibration(fa, &to_zio_cset(dev)->chan[i], usr_val);
 		if (err)
 			return err;
-		return err;
+		break;
 	case ZFA_CHx_CTL_RANGE:
 		err = zfad_calibration(fa, to_zio_chan(dev), usr_val);
 		if (err)
@@ -1018,7 +1018,7 @@ struct fmc_gpio zfat_gpio_cfg[] = {
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
-	int err = 0, i;
+	int err = 0, i, addr;
 
 	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
@@ -1043,8 +1043,12 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* Force stop FSM to prevent early trigger fire */
 	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
 	/* Initialize channels to use 1V range */
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < 4; ++i) {
+		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
+					  &zdev->cset->chan[i]);
+		zfa_common_conf_set(fa, addr, 0x11);
 		zfad_calibration(fa, &zdev->cset->chan[i], 0x11);
+	}
 	zfad_reset_offset(fa);
 
 	/* Enable mezzanine clock */
