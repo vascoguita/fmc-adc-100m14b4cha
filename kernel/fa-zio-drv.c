@@ -439,7 +439,8 @@ static void zfad_reset_offset(struct fa_dev *fa)
 {
 	int i;
 
-	for (i = 0; i < fa->zdev->cset->n_chan; ++i)
+	/* -1 because of interleaved channel */
+	for (i = 0; i < fa->zdev->cset->n_chan - 1; ++i)
 		zfad_apply_user_offset(fa, &fa->zdev->cset->chan[i], 0);
 }
 
@@ -458,7 +459,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
 		usr_val, zattr->attr.attr.name);
 	reg_index = zattr->id;
-	i = fa->zdev->cset->n_chan -1 ; /* -1 because of interleaved channel */
+	i = fa->zdev->cset->n_chan - 1 ; /* -1 because of interleaved channel */
 	switch (reg_index) {
 	case ZFA_SW_R_NOADDERS_AUTO:
 		enable_auto_start = usr_val;
