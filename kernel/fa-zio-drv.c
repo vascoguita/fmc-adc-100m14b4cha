@@ -406,7 +406,8 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	range = zfad_get_range(range_reg);
 	if (range < 0)
 		return range;
-	if (range != 0) {
+
+	if (range != ZFA_OPEN) {
 		/* Get calibration offset and gain for DAC */
 		offset = fa->dac_cal_data[range].offset[chan->index];
 		gain = fa->dac_cal_data[range].gain[chan->index];
