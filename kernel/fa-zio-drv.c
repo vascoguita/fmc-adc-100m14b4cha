@@ -842,7 +842,8 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		zfa_common_info_get(fa, ZFAT_POS, &trg_pos);
 		/* translate from sample count to memory offset */
 		fixed_mem_ptr = (trg_pos - pre_samp) * cset->ssize;
-		fixed_mem_ptr *= cset->n_chan;
+		/* -1 because of interleaved channel */
+		fixed_mem_ptr *= (cset->n_chan - 1);
 		dev_dbg(fa->fmc->hwdev,
 			"Trigger position: %i samples %i bytes\n",
 			trg_pos, fixed_mem_ptr);
