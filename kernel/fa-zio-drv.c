@@ -236,7 +236,12 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 static inline int zfad_get_chx_index(unsigned long addr,
 				     struct zio_channel *chan)
 {
-	return addr + ZFA_CHx_MULT  * (1 + chan->index - chan->cset->n_chan);
+	int offset;
+
+	/* (n_chan - 1) because of interleave */
+	offset = ZFA_CHx_MULT  * ((chan->cset->n_chan - 1) - chan->index);
+
+	return addr - offset;
 }
 
 
