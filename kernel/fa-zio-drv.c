@@ -232,6 +232,11 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 	/* Get Mezzanine temperature from onewire */
 	ZIO_PARAM_EXT("temperature", ZIO_RO_PERM, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
+
+/* Prototypes */
+static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
+				  uint32_t usr_val);
+
 /* Calculate correct index for channel from CHx indexes */
 static inline int zfad_get_chx_index(unsigned long addr,
 				     struct zio_channel *chan)
@@ -379,6 +384,9 @@ static int zfad_calibration(struct fa_dev *fa, struct zio_channel *chan,
 	cal_val = fa->adc_cal_data[range].gain[chan->index];
 	dev_dbg(&chan->head.dev, "gain calibration value 0x%x\n", cal_val);
 	zfa_common_conf_set(fa, i, cal_val);
+
+	/* Reset offset */
+	zfad_apply_user_offset(fa, chan, 0);
 
 	return 0;
 }
