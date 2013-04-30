@@ -16,6 +16,8 @@
 #include "fmc-adc.h"
 
 static struct fmc_driver fa_dev_drv;
+FMC_PARAM_BUSID(fa_dev_drv);
+
 static char *fa_binaries = FA_GATEWARE_DEFAULT_NAME;
 module_param_named(file, fa_binaries, charp, 0444);
 
@@ -38,6 +40,14 @@ int fa_probe(struct fmc_device *fmc)
 	struct fa_modlist *m = NULL;
 	struct fa_dev *fa;
 	int err, i = 0;
+
+	/* Validate the new FMC device */
+	i = fmc->op->validate(fmc, &fa_dev_drv);
+	if (i < 0) {
+		dev_info(fmc->hwdev, "not using \"%s\" according to "
+			 "modparam\n", KBUILD_MODNAME);
+		return -ENODEV;
+	}
 
 	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
