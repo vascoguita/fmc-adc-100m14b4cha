@@ -286,7 +286,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 
 	/* Allocate a new block for DMA transfer */
 	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots,
-			     GFP_ATOMIC);
+				GFP_KERNEL);
 	if (!zfad_block)
 		return -ENOMEM;
 
@@ -304,7 +304,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	for (i = 0; i < fa->n_shots; ++i) {
 		dev_dbg(&ti->cset->head.dev, "Allocating block %d ...\n", i);
 		block = zbuf->b_op->alloc_block(interleave->bi, size,
-					        GFP_ATOMIC);
+						GFP_KERNEL);
 		if (!block) {
 			dev_err(&ti->cset->head.dev,
 				"arm trigger fail, cannot allocate block\n");
