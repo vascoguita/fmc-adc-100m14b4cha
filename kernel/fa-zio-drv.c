@@ -853,7 +853,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		/* -1 because of interleaved channel */
 		fixed_mem_ptr *= (cset->n_chan - 1);
 		dev_dbg(fa->fmc->hwdev,
-			"Trigger position: %i samples %i bytes\n",
+			"Trigger position 0x%x, bytes 0x%x\n",
 			trg_pos, fixed_mem_ptr);
 
 		zfad_block[fa->n_fires].dev_mem_ptr = fixed_mem_ptr;
