@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
 		{0, 0, 0, 0}
 	};
 	int opt_index = 0, err = 0, i;
-	int argcd = 0; /* number of argument elaborated */
 	unsigned int dev_id = 0;
 	char c;
 
@@ -50,26 +49,20 @@ int main(int argc, char *argv[])
 	/* Parse options */
 	while( (c = getopt_long(argc, argv, "h",
 						options, &opt_index)) >=0 ){
-		if (!c) {
-			argcd++;
-			continue;
-		}
-
 		switch(c){
 		case 'h':
 			fald_help();
 			exit(1);
 			break;
 		}
-		argcd += 2;
 	}
 
-	if (argcd == argc - 1 ) {
+	if (optind != argc - 1 ) {
 		printf("Error: DEVICE ID is a mandatory argument\n");
 		fald_help();
 		exit(1);
 	} else {
-		sscanf(argv[argc - 1], "0x%x", &dev_id);
+		sscanf(argv[optind], "0x%x", &dev_id);
 	}
 
 	printf("Open ADC fmcadc_100MS_4ch_14bit dev_id 0x%04x ...\n", dev_id);

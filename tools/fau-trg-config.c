@@ -117,7 +117,6 @@ int main(int argc, char *argv[])
 		{0, 0, 0, 0}
 	};
 	int i, opt_index = 0, err = 0, cur_val;
-	int argcd = 0; /* number of argument elaborated */
 	char c;
 
 	if (argc == 1) {
@@ -127,11 +126,6 @@ int main(int argc, char *argv[])
 
 	while( (c = getopt_long(argc, argv, "p:P:n:d:t:c:h",
 						options, &opt_index)) >=0 ){
-		if (!c) {
-			argcd++;
-			continue;
-		}
-
 		switch(c){
 		case 'p':
 			attrval[FAU_TRG_PRE] = atoi(optarg);
@@ -156,16 +150,15 @@ int main(int argc, char *argv[])
 			exit(1);
 			break;
 		}
-		argcd += 2;
 	}
 
-	if (argcd == argc - 1 ) {
+	if (optind != argc - 1 ) {
 		printf("Error: DEVICE is a mandatory argument\n");
 		fau_help();
 		exit(1);
 	}
 
-	strcat(basepath, argv[argc-1]);
+	strcat(basepath, argv[optind]);
 	printf("Sysfs path to device is: %s\n", basepath);
 
 	for (i = 0; i < FAU_TRIG_NUM_ATTR; ++i) {

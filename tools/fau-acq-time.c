@@ -118,7 +118,6 @@ int main(int argc, char *argv[])
 		{0, 0, 0, 0}
 	};
 	int opt_index = 0, err = 0;
-	int argcd = 0; /* number of argument elaborated */
 	char c;
 	long time1[3], time2[3];
 
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (argcd == argc - 1 ) {
+	if (optind != argc - 1 ) {
 		printf("Error: DEVICE is a mandatory argument\n");
 		fau_help();
 		exit(1);
