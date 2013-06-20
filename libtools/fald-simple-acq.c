@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		{"delay",required_argument, 0, 'd'},
 		{"decimation",required_argument, 0, 'D'},
 		{"threshold",required_argument, 0, 't'},
-		{"src-channel",required_argument, 0, 'c'},
+		{"channel",required_argument, 0, 'c'},
 		{"external", no_argument, &trgval[FMCADC_CONF_TRG_SOURCE], 1},
 		{"negative-edge", no_argument, &trgval[FMCADC_CONF_TRG_POLARITY], 1},
 		{"help",no_argument, 0, 'h'},
