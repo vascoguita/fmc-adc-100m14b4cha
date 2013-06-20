@@ -173,7 +173,7 @@ static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 
 	/* Path exists, so device is there */
 
-	fa = malloc(sizeof *fa);
+	fa = calloc(1, sizeof(*fa));
 	if (!fa) {
 		goto out_fa_alloc;
 	}
