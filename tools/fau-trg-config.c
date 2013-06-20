@@ -153,7 +153,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc - 1 ) {
-		printf("Error: DEVICE is a mandatory argument\n");
+		fprintf(stderr, "%s: DEVICE-ID is a mandatory argument\n",
+			argv[0]);
 		fau_help();
 		exit(1);
 	}
@@ -171,7 +172,8 @@ int main(int argc, char *argv[])
 		}
 		err = fau_write_attribute(i, cur_val);
 		if (err) {
-			printf("Error %d with attribute %d\n", err, i);
+			fprintf(stderr, "%s: error %d for attribute %d\n",
+				argv[0], err, i);
 			exit(1);
 		}
 	}

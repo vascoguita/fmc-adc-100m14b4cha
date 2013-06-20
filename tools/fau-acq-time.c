@@ -135,7 +135,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc - 1 ) {
-		printf("Error: DEVICE is a mandatory argument\n");
+		fprintf(stderr, "%s: DEVICE-ID is a mandatory argument\n",
+			argv[0]);
 		fau_help();
 		exit(1);
 	}

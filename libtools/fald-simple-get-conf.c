@@ -58,7 +58,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc - 1 ) {
-		printf("Error: DEVICE ID is a mandatory argument\n");
+		fprintf(stderr, "%s: DEVICE-ID is a mandatory argument\n",
+			argv[0]);
 		fald_help();
 		exit(1);
 	} else {
@@ -69,7 +70,8 @@ int main(int argc, char *argv[])
 	/* Open the ADC */
 	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
 	if (!adc) {
-		printf("Cannot open: (%d) %s", errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot open device: %s",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 
@@ -83,8 +85,8 @@ int main(int argc, char *argv[])
 	fmcadc_set_attr_mask(&trg, FMCADC_CONF_TRG_DELAY);
 	err = fmcadc_retrieve_config(adc, &trg);
 	if (err) {
-		printf("Cannot retrieve trigger configuration: (%d) %s\n",
-			errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot get trigger config: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 	printf("    source: %s\n",
@@ -106,8 +108,8 @@ int main(int argc, char *argv[])
 	fmcadc_set_attr_mask(&acq, FMCADC_CONF_ACQ_N_BITS);
 	err = fmcadc_retrieve_config(adc, &acq);
 	if (err) {
-		printf("Cannot retrieve acquisition configuration: (%d) %s\n",
-			errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot get acquisition config: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 	printf("    n-shots: %d\n", acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
@@ -125,8 +127,8 @@ int main(int argc, char *argv[])
 	fmcadc_set_attr_mask(&brd, FMCADC_BOARD_N_CHAN);
 	err = fmcadc_retrieve_config(adc, &brd);
 	if (err) {
-		printf("Cannot retrieve board configuration: (%d) %s\n",
-			errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot get board config: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 	printf("    n-chan: %d\n", brd.value[FMCADC_BOARD_N_CHAN]);
@@ -144,9 +146,9 @@ int main(int argc, char *argv[])
 		fmcadc_set_attr_mask(&chn, FMCADC_CONF_CHN_OFFSET);
 		err = fmcadc_retrieve_config(adc, &chn);
 		if (err) {
-			printf("Cannot retrieve board configuration: (%d) %s\n",
-				errno, fmcadc_strerror(adc, errno));
-			exit(1);
+		fprintf(stderr, "%s: cannot get channel config: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
+		exit(1);
 		}
 		printf("    range: %d\n", chn.value[FMCADC_CONF_CHN_RANGE]);
 		printf("    50Ohm Termination: %s\n",

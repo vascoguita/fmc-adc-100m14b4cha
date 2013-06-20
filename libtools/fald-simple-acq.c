@@ -112,7 +112,8 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc - 1 ) {
-		printf("Error: DEVICE ID is a mandatory argument\n");
+		fprintf(stderr, "%s: DEVICE-ID is a mandatory argument\n",
+			argv[0]);
 		fald_help();
 		exit(1);
 	} else {
@@ -123,7 +124,8 @@ int main(int argc, char *argv[])
 	/* Open the ADC */
 	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
 	if (!adc) {
-		printf("Cannot open: (%d) %s", errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot open device: %s",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 
@@ -131,8 +133,8 @@ int main(int argc, char *argv[])
 	/* Configure trigger parameter */
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
-		printf("Cannot apply trigger configuration: (%d) %s\n",
-			errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot configure trigger: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 
@@ -140,8 +142,8 @@ int main(int argc, char *argv[])
 	/* Configure acquisition parameter */
 	err = fmcadc_apply_config(adc, 0 , &acq);
 	if (err && errno != FMCADC_ENOMASK) {
-		printf("Cannot apply acquisition configuration: (%d) %s\n",
-			errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot configure acquisition: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 
@@ -149,8 +151,8 @@ int main(int argc, char *argv[])
 	/* Start acquisition and wait until it completes */
 	err = fmcadc_acq_start(adc, 0 , NULL);
 	if (err) {
-		printf("Cannot apply acquisition configuration: (%d) %s\n",
-			errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot start acquisition: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
 
@@ -158,8 +160,8 @@ int main(int argc, char *argv[])
 	for (i = 0; i < acq.value[FMCADC_CONF_ACQ_N_SHOTS]; ++i) {
 		err = fmcadc_request_buffer(adc, &buf, 0, NULL);
 		if (err) {
-			printf("Cannot retrieve a buffer: (%d) %s\n",
-				errno, fmcadc_strerror(adc, errno));
+		fprintf(stderr, "%s: cannot get a buffer: %s\n",
+			argv[0], fmcadc_strerror(adc, errno));
 			exit(1);
 		}
 
