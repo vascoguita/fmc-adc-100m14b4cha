@@ -40,12 +40,14 @@ struct __fmcadc_dev_zio {
 	unsigned int cset;
 	int fdc;
 	int fdd;
-	int dev_id;
+	uint32_t dev_id;
+	unsigned long flags;
 	char *devbase;
 	char *sysbase;
 	/* Mandatory field */
 	struct fmcadc_gid gid;
 };
+#define FMCADC_FLAG_VERBOSE 0x00000001
 
 /*
  * offsetof and container_of come from kernel.h header file
@@ -113,9 +115,19 @@ static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *resp)
 {
 	char pathname[128];
+	int ret;
 
 	sprintf(pathname, "%s/%s", fa->sysbase, name);
-	return __fa_zio_sysfs_get(pathname, resp);
+	ret = __fa_zio_sysfs_get(pathname, resp);
+	if (!(fa->flags & FMCADC_FLAG_VERBOSE))
+		return ret;
+	/* verbose tail */
+	if (ret)
+		fprintf(stderr, "lib-fmcadc: Error reading %s\n", pathname);
+	else
+		fprintf(stderr, "lib-fmcadc: %08x %5i <- %s\n",
+			(int)*resp, (int)*resp, pathname);
+	return ret;
 }
 
 /*
@@ -128,9 +140,19 @@ static int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *value)
 {
 	char pathname[128];
+	int ret;
 
 	sprintf(pathname, "%s/%s", fa->sysbase, name);
-	return __fa_zio_sysfs_set(pathname, value);
+	ret = __fa_zio_sysfs_set(pathname, value);
+	if (!(fa->flags & FMCADC_FLAG_VERBOSE))
+		return ret;
+	/* verbose tail */
+	if (ret)
+		fprintf(stderr, "lib-fmcadc: Error writing %s\n", pathname);
+	else
+		fprintf(stderr, "lib-fmcadc: %08x %5i -> %s\n",
+			(int)*value, (int)*value, pathname);
+	return ret;
 }
 
 
@@ -190,6 +212,11 @@ static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 	    goto out_fa_open;
 
 	fa->gid.board = dev;
+
+	/* Finally, support verbose operation */
+	if (getenv("LIB_FMCADC_VERBOSE"))
+		fa->flags |= FMCADC_FLAG_VERBOSE;
+
 	return (void *) &fa->gid;
 
 out_fa_open:
