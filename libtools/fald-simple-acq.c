@@ -19,21 +19,17 @@
 
 static void fald_help()
 {
-	printf("\nfald-simple-acq [OPTIONS] 0x<DEVICE ID>\n\n");
-	printf("  <DEVICE>: hexadecimal string which represent the device "
-	       "identificator of an fmc-adc\n");
-	printf("  --pre|-p <value>: number of pre samples\n");
-	printf("  --post|-P <value>: number of post samples\n");
-	printf("  --nshots|-n <value>: number of trigger shots\n");
-	printf("  --delay|-d <value>: set the ticks delay of the trigger\n");
-	printf("  --threshold|-t <value>: set internal trigger threshold\n");
-	printf("  --channel|-c <value>: select the internal channel as "
-	       "trigger (0-based index)\n");
-	printf("  --external: set to external trigger. The default is the "
-	       "internal trigger.\n");
-	printf("  --negative-edge: set internal trigger polarity to negative "
-	       "edge. The default\n                    is positive edge.\n");
-	printf("  --help|-h: show this help\n\n");
+	printf("\nfald-simple-acq [OPTIONS] <DEVID>\n\n");
+	printf("  <DEVID>: hexadecimal identifier (e.g.: \"0x200\")\n");
+	printf("  --pre|-p <value>         number of pre samples\n");
+	printf("  --post|-P <value>        number of post samples (default: 16)\n");
+	printf("  --nshots|-n <value>      number of trigger shots\n");
+	printf("  --delay|-d <value>       ticks delay of the trigger\n");
+	printf("  --threshold|-t <value>   internal trigger threshold\n");
+	printf("  --channel|-c <value>     internal channel to use as trigger (0..3)\n");
+	printf("  --external               use external trigger (default: internal)\n");
+	printf("  --negative-edge          internal trigger is falling edge\n");
+	printf("  --help|-h                show this help\n\n");
 }
 
 int main(int argc, char *argv[])
@@ -50,7 +46,6 @@ int main(int argc, char *argv[])
 		{"decimation",required_argument, 0, 'D'},
 		{"threshold",required_argument, 0, 't'},
 		{"channel",required_argument, 0, 'c'},
-		{"external", no_argument, &trgval[FMCADC_CONF_TRG_SOURCE], 1},
 		{"negative-edge", no_argument, &trgval[FMCADC_CONF_TRG_POLARITY], 1},
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -64,9 +59,16 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* reset attribute's mask */
-	trg.mask = 0;
-	acq.mask = 0;
+	/* reset attributes and provide defaults */
+	memset(&trg, 0, sizeof(trg));
+	trg.type = FMCADC_CONF_TYPE_TRG;
+	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
+	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY, 0); /* positive edge */
+
+	memset(&acq, 0, sizeof(acq));
+	acq.type = FMCADC_CONF_TYPE_ACQ;
+	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP, 16);
+	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_N_SHOTS, 1);
 
 	/* Parse options */
 	while( (c = getopt_long(argc, argv, "p:P:n:d:D:t:c:h",
@@ -97,6 +99,8 @@ int main(int argc, char *argv[])
 					atoi(optarg));
 			break;
 		case 'c':
+			/* set internal, and then the channel */
+			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 0);
 			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
 					atoi(optarg));
 			break;
@@ -125,13 +129,6 @@ int main(int argc, char *argv[])
 
 	printf("Configuring trigger ...\n");
 	/* Configure trigger parameter */
-	trg.type = FMCADC_CONF_TYPE_TRG;
-	/* Set internal/external trigger according to trgval flag */
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE,
-					trgval[FMCADC_CONF_TRG_SOURCE]);
-	/* Set trigger polarity negative/positive according to trgval flag */
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY,
-					trgval[FMCADC_CONF_TRG_POLARITY]);
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
 		printf("Cannot apply trigger configuration: (%d) %s\n",
@@ -141,7 +138,6 @@ int main(int argc, char *argv[])
 
 	printf("Configuring acquisition ...\n");
 	/* Configure acquisition parameter */
-	acq.type = FMCADC_CONF_TYPE_ACQ;
 	err = fmcadc_apply_config(adc, 0 , &acq);
 	if (err && errno != FMCADC_ENOMASK) {
 		printf("Cannot apply acquisition configuration: (%d) %s\n",
