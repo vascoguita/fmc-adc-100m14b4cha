@@ -1,4 +1,3 @@
-.*
 *~
 .*cmd
 .*ersions
@@ -7,15 +6,10 @@
 *.order
 *.symvers
 *.mod.c
-*.pdf
-*.toc
-*.aux
-*.log
 *.lof
 *.bib
 *.bbl
 *.blg
-*.dvi
 *.out
 *.a
 \#*\#
@@ -29,5 +23,6 @@
 tools/fau-acq-time
 tools/fau-trg-config
 tools/parport-burst
-lib/demo/fald-simple-acq
-
+libtools/fald-simple-acq
+libtools/fald-simple-get-conf
+lib/.depend
