@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
-	int opt_index = 0, err = 0, i;
+	int opt_index = 0, err = 0, presamples = 0, i;
 	unsigned int dev_id = 0;
 	char c;
 
@@ -75,8 +75,9 @@ int main(int argc, char *argv[])
 						options, &opt_index)) >=0 ){
 		switch(c){
 		case 'p':
+			presamples = atoi(optarg),
 			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
-					atoi(optarg));
+					presamples);
 			break;
 		case 'P':
 			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP,
@@ -129,6 +130,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (strcmp(fmcadc_get_driver_type(adc), "zio")) {
+		fprintf(stderr, "%s: not a zio driver, aborting\n", argv[0]);
+		exit(1);
+	}
+
 	printf("Configuring trigger ...\n");
 	/* Configure trigger parameter */
 	err = fmcadc_apply_config(adc, 0 , &trg);
@@ -158,26 +164,29 @@ int main(int argc, char *argv[])
 
 	/* Retrieve buffer for each shot */
 	for (i = 0; i < acq.value[FMCADC_CONF_ACQ_N_SHOTS]; ++i) {
+		struct zio_control *ctrl;
+		int j, ch;
+		int16_t *data;
+
 		err = fmcadc_request_buffer(adc, &buf, 0, NULL);
 		if (err) {
-		fprintf(stderr, "%s: cannot get a buffer: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
+				" %s\n", argv[0], i + i,
+				acq.value[FMCADC_CONF_ACQ_N_SHOTS],
+				fmcadc_strerror(adc, errno));
 			exit(1);
 		}
+		ctrl = buf.metadata;
+		printf("\nRead %d samples from shot %i/%i\n", ctrl->nsamples,
+		       i + 1, acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
 
-		if (strcmp(fmcadc_get_driver_type(adc), "zio") == 0) {
-			struct zio_control *ctrl = buf.metadata;
-			int len, j;
-
-			len = ctrl->nsamples * ctrl->ssize;
-			printf("\nRead %d bytes from shot %d\n", len, i + 1);
-			for (j = 0; j < len; j++) {
-				if (!(j & 0xf))
-					printf("Data:");
-				printf(" %02x", buf.data[j]);
-				if ((j & 0xf) == 0xf || j == len - 1)
-					putchar('\n');
-			}
+		/* we lazily know samplesize is 2 bytes and chcount is 4 */
+		data = buf.data;
+		for (j = 0; j < ctrl->nsamples / 4; j++) {
+			printf("%5i     ", j - presamples);
+			for (ch = 0; ch < 4; ch++)
+				printf("%7i", *(data++));
+			printf("\n");
 		}
 		fmcadc_release_buffer(adc, &buf);
 	}
