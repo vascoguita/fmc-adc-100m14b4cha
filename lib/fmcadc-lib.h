@@ -31,7 +31,7 @@ extern const struct fmcadc_board_type
  *           store their own metadata information.
  */
 struct fmcadc_buffer {
-	uint8_t *data;
+	void *data;
 	void *metadata;
 };
 
