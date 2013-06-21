@@ -121,7 +121,6 @@ int main(int argc, char *argv[])
 		sscanf(argv[optind], "0x%x", &dev_id);
 	}
 
-	printf("Open ADC fmcadc_100MS_4ch_14bit dev_id 0x%04x ...\n", dev_id);
 	/* Open the ADC */
 	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
 	if (!adc) {
@@ -135,7 +134,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("Configuring trigger ...\n");
 	/* Configure trigger parameter */
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
@@ -144,7 +142,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("Configuring acquisition ...\n");
 	/* Configure acquisition parameter */
 	err = fmcadc_apply_config(adc, 0 , &acq);
 	if (err && errno != FMCADC_ENOMASK) {
@@ -153,7 +150,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("Start Acquisition ...\n");
 	/* Start acquisition and wait until it completes */
 	err = fmcadc_acq_start(adc, 0 , NULL);
 	if (err) {
@@ -177,8 +173,9 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		ctrl = buf.metadata;
-		printf("\nRead %d samples from shot %i/%i\n", ctrl->nsamples,
-		       i + 1, acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
+		fprintf(stderr, "Read %d samples from shot %i/%i\n",
+			ctrl->nsamples,
+			i + 1, acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
 
 		/* we lazily know samplesize is 2 bytes and chcount is 4 */
 		data = buf.data;
@@ -191,7 +188,6 @@ int main(int argc, char *argv[])
 		fmcadc_release_buffer(adc, &buf);
 	}
 
-	printf("Acquisition completed\n");
 	fmcadc_close(adc);
 	exit(0);
 }
