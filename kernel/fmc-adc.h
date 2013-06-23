@@ -35,10 +35,10 @@ extern int enable_auto_start;
 #define FA_CAL_LEN 108 /* Length of the calibration data */
 
 enum fa_input_range {
-	ZFA_10V = 0x0,
-	ZFA_1V,
-	ZFA_100mV,
-	ZFA_OPEN, /* Open Range */
+	ZFA_RANGE_10V = 0x0,
+	ZFA_RANGE_1V,
+	ZFA_RANGE_100mV,
+	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
 };
 /*
  * fa_calibration_data: Calibration item

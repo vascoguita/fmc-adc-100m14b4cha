@@ -332,48 +332,58 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 }
 
 
+static const int zfad_hw_range[] = {
+	[ZFA_RANGE_10V]   = 0x45,
+	[ZFA_RANGE_1V]    = 0x11,
+	[ZFA_RANGE_100mV] = 0x23,
+	[ZFA_RANGE_OPEN]  = 0x00,
+};
+
 /*
- * zfad_get_range
+ * zfad_convert_hw_range
  * @usr_val: range value
  *
  * return the enum associated to the range value
  */
-static int zfad_get_range(uint32_t usr_val)
+static int zfad_convert_hw_range(uint32_t bitmask)
 {
-	switch (usr_val) {
-	case 0x23:
-		return ZFA_100mV;
-	case 0x11:
-		return ZFA_1V;
-	case 0x45:
-		return ZFA_10V;
-	case 0x00:
-		return ZFA_OPEN;
-	}
+	int i;
 
+	for (i = 0; i < ARRAY_SIZE(zfad_hw_range); i++)
+		if (zfad_hw_range[i] == bitmask)
+			return i;
 	return -EINVAL;
 }
 
+/* Temporarily, user values are the same as hardware values */
+static int zfad_convert_user_range(uint32_t user_val)
+{
+	return zfad_convert_hw_range(user_val);
+}
 
 /*
- * zfad_calibration
+ * zfad_set_range
  * @fa: the fmc-adc descriptor
  * @chan: the channel to calibrate
  * @usr_val: the volt range to set and calibrate
  *
- * When the input range change, we must calibrate the offset and the gain.
+ * When the input range changes, we must write new fixup values
  */
-static int zfad_calibration(struct fa_dev *fa, struct zio_channel *chan,
-			    uint32_t usr_val)
+static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
+			  int range)
 {
-	int i, cal_val, range;
+	int i, cal_val;
 
-	range = zfad_get_range(usr_val);
-	if (range < 0)
-		return range;
+	dev_dbg(&chan->head.dev, "Set offset and gain for range %d\n",
+		range);
 
-	dev_dbg(&chan->head.dev, "Set offset and gain for range 0x%x (%d)\n",
-			usr_val, range);
+	/* Actually set the range */
+	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+	zfa_common_conf_set(fa, i, zfad_hw_range[range]);
+
+	if (range == ZFA_RANGE_OPEN)
+		return 0;
+
 	/* Apply the ADC calibration value for the offset */
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
 	cal_val = fa->adc_cal_data[range].offset[chan->index];
@@ -411,11 +421,11 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	zfa_common_info_get(fa, i, &range_reg);
 
-	range = zfad_get_range(range_reg);
+	range = zfad_convert_hw_range(range_reg);
 	if (range < 0)
 		return range;
 
-	if (range != ZFA_OPEN) {
+	if (range != ZFA_RANGE_OPEN) {
 		/* Get calibration offset and gain for DAC */
 		offset = fa->dac_cal_data[range].offset[chan->index];
 		gain = fa->dac_cal_data[range].gain[chan->index];
@@ -462,13 +472,21 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	int i, err, reg_index;
+	int i, range, err, reg_index;
 
 	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
 		usr_val, zattr->attr.attr.name);
 	reg_index = zattr->id;
 	i = fa->zdev->cset->n_chan - 1 ; /* -1 because of interleaved channel */
+
 	switch (reg_index) {
+		/*
+		 * Most of the following "case" statements are simply
+		 * error checking and ancillary operations.  The actual
+		 * programming of hardware is done at the end of the
+		 * switch, in the catch-all final zfa_common_conf_set()
+		 */
+
 	case ZFA_SW_R_NOADDERS_AUTO:
 		enable_auto_start = usr_val;
 		return 0;
@@ -523,14 +541,17 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 	case ZFA_CH4_CTL_RANGE:
 		i--;
-		err = zfad_calibration(fa, &to_zio_cset(dev)->chan[i], usr_val);
-		if (err)
-			return err;
-		break;
+		range = zfad_convert_user_range(usr_val);
+		if (range < 0)
+			return range;
+		return zfad_set_range(fa, &to_zio_cset(dev)->chan[i], range);
+
 	case ZFA_CHx_CTL_RANGE:
-		err = zfad_calibration(fa, to_zio_chan(dev), usr_val);
-		if (err)
-			return err;
+		range = zfad_convert_user_range(usr_val);
+		if (range < 0)
+			return range;
+		return zfad_set_range(fa, to_zio_chan(dev), range);
+
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(reg_index, to_zio_chan(dev));
 		break;
@@ -1055,8 +1076,8 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	for (i = 0; i < 4; ++i) {
 		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
 					  &zdev->cset->chan[i]);
-		zfa_common_conf_set(fa, addr, 0x11);
-		zfad_calibration(fa, &zdev->cset->chan[i], 0x11);
+		zfa_common_conf_set(fa, addr, ZFA_RANGE_1V);
+		zfad_set_range(fa, &zdev->cset->chan[i], ZFA_RANGE_1V);
 	}
 	zfad_reset_offset(fa);
 
