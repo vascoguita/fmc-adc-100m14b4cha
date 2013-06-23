@@ -433,7 +433,7 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 
 	dev_dbg(&chan->head.dev, "DAC offset calibration 0x%x\n", cal_val);
 	/* Apply calibrated offset to DAC */
-	return fa_spi_xfer(fa, chan->index, 16, cal_val, &tmp);
+	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, cal_val, &tmp);
 }
 
 

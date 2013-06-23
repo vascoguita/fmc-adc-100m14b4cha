@@ -345,6 +345,11 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 	return NULL;
 }
 
+/* SPI Slave Select lines (as defined in spec_top_fmc_adc_100Ms.vhd) */
+#define FA_SPI_SS_ADC		0
+#define FA_SPI_SS_DAC(ch)	((ch) + 1)
+
+/* Hardware filed-based access */
 static inline int zfa_common_conf_set(struct fa_dev *fa,
 				      enum zfadc_dregs_enum index,
 				      uint32_t usr_val)
