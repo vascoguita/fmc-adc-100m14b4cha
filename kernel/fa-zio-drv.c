@@ -1011,7 +1011,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	fa->fmc->op->gpio_config(fa->fmc, zfat_gpio_cfg,
 				 ARRAY_SIZE(zfat_gpio_cfg));
 	/* Request IRQ */
-	err = fa->fmc->op->irq_request(fa->fmc, zfad_irq, "fmc-adc",
+	err = fa->fmc->op->irq_request(fa->fmc, zfad_irq, "fmc-adc-100m14b",
 				       IRQF_SHARED);
 	if (err)
 		dev_err(fa->fmc->hwdev, "can't request irq %i (err %i)\n",
@@ -1111,21 +1111,21 @@ static struct zio_device zfad_tmpl = {
 		.ext_zattr = zfad_dev_ext_zattr,
 		.n_ext_attr = ARRAY_SIZE(zfad_dev_ext_zattr),
 	},
-	/* This driver work only with the fmc-adc-trg */
-	.preferred_trigger = "fmc-adc-trg",
+	/* This driver prefers its own trigger */
+	.preferred_trigger = "adc-100m14b",
 	.preferred_buffer = "vmalloc",
 };
 
 
 /* List of supported boards */
 static const struct zio_device_id zfad_table[] = {
-	{"fmc-adc", &zfad_tmpl},
+	{"adc-100m14b", &zfad_tmpl},
 	{},
 };
 
 static struct zio_driver fa_zdrv = {
 	.driver = {
-		.name = "fmc-adc",
+		.name = "adc-100m14b",
 		.owner = THIS_MODULE,
 	},
 	.id_table = zfad_table,
@@ -1199,9 +1199,10 @@ int fa_zio_init(struct fa_dev *fa)
 	}
 
 	/* Register our trigger hardware */
-	err = zio_register_trig(&zfat_type, "fmc-adc-trg");
+	err = zio_register_trig(&zfat_type, "adc-100m14b");
 	if (err) {
-		dev_err(hwdev, "Cannot register ZIO trigger fmc-adc-trig\n");
+		dev_err(hwdev, "Cannot register ZIO trigger type"
+			" \"adc-100m14b\"\n");
 		goto out_trg;
 	}
 
@@ -1218,9 +1219,10 @@ int fa_zio_init(struct fa_dev *fa)
 	fa->hwzdev->priv_d = fa;
 
 	/* Register the hardware zio_device */
-	err = zio_register_device(fa->hwzdev, "fmc-adc", fa->fmc->device_id);
+	err = zio_register_device(fa->hwzdev, "adc-100m14b",
+				  fa->fmc->device_id);
 	if (err) {
-		dev_err(hwdev, "Cannot register ZIO device fmc-adc\n");
+		dev_err(hwdev, "Cannot register ZIO device fmc-adc-100m14b\n");
 		goto out_dev;
 	}
 	return 0;

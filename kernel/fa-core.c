@@ -1,5 +1,5 @@
 /*
- * core fmc-adc driver
+ * core fmc-adc-100m14b driver
  *
  * Copyright (C) 2012 CERN (www.cern.ch)
  * Author: Federico Vaga <federico.vaga@gmail.com>
@@ -127,6 +127,6 @@ module_init(fa_init);
 module_exit(fa_exit);
 
 MODULE_AUTHOR("Federico Vaga");
-MODULE_DESCRIPTION("FMC-ADC Linux Driver");
+MODULE_DESCRIPTION("FMC-ADC-100MS-14b Linux Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.8");

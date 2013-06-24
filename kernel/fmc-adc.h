@@ -12,7 +12,7 @@
 #include <linux/zio.h>
 #include "field-desc.h"
 
-#define FA_GATEWARE_DEFAULT_NAME "fmc/spec-fmc-adc-v1.1.bin"
+#define FA_GATEWARE_DEFAULT_NAME "fmc/adc-100m14b.bin"
 extern int enable_auto_start;
 
 /* ADC register offset */

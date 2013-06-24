@@ -16,14 +16,14 @@ ccflags-y += -DDEBUG # temporary
 
 subdirs-ccflags-y = $(ccflags-y)
 
-obj-m := fmc-adc.o
-fmc-adc-objs =  fa-zio-drv.o 
-fmc-adc-objs += fa-core.o
-fmc-adc-objs += fa-zio-trg.o
-fmc-adc-objs += fa-dma.o
-fmc-adc-objs += onewire.o
-fmc-adc-objs += spi.o
-fmc-adc-objs += fa-regtable.o
+obj-m := fmc-adc-100m14b.o
+fmc-adc-100m14b-objs =  fa-core.o
+fmc-adc-100m14b-objs += fa-zio-drv.o 
+fmc-adc-100m14b-objs += fa-regtable.o
+fmc-adc-100m14b-objs += fa-zio-trg.o
+fmc-adc-100m14b-objs += fa-dma.o
+fmc-adc-100m14b-objs += onewire.o
+fmc-adc-100m14b-objs += spi.o
 
 all modules:
 	$(MAKE) -C $(LINUX) M=$(shell /bin/pwd) modules

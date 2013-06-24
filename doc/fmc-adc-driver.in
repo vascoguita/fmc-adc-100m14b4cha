@@ -119,8 +119,8 @@ carrier card.
 @node Gateware Dependencies
 @section Gateware Dependencies
 
-This driver has been developed from the FPGA binary included in the package
-as @file{binaries/spec-fmc-adc-v1.0.bin}.
+This driver has been developed from the FPGA binary included in the package,
+as a @t{.bin} file in the @file{binaries/} subdir.
 
 The driver repository always include the last binary version used during
 development. It can happen that the binary within this package become out
@@ -134,8 +134,8 @@ To install the FPGA image in the target system, please follow the
 instruction in the documentation of @i{fmc-bus}.
 
 To summarize, you'll need to place the @t{.bin} file in @file{/lib/firmware/}.
-By default, the driver looks for @t{fmc/spec-fmc-adc-v1.0.bin}@footnote{the full
-path will be @file{/lib/firmware/fmc/spec-fmc-adc-v1.0.bin}}. You
+By default, the driver looks for @t{fmc/adc-100m14b.bin}@footnote{the full
+path will be @file{/lib/firmware/fmc/adc-100m14b.bin}}. You
 can find the copy of the last tested binary within the driver repository.
 Anyway, you are free to use a different binary for your
 ADC and you can load it by specifying the module parameter @t{file}.
@@ -187,7 +187,7 @@ run:
     sudo make install LINUX=$LINUX
 @end example
 
-In addition to the normal installation procedure for @code{fmc-adc.ko}
+In addition to the normal installation procedure for @code{fmc-adc-100m14b.ko}
 you'll see the following message:
 
 @example
@@ -235,7 +235,7 @@ The following parameters are used:
 @table @code
  @item file=/path/to/binary.bin
   The binary file to use to reprogram the FPGA. The default value for this
-  parameter is @t{fmc/spec-fmc-adc-v1.0.bin} as seen in @ref{Gateware Installation}.
+  parameter is @t{fmc/adc-100m14b.bin} as seen in @ref{Gateware Installation}.
   The path to binary is the relative path from @file{/lib/firmware}
  @item enable_test_data=1
   This is for testing purpose. This option enables the testing data, so the ADC
@@ -328,19 +328,20 @@ the cset.
 @end float
 
 The ADC registers can be accessed in the proper @i{sysfs} directory. For a
-card in slot 0 of bus 1 (like shown above), the directory is
-@i{/sys/bus/zio/devices/fmc-adc-0100}.
+card in slot 0 of bus 2 (like shown above), the directory is
+@i{/sys/bus/zio/devices/adc-100m14b-0200}.
 
 The overall device (@i{fmc-adc}) has not any particular capabilities because
 the main features are handled by @i{cset0} and @i{trigger}. So, there are
 not any device-wide attribute, there are only the ZIO's default attributes.
 
 @smallexample
-# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/
+# ls -Ff /sys/bus/zio/devices/adc-100m14b-0200/
 ./   name     devtype  power/  subsystem@   uevent
 ../  devname  cset0/   enable  temperature
 
 @end smallexample
+@c FIXME: ``driver@'' missing above.
 
 @c FIXME better explaination
 @c The @{temperature} attribute is read-only. It returns the temperature of the
@@ -355,7 +356,7 @@ ADC state machine, the acquisition and the time stamp.
 
 @smallexample
 
-# ls -Ff /sys/bus/zio/devices/fmc-adc-0100/cset0/
+# ls -Ff /sys/bus/zio/devices/adc-100m14b-0200/cset0/
 ./              chani/             ch0-vref          tstamp-acq-str-t
 ../             power/             ch1-vref          ch3-vref
 name            fsm-command        tstamp-acq-end-b  ch3-offset
@@ -373,7 +374,7 @@ The @b{resolution-bits} attribute is read-only and it returns the
 number of bits of the ADC:
 
 @smallexample
-corinno-test:~# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/resolution-bits
+corinno-test:~# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/resolution-bits
 14
 @end smallexample
 
@@ -381,7 +382,7 @@ The @b{rst-ch-offset} attribute is write-only. When you write on it, the
 driver reset the offset of all channels.
 
 @smallexample
-corinno-test:~# echo 0 > /sys/bus/zio/devices/fmc-adc-0100/cset0/rst-ch-offset
+corinno-test:~# echo 0 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/rst-ch-offset
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -395,7 +396,7 @@ ADC export offset, volt-reference and termination for each channel in the
 channel-set layer:
 
 @smallexample
-# ls /sys/bus/zio/devices/fmc-adc-0100/cset0/ | grep ch.-
+# ls /sys/bus/zio/devices/adc-100m14b-0200/cset0/ | grep ch.-
 ch0-50ohm-term
 ch0-offset
 ch0-vref
@@ -411,11 +412,12 @@ ch3-vref
 @end smallexample
 
 The @b{*-offset} attribute is read/write. It allows to configure the offset of
-the signal on the channel. When you write a value to this attribute, the driver
+the signal on the channel. The value is expressed in millivolts, in
+the range [-5000,5000]. When you write a value to this attribute, the driver
 apply your value to a DAC which apply an offset to the input signal.
 
 @smallexample
-# echo 50 > /sys/bus/zio/devices/fmc-adc-0100/cset0/ch0-offset
+# echo 1000 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/ch0-offset
 @end smallexample
 
 The @b{*-vref} attribute is read/write. It allow you to change the Volt
@@ -423,14 +425,14 @@ reference of the ADC; the attribute accepts only 4 value: @i{0} (open range),
 @i{35} ([-100mV; +100mV), @i{17} ([-1V; +1V]), @i{69} ([-10V; +10V]).
 
 @smallexample
-# echo 17 > /sys/bus/zio/devices/fmc-adc-0100/cset0/ch0-vref
+# echo 17 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/ch0-vref
 @end smallexample
 
 The @b{*-50ohm-term} attirbute is read/write. It allow to enable (1) or
 disable (0) the 50Ohm termination.
 
 @smallexample
-# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/ch0-50ohm-term
+# echo 1 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/ch0-50ohm-term
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -444,7 +446,7 @@ The @b{sample-decimation} attribute is read/write. It configures the number
 of sample to drop. You can use value between 1 and 65535.
 
 @smallexample
-# echo 4 > /sys/bus/zio/devices/fmc-adc-0100/cset0/sample-decimation
+# echo 4 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/sample-decimation
 @end smallexample
 
 The value to write on decimation mean the number of sample to acquire for
@@ -480,7 +482,7 @@ current state of the state machine. In the following example, the state
 machine is in the status @i{idle}
 
 @smallexample
-# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/fsm-state
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/fsm-state
 1
 @end smallexample
 
@@ -494,7 +496,7 @@ acquisition. You cannot acquire if you don't start the state machine. To
 start the state machine you must use the following command:
 
 @smallexample
-# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/fsm-command
+# echo 1 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/fsm-command
 @end smallexample
 
 If the state machine started, the green LED @i{ACQ} on the front panel of the
@@ -504,7 +506,7 @@ If you want to abort the current acquisition you must send the
 @i{stop} command to the state machine.
 
 @smallexample
-# echo 2 > /sys/bus/zio/devices/fmc-adc-0100/cset0/fsm-command
+# echo 2 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/fsm-command
 @end smallexample
 
 When the state machine is stopped, the @i{ACQ} LED turns off. When you send
@@ -537,9 +539,9 @@ attributes named: second (s), ticks (t) and bins (b). For example, to read
 the entire timestamp of the state machin start event you should do:
 
 @smallexample
-# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/tstamp-acq-str-s
-# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/tstamp-acq-str-t
-# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/tstamp-acq-str-b
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-s
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-t
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-b
 @end smallexample
 
 Seconds represents the number of second since the epoch; ticks is the
@@ -555,16 +557,16 @@ The ADC has 4 input channels. Each channel has one attribute with the last
 acquired sample @i{current-value}.
 
 @smallexample
-# ls -fF /sys/bus/zio/devices/fmc-adc-0100/cset0/chan0/
+# ls -fF /sys/bus/zio/devices/adc-100m14b-0200/cset0/chan0/
 ./  ../  name  power/  current-value  buffer/  enable  current-control  uevent
 @end smallexample
-
+@c FIXME: missing devname, devtype, alarm, address
 
 The @b{current-value} attribute is read only. It returns the last converted
 value on the channel.
 
 @smallexample
-# cat /sys/bus/zio/devices/fmc-adc-0100/cset0/chan0/current-value
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/chan0/current-value
 32860
 @end smallexample
 
@@ -573,17 +575,18 @@ value on the channel.
 @section The Trigger
 
 The ADC has its own @i{zio_trigger_type} and it can not work with any other
-ZIO's trigger. The ADC trigger is named @b{fmc-adc-trg}. We advise you
+ZIO's trigger. The ADC trigger is called @b{fmc-adc-trg}. We advise you
 against replacing the trigger with another one. The sysfs directory of this
 trigger is the following:
 
 @smallexample
-# ls -fF /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/
+# ls -fF /sys/bus/zio/devices/adc-100m14b-0200/cset0/trigger/
 ./           external          tstamp-trg-lst-t  sw-trg-enable  pre-samples
 ../          devtype           delay             enable         sw-trg-fire
 name         tstamp-trg-lst-b  power/            nshots         post-samples
 int-channel  tstamp-trg-lst-s  polarity          uevent         int-threshold
 @end smallexample
+@c FIXME: check list above
 
 On the ADC there are two kind of trigger: hardware and software.
 
@@ -600,7 +603,7 @@ of the hardware trigger on device. So, if you write 1 you enable the hardware
 trigger, if you write 0 you disable the hardware trigger.
 
 @smallexample
-# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/enable
+# echo 1 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/trigger/enable
 @end smallexample
 
 The attribute @b{external} can be used to select the @i{internal trigger}
@@ -608,7 +611,7 @@ or the @i{external trigger}. You must write 1 to select the external trigger,
 0 to select the internal trigger.
 
 @smallexample
-# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/external
+# echo 1 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/trigger/external
 @end smallexample
 
 With the attribute @b{polarity} you can configure if the trigger fire on a
@@ -617,7 +620,7 @@ edge/slope you must write 0 on this attribute, otherwise 1 for a negative
 edge/slope.
 
 @smallexample
-# echo 1 > /sys/bus/zio/devices/fmc-adc-0100/cset0/trigger/polarity
+# echo 1 > /sys/bus/zio/devices/adc-100m14b-0200/cset0/trigger/polarity
 @end smallexample
 
 
@@ -670,13 +673,13 @@ dinamically change the buffer to use. If you want to use the @i{kmalloc}
 buffer you must write:
 
 @smallexample
-# echo kmalloc > /sys/bus/zio/devices/fmc-adc-0100/cset0/current_buffer
+# echo kmalloc > /sys/bus/zio/devices/adc-100m14b-0200/cset0/current_buffer
 @end smallexample
 
 To restore the @i{vmalloc} buffer:
 
 @smallexample
-# echo vmalloc > /sys/bus/zio/devices/fmc-adc-0100/cset0/current_buffer
+# echo vmalloc > /sys/bus/zio/devices/adc-100m14b-0200/cset0/current_buffer
 @end smallexample
 
 @c ==========================================================================
@@ -733,9 +736,10 @@ device interface creates only the char device for the interleaved acquisition.
 @smallexample
 # ls -l /dev/zio/
 total 0
-crw------- 1 root root 250, 8 Aug 23 22:21 fmc-adc-0100-0-i-ctrl
-crw------- 1 root root 250, 9 Aug 23 22:21 fmc-adc-0100-0-i-data
+crw------- 1 root root 250, 8 Aug 23 22:21 adc-100m14b-0200-0-i-ctrl
+crw------- 1 root root 250, 9 Aug 23 22:21 adc-100m14b-0200-0-i-data
 @end smallexample
+@c FIXME check permission as shown
 
 The actual pathnames depend on the version of @i{udev}, and the support
 library tries both names (the new one shown above, and the older one,
@@ -755,12 +759,12 @@ allow the driver to read only an interleaved block of samples.
 Neither the ZIO core nor this driver split interleaved data into
 4 different buffer; so, also the driver will return to user-space a
 block of interleaved samples. To read this interleaved block you
-can read directly the interleaved data char device @i{fmc-adc-0100-0-i-data}
+can read directly the interleaved data char device @i{adc-100m14b-0200-0-i-data}
 using simple program like @i{hexdump}@footnote{man hexdump if you do not
 know this program}:
 
 @smallexample
-# hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/fmc-adc-0100-0-i-data
+# hexdump -n 8 -e '"" 1/2 "%x\n"' /dev/zio/adc-100m14b-0200-0-i-data
 fffc
 e474
 8034
@@ -829,7 +833,7 @@ you want to configure the trigger to fire with an external pulse and to acquire
 3 shots of 10 pre-samples and 100 post-samples, you must write:
 
 @smallexample
-# ./fau-trg-config --external --pre 10 --post 100 --re-enable 2 fmc-adc-0100
+# ./fau-trg-config --external --pre 10 --post 100 --re-enable 2 adc-100m14b-0200
 @end smallexample
 
 The trigger is always active the first time, then you configure it to auto

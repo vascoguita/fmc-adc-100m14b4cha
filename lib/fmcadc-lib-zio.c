@@ -670,7 +670,7 @@ struct fmcadc_op fa_100ms_4ch_14bit_op = {
 };
 struct fmcadc_board_type fmcadc_100ms_4ch_14bit = {
 	.name = "fmcadc_100MS_4ch_14bit",
-	.devname = "fmc-adc",
+	.devname = "adc-100m14b",
 	.driver_type = "zio",
 	.capabilities = {
 		FMCADC_ZIO_TRG_MASK,
