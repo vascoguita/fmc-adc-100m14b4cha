@@ -2,8 +2,7 @@
  * SPI access to fine-delay internals
  *
  * Copyright (C) 2012 CERN (www.cern.ch)
- * Author: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
- * Author: Alessandro Rubini <rubini@gnudd.com>
+ * Author: Federico Vaga <federico.vaga@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
