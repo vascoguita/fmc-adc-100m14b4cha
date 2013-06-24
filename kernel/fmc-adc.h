@@ -30,27 +30,29 @@ extern int enable_auto_start;
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
 
 
-/* ADC Calibration */
-#define FA_CAL_PTR 0x0100 /* Pointer to calibration data in EEPROM (256 Byte) */
-#define FA_CAL_LEN 108 /* Length of the calibration data */
-
 enum fa_input_range {
 	ZFA_RANGE_10V = 0x0,
 	ZFA_RANGE_1V,
 	ZFA_RANGE_100mV,
 	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
 };
-/*
- * fa_calibration_data: Calibration item
- * @offset calibration data for 4 channels
- * @gain calibration data for 4 channels
- * @temp calibration data temperature
- */
-struct fa_calibration_data {
-	uint16_t offset[4];
-	uint16_t gain[4];
-	uint16_t temp;
+#define ZFA_RANGE_MIN  0 /* 10V above */
+#define ZFA_RANGE_MAX  2 /* 100mV above */
+
+
+/* ADC and DAC Calibration, from  EEPROM */
+struct fa_calib_stanza {
+	int16_t offset[4]; /* One per channel */
+	uint16_t gain[4];  /* One per channel */
+	uint16_t temperature;
 };
+
+struct fa_calib {
+	struct fa_calib_stanza adc[3];  /* For input, one per range */
+	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
+};
+
+#define FA_CAL_OFFSET		 0x0100 /* Offset in EEPROM */
 
 /*
  * dma_item: The information about a DMA transfer
@@ -109,8 +111,7 @@ struct fa_dev {
 	int			temp;	/* temperature: scaled by 4 bits */
 
 	/* Calibration Data */
-	struct fa_calibration_data adc_cal_data[3];
-	struct fa_calibration_data dac_cal_data[3];
+	struct fa_calib calib;
 
 	/* DMA attributes */
 	struct sg_table	sgt;

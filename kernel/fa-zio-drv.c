@@ -386,12 +386,12 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 
 	/* Apply the ADC calibration value for the offset */
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
-	cal_val = fa->adc_cal_data[range].offset[chan->index];
+	cal_val = fa->calib.adc[range].offset[chan->index];
 	dev_dbg(&chan->head.dev, "offset calibration value 0x%x\n", cal_val);
 	zfa_common_conf_set(fa, i, cal_val);
 	/* Apply the ADC calibration value for the gain */
 	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
-	cal_val = fa->adc_cal_data[range].gain[chan->index];
+	cal_val = fa->calib.adc[range].gain[chan->index];
 	dev_dbg(&chan->head.dev, "gain calibration value 0x%x\n", cal_val);
 	zfa_common_conf_set(fa, i, cal_val);
 
@@ -427,16 +427,19 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 
 	if (range != ZFA_RANGE_OPEN) {
 		/* Get calibration offset and gain for DAC */
-		offset = fa->dac_cal_data[range].offset[chan->index];
-		gain = fa->dac_cal_data[range].gain[chan->index];
-		dev_dbg(&chan->head.dev, "Appling offset (%d, 0x%x, 0x%x, 0x%x)\n",
-			chan->index, range, gain, offset);
-		/* Calculate calibrater value for DAC */
-		cal_val = ((((usr_val - 0x8000 + offset) << 15) * gain) >> 30);
-		cal_val += 0x8000;
-	} else {	/* Open range */
-		cal_val = usr_val;
+		offset = fa->calib.dac[range].offset[chan->index];
+		gain = fa->calib.dac[range].gain[chan->index];
+	} else {
+		/* open input channel: apply no-conversion values */
+		gain = 0x8000;
+		offset = 0;
 	}
+	dev_dbg(&chan->head.dev, "Appling offset (%d, 0x%x, 0x%x, 0x%x)\n",
+		chan->index, range, gain, offset);
+
+	/* Calculate value for DAC chip -- FIXME */
+	cal_val = ((((usr_val - 0x8000 + offset) << 15) * gain) >> 30);
+	cal_val += 0x8000;
 
 	if (cal_val > 0xFFFF)
 		cal_val = 0xFFFF;
@@ -1054,11 +1057,8 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
 
-	/*
-	 * Get Calibration Data. ADC calibration value and DAC calibration
-	 * value are consecutive; I can fill both array with a single memcpy
-	 */
-	memcpy(fa->adc_cal_data, fa->fmc->eeprom + FA_CAL_PTR, FA_CAL_LEN);
+	/* Retrieve calibration data from the eeprom. FIXME: verify it */
+	memcpy(&fa->calib, fa->fmc->eeprom + FA_CAL_OFFSET, sizeof(fa->calib));
 
 	/* Configure GPIO for IRQ */
 	fa->fmc->op->gpio_config(fa->fmc, zfat_gpio_cfg,
