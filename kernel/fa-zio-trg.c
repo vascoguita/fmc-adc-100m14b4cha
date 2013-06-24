@@ -219,7 +219,7 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
  * occurs before the natural end of the acquisition, un-filled block
  * are not stored.
  */
-static int zfat_data_done(struct zio_cset *cset)
+static void zfat_data_done(struct zio_cset *cset)
 {
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	struct zio_bi *bi = cset->interleave->bi;
@@ -230,7 +230,7 @@ static int zfat_data_done(struct zio_cset *cset)
 
 	/* Nothing to store */
 	if (!zfad_block)
-		return 0;
+		return;
 
 	/* Store blocks */
 	for(i = 0; i < fa->n_shots; ++i)
@@ -250,7 +250,7 @@ static int zfat_data_done(struct zio_cset *cset)
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;
 
-	return 0;
+	return;
 }
 
 /*

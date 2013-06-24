@@ -129,10 +129,9 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		 unsigned int n_blocks)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	struct zio_block *block = zfad_block->block;
 	struct scatterlist *sg;
 	struct dma_item *items;
-	uint32_t dev_mem_ptr;
+	uint32_t dev_mem_ptr = 0;
 	unsigned int i, pages, sglen, size, i_blk;
 	dma_addr_t tmp;
 	int err;
@@ -202,7 +201,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		/* Prepare DMA item */
 		items[i].start_addr = dev_mem_ptr;
 		items[i].dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
-		items[i].dma_addr_h = sg_dma_address(sg) >> 32;
+		items[i].dma_addr_h = (uint64_t)sg_dma_address(sg) >> 32;
 		items[i].dma_len = sg_dma_len(sg);
 		dev_mem_ptr += items[i].dma_len;
 		if (!sg_is_last(sg)) {/* more transfers */

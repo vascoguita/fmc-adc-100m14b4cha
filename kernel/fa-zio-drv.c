@@ -119,7 +119,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 
 };
 
-/* FIXME Unused until TLV control will be available */
+#if 0 /* FIXME Unused until TLV control will be available */
 static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 	/* the offset is complement 2 format */
 	ZIO_ATTR(zdev, ZIO_ATTR_OFFSET, ZIO_RW_PERM, ZFA_CHx_OFFSET, 0),
@@ -132,6 +132,7 @@ static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 	 */
 	ZIO_ATTR(zdev, ZIO_ATTR_VREFTYPE, ZIO_RW_PERM, ZFA_CHx_CTL_RANGE, 0x11),
 };
+#endif
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
 	/*ZIO_ATTR(zdev, "50ohm-termination", ZIO_RW_PERM, ZFA_CHx_CTL_TERM, 0x11),*/
