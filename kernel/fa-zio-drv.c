@@ -529,9 +529,12 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
-		/* Read temperature from onewire */
+		/*
+		 * Onewire returns units of 1/16 degree. We return units
+		 * of 1/1000 of a degree instead.
+		 */
 		*usr_val = fa_read_temp(fa, 0);
-		*usr_val = ((*usr_val) / 16) + (((*usr_val) & 0xf) * 1000 / 16);
+		*usr_val = (*usr_val * 1000 + 8) / 16;
 		return 0;
 	case ZFA_CHx_CTL_TERM:
 	case ZFA_CHx_CTL_RANGE:
