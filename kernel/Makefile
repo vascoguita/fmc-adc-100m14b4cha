@@ -12,7 +12,7 @@ ccflags-y = \
 	-I$(FMC_BUS)/kernel/include \
 	-I$M
 
-ccflags-y += -DDEBUG # temporary
+ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
 
 subdirs-ccflags-y = $(ccflags-y)
 
