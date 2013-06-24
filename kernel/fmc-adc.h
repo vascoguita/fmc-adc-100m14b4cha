@@ -54,6 +54,9 @@ struct fa_calib {
 
 #define FA_CAL_OFFSET		 0x0100 /* Offset in EEPROM */
 
+#define FA_CAL_NO_OFFSET	((int16_t)0x0000)
+#define FA_CAL_NO_GAIN		((uint16_t)0x8000)
+
 /*
  * dma_item: The information about a DMA transfer
  * @start_addr: pointer where start to retrieve data from device memory
@@ -104,6 +107,9 @@ struct fa_dev {
 
 	/* Statistic informations */
 	unsigned int		n_dma_err;
+
+	/* Configuration */
+	int			user_offset[4]; /* one per channel */
 
 	/* one-wire */
 	uint8_t ds18_id[8];

@@ -282,7 +282,7 @@ static int zfad_convert_user_range(uint32_t user_val)
 static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 			  int range)
 {
-	int i, cal_val;
+	int i, offset, gain;
 
 	dev_dbg(&chan->head.dev, "Set offset and gain for range %d\n",
 		range);
@@ -291,21 +291,28 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	zfa_common_conf_set(fa, i, zfad_hw_range[range]);
 
-	if (range == ZFA_RANGE_OPEN)
-		return 0;
+	if (range == ZFA_RANGE_OPEN) {
+		offset = FA_CAL_NO_OFFSET;
+		gain = FA_CAL_NO_GAIN;
+	} else {
+		if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
+			dev_info(&fa->fmc->dev, "Invalid range %i or ch %i\n",
+				 range, chan->index);
+			return -EINVAL;
+		}
+		offset = fa->calib.adc[range].offset[chan->index];
+		gain = fa->calib.adc[range].gain[chan->index];
+	}
 
-	/* Apply the ADC calibration value for the offset */
+	dev_dbg(&fa->fmc->dev, "Chan %i, range %i, offset 0x%x, gain 0x%x\n",
+		chan->index, range, offset, gain);
+
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
-	cal_val = fa->calib.adc[range].offset[chan->index];
-	dev_dbg(&chan->head.dev, "offset calibration value 0x%x\n", cal_val);
-	zfa_common_conf_set(fa, i, cal_val);
-	/* Apply the ADC calibration value for the gain */
+	zfa_common_conf_set(fa, i, offset & 0xffff); /* prevent warning */
 	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
-	cal_val = fa->calib.adc[range].gain[chan->index];
-	dev_dbg(&chan->head.dev, "gain calibration value 0x%x\n", cal_val);
-	zfa_common_conf_set(fa, i, cal_val);
+	zfa_common_conf_set(fa, i, gain);
 
-	/* Reset offset */
+	/* FIXME: recalculate user offset -- this zeroes it*/
 	zfad_apply_user_offset(fa, chan, 0);
 
 	return 0;
@@ -316,7 +323,7 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
  * zfad_apply_user_offset
  * @fa: the fmc-adc descriptor
  * @chan: the channel where apply offset
- * @usr_val: the offset value to apply
+ * @usr_val: the offset value to apply, expressed as millivolts (-5000..5000)
  *
  * Apply user offset to the channel input. Before apply the user offset it must
  * be corrected with offset and gain calibration value. An open input does not
@@ -325,8 +332,12 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 				  uint32_t usr_val)
 {
-	uint32_t tmp, cal_val, offset, gain, range_reg;
-	int i, range;
+	uint32_t range_reg;
+	int32_t uval =  (int32_t)usr_val;
+	int offset, gain, hwval, i, range;
+
+	if (uval < -5000 || uval > 5000)
+		return -EINVAL;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	zfa_common_info_get(fa, i, &range_reg);
@@ -335,28 +346,31 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (range < 0)
 		return range;
 
-	if (range != ZFA_RANGE_OPEN) {
-		/* Get calibration offset and gain for DAC */
+	if (range == ZFA_RANGE_OPEN) {
+		offset = FA_CAL_NO_OFFSET;
+		gain = FA_CAL_NO_GAIN;
+	} else {
 		offset = fa->calib.dac[range].offset[chan->index];
 		gain = fa->calib.dac[range].gain[chan->index];
-	} else {
-		/* open input channel: apply no-conversion values */
-		gain = 0x8000;
-		offset = 0;
 	}
-	dev_dbg(&chan->head.dev, "Appling offset (%d, 0x%x, 0x%x, 0x%x)\n",
-		chan->index, range, gain, offset);
 
-	/* Calculate value for DAC chip -- FIXME */
-	cal_val = ((((usr_val - 0x8000 + offset) << 15) * gain) >> 30);
-	cal_val += 0x8000;
+	hwval = uval * 0x8000 / 5000;
+	if (hwval == 0x8000) hwval = 0x7fff; /* -32768 .. 32767 */
 
-	if (cal_val > 0xFFFF)
-		cal_val = 0xFFFF;
+	dev_dbg(&fa->fmc->dev, "Chan %i: uval %i -> 0x%04x "
+		"(r %i, o 0x%x, g 0x%x)\n", chan->index, uval, hwval,
+		range, offset, gain);
 
-	dev_dbg(&chan->head.dev, "DAC offset calibration 0x%x\n", cal_val);
+	hwval = ((hwval + offset) * gain) >> 15; /* signed */
+	hwval += 0x8000; /* offset binary */
+	if (hwval < 0)
+		hwval = 0;
+	if (hwval > 0xffff)
+		hwval = 0xffff;
+
+	dev_dbg(&chan->head.dev, "DAC offset calibration 0x%x\n", hwval);
 	/* Apply calibrated offset to DAC */
-	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, cal_val, &tmp);
+	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, hwval, NULL);
 }
 
 
@@ -385,6 +399,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
+	struct zio_channel *chan;
 	int i, range, err, reg_index;
 
 	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
@@ -412,17 +427,21 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 	case ZFA_CH4_OFFSET:
 		i--;
-		err = zfad_apply_user_offset(fa, &to_zio_cset(dev)->chan[i],
-					     usr_val);
+		chan = to_zio_cset(dev)->chan + i;
+		err = zfad_apply_user_offset(fa, chan, usr_val);
 		if (err)
 			return err;
+		fa->user_offset[chan->index] = usr_val;
 		return 0;
+
 	case ZFA_CHx_OFFSET:
-		err = zfad_apply_user_offset(fa, to_zio_chan(dev), usr_val);
+		chan = to_zio_chan(dev),
+			err = zfad_apply_user_offset(fa, chan, usr_val);
 		if (err)
 			return err;
+		fa->user_offset[chan->index] = usr_val;
 		return 0;
-		break;
+
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
@@ -484,15 +503,27 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	int reg_index;
+	int i, reg_index;
+
+	i = fa->zdev->cset->n_chan - 1 ; /* -1 because of interleaved channel */
 
 	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
+		i--;
 	case ZFA_CH2_OFFSET:
+		i--;
 	case ZFA_CH3_OFFSET:
+		i--;
 	case ZFA_CH4_OFFSET:
+		i--;
+		*usr_val = fa->user_offset[i];
+		return 0;
+
 	case ZFA_CHx_OFFSET:
+		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
+		return 0;
+
 	case ZFA_SW_R_NOADDRES_NBIT:
 	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
@@ -504,8 +535,14 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_CHx_CTL_TERM:
 	case ZFA_CHx_CTL_RANGE:
+		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
+		break;
+
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
+		zfa_common_info_get(fa, reg_index, usr_val);
+		i = (int16_t)(*usr_val); /* now signed integer */
+		*usr_val = i;
 		break;
 	default:
 		reg_index = zattr->id;
