@@ -1102,6 +1102,11 @@ static int zfad_zio_probe(struct zio_device *zdev)
 		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
 	}
 
+	/* Zero offsets and release the DAC clear */
+	zfad_reset_offset(fa);
+	zfa_common_conf_set(fa, ZFA_CTL_DAC_CLR_N, 1);
+
+
 	/* Set UTC seconds from the kernel seconds */
 	zfa_common_conf_set(fa, ZFA_UTC_SECONDS, get_seconds());
 
