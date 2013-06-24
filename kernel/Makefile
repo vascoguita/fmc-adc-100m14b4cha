@@ -23,7 +23,8 @@ fmc-adc-objs += fa-zio-trg.o
 fmc-adc-objs += fa-dma.o
 fmc-adc-objs += onewire.o
 fmc-adc-objs += spi.o
-	
+fmc-adc-objs += fa-regtable.o
+
 all modules:
 	$(MAKE) -C $(LINUX) M=$(shell /bin/pwd) modules
 
