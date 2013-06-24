@@ -7,7 +7,7 @@
 #include "fmc-adc.h"
 
 /* Definition of the fmc-adc registers address - mask - mask offset */
-const struct zio_field_desc zfad_regs[] = {
+const struct zfa_field_desc zfad_regs[] = {
 	/* Control registers */
 	[ZFA_CTL_FMS_CMD] =		{FA_ADC_MEM_OFF + 0x00, 0x0003, 0},
 	[ZFA_CTL_CLK_EN] =		{FA_ADC_MEM_OFF + 0x00, 0x0001, 2},

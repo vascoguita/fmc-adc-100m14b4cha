@@ -19,7 +19,6 @@
 #include <linux/zio-sysfs.h>
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
-#include <linux/zio-utils.h>
 
 #include "fmc-adc.h"
 

@@ -8,11 +8,9 @@
 #ifndef _fa_dev_H_
 #define _fa_dev_H_
 #include <linux/scatterlist.h>
-
 #include <linux/fmc.h>
-
 #include <linux/zio.h>
-#include <linux/zio-utils.h>
+#include "field-desc.h"
 
 #define FA_GATEWARE_DEFAULT_NAME "fmc/spec-fmc-adc-v1.1.bin"
 extern int enable_auto_start;
@@ -259,7 +257,7 @@ enum zfadc_dregs_enum {
 	ZFA_SW_R_NOADDERS_AUTO,
 };
 /* Registers lists used in fd-zio-drv.c */
-extern const struct zio_field_desc zfad_regs[];
+extern const struct zfa_field_desc zfad_regs[];
 
 /*
  * ZFA_CHx_MULT
@@ -291,9 +289,7 @@ enum zfat_irq {
 };
 
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
-#include <linux/zio.h>
 #include <linux/zio-trigger.h>
-#include <linux/zio-utils.h>
 
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
@@ -364,7 +360,7 @@ static inline int zfa_common_conf_set(struct fa_dev *fa,
 	}
 	/* Read current register*/
 	cur = fmc_readl(fa->fmc, zfad_regs[index].addr);
-	val = zio_set_field(&zfad_regs[index], cur, usr_val);
+	val = zfa_set_field(&zfad_regs[index], cur, usr_val);
 	/* FIXME re-write usr_val when possible (zio need a patch) */
 	/* If the attribute has a valid address */
 	fmc_writel(fa->fmc, val, zfad_regs[index].addr);
@@ -379,7 +375,7 @@ static inline void zfa_common_info_get(struct fa_dev *fa,
 	/* Read current register*/
 	cur = fmc_readl(fa->fmc, zfad_regs[index].addr);
 	/* Return the value */
-	*usr_val = zio_get_field(&zfad_regs[index], cur);
+	*usr_val = zfa_get_field(&zfad_regs[index], cur);
 }
 
 
