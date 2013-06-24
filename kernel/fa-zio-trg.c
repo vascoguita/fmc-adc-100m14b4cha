@@ -122,7 +122,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	}
 
-	return zfa_common_conf_set(fa, zattr->id, tmp_val);
+	return zfa_hardware_write(fa, zattr->id, tmp_val);
 }
 
 
@@ -135,7 +135,7 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 
-	zfa_common_info_get(fa, zattr->id, usr_val);
+	zfa_hardware_read(fa, zattr->id, usr_val);
 
 	dev_dbg(dev, "Reading %d from the sysfs attribute %s\n",
 		*usr_val, zattr->attr.attr.name);
@@ -166,9 +166,9 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 		return ERR_PTR(-ENOMEM);
 
 	/* Disable Software trigger*/
-	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
+	zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 0);
 	/* Enable Hardware trigger*/
-	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 1);
+	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 1);
 
 	zfat->fa = fa;
 	zfat->ti.cset = cset;
@@ -182,15 +182,15 @@ static void zfat_destroy(struct zio_ti *ti)
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
 	/* Enable Software trigger */
-	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
+	zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
 	/* Disable Hardware trigger */
-	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
+	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 0);
 	/* Other triggers cannot use pre-samples */
-	zfa_common_conf_set(fa, ZFAT_PRE, 0);
+	zfa_hardware_write(fa, ZFAT_PRE, 0);
 	/* Reset post samples */
-	zfa_common_conf_set(fa, ZFAT_POST, 0);
+	zfa_hardware_write(fa, ZFAT_POST, 0);
 	/* Other triggers can handle only 1 shot */
-	zfa_common_conf_set(fa, ZFAT_SHOTS_NB, 1);
+	zfa_hardware_write(fa, ZFAT_SHOTS_NB, 1);
 
 	kfree(zfat);
 }
@@ -205,7 +205,7 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 
-	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, !status);
+	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, !status);
 }
 
 /*

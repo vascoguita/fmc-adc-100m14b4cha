@@ -347,7 +347,7 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 #define FA_SPI_SS_DAC(ch)	((ch) + 1)
 
 /* Hardware filed-based access */
-static inline int zfa_common_conf_set(struct fa_dev *fa,
+static inline int zfa_hardware_write(struct fa_dev *fa,
 				      enum zfadc_dregs_enum index,
 				      uint32_t usr_val)
 {
@@ -366,7 +366,7 @@ static inline int zfa_common_conf_set(struct fa_dev *fa,
 	fmc_writel(fa->fmc, val, zfad_regs[index].addr);
 	return 0;
 }
-static inline void zfa_common_info_get(struct fa_dev *fa,
+static inline void zfa_hardware_read(struct fa_dev *fa,
 				       enum zfadc_dregs_enum index,
 				       uint32_t *usr_val)
 {

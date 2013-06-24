@@ -201,14 +201,14 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	/* If START, check if we can start */
 	if (command == ZFA_START) {
 		/* Verify that SerDes PLL is lockes */
-		zfa_common_info_get(fa, ZFA_STA_SERDES_PLL, &val);
+		zfa_hardware_read(fa, ZFA_STA_SERDES_PLL, &val);
 		if (!val) {
 			dev_err(fa->fmc->hwdev,
 			"Cannot start acquisition: SerDes PLL not locked\n");
 			return -EBUSY;
 		}
 		/* Verify that SerDes is synched */
-		zfa_common_info_get(fa, ZFA_STA_SERDES_SYNCED, &val);
+		zfa_hardware_read(fa, ZFA_STA_SERDES_SYNCED, &val);
 		if (!val) {
 			dev_err(fa->fmc->hwdev,
 			"Cannot start acquisition: SerDes not synchronized\n");
@@ -231,13 +231,13 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		}
 
 		dev_dbg(fa->fmc->hwdev, "FSM START Command, Enable interrupts\n");
-		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_ALL);
+		zfa_hardware_write(fa, ZFA_IRQ_MASK, ZFAT_ALL);
 	} else {
 		dev_dbg(fa->fmc->hwdev, "FSM STOP Command, Disable interrupts\n");
-		zfa_common_conf_set(fa, ZFA_IRQ_MASK, ZFAT_NONE);
+		zfa_hardware_write(fa, ZFA_IRQ_MASK, ZFAT_NONE);
 	}
 
-	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, command);
+	zfa_hardware_write(fa, ZFA_CTL_FMS_CMD, command);
 	return 0;
 }
 
@@ -289,7 +289,7 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 
 	/* Actually set the range */
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
-	zfa_common_conf_set(fa, i, zfad_hw_range[range]);
+	zfa_hardware_write(fa, i, zfad_hw_range[range]);
 
 	if (range == ZFA_RANGE_OPEN) {
 		offset = FA_CAL_NO_OFFSET;
@@ -308,9 +308,9 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		chan->index, range, offset, gain);
 
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
-	zfa_common_conf_set(fa, i, offset & 0xffff); /* prevent warning */
+	zfa_hardware_write(fa, i, offset & 0xffff); /* prevent warning */
 	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
-	zfa_common_conf_set(fa, i, gain);
+	zfa_hardware_write(fa, i, gain);
 
 	/* recalculate user offset for the new range */
 	zfad_apply_user_offset(fa, chan, fa->user_offset[chan->index]);
@@ -340,7 +340,7 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 		return -EINVAL;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
-	zfa_common_info_get(fa, i, &range_reg);
+	zfa_hardware_read(fa, i, &range_reg);
 
 	range = zfad_convert_hw_range(range_reg);
 	if (range < 0)
@@ -412,7 +412,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		 * Most of the following "case" statements are simply
 		 * error checking and ancillary operations.  The actual
 		 * programming of hardware is done at the end of the
-		 * switch, in the catch-all final zfa_common_conf_set()
+		 * switch, in the catch-all final zfa_hardware_write()
 		 */
 
 	case ZFA_SW_R_NOADDERS_AUTO:
@@ -491,7 +491,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return zfad_fsm_command(fa, usr_val);
 	}
 
-	return zfa_common_conf_set(fa, reg_index, usr_val);
+	return zfa_hardware_write(fa, reg_index, usr_val);
 }
 
 /*
@@ -540,7 +540,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
-		zfa_common_info_get(fa, reg_index, usr_val);
+		zfa_hardware_read(fa, reg_index, usr_val);
 		i = (int16_t)(*usr_val); /* now signed integer */
 		*usr_val = i;
 		break;
@@ -548,7 +548,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		reg_index = zattr->id;
 	}
 
-	zfa_common_info_get(fa, reg_index, usr_val);
+	zfa_hardware_read(fa, reg_index, usr_val);
 	dev_dbg(dev, "Reading %d from the sysfs attribute %s (%d)\n",
 		*usr_val, zattr->attr.attr.name, reg_index);
 	return 0;
@@ -587,13 +587,13 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 	tmp->dev_mem_ptr = 0; /* Always the first block */
 
 	/* Configure post samples */
-	zfa_common_conf_set(fa, ZFAT_POST, cset->ti->nsamples);
+	zfa_hardware_write(fa, ZFAT_POST, cset->ti->nsamples);
 	/* Start the acquisition */
 	zfad_fsm_command(fa, ZFA_START);
 
 	fa->n_shots = 1;
 	/* Fire software trigger */
-	zfa_common_conf_set(fa, ZFAT_SW, 1);
+	zfa_hardware_write(fa, ZFAT_SW, 1);
 
 	return -EAGAIN;
 }
@@ -666,14 +666,14 @@ static void zfat_get_irq_status(struct fa_dev *fa,
 {
 
 	/* Get current interrupts status */
-	zfa_common_info_get(fa, ZFA_IRQ_SRC, irq_status);
-	zfa_common_info_get(fa, ZFA_IRQ_MULTI, irq_multi);
+	zfa_hardware_read(fa, ZFA_IRQ_SRC, irq_status);
+	zfa_hardware_read(fa, ZFA_IRQ_MULTI, irq_multi);
 	dev_dbg(fa->fmc->hwdev, "irq status = 0x%x multi = 0x%x\n",
 			*irq_status, *irq_multi);
 
 	/* Clear current interrupts status */
-	zfa_common_conf_set(fa, ZFA_IRQ_SRC, *irq_status);
-	zfa_common_conf_set(fa, ZFA_IRQ_MULTI, *irq_multi);
+	zfa_hardware_write(fa, ZFA_IRQ_SRC, *irq_status);
+	zfa_hardware_write(fa, ZFA_IRQ_MULTI, *irq_multi);
 }
 
 
@@ -696,7 +696,7 @@ static void zfad_dma_start(struct zio_cset *cset)
 		return;
 
 	/* Start DMA transefer */
-	zfa_common_conf_set(fa, ZFA_DMA_CTL_START, 1);
+	zfa_hardware_write(fa, ZFA_DMA_CTL_START, 1);
 	dev_dbg(fa->fmc->hwdev, "Start DMA transfer\n");
 }
 
@@ -734,13 +734,13 @@ static void zfad_dma_done(struct zio_cset *cset)
 	 * trigger.
 	 */
 	if (cset->trig == &zfat_type) {
-		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN,
+		zfa_hardware_write(fa, ZFAT_CFG_HW_EN,
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
-		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN,
+		zfa_hardware_write(fa, ZFAT_CFG_SW_EN,
 				    ti->zattr_set.ext_zattr[5].value);
 	} else {
 		dev_dbg(&cset->head.dev, "Software acquisition over");
-		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
+		zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
 	}
 
 	/* Automatic start next acquisition */
@@ -765,7 +765,7 @@ static void zfad_dma_error(struct zio_cset *cset)
 
 	zfad_unmap_dma(cset, zfad_block);
 
-	zfa_common_info_get(fa, ZFA_DMA_STA, &val);
+	zfa_hardware_read(fa, ZFA_DMA_STA, &val);
 	dev_err(fa->fmc->hwdev,
 		"DMA error (status 0x%x). All acquisition lost\n", val);
 	zfad_fsm_command(fa, ZFA_STOP);
@@ -780,9 +780,9 @@ static void zfad_dma_error(struct zio_cset *cset)
  */
 static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
 {
-	zfa_common_info_get(fa, ZFA_UTC_TRIG_SECONDS, (uint32_t *)&ts->secs);
-	zfa_common_info_get(fa, ZFA_UTC_TRIG_COARSE, (uint32_t *)&ts->ticks);
-	zfa_common_info_get(fa, ZFA_UTC_TRIG_FINE, (uint32_t *)&ts->bins);
+	zfa_hardware_read(fa, ZFA_UTC_TRIG_SECONDS, (uint32_t *)&ts->secs);
+	zfa_hardware_read(fa, ZFA_UTC_TRIG_COARSE, (uint32_t *)&ts->ticks);
+	zfa_hardware_read(fa, ZFA_UTC_TRIG_FINE, (uint32_t *)&ts->bins);
 }
 
 
@@ -818,7 +818,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		pre_samp = cset->trig->zattr_set
 				.std_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
 		/* Get trigger position in DDR */
-		zfa_common_info_get(fa, ZFAT_POS, &trg_pos);
+		zfa_hardware_read(fa, ZFAT_POS, &trg_pos);
 		/* translate from sample count to memory offset */
 		fixed_mem_ptr = (trg_pos - pre_samp) * cset->ssize;
 		/* -1 because of interleaved channel */
@@ -871,7 +871,7 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	 */
 	while (try-- && val != ZFA_STATE_IDLE) {
 		//udelay(2);
-		zfa_common_info_get(fa, ZFA_STA_FSM, &val);
+		zfa_hardware_read(fa, ZFA_STA_FSM, &val);
 	}
 
 	if (val != ZFA_STATE_IDLE) {
@@ -887,8 +887,8 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	 * Disable all triggers to prevent fires between
 	 * different DMA transfers required for multi-shots
 	 */
-	zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
-	zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 0);
+	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 0);
+	zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 0);
 
 	/* Start the DMA transfer */
 	zfad_dma_start(cset);
@@ -1018,44 +1018,44 @@ static int zfad_zio_probe(struct zio_device *zdev)
 			fa->fmc->irq, err);
 
 	/* Force stop FSM to prevent early trigger fire */
-	zfa_common_conf_set(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
+	zfa_hardware_write(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
 		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
 					  &zdev->cset->chan[i]);
-		zfa_common_conf_set(fa, addr, ZFA_RANGE_1V);
+		zfa_hardware_write(fa, addr, ZFA_RANGE_1V);
 		zfad_set_range(fa, &zdev->cset->chan[i], ZFA_RANGE_1V);
 	}
 	zfad_reset_offset(fa);
 
 	/* Enable mezzanine clock */
-	zfa_common_conf_set(fa, ZFA_CTL_CLK_EN, 1);
+	zfa_hardware_write(fa, ZFA_CTL_CLK_EN, 1);
 	/* Set DMA to transfer data from device to host */
-	zfa_common_conf_set(fa, ZFA_DMA_BR_DIR, 0);
+	zfa_hardware_write(fa, ZFA_DMA_BR_DIR, 0);
 	/* Set decimation to minimum */
-	zfa_common_conf_set(fa, ZFAT_SR_DECI, 1);
+	zfa_hardware_write(fa, ZFAT_SR_DECI, 1);
 	/* Set test data register */
-	zfa_common_conf_set(fa, ZFA_CTL_TEST_DATA_EN, enable_test_data);
+	zfa_hardware_write(fa, ZFA_CTL_TEST_DATA_EN, enable_test_data);
 	/* Set to single shot mode by default */
-	zfa_common_conf_set(fa, ZFAT_SHOTS_NB, 1);
+	zfa_hardware_write(fa, ZFAT_SHOTS_NB, 1);
 	if (zdev->cset->ti->cset->trig == &zfat_type) {
 		/* Select external trigger (index 0) */
-		zfa_common_conf_set(fa, ZFAT_CFG_HW_SEL, 1);
+		zfa_hardware_write(fa, ZFAT_CFG_HW_SEL, 1);
 		zdev->cset->ti->zattr_set.ext_zattr[0].value = 1;
 	} else {
 		/* Enable Software trigger*/
-		zfa_common_conf_set(fa, ZFAT_CFG_SW_EN, 1);
+		zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
 		/* Disable Hardware trigger*/
-		zfa_common_conf_set(fa, ZFAT_CFG_HW_EN, 0);
+		zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 0);
 	}
 
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
-	zfa_common_conf_set(fa, ZFA_CTL_DAC_CLR_N, 1);
+	zfa_hardware_write(fa, ZFA_CTL_DAC_CLR_N, 1);
 
 
 	/* Set UTC seconds from the kernel seconds */
-	zfa_common_conf_set(fa, ZFA_UTC_SECONDS, get_seconds());
+	zfa_hardware_write(fa, ZFA_UTC_SECONDS, get_seconds());
 
 	return err;
 }
@@ -1180,19 +1180,19 @@ int fa_zio_init(struct fa_dev *fa)
 	/* Wait 50ms, so device has time to calibrate */
 	mdelay(50);
 	/* Verify that the FMC is plugged (0 is plugged) */
-	zfa_common_info_get(fa, ZFA_CAR_FMC_PRES, &val);
+	zfa_hardware_read(fa, ZFA_CAR_FMC_PRES, &val);
 	if (val) {
 		dev_err(hwdev, "No FCM ADC plugged\n");
 		return -ENODEV;
 	}
 	/* Verify that system PLL is locked (1 is calibrated) */
-	zfa_common_info_get(fa, ZFA_CAR_SYS_PLL, &val);
+	zfa_hardware_read(fa, ZFA_CAR_SYS_PLL, &val);
 	if (!val) {
 		dev_err(hwdev, "System PLL not locked\n");
 		return -ENODEV;
 	}
 	/* Verify that DDR3 calibration is done (1 is calibrated) */
-	zfa_common_info_get(fa, ZFA_CAR_DDR_CAL, &val);
+	zfa_hardware_read(fa, ZFA_CAR_DDR_CAL, &val);
 	if (!val) {
 		dev_err(hwdev, "DDR3 Calibration not done\n");
 		return -ENODEV;
