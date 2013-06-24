@@ -38,22 +38,21 @@
 int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		uint32_t tx, uint32_t *rx)
 {
-	uint32_t ctrl;
+	uint32_t regval;
 	unsigned long j = jiffies + HZ;
 	int err = 0;
 
 	/* Put out value (LSB-aligned) in the T0 register (bits 0..31) */
 	fmc_writel(fa->fmc, tx, FA_SPI_MEM_OFF + FA_SPI_TX(0));
 	/* Configure SPI controller */
-	ctrl = FA_SPI_CTRL_ASS |	/* Automatic Slave Select*/
+	regval = FA_SPI_CTRL_ASS |	/* Automatic Slave Select*/
 		FA_SPI_CTRL_Tx_NEG |	/* Change on falling edge */
 		num_bits;		/* In CHAR_LEN field */
-	fmc_writel(fa->fmc, ctrl, FA_SPI_REG(FA_SPI_CTRL));
+	fmc_writel(fa->fmc, regval, FA_SPI_REG(FA_SPI_CTRL));
 	/* Set Chip Select */
 	fmc_writel(fa->fmc, (1 << cs), FA_SPI_REG(FA_SPI_CS));
 	/* Start transfer */
-	ctrl |= FA_SPI_CTRL_GO;
-	fmc_writel(fa->fmc, ctrl, FA_SPI_REG(FA_SPI_CTRL));
+	fmc_writel(fa->fmc, regval | FA_SPI_CTRL_GO, FA_SPI_REG(FA_SPI_CTRL));
 	/* Wait transfer complete */
 	while(fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_CTRL)) & FA_SPI_CTRL_BUSY) {
 		if (jiffies > j) {
@@ -63,9 +62,11 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		}
 	}
 	/* Transfer compleate, read data */
-	*rx = fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_RX(0))),
+	regval = fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_RX(0))),
 	dev_dbg(&fa->fmc->dev, "SPI transfer CS %d, NBIT %d, TX 0x%x RX 0x%x\n",
-		cs, num_bits, tx, *rx);
+		cs, num_bits, tx, regval);
+	if (rx)
+		*rx = regval;
 out:
 	/* Clear Chip Select */
 	fmc_writel(fa->fmc, 0, FA_SPI_REG(FA_SPI_CTRL_ASS));
