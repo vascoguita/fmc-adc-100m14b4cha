@@ -312,8 +312,8 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
 	zfa_common_conf_set(fa, i, gain);
 
-	/* FIXME: recalculate user offset -- this zeroes it*/
-	zfad_apply_user_offset(fa, chan, 0);
+	/* recalculate user offset for the new range */
+	zfad_apply_user_offset(fa, chan, fa->user_offset[chan->index]);
 
 	return 0;
 }
