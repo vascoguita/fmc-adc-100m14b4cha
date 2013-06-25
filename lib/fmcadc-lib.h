@@ -49,7 +49,7 @@ struct fmcadc_timestamp {
 };
 
 /*
- * The following enum can be use to se the mask of valid attribute
+ * The following enum can be use to se the mask of valid configurations
  */
 enum fmcadc_configuration_trigger {
 	FMCADC_CONF_TRG_SOURCE = 0,
@@ -117,43 +117,43 @@ struct fmcadc_conf {
 };
 
 
-static inline void fmcadc_set_attr_mask(struct fmcadc_conf *conf,
-				        unsigned int attr_index)
+static inline void fmcadc_set_conf_mask(struct fmcadc_conf *conf,
+				        unsigned int conf_index)
 {
-	conf->mask |= (1LL << attr_index);
+	conf->mask |= (1LL << conf_index);
 }
 /*
- * fmcadc_set_attr
+ * fmcadc_set_conf
  * @conf: where set the configuration
- * @attr_index: the configuration to set
+ * @conf_index: the configuration to set
  * @val: the value to apply
  *
  * it is a little helper to set correctly a configuration into the
  * configuration structure
  */
-static inline void fmcadc_set_attr(struct fmcadc_conf *conf,
-				   unsigned int attr_index,
+static inline void fmcadc_set_conf(struct fmcadc_conf *conf,
+				   unsigned int conf_index,
 				   uint32_t val)
 {
-	conf->value[attr_index] = val;
-	fmcadc_set_attr_mask(conf, attr_index);
+	conf->value[conf_index] = val;
+	fmcadc_set_conf_mask(conf, conf_index);
 }
 
 /*
- * fmcadc_get_attr
+ * fmcadc_get_conf
  * @conf: where get the configuration
- * @attr_index: the configuration to get
+ * @conf_index: the configuration to get
  * @val: the value of the configuration
  *
  * it is a little helper to get correctly a configuration from the
  * configuration structure
  */
-static inline int fmcadc_get_attr(struct fmcadc_conf *conf,
-				  unsigned int attr_index,
+static inline int fmcadc_get_conf(struct fmcadc_conf *conf,
+				  unsigned int conf_index,
 				  uint32_t *val)
 {
-	if (conf->mask & (1LL << attr_index)) {
-		*val = conf->value[attr_index];
+	if (conf->mask & (1LL << conf_index)) {
+		*val = conf->value[conf_index];
 		return 0;
 	} else {
 		return -1;

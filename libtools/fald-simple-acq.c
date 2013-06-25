@@ -84,12 +84,12 @@ int main(int argc, char *argv[])
 	/* reset attributes and provide defaults */
 	memset(&trg, 0, sizeof(trg));
 	trg.type = FMCADC_CONF_TYPE_TRG;
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
+	fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
 
 	memset(&acq, 0, sizeof(acq));
 	acq.type = FMCADC_CONF_TYPE_ACQ;
-	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP, 16);
-	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_N_SHOTS, 1);
+	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP, 16);
+	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS, 1);
 
 	/* Parse options */
 	while( (c = getopt_long(argc, argv, GETOPT_STRING,
@@ -97,33 +97,33 @@ int main(int argc, char *argv[])
 		switch(c){
 		case 'b': case 'p': /* before */
 			presamples = atoi(optarg),
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
 					presamples);
 			break;
 		case 'a': case 'P': /* after */
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP,
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP,
 					atoi(optarg));
 			break;
 		case 'n':
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_N_SHOTS,
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS,
 					atoi(optarg));
 			break;
 		case 'd':
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_DELAY,
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_DELAY,
 					atoi(optarg));
 			break;
 		case 'u': case 'D':
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_DECIMATION,
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_DECIMATION,
 					atoi(optarg));
 			break;
 		case 't':
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_THRESHOLD,
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_THRESHOLD,
 					atoi(optarg));
 			break;
 		case 'c':
 			/* set internal, and then the channel */
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 0);
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE, 0);
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
 					atoi(optarg));
 			break;
 		case 'B':
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Configure trigger (pick trigger polarity from external array) */
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY,
+	fmcadc_set_conf(&trg, FMCADC_CONF_TRG_POLARITY,
 			trgval[FMCADC_CONF_TRG_POLARITY]);
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
