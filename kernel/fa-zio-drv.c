@@ -284,9 +284,6 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 {
 	int i, offset, gain;
 
-	dev_dbg(&chan->head.dev, "Set offset and gain for range %d\n",
-		range);
-
 	/* Actually set the range */
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	zfa_hardware_write(fa, i, zfad_hw_range[range]);
@@ -303,9 +300,6 @@ static int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		offset = fa->calib.adc[range].offset[chan->index];
 		gain = fa->calib.adc[range].gain[chan->index];
 	}
-
-	dev_dbg(&fa->fmc->dev, "Chan %i, range %i, offset 0x%x, gain 0x%x\n",
-		chan->index, range, offset, gain);
 
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
 	zfa_hardware_write(fa, i, offset & 0xffff); /* prevent warning */
@@ -357,10 +351,6 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	hwval = uval * 0x8000 / 5000;
 	if (hwval == 0x8000) hwval = 0x7fff; /* -32768 .. 32767 */
 
-	dev_dbg(&fa->fmc->dev, "Chan %i: uval %i -> 0x%04x "
-		"(r %i, o 0x%x, g 0x%x)\n", chan->index, uval, hwval,
-		range, offset, gain);
-
 	hwval = ((hwval + offset) * gain) >> 15; /* signed */
 	hwval += 0x8000; /* offset binary */
 	if (hwval < 0)
@@ -368,7 +358,6 @@ static int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (hwval > 0xffff)
 		hwval = 0xffff;
 
-	dev_dbg(&chan->head.dev, "DAC offset calibration 0x%x\n", hwval);
 	/* Apply calibrated offset to DAC */
 	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, hwval, NULL);
 }
