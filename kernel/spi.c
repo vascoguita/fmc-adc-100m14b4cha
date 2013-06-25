@@ -62,9 +62,7 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		}
 	}
 	/* Transfer compleate, read data */
-	regval = fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_RX(0))),
-	dev_dbg(&fa->fmc->dev, "SPI transfer CS %d, NBIT %d, TX 0x%x RX 0x%x\n",
-		cs, num_bits, tx, regval);
+	regval = fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_RX(0)));
 	if (rx)
 		*rx = regval;
 out:
