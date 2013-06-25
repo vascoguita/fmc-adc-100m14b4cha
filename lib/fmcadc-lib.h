@@ -90,7 +90,7 @@ enum fmcadc_configuration_type {
 	__FMCADC_CONF_TYPE_LAST_INDEX,
 };
 
-#define FMCADC_N_ATTRIBUTES 32
+
 /*
  * @type: type of configuration
  * @dev_type: device identificator
@@ -106,20 +106,21 @@ enum fmcadc_configuration_type {
  * @value: list of configuration value. Each type has its own enumeration for
  *         configuration values
  */
+#define __FMCADC_CONF_LEN 64 /* number of allocated items in each structure */
 struct fmcadc_conf {
 	enum fmcadc_configuration_type type;
 	uint32_t dev_type;
 	uint32_t route_to;
-	uint32_t mask;
 	uint32_t flags; /* how to identify invalid? */
-	uint32_t value[FMCADC_N_ATTRIBUTES];
+	uint64_t mask;
+	uint32_t value[__FMCADC_CONF_LEN];
 };
 
 
 static inline void fmcadc_set_attr_mask(struct fmcadc_conf *conf,
 				        unsigned int attr_index)
 {
-	conf->mask |= (1 << attr_index);
+	conf->mask |= (1LL << attr_index);
 }
 /*
  * fmcadc_set_attr
@@ -151,7 +152,7 @@ static inline int fmcadc_get_attr(struct fmcadc_conf *conf,
 				  unsigned int attr_index,
 				  uint32_t *val)
 {
-	if (conf->mask & (1 << attr_index)) {
+	if (conf->mask & (1LL << attr_index)) {
 		*val = conf->value[attr_index];
 		return 0;
 	} else {

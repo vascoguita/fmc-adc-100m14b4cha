@@ -37,7 +37,7 @@ static void fald_help()
 	printf("  --help|-h                show this help\n\n");
 }
 
-static int trgval[FMCADC_N_ATTRIBUTES]; /* FIXME: this is not used */
+static int trgval[__FMCADC_CONF_LEN]; /* FIXME: this is not used */
 
 static struct option options[] = {
 	{"before",	required_argument, 0, 'b'},

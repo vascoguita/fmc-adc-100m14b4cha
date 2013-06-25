@@ -473,8 +473,8 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 
 	int err, i;
 
-	for (i = 0; i < FMCADC_N_ATTRIBUTES; ++i) {
-		if (!(conf->mask & (1 << i)))
+	for (i = 0; i < __FMCADC_CONF_LEN; ++i) {
+		if (!(conf->mask & (1LL << i)))
 			continue;
 
 		/* Parameter to configure */
@@ -640,22 +640,22 @@ static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 }
 
 /* * * * * * * * * * * * * * * * * Boards definition * * * * * * * * * * * * */
-#define FMCADC_ZIO_TRG_MASK (1 << FMCADC_CONF_TRG_SOURCE) |      \
-			    (1 << FMCADC_CONF_TRG_SOURCE_CHAN) | \
-			    (1 << FMCADC_CONF_TRG_THRESHOLD) |   \
-			    (1 << FMCADC_CONF_TRG_POLARITY) |    \
-			    (1 << FMCADC_CONF_TRG_DELAY)
-#define FMCADC_ZIO_ACQ_MASK (1 << FMCADC_CONF_ACQ_N_SHOTS) |     \
-			    (1 << FMCADC_CONF_ACQ_POST_SAMP) |   \
-			    (1 << FMCADC_CONF_ACQ_PRE_SAMP) |    \
-			    (1 << FMCADC_CONF_ACQ_DECIMATION) |  \
-			    (1 << FMCADC_CONF_ACQ_FREQ_HZ) |     \
-			    (1 << FMCADC_CONF_ACQ_N_BITS)
-#define FMCADC_ZIO_CHN_MASK (1 << FMCADC_CONF_CHN_RANGE) |       \
-			    (1 << FMCADC_CONF_CHN_TERMINATION) | \
-			    (1 << FMCADC_CONF_CHN_OFFSET)
-#define FMCADC_ZIO_BRD_MASK (1 << FMCADC_CONF_BRD_STATE_MACHINE_STATUS) | \
-			    (1 << FMCADC_CONF_BRD_N_CHAN)
+#define FMCADC_ZIO_TRG_MASK (1LL << FMCADC_CONF_TRG_SOURCE) |      \
+			    (1LL << FMCADC_CONF_TRG_SOURCE_CHAN) | \
+			    (1LL << FMCADC_CONF_TRG_THRESHOLD) |   \
+			    (1LL << FMCADC_CONF_TRG_POLARITY) |    \
+			    (1LL << FMCADC_CONF_TRG_DELAY)
+#define FMCADC_ZIO_ACQ_MASK (1LL << FMCADC_CONF_ACQ_N_SHOTS) |     \
+			    (1LL << FMCADC_CONF_ACQ_POST_SAMP) |   \
+			    (1LL << FMCADC_CONF_ACQ_PRE_SAMP) |    \
+			    (1LL << FMCADC_CONF_ACQ_DECIMATION) |  \
+			    (1LL << FMCADC_CONF_ACQ_FREQ_HZ) |     \
+			    (1LL << FMCADC_CONF_ACQ_N_BITS)
+#define FMCADC_ZIO_CHN_MASK (1LL << FMCADC_CONF_CHN_RANGE) |       \
+			    (1LL << FMCADC_CONF_CHN_TERMINATION) | \
+			    (1LL << FMCADC_CONF_CHN_OFFSET)
+#define FMCADC_ZIO_BRD_MASK (1LL << FMCADC_CONF_BRD_STATE_MACHINE_STATUS) | \
+			    (1LL << FMCADC_CONF_BRD_N_CHAN)
 
 struct fmcadc_op fa_100ms_4ch_14bit_op = {
 	.open = fmcadc_zio_open,

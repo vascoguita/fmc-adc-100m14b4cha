@@ -168,7 +168,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			struct fmcadc_conf *conf)
 {
 	struct fmcadc_gid *b = (void *)dev;
-	uint32_t cap_mask;
+	uint64_t cap_mask;
 
 	if (!conf || !dev) {
 		/* conf and dev cannot be NULL*/
@@ -182,7 +182,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 	cap_mask = b->board->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
-		fprintf(stderr, "Apply Config, wrong mask 0x%x (0x%x)",
+		fprintf(stderr, "Apply Config, wrong mask 0x%llx (0x%llx)",
 			conf->mask, cap_mask);
 		errno = FMCADC_ENOCAP;
 		return -1;
@@ -208,7 +208,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 {
 	struct fmcadc_gid *b = (void *)dev;
-	uint32_t cap_mask;
+	uint64_t cap_mask;
 
 	if (!conf || !dev) {
 		/* conf and dev cannot be NULL*/
@@ -222,7 +222,7 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 	cap_mask = b->board->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
-		fprintf(stderr, "Apply Config, wrong mask 0x%x (0x%x)",
+		fprintf(stderr, "Apply Config, wrong mask 0x%llx (0x%llx)",
 			conf->mask, cap_mask);
 		errno = FMCADC_ENOCAP;
 		return -1;
