@@ -89,8 +89,6 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	uint32_t tmp_val = usr_val;
 	int err = 0;
 
-	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
-		usr_val, zattr->attr.attr.name);
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
 		if (!tmp_val) {
@@ -136,9 +134,6 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 
 	zfa_hardware_read(fa, zattr->id, usr_val);
-
-	dev_dbg(dev, "Reading %d from the sysfs attribute %s\n",
-		*usr_val, zattr->attr.attr.name);
 
 	return 0;
 }

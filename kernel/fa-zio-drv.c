@@ -391,8 +391,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	struct zio_channel *chan;
 	int i, range, err, reg_index;
 
-	dev_dbg(dev, "Writing %d in the sysfs attribute %s\n",
-		usr_val, zattr->attr.attr.name);
 	reg_index = zattr->id;
 	i = fa->zdev->cset->n_chan - 1 ; /* -1 because of interleaved channel */
 
@@ -541,8 +539,6 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	}
 
 	zfa_hardware_read(fa, reg_index, usr_val);
-	dev_dbg(dev, "Reading %d from the sysfs attribute %s (%d)\n",
-		*usr_val, zattr->attr.attr.name, reg_index);
 	return 0;
 }
 static const struct zio_sysfs_operations zfad_s_op = {
