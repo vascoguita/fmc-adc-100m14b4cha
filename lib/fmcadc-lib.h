@@ -163,6 +163,10 @@ static inline int fmcadc_get_conf(struct fmcadc_conf *conf,
 }
 
 
+extern int fmcadc_init(void);
+extern void fmcadc_exit(void);
+
+
 /* fmcadc_open
  * @name: name of the device type to open
  * @dev_id: device identificator of a particular device connected to the system
