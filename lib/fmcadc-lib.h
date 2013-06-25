@@ -33,6 +33,9 @@ extern const struct fmcadc_board_type
 struct fmcadc_buffer {
 	void *data;
 	void *metadata;
+	int samplesize;
+	int nsamples;
+	char *drivername;
 };
 
 /*
