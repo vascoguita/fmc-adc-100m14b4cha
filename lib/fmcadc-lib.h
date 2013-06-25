@@ -166,24 +166,32 @@ static inline int fmcadc_get_conf(struct fmcadc_conf *conf,
 extern int fmcadc_init(void);
 extern void fmcadc_exit(void);
 
-
 /* fmcadc_open
  * @name: name of the device type to open
- * @dev_id: device identificator of a particular device connected to the system
- * @details: specific driver detail to open the device. For example, in ZIO,
- *           this field is used to specify the cset to open
+ * @dev_id: device identification of a specific card
+ * @buffersize: hint about the buffersize used in this device
+ * @nbuffer: hint about how many buffers are needed (e.g. multishot)
+ * @flags: driver-specific detail information
  */
 extern struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-				      unsigned int details);
+				      unsigned long buffersize,
+				      unsigned int nbuffer,
+				      unsigned long flags);
 
 /*
  * fmcadc_open_by_lun
  * @name: name of the device type to open
  * @lun: Logical Unit Number of the device
+ * @buffersize: hint about the buffersize used in this device
+ * @nbuffer: hint about how many buffers are needed (e.g. multishot)
+ * @flags: driver-specific detail information
  *
  * TODO
  */
-extern struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun);
+extern struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
+					     unsigned long buffersize,
+					     unsigned int nbuffer,
+					     unsigned long flags);
 
 /*
  * fmcadc_close

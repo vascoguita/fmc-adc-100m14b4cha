@@ -70,7 +70,8 @@ int main(int argc, char *argv[])
 	struct fmcadc_buffer buf;
 	struct fmcadc_dev *adc;
 	struct fmcadc_conf trg, acq;
-	int i, c, err, opt_index, binmode = 0, presamples = 0;
+	int i, c, err, opt_index, binmode = 0;
+	int nshots = 1, presamples = 0, postsamples = 16;
 	unsigned int dev_id = 0;
 	char *basefile = NULL;
 	char fname[PATH_MAX];
@@ -88,25 +89,27 @@ int main(int argc, char *argv[])
 
 	memset(&acq, 0, sizeof(acq));
 	acq.type = FMCADC_CONF_TYPE_ACQ;
-	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP, 16);
-	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS, 1);
+	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP, postsamples);
+	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS, nshots);
 
 	/* Parse options */
 	while( (c = getopt_long(argc, argv, GETOPT_STRING,
 				options, &opt_index)) >=0 ){
 		switch(c){
 		case 'b': case 'p': /* before */
-			presamples = atoi(optarg),
+			presamples = atoi(optarg);
 			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
 					presamples);
 			break;
 		case 'a': case 'P': /* after */
+			postsamples = atoi(optarg);
 			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP,
-					atoi(optarg));
+					postsamples);
 			break;
 		case 'n':
+			nshots = atoi(optarg);
 			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS,
-					atoi(optarg));
+					nshots);
 			break;
 		case 'd':
 			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_DELAY,
@@ -155,7 +158,10 @@ int main(int argc, char *argv[])
 	}
 
 	/* Open the ADC */
-	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
+	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id,
+			  nshots * (presamples + postsamples),
+			  nshots,
+			  0);
 	if (!adc) {
 		fprintf(stderr, "%s: cannot open device: %s",
 			argv[0], fmcadc_strerror(errno));

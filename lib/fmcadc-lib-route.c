@@ -33,7 +33,9 @@ const struct fmcadc_board_type
  * @dev_id: device identificator of a particular device connected to the system
  */
 struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-			       unsigned int details)
+				      unsigned long buffersize,
+				      unsigned int nbuffer,
+				      unsigned long flags)
 {
 	struct fmcadc_dev *dev = NULL;
 	int i, found = 0;
@@ -57,7 +59,7 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 	/* The library supports this board */
 	if (fmcadc_board_types[i]->fa_op && fmcadc_board_types[i]->fa_op->open) {
 		dev = fmcadc_board_types[i]->fa_op->open(fmcadc_board_types[i],
-							 dev_id, details);
+							 dev_id, flags);
 	} else {
 		errno = FMCADC_ENOP;
 	}
@@ -72,7 +74,10 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
  *
  * TODO
  */
-struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun)
+struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
+					     unsigned long buffersize,
+					     unsigned int nbuffer,
+					     unsigned long flags)
 {
 	if (!name)
 		return NULL;
