@@ -547,7 +547,7 @@ static struct zio_control *fmcadc_zio_read_ctrl(struct __fmcadc_dev_zio *fa)
 		fprintf(stderr, "control read: unexpected EOF\n");
 		return NULL;
 	default:
-		fprintf(stderr, "ctrl read: %i bytes (expected %i)\n",
+		fprintf(stderr, "ctrl read: %i bytes (expected %zi)\n",
 			i, sizeof(ctrl));
 		return NULL;
 	case sizeof(struct zio_control):
