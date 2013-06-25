@@ -6,13 +6,15 @@
 #ifndef FMCADC_LIB_H_
 #define FMCADC_LIB_H_
 
-#define FMCADC_ENOP   1024
-#define FMCADC_ENOCAP 1025
-#define FMCADC_ENOCFG 1026
-#define FMCADC_ENOGET 1027
-#define FMCADC_ENOSET 1028
-#define FMCADC_ENOCHAN 1029
-#define FMCADC_ENOMASK 1030
+/* Error codes start from 1024 to void conflicting with libc codes */
+#define __FMCADC_ERRNO_START 1024
+#define FMCADC_ENOP		1024
+#define FMCADC_ENOCAP		1025
+#define FMCADC_ENOCFG		1026
+#define FMCADC_ENOGET		1027
+#define FMCADC_ENOSET		1028
+#define FMCADC_ENOCHAN		1029
+#define FMCADC_ENOMASK		1030
 
 struct fmcadc_dev;
 
@@ -248,10 +250,9 @@ extern int fmcadc_release_buffer(struct fmcadc_dev *dev,
 
 /*
  * fmcadc_strerror
- * @dev: device for which you want to know the meaning of the error
  * @errnum: error number
  */
-extern char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum);
+extern char *fmcadc_strerror(int errnum);
 
 /*
  * fmcadc_get_driver_type

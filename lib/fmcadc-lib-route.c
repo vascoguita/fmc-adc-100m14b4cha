@@ -301,49 +301,31 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
  * @dev: device for which you want to know the meaning of the error
  * @errnum: error number
  */
-char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum)
+
+static struct fmcadc_errors {
+	int num;
+	char *str;
+} fmcadc_errors[] = {
+	{ FMCADC_ENOP,		"Operation not supported"},
+	{ FMCADC_ENOCAP,	"Capabilities not supported"},
+	{ FMCADC_ENOCFG,	"Configuration type not supported"},
+	{ FMCADC_ENOGET,	"Cannot get capabilities information"},
+	{ FMCADC_ENOSET,	"Cannot set capabilities information"},
+	{ FMCADC_ENOCHAN,	"Invalid channel"},
+	{ FMCADC_ENOMASK,	"Missing configuration mask"},
+	{ 0, }
+};
+
+char *fmcadc_strerror(int errnum)
 {
-	struct fmcadc_gid *b = (void *)dev;
-	char *str = NULL;
+	struct fmcadc_errors *p;
 
-	if (!dev || !errnum) {
-		/* dev and buf cannot be NULL */
-		return NULL;
-	}
-
-	if (errnum >= FMCADC_ENOP && errnum <= FMCADC_ENOMASK) {
-		switch (errnum) {
-		case FMCADC_ENOP:
-			str = "Operation not supported";
-			break;
-		case FMCADC_ENOCAP:
-			str = "Capabilities not supported";
-			break;
-		case FMCADC_ENOCFG:
-			str = "Configuration type not supported";
-			break;
-		case FMCADC_ENOGET:
-			str = "Cannot get capabilities information";
-			break;
-		case FMCADC_ENOSET:
-			str = "Cannot set capabilities information";
-			break;
-		case FMCADC_ENOCHAN:
-			str = "Invalid channel";
-			break;
-		case FMCADC_ENOMASK:
-			str = "Missing configuration mask";
-			break;
-		}
-		goto out;
-	}
-
-	if (!str && b->board->fa_op->strerror)
-		str = b->board->fa_op->strerror(errnum);
-	if (!str)
-		str = strerror(errnum);
-out:
-	return str;
+	if (errnum < __FMCADC_ERRNO_START)
+		return strerror(errnum);
+	for (p = fmcadc_errors; p->num; p++)
+		if (p->num == errnum)
+			return p->str;
+	return "Unknown error code";
 }
 
 /*

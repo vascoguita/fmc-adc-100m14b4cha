@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
 	if (!adc) {
 		fprintf(stderr, "%s: cannot open device: %s",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
 		fprintf(stderr, "%s: cannot configure trigger: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_apply_config(adc, 0 , &acq);
 	if (err && errno != FMCADC_ENOMASK) {
 		fprintf(stderr, "%s: cannot configure acquisition: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_acq_start(adc, 0 , NULL);
 	if (err) {
 		fprintf(stderr, "%s: cannot start acquisition: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
 				" %s\n", argv[0], i + i,
 				acq.value[FMCADC_CONF_ACQ_N_SHOTS],
-				fmcadc_strerror(adc, errno));
+				fmcadc_strerror(errno));
 			exit(1);
 		}
 		ctrl = buf.metadata;

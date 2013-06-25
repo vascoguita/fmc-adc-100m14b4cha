@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
 	if (!adc) {
 		fprintf(stderr, "%s: cannot open device: %s",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_retrieve_config(adc, &trg);
 	if (err) {
 		fprintf(stderr, "%s: cannot get trigger config: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 	printf("    source: %s\n",
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_retrieve_config(adc, &acq);
 	if (err) {
 		fprintf(stderr, "%s: cannot get acquisition config: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 	printf("    n-shots: %d\n", acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_retrieve_config(adc, &brd);
 	if (err) {
 		fprintf(stderr, "%s: cannot get board config: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 	printf("    n-chan: %d\n", brd.value[FMCADC_CONF_BRD_N_CHAN]);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 		err = fmcadc_retrieve_config(adc, &chn);
 		if (err) {
 		fprintf(stderr, "%s: cannot get channel config: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 		}
 		printf("    range: %d\n", chn.value[FMCADC_CONF_CHN_RANGE]);
