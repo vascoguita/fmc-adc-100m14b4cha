@@ -448,13 +448,13 @@ static int fmcadc_zio_config_brd(struct __fmcadc_dev_zio *fa,
 		unsigned int index, uint32_t *value, unsigned int direction)
 {
 	switch (index) {
-	case FMCADC_BOARD_STATE_MACHINE_STATUS:
+	case FMCADC_CONF_BRD_STATE_MACHINE_STATUS:
 		if (!direction)
 			return fa_zio_sysfs_get(fa, "cset0/fsm-state",
 						value);
 		errno = EINVAL;
 		return -1;
-	case FMCADC_BOARD_N_CHAN:
+	case FMCADC_CONF_BRD_N_CHAN:
 		if (!direction) {
 			*value = 4;
 			return 0;
@@ -654,8 +654,8 @@ static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 #define FMCADC_ZIO_CHN_MASK (1 << FMCADC_CONF_CHN_RANGE) |       \
 			    (1 << FMCADC_CONF_CHN_TERMINATION) | \
 			    (1 << FMCADC_CONF_CHN_OFFSET)
-#define FMCADC_ZIO_BRD_MASK (1 << FMCADC_BOARD_STATE_MACHINE_STATUS) | \
-			    (1 << FMCADC_BOARD_N_CHAN)
+#define FMCADC_ZIO_BRD_MASK (1 << FMCADC_CONF_BRD_STATE_MACHINE_STATUS) | \
+			    (1 << FMCADC_CONF_BRD_N_CHAN)
 
 struct fmcadc_op fa_100ms_4ch_14bit_op = {
 	.open = fmcadc_zio_open,

@@ -123,20 +123,20 @@ int main(int argc, char *argv[])
 	printf("Get Board Configuration ...\n");
 	/* Configure acquisition parameter */
 	brd.type = FMCADC_CONT_TYPE_BRD;
-	fmcadc_set_attr_mask(&brd, FMCADC_BOARD_STATE_MACHINE_STATUS);
-	fmcadc_set_attr_mask(&brd, FMCADC_BOARD_N_CHAN);
+	fmcadc_set_attr_mask(&brd, FMCADC_CONF_BRD_STATE_MACHINE_STATUS);
+	fmcadc_set_attr_mask(&brd, FMCADC_CONF_BRD_N_CHAN);
 	err = fmcadc_retrieve_config(adc, &brd);
 	if (err) {
 		fprintf(stderr, "%s: cannot get board config: %s\n",
 			argv[0], fmcadc_strerror(adc, errno));
 		exit(1);
 	}
-	printf("    n-chan: %d\n", brd.value[FMCADC_BOARD_N_CHAN]);
+	printf("    n-chan: %d\n", brd.value[FMCADC_CONF_BRD_N_CHAN]);
 	printf("    State Machine: %d\n",
-		brd.value[FMCADC_BOARD_STATE_MACHINE_STATUS]);
+		brd.value[FMCADC_CONF_BRD_STATE_MACHINE_STATUS]);
 
 
-	for (i = 0; i < brd.value[FMCADC_BOARD_N_CHAN]; ++i) {
+	for (i = 0; i < brd.value[FMCADC_CONF_BRD_N_CHAN]; ++i) {
 		printf("Get Channel %d Configuration ...\n", i);
 		/* Configure acquisition parameter */
 		chn.type = FMCADC_CONF_TYPE_CHN;
