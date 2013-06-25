@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <errno.h>
 #include <linux/zio-user.h>
 #include <fmcadc-lib.h>
@@ -21,38 +22,59 @@ static void fald_help()
 {
 	printf("\nfald-simple-acq [OPTIONS] <DEVID>\n\n");
 	printf("  <DEVID>: hexadecimal identifier (e.g.: \"0x200\")\n");
-	printf("  --pre|-p <value>         number of pre samples\n");
-	printf("  --post|-P <value>        number of post samples (default: 16)\n");
-	printf("  --nshots|-n <value>      number of trigger shots\n");
-	printf("  --delay|-d <value>       ticks delay of the trigger\n");
-	printf("  --threshold|-t <value>   internal trigger threshold\n");
-	printf("  --channel|-c <value>     internal channel to use as trigger (0..3)\n");
-	printf("  --external               use external trigger (default: internal)\n");
+	printf("  --before|-b <num>        number of pre samples\n");
+	printf("  --after|-a <num>         number of post samples (default: 16)\n");
+	printf("  --nshots|-n <num>        number of trigger shots\n");
+	printf("  --delay|-d <num>         delay sample after trigger\n");
+	printf("  --under-sample|-U <num>  pick 1 sample every <num>\n");
+	printf("  --threshold|-t <num>     internal trigger threshold\n");
+	printf("  --channel|-c <num>       internal channel to use as trigger (0..3)\n");
 	printf("  --negative-edge          internal trigger is falling edge\n");
+	printf("  --binary|-B <file>       save binary to <file>\n");
+	printf("  --multi-binary|-M <file> save two files per shot: <file>.0000.ctrl etc\n");
+	printf("  --dont-read|-N           config-only, use with zio-dump\n");
+
 	printf("  --help|-h                show this help\n\n");
 }
+
+static int trgval[FMCADC_N_ATTRIBUTES]; /* FIXME: this is not used */
+
+static struct option options[] = {
+	{"before",	required_argument, 0, 'b'},
+	{"after",	required_argument, 0, 'a'},
+	{"nshots",	required_argument, 0, 'n'},
+	{"delay",	required_argument, 0, 'd'},
+	{"under-sample",required_argument, 0, 'u'},
+	{"threshold",	required_argument, 0, 't'},
+	{"channel",	required_argument, 0, 'c'},
+	{"negative-edge", no_argument, &trgval[FMCADC_CONF_TRG_POLARITY], 1},
+
+	/* new options, to help stress-test */
+	{"binary",	required_argument, 0, 'B'},
+	{"multi-binary",required_argument, 0, 'M'},
+	{"dont-read",	no_argument,       0, 'N'},
+
+	/* backward-compatible options */
+	{"pre",		required_argument, 0, 'p'},
+	{"post",	required_argument, 0, 'P'},
+	{"decimation",	required_argument, 0, 'D'},
+
+	{"help",no_argument, 0, 'h'},
+	{0, 0, 0, 0}
+};
+
+#define GETOPT_STRING "b:a:n:d:u:t:c:B:M:Np:P:D:h"
 
 int main(int argc, char *argv[])
 {
 	struct fmcadc_buffer buf;
 	struct fmcadc_dev *adc;
 	struct fmcadc_conf trg, acq;
-	static int trgval[FMCADC_N_ATTRIBUTES];
-	static struct option options[] = {
-		{"pre",required_argument, 0, 'p'},
-		{"post",required_argument, 0, 'P'},
-		{"nshots",required_argument, 0, 'n'},
-		{"delay",required_argument, 0, 'd'},
-		{"decimation",required_argument, 0, 'D'},
-		{"threshold",required_argument, 0, 't'},
-		{"channel",required_argument, 0, 'c'},
-		{"negative-edge", no_argument, &trgval[FMCADC_CONF_TRG_POLARITY], 1},
-		{"help",no_argument, 0, 'h'},
-		{0, 0, 0, 0}
-	};
-	int opt_index = 0, err = 0, presamples = 0, i;
+	int i, c, err, opt_index, binmode = 0, presamples = 0;
 	unsigned int dev_id = 0;
-	char c;
+	char *basefile = NULL;
+	char fname[PATH_MAX];
+	FILE *f = NULL;
 
 	if (argc == 1) {
 		fald_help();
@@ -63,7 +85,6 @@ int main(int argc, char *argv[])
 	memset(&trg, 0, sizeof(trg));
 	trg.type = FMCADC_CONF_TYPE_TRG;
 	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY, 0); /* positive edge */
 
 	memset(&acq, 0, sizeof(acq));
 	acq.type = FMCADC_CONF_TYPE_ACQ;
@@ -71,15 +92,15 @@ int main(int argc, char *argv[])
 	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_N_SHOTS, 1);
 
 	/* Parse options */
-	while( (c = getopt_long(argc, argv, "p:P:n:d:D:t:c:h",
-						options, &opt_index)) >=0 ){
+	while( (c = getopt_long(argc, argv, GETOPT_STRING,
+				options, &opt_index)) >=0 ){
 		switch(c){
-		case 'p':
+		case 'b': case 'p': /* before */
 			presamples = atoi(optarg),
 			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
 					presamples);
 			break;
-		case 'P':
+		case 'a': case 'P': /* after */
 			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP,
 					atoi(optarg));
 			break;
@@ -91,7 +112,7 @@ int main(int argc, char *argv[])
 			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_DELAY,
 					atoi(optarg));
 			break;
-		case 'D':
+		case 'u': case 'D':
 			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_DECIMATION,
 					atoi(optarg));
 			break;
@@ -105,7 +126,19 @@ int main(int argc, char *argv[])
 			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
 					atoi(optarg));
 			break;
-		case 'h':
+		case 'B':
+			binmode = 1; /* do binary (default is 0) */
+			basefile = optarg;
+			break;
+		case 'M':
+			binmode = 2; /* do many binaries */
+			basefile = optarg;
+			break;
+		case 'N':
+			binmode = -1;
+			break;
+
+		case 'h': case '?':
 			fald_help();
 			exit(1);
 			break;
@@ -118,7 +151,7 @@ int main(int argc, char *argv[])
 		fald_help();
 		exit(1);
 	} else {
-		sscanf(argv[optind], "0x%x", &dev_id);
+		sscanf(argv[optind], "%x", &dev_id);
 	}
 
 	/* Open the ADC */
@@ -134,7 +167,28 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* Configure trigger parameter */
+	/* If we save to a a file, open it now to error out soon */
+	if (binmode > 0) {
+		char *s;
+
+		s = basefile;
+		if (binmode == 2) {
+			sprintf(fname, "%s.000.ctrl", basefile);
+			s = fname;
+		}
+		f = fopen(s, "a");
+		if (!f) {
+			fprintf(stderr, "%s: %s: %s\n", argv[0], s,
+				strerror(errno));
+			exit(1);
+		}
+		if (binmode == 2)
+			fclose(f);
+	}
+
+	/* Configure trigger (pick trigger polarity from external array) */
+	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY,
+			trgval[FMCADC_CONF_TRG_POLARITY]);
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
 		fprintf(stderr, "%s: cannot configure trigger: %s\n",
@@ -164,6 +218,10 @@ int main(int argc, char *argv[])
 		int j, ch;
 		int16_t *data;
 
+		if (binmode < 0) /* no data must be acquired */
+			break;
+
+		/* Currently this request_buffer() actually reads data */
 		err = fmcadc_request_buffer(adc, &buf, 0, NULL);
 		if (err) {
 			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
@@ -173,12 +231,61 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		ctrl = buf.metadata;
+		data = buf.data;
 		fprintf(stderr, "Read %d samples from shot %i/%i\n",
 			ctrl->nsamples,
 			i + 1, acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
 
-		/* we lazily know samplesize is 2 bytes and chcount is 4 */
-		data = buf.data;
+		if (binmode == 1) { /* append everything to a single file */
+			if (fwrite(ctrl, sizeof(*ctrl), 1, f) != 1)
+				err++;
+			if (fwrite(data, ctrl->ssize, ctrl->nsamples, f)
+			    != ctrl->nsamples)
+				err++;
+			if (err) {
+				fprintf(stderr, "%s: write(%s): short write\n",
+					argv[0], basefile);
+				exit(1);
+			}
+			continue; /* next shot please */
+		}
+
+		if (binmode == 2) { /* several files */
+			sprintf(fname, "%s.%03i.ctrl", basefile, i);
+			f = fopen(fname, "w");
+			if (!f) {
+				fprintf(stderr, "%s: %s: %s\n",
+					argv[0], fname, strerror(errno));
+				exit(1);
+			}
+			if (fwrite(ctrl, sizeof(*ctrl), 1, f) != 1) {
+				fprintf(stderr, "%s: write(%s): short write\n",
+					argv[0], fname);
+				exit(1);
+			}
+			fclose(f);
+			sprintf(fname, "%s.%03i.data", basefile, i);
+			f = fopen(fname, "w");
+			if (!f) {
+				fprintf(stderr, "%s: %s: %s\n",
+					argv[0], fname, strerror(errno));
+				exit(1);
+			}
+			if (fwrite(data, ctrl->ssize, ctrl->nsamples, f)
+			    != ctrl->nsamples) {
+				fprintf(stderr, "%s: write(%s): short write\n",
+					argv[0], fname);
+				exit(1);
+			}
+			fclose(f);
+
+			continue;
+		}
+
+		/*
+		 * Finally, binmode = 0.
+		 * We lazily know samplesize is 2 bytes and chcount is 4
+		 */
 		for (j = 0; j < ctrl->nsamples / 4; j++) {
 			printf("%5i     ", j - presamples);
 			for (ch = 0; ch < 4; ch++)
@@ -187,6 +294,8 @@ int main(int argc, char *argv[])
 		}
 		fmcadc_release_buffer(adc, &buf);
 	}
+	if (binmode == 1)
+		fclose(f);
 
 	fmcadc_close(adc);
 	exit(0);
