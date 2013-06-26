@@ -52,11 +52,6 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 */
 	ZIO_ATTR_EXT("sample-decimation", ZIO_RW_PERM, ZFAT_SR_DECI, 1),
 
-	/*
-	 * State machine commands
-	 * 1: start
-	 * 2: stop
-	 */
 	ZIO_ATTR_EXT("ch0-offset", ZIO_RW_PERM, ZFA_CH1_OFFSET, 0),
 	ZIO_ATTR_EXT("ch1-offset", ZIO_RW_PERM, ZFA_CH2_OFFSET, 0),
 	ZIO_ATTR_EXT("ch2-offset", ZIO_RW_PERM, ZFA_CH3_OFFSET, 0),
@@ -74,6 +69,11 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 
 	/* Parameters (not attributes) follow */
 
+	/*
+	 * State machine commands
+	 * 1: start
+	 * 2: stop
+	 */
 	ZIO_PARAM_EXT("fsm-command", ZIO_WO_PERM, ZFA_CTL_FMS_CMD, 0),
 	/*
 	 * Automatic start acquisition
