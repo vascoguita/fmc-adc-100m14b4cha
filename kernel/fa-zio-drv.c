@@ -1101,7 +1101,7 @@ static struct zio_device zfad_tmpl = {
 	},
 	/* This driver prefers its own trigger */
 	.preferred_trigger = "adc-100m14b",
-	.preferred_buffer = "vmalloc",
+	.preferred_buffer = "kmalloc",
 };
 
 
