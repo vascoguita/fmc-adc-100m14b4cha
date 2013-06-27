@@ -141,6 +141,8 @@ extern int fmcadc_close(struct fmcadc_dev *dev);
 
 extern int fmcadc_acq_start(struct fmcadc_dev *dev, unsigned int flags,
 			    struct timeval *timeout);
+extern int fmcadc_acq_poll(struct fmcadc_dev *dev, unsigned int flags,
+			    struct timeval *timeout);
 extern int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags);
 
 extern int fmcadc_reset_conf(struct fmcadc_dev *dev, unsigned int flags,
