@@ -142,6 +142,8 @@ extern int fmcadc_acq_start(struct fmcadc_dev *dev, unsigned int flags,
 			    struct timeval *timeout);
 extern int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags);
 
+extern int fmcadc_reset_conf(struct fmcadc_dev *dev, unsigned int flags,
+			       struct fmcadc_conf *conf);
 extern int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			       struct fmcadc_conf *conf);
 extern int fmcadc_retrieve_config(struct fmcadc_dev *dev,
@@ -152,9 +154,11 @@ extern struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 						   void *(*alloc_fn)(size_t),
 						   unsigned int flags,
 						   struct timeval *timeout);
-extern int *fmcadc_fill_buffer(struct fmcadc_dev *dev,
-			       struct fmcadc_buffer *buf,
-			       unsigned int flags);
+extern int fmcadc_fill_buffer(struct fmcadc_dev *dev,
+			      struct fmcadc_buffer *buf,
+			      unsigned int flags);
+extern struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
+						     struct fmcadc_timestamp *);
 extern int fmcadc_release_buffer(struct fmcadc_dev *dev,
 				 struct fmcadc_buffer *buf,
 				 void (*free_fn)(void *));
