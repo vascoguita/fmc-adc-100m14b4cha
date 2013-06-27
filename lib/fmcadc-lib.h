@@ -25,13 +25,8 @@ enum fmcadc_supported_board {
 
 extern const struct fmcadc_board_type
 		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX];
-/*
- * @data buffer with samples
- * @metadata it describe the buffer; it depends on the board_type in use.
- *           If the device uses a ZIO driver, this fields is a zio_control
- *           structure. Other kind of driver can use this structure to
- *           store their own metadata information.
- */
+
+/* The buffer hosts data and metadata, plus informative fields */
 struct fmcadc_buffer {
 	void *data;
 	void *metadata;
@@ -40,19 +35,14 @@ struct fmcadc_buffer {
 	char *drivername;
 };
 
-/*
- * It is exactly the zio_timestamp, but this definition avoid a ZIO dependency
- * for eventually non ZIO drivers in the future (or present)
- */
+/* This is exactly the zio_timestamp, there is no depency on zio here */
 struct fmcadc_timestamp {
 	uint64_t secs;
 	uint64_t ticks;
 	uint64_t bins;
 };
 
-/*
- * The following enum can be use to se the mask of valid configurations
- */
+/* The following enum can be use to se the mask of valid configurations */
 enum fmcadc_configuration_trigger {
 	FMCADC_CONF_TRG_SOURCE = 0,
 	FMCADC_CONF_TRG_SOURCE_CHAN,
@@ -93,21 +83,6 @@ enum fmcadc_configuration_type {
 };
 
 
-/*
- * @type: type of configuration
- * @dev_type: device identificator
- * @route_to: this field help the routing process to send the configuration
- *            to the correct entity. This field is processed by the device
- *            operations, so, its value depend on the library implementation.
- *            For example. In ZIO, this field is evaluated only when you are
- *            configuring a channel; its meaning is the channel index
- * @mask: mask of valid value. The user must set this field to choose which
- *        value configure. On fmcadc_get_config(), the user can set this field
- *        to ask specific values. The library can change this value if the
- *        device does not support the value required by the user
- * @value: list of configuration value. Each type has its own enumeration for
- *         configuration values
- */
 #define __FMCADC_CONF_LEN 64 /* number of allocated items in each structure */
 struct fmcadc_conf {
 	enum fmcadc_configuration_type type;
@@ -124,32 +99,16 @@ static inline void fmcadc_set_conf_mask(struct fmcadc_conf *conf,
 {
 	conf->mask |= (1LL << conf_index);
 }
-/*
- * fmcadc_set_conf
- * @conf: where set the configuration
- * @conf_index: the configuration to set
- * @val: the value to apply
- *
- * it is a little helper to set correctly a configuration into the
- * configuration structure
- */
+
+/* assign a configuration item, and its mask */
 static inline void fmcadc_set_conf(struct fmcadc_conf *conf,
-				   unsigned int conf_index,
-				   uint32_t val)
+				   unsigned int conf_index, uint32_t val)
 {
 	conf->value[conf_index] = val;
 	fmcadc_set_conf_mask(conf, conf_index);
 }
 
-/*
- * fmcadc_get_conf
- * @conf: where get the configuration
- * @conf_index: the configuration to get
- * @val: the value of the configuration
- *
- * it is a little helper to get correctly a configuration from the
- * configuration structure
- */
+/* retieve a configuration item */
 static inline int fmcadc_get_conf(struct fmcadc_conf *conf,
 				  unsigned int conf_index,
 				  uint32_t *val)
@@ -162,114 +121,39 @@ static inline int fmcadc_get_conf(struct fmcadc_conf *conf,
 	}
 }
 
-
+/*
+ * Actual functions follow
+ */
 extern int fmcadc_init(void);
 extern void fmcadc_exit(void);
+extern char *fmcadc_strerror(int errnum);
 
-/* fmcadc_open
- * @name: name of the device type to open
- * @dev_id: device identification of a specific card
- * @buffersize: hint about the buffersize used in this device
- * @nbuffer: hint about how many buffers are needed (e.g. multishot)
- * @flags: driver-specific detail information
- */
 extern struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 				      unsigned long buffersize,
 				      unsigned int nbuffer,
 				      unsigned long flags);
-
-/*
- * fmcadc_open_by_lun
- * @name: name of the device type to open
- * @lun: Logical Unit Number of the device
- * @buffersize: hint about the buffersize used in this device
- * @nbuffer: hint about how many buffers are needed (e.g. multishot)
- * @flags: driver-specific detail information
- *
- * TODO
- */
 extern struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
 					     unsigned long buffersize,
 					     unsigned int nbuffer,
 					     unsigned long flags);
-
-/*
- * fmcadc_close
- * @dev: the device to close
- */
 extern int fmcadc_close(struct fmcadc_dev *dev);
 
-/*
- * fmcadc_acq_start
- * @dev: device where to start acquiring
- * @flags:
- * @timeout: it can be used to specify how much time wait that acquisition is
- *           over. This value follow the select() policy: NULL to wait until
- *           acquisition is over; {0, 0} to return immediately without wait;
- *           {x, y} to wait acquisition end for a specified time
- */
 extern int fmcadc_acq_start(struct fmcadc_dev *dev, unsigned int flags,
 			    struct timeval *timeout);
-
-/*
- * fmcadc_acq_stop
- * @dev: device where to stop acquisition
- * @flags:
- */
 extern int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags);
 
-/*
- * fmcadc_apply_config
- * @dev: device to configure
- * @flags:
- * @conf: configuration to apply on device.
- */
 extern int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			       struct fmcadc_conf *conf);
-
-/*
- * fmcadc_retrieve_config
- * @dev: device where retireve configuration
- * @flags:
- * @conf: configuration to retrieve. The mask tell which value acquire, then
- *        the library will acquire and set the value in the "value" array
- */
 extern int fmcadc_retrieve_config(struct fmcadc_dev *dev,
 				 struct fmcadc_conf *conf);
 
-/*
- * fmcadc_request_buffer
- * @dev: device where look for a buffer
- * @buf: where store the buffer. The user must allocate this structure.
- * @flags:
- * @timeout: it can be used to specify how much time wait that a buffer is
- *           ready. This value follow the select() policy: NULL to wait until
- *           acquisition is over; {0, 0} to return immediately without wait;
- *           {x, y} to wait acquisition end for a specified time
- */
 extern int fmcadc_request_buffer(struct fmcadc_dev *dev,
 				 struct fmcadc_buffer *buf,
 				 unsigned int flags,
 				 struct timeval *timeout);
-
-/*
- * fmcadc_release_buffer
- * @dev: device that generate the buffer
- * @buf: buffer to release
- */
 extern int fmcadc_release_buffer(struct fmcadc_dev *dev,
 				 struct fmcadc_buffer *buf);
 
-/*
- * fmcadc_strerror
- * @errnum: error number
- */
-extern char *fmcadc_strerror(int errnum);
-
-/*
- * fmcadc_get_driver_type
- * @dev: device which want to know the driver type
- */
 extern char *fmcadc_get_driver_type(struct fmcadc_dev *dev);
 
 #ifdef FMCADCLIB_INTERNAL
