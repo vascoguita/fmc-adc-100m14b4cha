@@ -33,6 +33,7 @@ struct fmcadc_buffer {
 	int samplesize;
 	int nsamples;
 	char *drivername;
+	unsigned long flags; /* internal to the library */
 };
 
 /* This is exactly the zio_timestamp, there is no depency on zio here */
@@ -129,11 +130,11 @@ extern void fmcadc_exit(void);
 extern char *fmcadc_strerror(int errnum);
 
 extern struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-				      unsigned long buffersize,
+				      unsigned long totalsize,
 				      unsigned int nbuffer,
 				      unsigned long flags);
 extern struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
-					     unsigned long buffersize,
+					     unsigned long totalsize,
 					     unsigned int nbuffer,
 					     unsigned long flags);
 extern int fmcadc_close(struct fmcadc_dev *dev);
