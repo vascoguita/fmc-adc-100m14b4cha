@@ -147,12 +147,17 @@ extern int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 extern int fmcadc_retrieve_config(struct fmcadc_dev *dev,
 				 struct fmcadc_conf *conf);
 
-extern int fmcadc_request_buffer(struct fmcadc_dev *dev,
-				 struct fmcadc_buffer *buf,
-				 unsigned int flags,
-				 struct timeval *timeout);
+extern struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
+						   int nsamples,
+						   void *(*alloc_fn)(size_t),
+						   unsigned int flags,
+						   struct timeval *timeout);
+extern int *fmcadc_fill_buffer(struct fmcadc_dev *dev,
+			       struct fmcadc_buffer *buf,
+			       unsigned int flags);
 extern int fmcadc_release_buffer(struct fmcadc_dev *dev,
-				 struct fmcadc_buffer *buf);
+				 struct fmcadc_buffer *buf,
+				 void (*free_fn)(void *));
 
 extern char *fmcadc_get_driver_type(struct fmcadc_dev *dev);
 
@@ -221,12 +226,14 @@ struct fmcadc_op {
 	int (*retrieve_config)(struct fmcadc_dev *dev,
 			       struct fmcadc_conf *conf);
 	/* Handle buffers */
-	int (*request_buffer)(struct fmcadc_dev *dev,
-			      struct fmcadc_buffer *buf,
-			      unsigned int flags,
-			      struct timeval *timeout);
+	struct fmcadc_buffer *(*request_buffer)(struct fmcadc_dev *dev,
+					       int nsamples,
+					       void *(*alloc_fn)(size_t),
+					       unsigned int flags,
+					       struct timeval *timeout);
 	int (*release_buffer)(struct fmcadc_dev *dev,
-			      struct fmcadc_buffer *buf);
+			      struct fmcadc_buffer *buf,
+			      void (*free_fn)(void *));
 	char *(*strerror)(int errnum);
 };
 /*

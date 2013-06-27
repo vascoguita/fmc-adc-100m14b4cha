@@ -590,16 +590,23 @@ static void fmcadc_zio_release_data(void *data)
 	free(data);
 }
 
-static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
-		struct fmcadc_buffer *buf, unsigned int flags,
-		struct timeval *timeout)
+struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
+						int nsamples,
+						void *(*alloc)(size_t),
+						unsigned int flags,
+						struct timeval *timeout)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	struct fmcadc_buffer *buf;
 	struct zio_control *ctrl;
 	void *data;
 	fd_set set;
 	int err;
 	unsigned int len;
+
+	buf = calloc(1, sizeof(*buf));
+	if (!buf)
+		return NULL;
 
 	/* So, first sample and blocking read. Wait.. */
 	FD_ZERO(&set);
@@ -607,9 +614,9 @@ static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
 	if (err == 0) {
 		errno = EAGAIN;
-		return -1;
+		return NULL; /* no free, but the function is wrong generally */
 	} else if (err < 0) {
-		return err;
+		return NULL;
 	}
 
 	/* Ready to read */
@@ -624,18 +631,21 @@ static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 
 	buf->data = data;
 	buf->metadata = (void *) ctrl;
-	return 0;
+	return buf;
 
 out_data:
 	fmcadc_zio_release_ctrl(ctrl);
 out_ctrl:
-	return -1;
+	return NULL;
 }
+
 static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
-		struct fmcadc_buffer *buf)
+				     struct fmcadc_buffer *buf,
+				     void (*free_fn)(void *))
 {
 	fmcadc_zio_release_ctrl(buf->metadata);
 	fmcadc_zio_release_data(buf->data);
+	free(buf);
 	return 0;
 }
 

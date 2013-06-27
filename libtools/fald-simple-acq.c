@@ -67,7 +67,7 @@ static struct option options[] = {
 
 int main(int argc, char *argv[])
 {
-	struct fmcadc_buffer buf;
+	struct fmcadc_buffer *buf;
 	struct fmcadc_dev *adc;
 	struct fmcadc_conf trg, acq;
 	int i, c, err, opt_index, binmode = 0;
@@ -228,16 +228,19 @@ int main(int argc, char *argv[])
 			break;
 
 		/* Currently this request_buffer() actually reads data */
-		err = fmcadc_request_buffer(adc, &buf, 0, NULL);
-		if (err) {
+		buf = fmcadc_request_buffer(adc,
+					    presamples + postsamples,
+					    NULL /* alloc */,
+					    0, NULL /* timeout */);
+		if (!buf) {
 			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
 				" %s\n", argv[0], i + i,
 				acq.value[FMCADC_CONF_ACQ_N_SHOTS],
 				fmcadc_strerror(errno));
 			exit(1);
 		}
-		ctrl = buf.metadata;
-		data = buf.data;
+		ctrl = buf->metadata;
+		data = buf->data;
 		fprintf(stderr, "Read %d samples from shot %i/%i\n",
 			ctrl->nsamples,
 			i + 1, acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
@@ -298,7 +301,7 @@ int main(int argc, char *argv[])
 				printf("%7i", *(data++));
 			printf("\n");
 		}
-		fmcadc_release_buffer(adc, &buf);
+		fmcadc_release_buffer(adc, buf, NULL);
 	}
 	if (binmode == 1)
 		fclose(f);

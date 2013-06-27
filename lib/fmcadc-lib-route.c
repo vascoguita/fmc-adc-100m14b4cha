@@ -246,32 +246,35 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 /*
  * fmcadc_request_buffer
  * @dev: device where look for a buffer
- * @buf: where store the buffer. The user must allocate this structure.
+ * @nsamples: size of this buffer
+ * @alloc: user-defined allocator
  * @flags:
  * @timeout: it can be used to specify how much time wait that a buffer is
  *           ready. This value follow the select() policy: NULL to wait until
  *           acquisition is over; {0, 0} to return immediately without wait;
  *           {x, y} to wait acquisition end for a specified time
  */
-int fmcadc_request_buffer(struct fmcadc_dev *dev,
-			  struct fmcadc_buffer *buf,
-			  unsigned int flags,
-			  struct timeval *timeout)
+struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
+					    int nsamples,
+					    void *(*alloc)(size_t),
+					    unsigned int flags,
+					    struct timeval *timeout)
 {
 	struct fmcadc_gid *b = (void *)dev;
 
-	if (!dev || !buf) {
-		/* dev and buf cannot be NULL */
+	if (!dev) {
+		/* dev cannot be NULL */
 		errno = EINVAL;
-		return -1;
+		return NULL;
 	}
 
 	if (b->board->fa_op->request_buffer) {
-		return b->board->fa_op->request_buffer(dev, buf, flags, timeout);
+		return b->board->fa_op->request_buffer(dev, nsamples,
+						       alloc, flags, timeout);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
-		return -1;
+		return NULL;
 	}
 }
 
@@ -280,7 +283,8 @@ int fmcadc_request_buffer(struct fmcadc_dev *dev,
  * @dev: device that generate the buffer
  * @buf: buffer to release
  */
-int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
+int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf,
+			  void (*free)(void *))
 {
 	struct fmcadc_gid *b = (void *)dev;
 
@@ -291,7 +295,7 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
 	}
 
 	if (b->board->fa_op->release_buffer) {
-		return b->board->fa_op->release_buffer(dev, buf);
+		return b->board->fa_op->release_buffer(dev, buf, free);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
