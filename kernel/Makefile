@@ -7,7 +7,9 @@ KBUILD_EXTRA_SYMBOLS := \
 	$(ZIO)/Module.symvers \
 	$(FMC_BUS)/kernel/Module.symvers
 
-ccflags-y = \
+GIT_VERSION = $(shell cd $(src); git describe --always --dirty --long --tags)
+
+ccflags-y = -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(ZIO)/include \
 	-I$(FMC_BUS)/kernel/include \
 	-I$M
