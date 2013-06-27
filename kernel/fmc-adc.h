@@ -56,7 +56,7 @@ struct fa_calib {
 #define FA_CAL_NO_GAIN		((uint16_t)0x8000)
 
 /*
- * dma_item: The information about a DMA transfer
+ * fa_dma_item: The information about a DMA transfer
  * @start_addr: pointer where start to retrieve data from device memory
  * @dma_addr_l: low 32bit of the dma address on host memory
  * @dma_addr_h: high 32bit of the dma address on host memory
@@ -67,7 +67,7 @@ struct fa_calib {
  *             only to provide the "last item" bit, direction is fixed to
  *             device->host
  */
-struct dma_item {
+struct fa_dma_item {
 	uint32_t start_addr;	/* 0x00 */
 	uint32_t dma_addr_l;	/* 0x04 */
 	uint32_t dma_addr_h;	/* 0x08 */
@@ -91,8 +91,8 @@ struct dma_item {
  * @n_dma_err: number of errors
  *
  * @sgt is the scatter/gather table that describe the DMA acquisition
- * @item a list on dma_item to describe
- * @dma_list_item is a DMA address pointer to the dma_item list
+ * @item a list on fa_dma_item to describe
+ * @dma_list_item is a DMA address pointer to the fa_dma_item list
  */
 struct fa_dev {
 	struct fmc_device	*fmc;
@@ -119,8 +119,8 @@ struct fa_dev {
 
 	/* DMA attributes */
 	struct sg_table	sgt;
-	struct dma_item	*items;
-	dma_addr_t	dma_list_item;
+	struct fa_dma_item	*items;
+	dma_addr_t		dma_list_item;
 };
 
 /*

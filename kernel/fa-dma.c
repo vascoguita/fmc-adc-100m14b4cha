@@ -130,7 +130,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct scatterlist *sg;
-	struct dma_item *items;
+	struct fa_dma_item *items;
 	uint32_t dev_mem_ptr = 0;
 	unsigned int i, pages, sglen, size, i_blk;
 	dma_addr_t tmp;
@@ -153,7 +153,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 	}
 
 	/* Limited to 32-bit (kernel limit) */
-	size = sizeof(struct dma_item) * fa->sgt.nents;
+	size = sizeof(*items) * fa->sgt.nents;
 	items = kzalloc(size, GFP_ATOMIC);
 	if (!items) {
 		dev_err(fa->fmc->hwdev, "cannot allocate coherent dma memory\n");
@@ -207,14 +207,13 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		if (!sg_is_last(sg)) {/* more transfers */
 			/* uint64_t so it works on 32 and 64 bit */
 			tmp = fa->dma_list_item;
-			tmp += (sizeof(struct dma_item) * ( i+ 1 ));
+			tmp += (sizeof(struct fa_dma_item) * ( i+ 1 ));
 			items[i].next_addr_l = ((uint64_t)tmp) & 0xFFFFFFFF;
 			items[i].next_addr_h = ((uint64_t)tmp) >> 32;
 			items[i].attribute = 0x1;	/* more items */
 		} else {
 			items[i].attribute = 0x0;	/* last item */
 		}
-
 
 		/* The first item is written on the device */
 		if (i == 0) {
@@ -263,7 +262,7 @@ void zfad_unmap_dma(struct zio_cset *cset, struct zfad_block *zfad_block)
 	unsigned int size;
 
 	dev_dbg(fa->fmc->hwdev, "unmap DMA\n");
-	size = sizeof(struct dma_item) * fa->sgt.nents;
+	size = sizeof(struct fa_dma_item) * fa->sgt.nents;
 	dma_unmap_single(fa->fmc->hwdev, fa->dma_list_item, size,
 			 DMA_FROM_DEVICE);
 	dma_unmap_sg(fa->fmc->hwdev, fa->sgt.sgl, fa->sgt.nents,
