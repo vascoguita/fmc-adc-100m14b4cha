@@ -965,6 +965,32 @@ future, for better naming consistency with hardware documentation and
 across tools.
 
 @c ==========================================================================
+@node Gain Configuration
+@section Gain Configuration
+
+The program @t{tools/fau-config-if} is a simple graphic tool that allow
+to select offset and range for the four channels, activate termination
+and see the current value of each channel, every 500ms.
+
+The program open one window for each detected card, and configures it
+by writing to @i{sysfs}. Such writes are also reported to @i{stdout}
+(in the terminal where you invoked the program), so you can easily copy
+the pathnames in your shell commands.
+
+@ref{fig:fau-config-if} shows two instances of the tool, running on
+the same card with device_id 0x200 (your window decorations will be
+different, according to your choice of window manager or desktop
+environment).  The first one (at the left) is running under Tk-8.5;
+the second one shows the graphic appearance of Tk-8.4 (and earlier
+versions). If you prefer the older one, run ``@t{wish8.4
+tools/fau-config-if}'' instead of ``@t{tools/fau-config-if}'' (or set
+the previous version as default Tk interpreter).
+
+@float Figure, fig:fau-config-if
+@center @image{img/config-if, 10cm, ,Two snapshots of fau-config-if, pdf}
+@end float
+
+@c ==========================================================================
 @node Acquisition Time
 @section Acquisition Time
 
