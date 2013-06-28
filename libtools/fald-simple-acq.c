@@ -37,7 +37,7 @@ static void fald_help()
 	printf("  --help|-h                show this help\n\n");
 }
 
-static int trgval[FMCADC_N_ATTRIBUTES]; /* FIXME: this is not used */
+static int trgval[__FMCADC_CONF_LEN]; /* FIXME: this is not used */
 
 static struct option options[] = {
 	{"before",	required_argument, 0, 'b'},
@@ -67,10 +67,11 @@ static struct option options[] = {
 
 int main(int argc, char *argv[])
 {
-	struct fmcadc_buffer buf;
+	struct fmcadc_buffer *buf;
 	struct fmcadc_dev *adc;
 	struct fmcadc_conf trg, acq;
-	int i, c, err, opt_index, binmode = 0, presamples = 0;
+	int i, c, err, opt_index, binmode = 0;
+	int nshots = 1, presamples = 0, postsamples = 16;
 	unsigned int dev_id = 0;
 	char *basefile = NULL;
 	char fname[PATH_MAX];
@@ -84,46 +85,48 @@ int main(int argc, char *argv[])
 	/* reset attributes and provide defaults */
 	memset(&trg, 0, sizeof(trg));
 	trg.type = FMCADC_CONF_TYPE_TRG;
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
+	fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
 
 	memset(&acq, 0, sizeof(acq));
 	acq.type = FMCADC_CONF_TYPE_ACQ;
-	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP, 16);
-	fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_N_SHOTS, 1);
+	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP, postsamples);
+	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS, nshots);
 
 	/* Parse options */
 	while( (c = getopt_long(argc, argv, GETOPT_STRING,
 				options, &opt_index)) >=0 ){
 		switch(c){
 		case 'b': case 'p': /* before */
-			presamples = atoi(optarg),
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
+			presamples = atoi(optarg);
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
 					presamples);
 			break;
 		case 'a': case 'P': /* after */
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_POST_SAMP,
-					atoi(optarg));
+			postsamples = atoi(optarg);
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_POST_SAMP,
+					postsamples);
 			break;
 		case 'n':
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_N_SHOTS,
-					atoi(optarg));
+			nshots = atoi(optarg);
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS,
+					nshots);
 			break;
 		case 'd':
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_DELAY,
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_DELAY,
 					atoi(optarg));
 			break;
 		case 'u': case 'D':
-			fmcadc_set_attr(&acq, FMCADC_CONF_ACQ_DECIMATION,
+			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_DECIMATION,
 					atoi(optarg));
 			break;
 		case 't':
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_THRESHOLD,
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_THRESHOLD,
 					atoi(optarg));
 			break;
 		case 'c':
 			/* set internal, and then the channel */
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE, 0);
-			fmcadc_set_attr(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE, 0);
+			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
 					atoi(optarg));
 			break;
 		case 'B':
@@ -155,10 +158,13 @@ int main(int argc, char *argv[])
 	}
 
 	/* Open the ADC */
-	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id, 0);
+	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id,
+			  nshots * (presamples + postsamples),
+			  nshots,
+			  0);
 	if (!adc) {
 		fprintf(stderr, "%s: cannot open device: %s",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -187,12 +193,12 @@ int main(int argc, char *argv[])
 	}
 
 	/* Configure trigger (pick trigger polarity from external array) */
-	fmcadc_set_attr(&trg, FMCADC_CONF_TRG_POLARITY,
+	fmcadc_set_conf(&trg, FMCADC_CONF_TRG_POLARITY,
 			trgval[FMCADC_CONF_TRG_POLARITY]);
 	err = fmcadc_apply_config(adc, 0 , &trg);
 	if (err && errno != FMCADC_ENOMASK) {
 		fprintf(stderr, "%s: cannot configure trigger: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -200,7 +206,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_apply_config(adc, 0 , &acq);
 	if (err && errno != FMCADC_ENOMASK) {
 		fprintf(stderr, "%s: cannot configure acquisition: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -208,7 +214,7 @@ int main(int argc, char *argv[])
 	err = fmcadc_acq_start(adc, 0 , NULL);
 	if (err) {
 		fprintf(stderr, "%s: cannot start acquisition: %s\n",
-			argv[0], fmcadc_strerror(adc, errno));
+			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
 
@@ -222,16 +228,19 @@ int main(int argc, char *argv[])
 			break;
 
 		/* Currently this request_buffer() actually reads data */
-		err = fmcadc_request_buffer(adc, &buf, 0, NULL);
-		if (err) {
+		buf = fmcadc_request_buffer(adc,
+					    presamples + postsamples,
+					    NULL /* alloc */,
+					    0, NULL /* timeout */);
+		if (!buf) {
 			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
 				" %s\n", argv[0], i + i,
 				acq.value[FMCADC_CONF_ACQ_N_SHOTS],
-				fmcadc_strerror(adc, errno));
+				fmcadc_strerror(errno));
 			exit(1);
 		}
-		ctrl = buf.metadata;
-		data = buf.data;
+		ctrl = buf->metadata;
+		data = buf->data;
 		fprintf(stderr, "Read %d samples from shot %i/%i\n",
 			ctrl->nsamples,
 			i + 1, acq.value[FMCADC_CONF_ACQ_N_SHOTS]);
@@ -292,7 +301,7 @@ int main(int argc, char *argv[])
 				printf("%7i", *(data++));
 			printf("\n");
 		}
-		fmcadc_release_buffer(adc, &buf);
+		fmcadc_release_buffer(adc, buf, NULL);
 	}
 	if (binmode == 1)
 		fclose(f);

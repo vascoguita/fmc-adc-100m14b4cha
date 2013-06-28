@@ -33,7 +33,9 @@ const struct fmcadc_board_type
  * @dev_id: device identificator of a particular device connected to the system
  */
 struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-			       unsigned int details)
+				      unsigned long buffersize,
+				      unsigned int nbuffer,
+				      unsigned long flags)
 {
 	struct fmcadc_dev *dev = NULL;
 	int i, found = 0;
@@ -57,7 +59,7 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 	/* The library supports this board */
 	if (fmcadc_board_types[i]->fa_op && fmcadc_board_types[i]->fa_op->open) {
 		dev = fmcadc_board_types[i]->fa_op->open(fmcadc_board_types[i],
-							 dev_id, details);
+							 dev_id, flags);
 	} else {
 		errno = FMCADC_ENOP;
 	}
@@ -72,7 +74,10 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
  *
  * TODO
  */
-struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun)
+struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
+					     unsigned long buffersize,
+					     unsigned int nbuffer,
+					     unsigned long flags)
 {
 	if (!name)
 		return NULL;
@@ -168,7 +173,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			struct fmcadc_conf *conf)
 {
 	struct fmcadc_gid *b = (void *)dev;
-	uint32_t cap_mask;
+	uint64_t cap_mask;
 
 	if (!conf || !dev) {
 		/* conf and dev cannot be NULL*/
@@ -182,7 +187,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 	cap_mask = b->board->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
-		fprintf(stderr, "Apply Config, wrong mask 0x%x (0x%x)",
+		fprintf(stderr, "Apply Config, wrong mask 0x%llx (0x%llx)",
 			conf->mask, cap_mask);
 		errno = FMCADC_ENOCAP;
 		return -1;
@@ -208,7 +213,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 {
 	struct fmcadc_gid *b = (void *)dev;
-	uint32_t cap_mask;
+	uint64_t cap_mask;
 
 	if (!conf || !dev) {
 		/* conf and dev cannot be NULL*/
@@ -222,7 +227,7 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 	cap_mask = b->board->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
-		fprintf(stderr, "Apply Config, wrong mask 0x%x (0x%x)",
+		fprintf(stderr, "Apply Config, wrong mask 0x%llx (0x%llx)",
 			conf->mask, cap_mask);
 		errno = FMCADC_ENOCAP;
 		return -1;
@@ -241,32 +246,35 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 /*
  * fmcadc_request_buffer
  * @dev: device where look for a buffer
- * @buf: where store the buffer. The user must allocate this structure.
+ * @nsamples: size of this buffer
+ * @alloc: user-defined allocator
  * @flags:
  * @timeout: it can be used to specify how much time wait that a buffer is
  *           ready. This value follow the select() policy: NULL to wait until
  *           acquisition is over; {0, 0} to return immediately without wait;
  *           {x, y} to wait acquisition end for a specified time
  */
-int fmcadc_request_buffer(struct fmcadc_dev *dev,
-			  struct fmcadc_buffer *buf,
-			  unsigned int flags,
-			  struct timeval *timeout)
+struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
+					    int nsamples,
+					    void *(*alloc)(size_t),
+					    unsigned int flags,
+					    struct timeval *timeout)
 {
 	struct fmcadc_gid *b = (void *)dev;
 
-	if (!dev || !buf) {
-		/* dev and buf cannot be NULL */
+	if (!dev) {
+		/* dev cannot be NULL */
 		errno = EINVAL;
-		return -1;
+		return NULL;
 	}
 
 	if (b->board->fa_op->request_buffer) {
-		return b->board->fa_op->request_buffer(dev, buf, flags, timeout);
+		return b->board->fa_op->request_buffer(dev, nsamples,
+						       alloc, flags, timeout);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
-		return -1;
+		return NULL;
 	}
 }
 
@@ -275,7 +283,8 @@ int fmcadc_request_buffer(struct fmcadc_dev *dev,
  * @dev: device that generate the buffer
  * @buf: buffer to release
  */
-int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
+int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf,
+			  void (*free)(void *))
 {
 	struct fmcadc_gid *b = (void *)dev;
 
@@ -286,7 +295,7 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
 	}
 
 	if (b->board->fa_op->release_buffer) {
-		return b->board->fa_op->release_buffer(dev, buf);
+		return b->board->fa_op->release_buffer(dev, buf, free);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
@@ -301,49 +310,31 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf)
  * @dev: device for which you want to know the meaning of the error
  * @errnum: error number
  */
-char *fmcadc_strerror(struct fmcadc_dev *dev, int errnum)
+
+static struct fmcadc_errors {
+	int num;
+	char *str;
+} fmcadc_errors[] = {
+	{ FMCADC_ENOP,		"Operation not supported"},
+	{ FMCADC_ENOCAP,	"Capabilities not supported"},
+	{ FMCADC_ENOCFG,	"Configuration type not supported"},
+	{ FMCADC_ENOGET,	"Cannot get capabilities information"},
+	{ FMCADC_ENOSET,	"Cannot set capabilities information"},
+	{ FMCADC_ENOCHAN,	"Invalid channel"},
+	{ FMCADC_ENOMASK,	"Missing configuration mask"},
+	{ 0, }
+};
+
+char *fmcadc_strerror(int errnum)
 {
-	struct fmcadc_gid *b = (void *)dev;
-	char *str = NULL;
+	struct fmcadc_errors *p;
 
-	if (!dev || !errnum) {
-		/* dev and buf cannot be NULL */
-		return NULL;
-	}
-
-	if (errnum >= FMCADC_ENOP && errnum <= FMCADC_ENOMASK) {
-		switch (errnum) {
-		case FMCADC_ENOP:
-			str = "Operation not supported";
-			break;
-		case FMCADC_ENOCAP:
-			str = "Capabilities not supported";
-			break;
-		case FMCADC_ENOCFG:
-			str = "Configuration type not supported";
-			break;
-		case FMCADC_ENOGET:
-			str = "Cannot get capabilities information";
-			break;
-		case FMCADC_ENOSET:
-			str = "Cannot set capabilities information";
-			break;
-		case FMCADC_ENOCHAN:
-			str = "Invalid channel";
-			break;
-		case FMCADC_ENOMASK:
-			str = "Missing configuration mask";
-			break;
-		}
-		goto out;
-	}
-
-	if (!str && b->board->fa_op->strerror)
-		str = b->board->fa_op->strerror(errnum);
-	if (!str)
-		str = strerror(errnum);
-out:
-	return str;
+	if (errnum < __FMCADC_ERRNO_START)
+		return strerror(errnum);
+	for (p = fmcadc_errors; p->num; p++)
+		if (p->num == errnum)
+			return p->str;
+	return "Unknown error code";
 }
 
 /*

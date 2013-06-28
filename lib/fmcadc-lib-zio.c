@@ -448,13 +448,13 @@ static int fmcadc_zio_config_brd(struct __fmcadc_dev_zio *fa,
 		unsigned int index, uint32_t *value, unsigned int direction)
 {
 	switch (index) {
-	case FMCADC_BOARD_STATE_MACHINE_STATUS:
+	case FMCADC_CONF_BRD_STATE_MACHINE_STATUS:
 		if (!direction)
 			return fa_zio_sysfs_get(fa, "cset0/fsm-state",
 						value);
 		errno = EINVAL;
 		return -1;
-	case FMCADC_BOARD_N_CHAN:
+	case FMCADC_CONF_BRD_N_CHAN:
 		if (!direction) {
 			*value = 4;
 			return 0;
@@ -473,8 +473,8 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 
 	int err, i;
 
-	for (i = 0; i < FMCADC_N_ATTRIBUTES; ++i) {
-		if (!(conf->mask & (1 << i)))
+	for (i = 0; i < __FMCADC_CONF_LEN; ++i) {
+		if (!(conf->mask & (1LL << i)))
 			continue;
 
 		/* Parameter to configure */
@@ -590,16 +590,23 @@ static void fmcadc_zio_release_data(void *data)
 	free(data);
 }
 
-static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
-		struct fmcadc_buffer *buf, unsigned int flags,
-		struct timeval *timeout)
+struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
+						int nsamples,
+						void *(*alloc)(size_t),
+						unsigned int flags,
+						struct timeval *timeout)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	struct fmcadc_buffer *buf;
 	struct zio_control *ctrl;
 	void *data;
 	fd_set set;
 	int err;
 	unsigned int len;
+
+	buf = calloc(1, sizeof(*buf));
+	if (!buf)
+		return NULL;
 
 	/* So, first sample and blocking read. Wait.. */
 	FD_ZERO(&set);
@@ -607,9 +614,9 @@ static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
 	if (err == 0) {
 		errno = EAGAIN;
-		return -1;
+		return NULL; /* no free, but the function is wrong generally */
 	} else if (err < 0) {
-		return err;
+		return NULL;
 	}
 
 	/* Ready to read */
@@ -624,38 +631,41 @@ static int fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 
 	buf->data = data;
 	buf->metadata = (void *) ctrl;
-	return 0;
+	return buf;
 
 out_data:
 	fmcadc_zio_release_ctrl(ctrl);
 out_ctrl:
-	return -1;
+	return NULL;
 }
+
 static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
-		struct fmcadc_buffer *buf)
+				     struct fmcadc_buffer *buf,
+				     void (*free_fn)(void *))
 {
 	fmcadc_zio_release_ctrl(buf->metadata);
 	fmcadc_zio_release_data(buf->data);
+	free(buf);
 	return 0;
 }
 
 /* * * * * * * * * * * * * * * * * Boards definition * * * * * * * * * * * * */
-#define FMCADC_ZIO_TRG_MASK (1 << FMCADC_CONF_TRG_SOURCE) |      \
-			    (1 << FMCADC_CONF_TRG_SOURCE_CHAN) | \
-			    (1 << FMCADC_CONF_TRG_THRESHOLD) |   \
-			    (1 << FMCADC_CONF_TRG_POLARITY) |    \
-			    (1 << FMCADC_CONF_TRG_DELAY)
-#define FMCADC_ZIO_ACQ_MASK (1 << FMCADC_CONF_ACQ_N_SHOTS) |     \
-			    (1 << FMCADC_CONF_ACQ_POST_SAMP) |   \
-			    (1 << FMCADC_CONF_ACQ_PRE_SAMP) |    \
-			    (1 << FMCADC_CONF_ACQ_DECIMATION) |  \
-			    (1 << FMCADC_CONF_ACQ_FREQ_HZ) |     \
-			    (1 << FMCADC_CONF_ACQ_N_BITS)
-#define FMCADC_ZIO_CHN_MASK (1 << FMCADC_CONF_CHN_RANGE) |       \
-			    (1 << FMCADC_CONF_CHN_TERMINATION) | \
-			    (1 << FMCADC_CONF_CHN_OFFSET)
-#define FMCADC_ZIO_BRD_MASK (1 << FMCADC_BOARD_STATE_MACHINE_STATUS) | \
-			    (1 << FMCADC_BOARD_N_CHAN)
+#define FMCADC_ZIO_TRG_MASK (1LL << FMCADC_CONF_TRG_SOURCE) |      \
+			    (1LL << FMCADC_CONF_TRG_SOURCE_CHAN) | \
+			    (1LL << FMCADC_CONF_TRG_THRESHOLD) |   \
+			    (1LL << FMCADC_CONF_TRG_POLARITY) |    \
+			    (1LL << FMCADC_CONF_TRG_DELAY)
+#define FMCADC_ZIO_ACQ_MASK (1LL << FMCADC_CONF_ACQ_N_SHOTS) |     \
+			    (1LL << FMCADC_CONF_ACQ_POST_SAMP) |   \
+			    (1LL << FMCADC_CONF_ACQ_PRE_SAMP) |    \
+			    (1LL << FMCADC_CONF_ACQ_DECIMATION) |  \
+			    (1LL << FMCADC_CONF_ACQ_FREQ_HZ) |     \
+			    (1LL << FMCADC_CONF_ACQ_N_BITS)
+#define FMCADC_ZIO_CHN_MASK (1LL << FMCADC_CONF_CHN_RANGE) |       \
+			    (1LL << FMCADC_CONF_CHN_TERMINATION) | \
+			    (1LL << FMCADC_CONF_CHN_OFFSET)
+#define FMCADC_ZIO_BRD_MASK (1LL << FMCADC_CONF_BRD_STATE_MACHINE_STATUS) | \
+			    (1LL << FMCADC_CONF_BRD_N_CHAN)
 
 struct fmcadc_op fa_100ms_4ch_14bit_op = {
 	.open = fmcadc_zio_open,
