@@ -790,8 +790,8 @@ The following table lists all attributes related to this driver.
 All values are 32-bit
 that ZIO framework can handle only 32bit unsigned integer.
 
-     @multitable @columnfractions .05 .25 .05 .1 .15 .40
-     @headitem Cntxt @tab Name @tab RW @tab Default @tab Accepted @tab Comment
+     @multitable @columnfractions .08 .25 .07 .1 .20 .35
+     @headitem Ctx @tab Name @tab RW @tab Def. @tab Accepted @tab Comment
      @c Cset
      @item Cset @tab @code{enable} @tab rw @tab 1 @tab [0;1]
      @item Cset @tab @code{chN-50ohm-term} @tab rw @tab 0 @tab [0;1] @tab N = 0..3
