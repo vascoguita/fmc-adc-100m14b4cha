@@ -374,7 +374,7 @@ static const struct zio_trigger_operations zfat_ops = {
 	.push_block =		zfat_push,
 };
 
-/* Definition of the trigger type */
+/* Definition of the trigger type -- can't be static */
 struct zio_trigger_type zfat_type = {
 	.owner = THIS_MODULE,
 	.zattr_set = {
@@ -386,3 +386,18 @@ struct zio_trigger_type zfat_type = {
 	.t_op = &zfat_ops,
 };
 
+int fa_trig_init(void)
+{
+	int err;
+
+	err = zio_register_trig(&zfat_type, "adc-100m14b");
+	if (err)
+		pr_err("%s: Cannot register ZIO trigger type"
+		       " \"adc-100m14b\" (error %i)\n", KBUILD_MODNAME, err);
+	return err;
+}
+
+void fa_trig_exit(void)
+{
+	zio_unregister_trig(&zfat_type);
+}

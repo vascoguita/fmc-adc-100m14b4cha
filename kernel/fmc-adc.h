@@ -379,11 +379,15 @@ static inline void zfa_hardware_read(struct fa_dev *fa,
 }
 
 
-/* Functions exported by fa-zio.c */
+/* Functions exported by fa-zio-drv.c */
 extern int fa_zio_register(void);
 extern void fa_zio_unregister(void);
 extern int fa_zio_init(struct fa_dev *fa);
 extern void fa_zio_exit(struct fa_dev *fa);
+
+/* Functions exported by fa-zio-trg.c */
+extern int fa_trig_init(void);
+extern void fa_trig_exit(void);
 
 /* Functions exported by fa-spec.c */
 extern int fa_spec_init(void);

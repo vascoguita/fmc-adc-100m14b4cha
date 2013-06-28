@@ -1186,14 +1186,6 @@ int fa_zio_init(struct fa_dev *fa)
 		return -ENODEV;
 	}
 
-	/* Register our trigger hardware */
-	err = zio_register_trig(&zfat_type, "adc-100m14b");
-	if (err) {
-		dev_err(hwdev, "Cannot register ZIO trigger type"
-			" \"adc-100m14b\"\n");
-		goto out_trg;
-	}
-
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev)) {
@@ -1218,8 +1210,6 @@ int fa_zio_init(struct fa_dev *fa)
 out_dev:
 	zio_free_device(fa->hwzdev);
 out_allocate:
-	zio_unregister_trig(&zfat_type);
-out_trg:
 	return err;
 }
 
@@ -1233,5 +1223,4 @@ void fa_zio_exit(struct fa_dev *fa)
 {
 	zio_unregister_device(fa->hwzdev);
 	zio_free_device(fa->hwzdev);
-	zio_unregister_trig(&zfat_type);
 }

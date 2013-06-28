@@ -105,13 +105,22 @@ static int fa_init(void)
 	int ret;
 
 	pr_debug("%s\n",__func__);
-	ret = fmc_driver_register(&fa_dev_drv);
+
+	/* First trigger and zio driver */
+	ret = fa_trig_init();
 	if (ret)
 		return ret;
 
 	ret = fa_zio_register();
 	if (ret) {
+		fa_trig_exit();
+		return ret;
+	}
+	/* Finally the fmc driver, whose probe instantiates zio devices */
+	ret = fmc_driver_register(&fa_dev_drv);
+	if (ret) {
 		fmc_driver_unregister(&fa_dev_drv);
+		fa_zio_unregister();
 		return ret;
 	}
 	return 0;
@@ -119,8 +128,9 @@ static int fa_init(void)
 
 static void fa_exit(void)
 {
-	fa_zio_unregister();
 	fmc_driver_unregister(&fa_dev_drv);
+	fa_zio_unregister();
+	fa_trig_exit();
 }
 
 module_init(fa_init);
