@@ -65,6 +65,13 @@ David Cobas, Federico Vaga and Alessandro Rubini in March 2013.  Ideas
 have later been refined during real use.  Alessandro wrote this
 document.
 
+@b{Warning}: this file documents the library as we want it to be
+when we release it. Currently, the prototypes match documentation
+but the semantics are still old-fashioned (they match the first
+development implementation, that revealed suboptimal).
+I'll remove this warning when I'm done with porting the code to the new
+conventions.
+
 @c ##########################################################################
 @node General Ideas and Rationale
 @chapter General Ideas and Rationale
@@ -530,6 +537,60 @@ saving in using the custom allocator but no additional cost, either.
 @chapter Internals
 
 To be documented in a later version.
+
+@c ##########################################################################
+@node Incompatibilities
+@chapter Incompatibilities
+
+During June 2013 we defined the final API as documented here. However,
+code written before June 28th may use the initial conventions, that are
+no more active. The current API is designed to be persistent over
+the yeears, and work with any ADC card belonging to the same family
+as our first board, the ``fmc-adc-100m14b4cha'' one.
+
+This is the list of incompatibilities. I list the commit, so you
+can see the actual change in @i{git} history if you are affected.
+
+@itemize @bullet
+
+@item Some configuration names changed. Now naming is consistent
+across all configuration macros. Change applied in commit 78a2ac0b.
+
+@item The data structures have 64 configuration items, not 32.
+This requires to use @t{long long} for the mask, but users are
+steongly encouraged to use the helpers @i{conf_set} and @i{conf_get}.
+Change applied in commit aa1eae16.
+
+@item Configuration functions use @t{conf} in their name, not
+@t{attr}. Change applied in commit 34c93097.
+
+@item The @i{fmcadc_strerror} function takes only the @t{errnum}
+argument, not @t{dev} any more. Applied in commit e83791de.
+
+@item Applications are adked to call @i{fmcadc_init} and @i{fmcadc_exit}
+(but the latter is optional at program termination).
+
+@item The open function states the number of shots and the total data
+size, so the library can prepare for the best allocation strategy.
+Applied in commit 6f3e4435.
+
+@item Buffer functions are different: the buffer is allocated by the
+library (not by the caller any more) and there is a new function to
+fill the buffer. Commit 3e83241e implements the prototype, but keeps
+the previous semantic; code and examples have been fixed later.
+
+@item A new @i{reset_conf} function exists, to force default values
+on all configuration variables. This can be used to prevent configuration
+leakage from the previous acquisition to the next. Resetting configuration
+is optional, so you can use a process to configure the card and another
+to acquire (I personally set range and gain before I run acquisition
+programs, for example).
+
+@item There is a new function to poll for acquisition. This is useful
+since whil the process is waiting for the trigger it may want to
+do something else.
+
+@end itemize
 
 @c ##########################################################################
 @node Index
