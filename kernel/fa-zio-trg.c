@@ -262,7 +262,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
 	unsigned int size;
-	uint32_t dev_mem_ptr;
+	uint32_t dev_mem_off;
 	int i, err = 0;
 
 	dev_dbg(&ti->head.dev, "Arming trigger\n");
@@ -293,7 +293,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	 */
 	size = interleave->current_ctrl->ssize * ti->nsamples;
 
-	dev_mem_ptr = 0;
+	dev_mem_off = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
 		dev_dbg(&ti->cset->head.dev, "Allocating block %d ...\n", i);
@@ -310,10 +310,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		       zio_control_size(interleave));
 		/* Add to the vector of prepared blocks */
 		zfad_block[i].block = block;
-		zfad_block[i].dev_mem_ptr = dev_mem_ptr;
-		dev_mem_ptr += size;
-		dev_dbg(&ti->cset->head.dev, "next dev_mem_ptr 0x%x (+%d)",
-			dev_mem_ptr, size);
+		zfad_block[i].dev_mem_off = dev_mem_off;
+		dev_mem_off += size;
+		dev_dbg(&ti->cset->head.dev, "next dev_mem_off 0x%x (+%d)",
+			dev_mem_off, size);
 	}
 
 	err = ti->cset->raw_io(ti->cset);

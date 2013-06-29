@@ -126,13 +126,13 @@ struct fa_dev {
 /*
  * zfad_block
  * @block is zio_block which contains data and metadata from a single shot
- * @dev_mem_ptr is pointer to the ADC internal memory. It points to the first
- *              samples of the stored shot
+ * @dev_mem_off is the offset in ADC internal memory. It points to the first
+ *              sample of the stored shot
  * @first_nent is the index of the first nent used for this block
  */
 struct zfad_block {
 	struct zio_block *block;
-	uint32_t	dev_mem_ptr;
+	uint32_t	dev_mem_off;
 	unsigned int first_nent;
 };
 

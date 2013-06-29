@@ -131,7 +131,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct scatterlist *sg;
 	struct fa_dma_item *items;
-	uint32_t dev_mem_ptr = 0;
+	uint32_t dev_mem_off = 0;
 	unsigned int i, pages, sglen, size, i_blk;
 	dma_addr_t tmp;
 	int err;
@@ -180,10 +180,10 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
 		if (i == zfad_block[i_blk].first_nent) {
 			/*
-			 * FIXME if we trust our configuration, dev_mem_ptr is
+			 * FIXME if we trust our configuration, dev_mem_off is
 			 * useless in multishot
 			 */
-			dev_mem_ptr = zfad_block[i_blk].dev_mem_ptr;
+			dev_mem_off = zfad_block[i_blk].dev_mem_off;
 
 			i_blk++; /* index the next block */
 			if (unlikely(i_blk > n_blocks)) {
@@ -197,13 +197,13 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		dev_dbg(&cset->head.dev, "configure DMA item %d"
 			"(addr: 0x%llx len: %d)(dev off: 0x%x)\n",
 			i, (long long)sg_dma_address(sg),
-			sg_dma_len(sg), dev_mem_ptr);
+			sg_dma_len(sg), dev_mem_off);
 		/* Prepare DMA item */
-		items[i].start_addr = dev_mem_ptr;
+		items[i].start_addr = dev_mem_off;
 		items[i].dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
 		items[i].dma_addr_h = (uint64_t)sg_dma_address(sg) >> 32;
 		items[i].dma_len = sg_dma_len(sg);
-		dev_mem_ptr += items[i].dma_len;
+		dev_mem_off += items[i].dma_len;
 		if (!sg_is_last(sg)) {/* more transfers */
 			/* uint64_t so it works on 32 and 64 bit */
 			tmp = fa->dma_list_item;

@@ -572,7 +572,7 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 		return -ENOMEM;
 	tmp->block = cset->interleave->active_block;
 	cset->interleave->priv_d = tmp;
-	tmp->dev_mem_ptr = 0; /* Always the first block */
+	tmp->dev_mem_off = 0; /* Always the first block */
 
 	/* Configure post samples */
 	zfa_hardware_write(fa, ZFAT_POST, cset->ti->nsamples);
@@ -794,7 +794,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = interleave->priv_d;
 	struct zio_control *ctrl;
-	uint32_t fixed_mem_ptr, trg_pos, pre_samp;
+	uint32_t dev_mem_off, trg_pos, pre_samp;
 
 	dev_dbg(fa->fmc->hwdev, "Trigger fire %i/%i\n",
 		fa->n_fires + 1, fa->n_shots);
@@ -811,14 +811,14 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		/* Get trigger position in DDR */
 		zfa_hardware_read(fa, ZFAT_POS, &trg_pos);
 		/* translate from sample count to memory offset */
-		fixed_mem_ptr = (trg_pos - pre_samp) * cset->ssize;
+		dev_mem_off = (trg_pos - pre_samp) * cset->ssize;
 		/* -1 because of interleaved channel */
-		fixed_mem_ptr *= (cset->n_chan - 1);
+		dev_mem_off *= (cset->n_chan - 1);
 		dev_dbg(fa->fmc->hwdev,
 			"Trigger position 0x%x, bytes 0x%x\n",
-			trg_pos, fixed_mem_ptr);
+			trg_pos, dev_mem_off);
 
-		zfad_block[fa->n_fires].dev_mem_ptr = fixed_mem_ptr;
+		zfad_block[fa->n_fires].dev_mem_off = dev_mem_off;
 	}
 
 	/* Get control from pre-allocated block */
