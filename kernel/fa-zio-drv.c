@@ -153,8 +153,7 @@ static inline int zfad_get_chx_index(unsigned long addr,
 {
 	int offset;
 
-	/* (n_chan - 1) because of interleave */
-	offset = ZFA_CHx_MULT  * ((chan->cset->n_chan - 1) - chan->index);
+	offset = ZFA_CHx_MULT  * (FA_NCHAN - chan->index);
 
 	return addr - offset;
 }
@@ -373,8 +372,7 @@ static void zfad_reset_offset(struct fa_dev *fa)
 {
 	int i;
 
-	/* -1 because of interleaved channel */
-	for (i = 0; i < fa->zdev->cset->n_chan - 1; ++i)
+	for (i = 0; i < FA_NCHAN; ++i)
 		zfad_apply_user_offset(fa, &fa->zdev->cset->chan[i], 0);
 }
 
@@ -392,7 +390,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, range, err, reg_index;
 
 	reg_index = zattr->id;
-	i = fa->zdev->cset->n_chan - 1 ; /* -1 because of interleaved channel */
+	i = FA_NCHAN;
 
 	switch (reg_index) {
 		/*
@@ -492,7 +490,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	int i, reg_index;
 
-	i = fa->zdev->cset->n_chan - 1 ; /* -1 because of interleaved channel */
+	i = FA_NCHAN;
 
 	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
@@ -806,14 +804,14 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 
 	/* Fix dev_mem_addr in single-shot mode */
 	if (fa->n_shots == 1) {
+		int nchan = FA_NCHAN;
+
 		pre_samp = cset->trig->zattr_set
 				.std_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
 		/* Get trigger position in DDR */
 		zfa_hardware_read(fa, ZFAT_POS, &trg_pos);
 		/* translate from sample count to memory offset */
-		dev_mem_off = (trg_pos - pre_samp) * cset->ssize;
-		/* -1 because of interleaved channel */
-		dev_mem_off *= (cset->n_chan - 1);
+		dev_mem_off = (trg_pos - pre_samp) * cset->ssize * nchan;
 		dev_dbg(fa->fmc->hwdev,
 			"Trigger position 0x%x, bytes 0x%x\n",
 			trg_pos, dev_mem_off);
@@ -1080,7 +1078,7 @@ static struct zio_cset zfad_cset[] = {
 		.raw_io = zfad_input_cset,
 		.stop_io = zfad_stop_cset,
 		.ssize = 2,
-		.n_chan = 4,
+		.n_chan = FA_NCHAN,
 		.chan_template = &zfad_chan_tmpl,
 		.flags =  ZIO_CSET_TYPE_ANALOG |	/* is analog */
 			  ZIO_DIR_INPUT |	/* is input */

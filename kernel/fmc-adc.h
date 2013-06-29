@@ -15,6 +15,8 @@
 #define FA_GATEWARE_DEFAULT_NAME "fmc/adc-100m14b.bin"
 extern int enable_auto_start;
 
+#define FA_NCHAN 4 /* We have 4 of them,no way out of it */
+
 /* ADC register offset */
 #define FA_DMA_MEM_OFF	0x01000
 #define FA_CAR_MEM_OFF	0x01300
@@ -316,8 +318,7 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 		nshot_t = addr == ZFAT_SHOTS_NB ? val :
 			  ti_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
 
-	size = ((pre_t + post_t) * ti->cset->ssize * nshot_t) *
-		(ti->cset->n_chan - 1);
+	size = ((pre_t + post_t) * ti->cset->ssize * nshot_t) * FA_NCHAN;
 	if (size >= FA_MAX_ACQ_BYTE) {
 		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
 		return -ENOMEM;
