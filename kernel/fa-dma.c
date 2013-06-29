@@ -161,7 +161,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 	}
 	fa->items = items;
 	fa->dma_list_item = dma_map_single(fa->fmc->hwdev, items, size,
-						   DMA_FROM_DEVICE);
+						   DMA_TO_DEVICE);
 	if (!fa->dma_list_item) {
 		goto out_free;
 	}
@@ -239,7 +239,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 
 out_map:
 	dma_unmap_single(fa->fmc->hwdev, fa->dma_list_item, size,
-		       DMA_FROM_DEVICE);
+		       DMA_TO_DEVICE);
 out_free:
 	kfree(fa->items);
 out_mem:
@@ -264,7 +264,7 @@ void zfad_unmap_dma(struct zio_cset *cset, struct zfad_block *zfad_block)
 	dev_dbg(fa->fmc->hwdev, "unmap DMA\n");
 	size = sizeof(struct fa_dma_item) * fa->sgt.nents;
 	dma_unmap_single(fa->fmc->hwdev, fa->dma_list_item, size,
-			 DMA_FROM_DEVICE);
+			 DMA_TO_DEVICE);
 	dma_unmap_sg(fa->fmc->hwdev, fa->sgt.sgl, fa->sgt.nents,
 		     DMA_FROM_DEVICE);
 
