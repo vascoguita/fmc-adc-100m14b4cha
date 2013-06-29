@@ -5,8 +5,8 @@
  * Header for the mezzanine ADC for the SPEC
  */
 
-#ifndef _fa_dev_H_
-#define _fa_dev_H_
+#ifndef FMC_ADC_H_ /* too generic, maybe */
+#define FMC_ADC_H_
 #include <linux/scatterlist.h>
 #include <linux/fmc.h>
 #include <linux/zio.h>
@@ -405,4 +405,4 @@ extern void fa_spi_exit(struct fa_dev *fd);
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 
 #endif /* __KERNEL__ */
-#endif /* _fa_dev_H_ */
+#endif /*  FMC_ADC_H_ */

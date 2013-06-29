@@ -291,7 +291,7 @@ environment variables (again, this is mostly for developers):
 
 @table @code
 @item ZIO
-@item FMC-BUS
+@item FMC_BUS
 	The top-level directory of the @i{fmc-bus}/@i{zio} repository checkout.
 
 @end table
