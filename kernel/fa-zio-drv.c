@@ -805,16 +805,17 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 	/* Fix dev_mem_addr in single-shot mode */
 	if (fa->n_shots == 1) {
 		int nchan = FA_NCHAN;
+		struct zio_control *ctrl = cset->chan[FA_NCHAN].current_ctrl;
 
-		pre_samp = cset->trig->zattr_set
-				.std_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value;
+		/* get pre-samples from the current control (interleave chan) */
+		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
 		/* Get trigger position in DDR */
 		zfa_hardware_read(fa, ZFAT_POS, &trg_pos);
 		/* translate from sample count to memory offset */
 		dev_mem_off = (trg_pos - pre_samp) * cset->ssize * nchan;
 		dev_dbg(fa->fmc->hwdev,
-			"Trigger position 0x%x, bytes 0x%x\n",
-			trg_pos, dev_mem_off);
+			"Trigger @ 0x%08x, pre %i, offset 0x%08x\n",
+			trg_pos, pre_samp, dev_mem_off);
 
 		zfad_block[fa->n_fires].dev_mem_off = dev_mem_off;
 	}
