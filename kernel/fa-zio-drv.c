@@ -768,9 +768,12 @@ static void zfad_dma_error(struct zio_cset *cset)
  */
 static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
 {
-	zfa_hardware_read(fa, ZFA_UTC_TRIG_SECONDS, (uint32_t *)&ts->secs);
-	zfa_hardware_read(fa, ZFA_UTC_TRIG_COARSE, (uint32_t *)&ts->ticks);
-	zfa_hardware_read(fa, ZFA_UTC_TRIG_FINE, (uint32_t *)&ts->bins);
+	uint32_t val;
+
+	/* We can't  read directly to ts->, as they are 64-bit values */
+	zfa_hardware_read(fa, ZFA_UTC_TRIG_SECONDS, &val);  ts->secs = val;
+	zfa_hardware_read(fa, ZFA_UTC_TRIG_COARSE, &val);   ts->ticks = val;
+	zfa_hardware_read(fa, ZFA_UTC_TRIG_FINE, &val);     ts->bins = val;
 }
 
 
