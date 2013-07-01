@@ -355,7 +355,7 @@ static inline int zfa_hardware_write(struct fa_dev *fa,
 	uint32_t cur, val;
 
 	if ((usr_val & (~zfad_regs[index].mask))) {
-		dev_err(fa->fmc->hwdev, "value 0x%x must fit mask 0x%x\n",
+		dev_info(&fa->fmc->dev, "value 0x%x must fit mask 0x%x\n",
 			usr_val, zfad_regs[index].mask);
 		return -EINVAL;
 	}

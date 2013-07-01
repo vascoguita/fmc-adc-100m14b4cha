@@ -129,6 +129,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		 unsigned int n_blocks)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
+	struct device *dev = &fa->fmc->dev;
 	struct scatterlist *sg;
 	struct fa_dma_item *items;
 	uint32_t dev_mem_off = 0;
@@ -138,17 +139,17 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 
 	pages = zfat_calculate_nents(zfad_block, n_blocks);
 	if (!pages) {
-		dev_err(&cset->head.dev, "No pages to transfer %i\n",
+		dev_info(dev, "No pages to transfer %i\n",
 			n_blocks);
 		return -EINVAL;
 	}
-	dev_dbg(&cset->head.dev, "using %d pages to transfer %i blocks\n",
+	dev_dbg(dev, "using %d pages to transfer %i blocks\n",
 		pages, n_blocks);
 
 	/* Create sglists for the transfers */
 	err = sg_alloc_table(&fa->sgt, pages, GFP_ATOMIC);
 	if (err) {
-		dev_err(&cset->head.dev, "cannot allocate sg table\n");
+		dev_err(dev, "cannot allocate sg table (%i pages)\n", pages);
 		goto out;
 	}
 
@@ -171,7 +172,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 	sglen = dma_map_sg(fa->fmc->hwdev, fa->sgt.sgl,
 			   fa->sgt.nents, DMA_FROM_DEVICE);
 	if (!sglen) {
-		dev_err(fa->fmc->hwdev, "cannot map dma memory\n");
+		dev_err(dev, "cannot map dma memory\n");
 		goto out_map;
 	}
 
@@ -187,14 +188,13 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 
 			i_blk++; /* index the next block */
 			if (unlikely(i_blk > n_blocks)) {
-				dev_err(&fa->zdev->head.dev,
-					"DMA map out of block\n");
+				dev_err(dev, "DMA map out of block\n");
 				BUG();
 			}
 		}
 
 
-		dev_dbg(&cset->head.dev, "configure DMA item %d"
+		pr_debug("configure DMA item %d "
 			"(addr: 0x%llx len: %d)(dev off: 0x%x)\n",
 			i, (long long)sg_dma_address(sg),
 			sg_dma_len(sg), dev_mem_off);

@@ -44,7 +44,7 @@ int fa_probe(struct fmc_device *fmc)
 	/* Validate the new FMC device */
 	i = fmc->op->validate(fmc, &fa_dev_drv);
 	if (i < 0) {
-		dev_info(fmc->hwdev, "not using \"%s\" according to "
+		dev_info(&fmc->dev, "not using \"%s\" according to "
 			 "modparam\n", KBUILD_MODNAME);
 		return -ENODEV;
 	}
@@ -67,10 +67,10 @@ int fa_probe(struct fmc_device *fmc)
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
-		dev_dbg(fmc->hwdev, "Calling init for \"%s\"\n", m->name);
+		dev_dbg(&fmc->dev, "Calling init for \"%s\"\n", m->name);
 		err = m->init(fa);
 		if (err) {
-			dev_err(fmc->hwdev, "error initializing %s\n", m->name);
+			dev_err(&fmc->dev, "error initializing %s\n", m->name);
 			goto out;
 		}
 

@@ -109,12 +109,12 @@ static int zfat_conf_set(struct device *zdev, struct zio_attribute *zattr,
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
 		if (!ti->zattr_set.ext_zattr[5].value) {
-			dev_err(dev, "sw trigger must be enable");
+			dev_info(dev, "sw trigger is not enabled\n");
 			return -EPERM;
 		}
 		/* Fire if nsamples!=0 */
 		if (!ti->nsamples) {
-			dev_err(dev, "there aren't samples to acquire");
+			dev_info(dev, "pre + post = 0: cannot acquire\n");
 			return -EINVAL;
 		}
 		/*
@@ -157,7 +157,8 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 	struct zfat_instance *zfat;
 
 	if (!fa) {
-		dev_err(&cset->head.dev, "no spec device defined\n");
+		/* This only happens if we have a bug in the init sequence */
+		dev_err(&cset->head.dev, "No FMC device associated\n");
 		return ERR_PTR(-ENODEV);
 	}
 
@@ -225,7 +226,7 @@ static void zfat_data_done(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	unsigned int i;
 
-	dev_dbg(&cset->head.dev, "Data done\n");
+	dev_dbg(&fa->fmc->dev, "Data done\n");
 
 	/* Nothing to store */
 	if (!zfad_block)
@@ -234,11 +235,11 @@ static void zfat_data_done(struct zio_cset *cset)
 	/* Store blocks */
 	for(i = 0; i < fa->n_shots; ++i)
 		if (likely(i < fa->n_fires)) {/* Store filled blocks */
-			dev_dbg(&cset->head.dev, "Store Block %i/%i\n",
+			dev_dbg(&fa->fmc->dev, "Store Block %i/%i\n",
 				i + 1, fa->n_shots);
 			bi->b_op->store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
-			dev_dbg(&cset->head.dev, "Free un-acquired block %d/%d "
+			dev_dbg(&fa->fmc->dev, "Free un-acquired block %d/%d "
 					"(received %d shots)\n",
 					i + 1, fa->n_shots, fa->n_fires);
 			bi->b_op->free_block(bi, zfad_block[i].block);
@@ -264,22 +265,23 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	struct zio_channel *interleave = ti->cset->interleave;
 	struct zio_buffer_type *zbuf = ti->cset->zbuf;
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
+	struct device *msgdev = &fa->fmc->dev;
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
 	unsigned int size;
 	uint32_t dev_mem_off;
 	int i, err = 0;
 
-	dev_dbg(&ti->head.dev, "Arming trigger\n");
+	dev_dbg(msgdev, "Arming trigger\n");
 	/* Update the current control: sequence, nsamples and tstamp */
 	interleave->current_ctrl->nsamples = ti->nsamples;
 
 	/* Allocate the necessary blocks for multi-shot acquisition */
 	fa->n_shots = ti->zattr_set.std_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
-	dev_dbg(&ti->head.dev, "programmed shot %i\n", fa->n_shots);
+	dev_dbg(msgdev, "programmed shot %i\n", fa->n_shots);
 
 	if (!fa->n_shots) {
-		dev_err(&ti->head.dev, "Cannot arm. No programmed shots\n");
+		dev_info(msgdev, "Cannot arm. No programmed shots\n");
 		return -EINVAL;
 	}
 
@@ -301,11 +303,11 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_mem_off = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
-		dev_dbg(&ti->cset->head.dev, "Allocating block %d ...\n", i);
+		dev_dbg(msgdev, "Allocating block %d ...\n", i);
 		block = zbuf->b_op->alloc_block(interleave->bi, size,
 						GFP_KERNEL);
 		if (!block) {
-			dev_err(&ti->cset->head.dev,
+			dev_err(msgdev,
 				"arm trigger fail, cannot allocate block\n");
 			err = -ENOMEM;
 			goto out_allocate;
@@ -317,7 +319,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		zfad_block[i].block = block;
 		zfad_block[i].dev_mem_off = dev_mem_off;
 		dev_mem_off += size;
-		dev_dbg(&ti->cset->head.dev, "next dev_mem_off 0x%x (+%d)",
+		dev_dbg(msgdev, "next dev_mem_off 0x%x (+%d)",
 			dev_mem_off, size);
 	}
 
@@ -350,7 +352,7 @@ static void zfat_abort(struct zio_ti *ti)
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	unsigned int i;
 
-	dev_dbg(&ti->head.dev, "Aborting trigger");
+	dev_dbg(&fa->fmc->dev, "Aborting trigger");
 	/* Free all blocks */
 	for(i = 0; i < fa->n_shots; ++i)
 		bi->b_op->free_block(bi, zfad_block[i].block);
@@ -364,8 +366,6 @@ static int zfat_push(struct zio_ti *ti, struct zio_channel *chan,
 {
 	dev_err(&ti->head.dev, "trigger \"%s\" does not support output",
 		ti->head.name);
-	BUG();
-
 	return -EIO;
 }
 

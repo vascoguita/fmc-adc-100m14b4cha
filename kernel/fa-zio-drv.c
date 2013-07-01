@@ -169,10 +169,11 @@ static inline int zfad_get_chx_index(unsigned long addr,
  */
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
+	struct device *dev = &fa->fmc->dev;
 	uint32_t val;
 
 	if (command != ZFA_START && command != ZFA_STOP) {
-		dev_err(fa->fmc->hwdev, "Invalid command\n");
+		dev_info(dev, "Invalid command %i\n", command);
 		return -EINVAL;
 	}
 
@@ -202,15 +203,15 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		/* Verify that SerDes PLL is lockes */
 		zfa_hardware_read(fa, ZFA_STA_SERDES_PLL, &val);
 		if (!val) {
-			dev_err(fa->fmc->hwdev,
-			"Cannot start acquisition: SerDes PLL not locked\n");
+			dev_info(dev, "Cannot start acquisition: "
+				 "SerDes PLL not locked\n");
 			return -EBUSY;
 		}
 		/* Verify that SerDes is synched */
 		zfa_hardware_read(fa, ZFA_STA_SERDES_SYNCED, &val);
 		if (!val) {
-			dev_err(fa->fmc->hwdev,
-			"Cannot start acquisition: SerDes not synchronized\n");
+			dev_info(dev, "Cannot start acquisition: "
+				 "SerDes not synchronized\n");
 			return -EBUSY;
 		}
 
@@ -224,15 +225,15 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		 * from zfat_arm_trigger() or zfad_input_cset()
 		 */
 		if (!(fa->zdev->cset->ti->flags & ZIO_TI_ARMED)) {
-			dev_err(fa->fmc->hwdev,
-				"Trigger not armed, cannot start acquisition\n");
-			return -EPERM;
+			dev_info(dev, "Cannot start acquisition: "
+				 "Trigger refuses to arm\n");
+			return -EIO;
 		}
 
-		dev_dbg(fa->fmc->hwdev, "FSM START Command, Enable interrupts\n");
+		dev_dbg(dev, "FSM START Command, Enable interrupts\n");
 		zfa_hardware_write(fa, ZFA_IRQ_MASK, ZFAT_ALL);
 	} else {
-		dev_dbg(fa->fmc->hwdev, "FSM STOP Command, Disable interrupts\n");
+		dev_dbg(dev, "FSM STOP Command, Disable interrupts\n");
 		zfa_hardware_write(fa, ZFA_IRQ_MASK, ZFAT_NONE);
 	}
 
@@ -431,10 +432,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		zfad_reset_offset(fa);
 		return 0;
 	case ZFAT_SR_DECI:
-		if (usr_val == 0) {
-			dev_err(dev, "max-sample-rate minimum value is 1\n");
-			return -EINVAL;
-		}
+		if (usr_val == 0)
+			usr_val++;
 		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_TERM:
@@ -442,11 +441,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CH3_CTL_TERM:
 	case ZFA_CH4_CTL_TERM:
 	case ZFA_CHx_CTL_TERM:
-		if (usr_val != 0 && usr_val != 1) {
-			dev_err(dev, "50 Ohm termination can be activated (1) "
-				     "or deactivated (0)\n");
-			return -EINVAL;
-		}
+		if (usr_val > 1)
+			usr_val = 1;
 		break;
 
 	/* FIXME temporary until TLV control */
@@ -595,13 +591,13 @@ static int zfad_input_cset(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	dev_dbg(fa->fmc->hwdev, "Ready to acquire\n");
+	dev_dbg(&fa->fmc->dev, "Ready to acquire\n");
 	/* ZIO should configure only the interleaved channel */
 	if (!cset->interleave)
 		return -EINVAL;
 	/* nsamples can't be 0 */
 	if (!cset->interleave->current_ctrl->nsamples) {
-		dev_err(&cset->head.dev, "no post/pre-sample configured\n");
+		dev_info(&fa->fmc->dev, "pre + post = 0: can't acquire\n");
 		return -EINVAL;
 	}
 
@@ -654,7 +650,7 @@ static void zfat_get_irq_status(struct fa_dev *fa,
 	/* Get current interrupts status */
 	zfa_hardware_read(fa, ZFA_IRQ_SRC, irq_status);
 	zfa_hardware_read(fa, ZFA_IRQ_MULTI, irq_multi);
-	dev_dbg(fa->fmc->hwdev, "irq status = 0x%x multi = 0x%x\n",
+	dev_dbg(&fa->fmc->dev, "irq status = 0x%x multi = 0x%x\n",
 			*irq_status, *irq_multi);
 
 	/* Clear current interrupts status */
@@ -683,7 +679,7 @@ static void zfad_dma_start(struct zio_cset *cset)
 
 	/* Start DMA transefer */
 	zfa_hardware_write(fa, ZFA_DMA_CTL_START, 1);
-	dev_dbg(fa->fmc->hwdev, "Start DMA transfer\n");
+	dev_dbg(&fa->fmc->dev, "Start DMA transfer\n");
 }
 
 /**
@@ -709,7 +705,7 @@ static void zfad_dma_done(struct zio_cset *cset)
 	 * it can store blocks into the buffer
 	 */
 	zio_trigger_data_done(cset);
-	dev_dbg(fa->fmc->hwdev, "%i blocks transfered\n", fa->n_shots);
+	dev_dbg(&fa->fmc->dev, "%i blocks transfered\n", fa->n_shots);
 
 	/*
 	 * we can safely re-enable triggers.
@@ -725,13 +721,13 @@ static void zfad_dma_done(struct zio_cset *cset)
 		zfa_hardware_write(fa, ZFAT_CFG_SW_EN,
 				    ti->zattr_set.ext_zattr[5].value);
 	} else {
-		dev_dbg(&cset->head.dev, "Software acquisition over");
+		dev_dbg(&fa->fmc->dev, "Software acquisition over");
 		zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
 	}
 
 	/* Automatic start next acquisition */
 	if (enable_auto_start) {
-		dev_dbg(fa->fmc->hwdev, "Automatic start\n");
+		dev_dbg(&fa->fmc->dev, "Automatic start\n");
 		zfad_fsm_command(fa, ZFA_START);
 	}
 }
@@ -752,7 +748,7 @@ static void zfad_dma_error(struct zio_cset *cset)
 	zfad_unmap_dma(cset, zfad_block);
 
 	zfa_hardware_read(fa, ZFA_DMA_STA, &val);
-	dev_err(fa->fmc->hwdev,
+	dev_err(&fa->fmc->dev,
 		"DMA error (status 0x%x). All acquisition lost\n", val);
 	zfad_fsm_command(fa, ZFA_STOP);
 	fa->n_dma_err++;
@@ -794,7 +790,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 	struct zio_control *ctrl;
 	uint32_t dev_mem_off, trg_pos, pre_samp;
 
-	dev_dbg(fa->fmc->hwdev, "Trigger fire %i/%i\n",
+	dev_dbg(&fa->fmc->dev, "Trigger fire %i/%i\n",
 		fa->n_fires + 1, fa->n_shots);
 	if (fa->n_fires >= fa->n_shots) {
 		WARN(1, "Invalid Fire, STOP acquisition");
@@ -813,7 +809,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 		zfa_hardware_read(fa, ZFAT_POS, &trg_pos);
 		/* translate from sample count to memory offset */
 		dev_mem_off = (trg_pos - pre_samp) * cset->ssize * nchan;
-		dev_dbg(fa->fmc->hwdev,
+		dev_dbg(&fa->fmc->dev,
 			"Trigger @ 0x%08x, pre %i, offset 0x%08x\n",
 			trg_pos, pre_samp, dev_mem_off);
 
@@ -848,9 +844,9 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	uint32_t val = 0;
 	int try = 5;
 
-	dev_dbg(fa->fmc->hwdev, "Acquisition done\n");
+	dev_dbg(&fa->fmc->dev, "Acquisition done\n");
 	if (fa->n_fires != fa->n_shots) {
-		dev_err(fa->fmc->hwdev,
+		dev_err(&fa->fmc->dev,
 			"Expected %i trigger fires, but %i occurs\n",
 			fa->n_shots, fa->n_fires);
 	}
@@ -866,7 +862,7 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 
 	if (val != ZFA_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
-		dev_warn(fa->fmc->hwdev,
+		dev_warn(&fa->fmc->dev,
 			 "Can't start DMA on the last acquisition, "
 			 "State Machine is not IDLE (status:%d)\n", val);
 		zfad_fsm_command(fa, ZFA_STOP);
@@ -912,7 +908,7 @@ static irqreturn_t zfad_irq(int irq, void *ptr)
 		return IRQ_NONE;
 
 irq_handler:
-	dev_dbg(fa->fmc->hwdev, "Handle ADC interrupts\n");
+	dev_dbg(&fa->fmc->dev, "Handle ADC interrupts\n");
 	if (unlikely((status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) &&
 	    (status & (ZFAT_TRG_FIRE | ZFAT_ACQ_END)))) {
 		WARN(1, "Cannot handle trigger interrupt and DMA interrupt at "
@@ -1004,7 +1000,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	err = fa->fmc->op->irq_request(fa->fmc, zfad_irq, "fmc-adc-100m14b",
 				       IRQF_SHARED);
 	if (err)
-		dev_err(fa->fmc->hwdev, "can't request irq %i (err %i)\n",
+		dev_err(&fa->fmc->dev, "can't request irq %i (error %i)\n",
 			fa->fmc->irq, err);
 
 	/* Force stop FSM to prevent early trigger fire */
@@ -1155,15 +1151,15 @@ void fa_zio_unregister(void)
 int fa_zio_init(struct fa_dev *fa)
 {
 	struct device *hwdev = fa->fmc->hwdev;
+	struct device *msgdev = &fa->fmc->dev;
 	uint32_t val;
 	int err;
 
 	/* Check if hardware supports 64-bit DMA */
 	if(dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
-		dev_err(hwdev, "64-bit DMA addressing not available, try 32\n");
 		/* Check if hardware supports 32-bit DMA */
 		if(dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
-			dev_err(hwdev, "32-bit DMA addressing not available\n");
+			dev_err(msgdev, "32-bit DMA addressing not available\n");
 			return -EINVAL;
 		}
 	}
@@ -1172,26 +1168,26 @@ int fa_zio_init(struct fa_dev *fa)
 	/* Verify that the FMC is plugged (0 is plugged) */
 	zfa_hardware_read(fa, ZFA_CAR_FMC_PRES, &val);
 	if (val) {
-		dev_err(hwdev, "No FCM ADC plugged\n");
+		dev_err(msgdev, "No FCM ADC plugged\n");
 		return -ENODEV;
 	}
 	/* Verify that system PLL is locked (1 is calibrated) */
 	zfa_hardware_read(fa, ZFA_CAR_SYS_PLL, &val);
 	if (!val) {
-		dev_err(hwdev, "System PLL not locked\n");
+		dev_err(msgdev, "System PLL not locked\n");
 		return -ENODEV;
 	}
 	/* Verify that DDR3 calibration is done (1 is calibrated) */
 	zfa_hardware_read(fa, ZFA_CAR_DDR_CAL, &val);
 	if (!val) {
-		dev_err(hwdev, "DDR3 Calibration not done\n");
+		dev_err(msgdev, "DDR3 Calibration not done\n");
 		return -ENODEV;
 	}
 
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev)) {
-		dev_err(hwdev, "Cannot allocate ZIO device\n");
+		dev_err(msgdev, "Cannot allocate ZIO device\n");
 		err = PTR_ERR(fa->hwzdev);
 		goto out_allocate;
 	}
@@ -1204,7 +1200,7 @@ int fa_zio_init(struct fa_dev *fa)
 	err = zio_register_device(fa->hwzdev, "adc-100m14b",
 				  fa->fmc->device_id);
 	if (err) {
-		dev_err(hwdev, "Cannot register ZIO device fmc-adc-100m14b\n");
+		dev_err(msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
 		goto out_dev;
 	}
 	return 0;
