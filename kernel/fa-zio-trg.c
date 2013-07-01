@@ -33,7 +33,7 @@ struct zfat_instance {
 
 /* zio trigger attributes */
 static ZIO_ATTR_DEFINE_STD(ZIO_TRG, zfat_std_zattr) = {
-	/* Number of shots */
+	/* Number of shots was called NB (number of buffers), so it remains */
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_N_SHOTS, ZIO_RW_PERM, ZFAT_SHOTS_NB, 1),
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_PRE_SAMP, ZIO_RW_PERM, ZFAT_PRE, 0),
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, ZIO_RW_PERM, ZFAT_POST, 0),
@@ -81,23 +81,28 @@ static struct zio_attribute zfat_ext_zattr[] = {
  *
  * set a value to a FMC-ADC trigger register
  */
-static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
+static int zfat_conf_set(struct device *zdev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
-	struct fa_dev *fa = get_zfadc(dev);
-	struct zio_ti *ti = to_zio_ti(dev);
-	uint32_t tmp_val = usr_val;
-	int err = 0;
+	struct fa_dev *fa = get_zfadc(zdev);
+	struct device *dev = &fa->fmc->dev;
+	struct zio_ti *ti = to_zio_ti(zdev);
+	uint32_t hw_val = usr_val;
+	int err;
+
+	if (zattr->id == ZFAT_SHOTS_NB && usr_val == 0) {
+		dev_info(dev, "nshots cannot be 0\n");
+		return -EINVAL;
+	}
 
 	switch (zattr->id) {
-	case ZFAT_SHOTS_NB:
-		if (!tmp_val) {
-			dev_err(dev, "nshots cannot be 0\n");
-			return -EINVAL;
-		}
-	case ZFAT_PRE:
+
 	case ZFAT_POST:
-		err = zfat_overflow_detection(ti, zattr->id, tmp_val);
+		if (usr_val) hw_val--; /* hw uses pre+1+post */
+	case ZFAT_SHOTS_NB:
+		/* fall through, for oveflow detection */
+	case ZFAT_PRE:
+		err = zfat_overflow_detection(ti, zattr->id, usr_val);
 		if (err)
 			return err;
 		break;
@@ -120,7 +125,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	}
 
-	return zfa_hardware_write(fa, zattr->id, tmp_val);
+	return zfa_hardware_write(fa, zattr->id, hw_val);
 }
 
 
