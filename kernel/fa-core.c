@@ -18,8 +18,8 @@
 static struct fmc_driver fa_dev_drv;
 FMC_PARAM_BUSID(fa_dev_drv);
 
-static char *fa_binaries = FA_GATEWARE_DEFAULT_NAME;
-module_param_named(file, fa_binaries, charp, 0444);
+static char *fa_binary = FA_GATEWARE_DEFAULT_NAME;
+module_param_named(file, fa_binary, charp, 0444);
 
 /* This structure lists the various subsystems */
 struct fa_modlist {
@@ -58,10 +58,10 @@ int fa_probe(struct fmc_device *fmc)
 	fa->fmc = fmc;
 
 	/* We first write a new binary (and lm32) within the carrier */
-	err = fmc->op->reprogram(fmc, &fa_dev_drv, fa_binaries);
+	err = fmc->op->reprogram(fmc, &fa_dev_drv, fa_binary);
 	if (err) {
 		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
-				fa_binaries, err);
+				fa_binary, err);
 		goto out;
 	}
 
