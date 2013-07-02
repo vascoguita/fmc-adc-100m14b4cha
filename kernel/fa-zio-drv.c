@@ -4,8 +4,6 @@
  *
  * Driver for the mezzanine ADC for the SPEC
  */
-
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -21,13 +19,14 @@
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
 
+#include <asm/byteorder.h>
+
 #include "fmc-adc.h"
 
 int enable_auto_start = 0;
 static int enable_test_data = 0;
 
 module_param(enable_test_data, int, 0444);
-
 
 /*
  * zio device attributes
@@ -1037,6 +1036,16 @@ static void zfad_verify_calib(struct device *msgdev,
 	}
 }
 
+static void zfad_endian_calib(struct fa_calib *calib)
+{
+	int i;
+	uint16_t *p = (void *)calib;
+
+	/* We know for sure that our structure is only made of 16bit fields */
+	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); i++)
+		le16_to_cpus(p + i); /* s == in situ */
+}
+
 /* * * * * * * * * * * * * * * * Initialization * * * * * * * * * * * * * * */
 
 /*
@@ -1057,6 +1066,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 
 	/* Retrieve calibration data from the eeprom, then verify it */
 	memcpy(&fa->calib, fa->fmc->eeprom + FA_CAL_OFFSET, sizeof(fa->calib));
+	zfad_endian_calib(&fa->calib);
 	zfad_verify_calib(&fa->fmc->dev, &fa->calib, &fa_identity_calib);
 
 	/* Configure GPIO for IRQ */
