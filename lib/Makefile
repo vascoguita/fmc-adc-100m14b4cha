@@ -5,6 +5,7 @@ LIB = libfmcadc.a
 LOBJ := route.o
 LOBJ += boards.o
 LOBJ += config-zio.o
+LOBJ += buffer-zio.o
 LOBJ += lib.o
 LOBJ += fmc-adc-100m14b4cha.o
 
