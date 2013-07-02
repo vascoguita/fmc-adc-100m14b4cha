@@ -1,5 +1,5 @@
 /*
- * Initializing and cleaning up the fmc adc library
+ * The ADC library for a ZIO device (100MS-14bit-4-cha by now)
  *
  * Copyright (C) 2013 CERN (www.cern.ch)
  * Author: Federico Vaga <federico.vaga@gmail.com>
@@ -157,10 +157,10 @@ static int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 
 
 /* * * * * * * * * *  Library Operations Implementation * * * * * * * * * * */
-static int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
+int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
 				       unsigned int flags);
 
-static struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
+struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 					  unsigned int dev_id,
 					  unsigned int details)
 {
@@ -229,12 +229,12 @@ out_fa_stat:
 	return NULL ;
 }
 
-static struct fmcadc_dev *fmcadc_zio_open_by_lun(char *name, int lun)
+struct fmcadc_dev *fmcadc_zio_open_by_lun(char *name, int lun)
 {
 	/* TODO implement*/
 	return NULL ;
 }
-static int fmcadc_zio_close(struct fmcadc_dev *dev)
+int fmcadc_zio_close(struct fmcadc_dev *dev)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
@@ -255,7 +255,7 @@ static int fmcadc_zio_close(struct fmcadc_dev *dev)
 	return 0;
 }
 /* Handle acquisition */
-static int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
+int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 		unsigned int flags, struct timeval *timeout)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
@@ -291,7 +291,7 @@ static int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 		return err;
 	}
 }
-static int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
+int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
 		unsigned int flags)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
@@ -511,7 +511,7 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 	return 0;
 }
 
-static int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
+int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 		struct fmcadc_conf *conf)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
@@ -519,7 +519,7 @@ static int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 	return fmcadc_zio_config(fa, flags, conf, FMCADC_CONF_SET);
 }
 
-static int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
+int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
 		struct fmcadc_conf *conf)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
@@ -639,7 +639,7 @@ out_ctrl:
 	return NULL;
 }
 
-static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
+int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 				     struct fmcadc_buffer *buf,
 				     void (*free_fn)(void *))
 {
@@ -648,46 +648,4 @@ static int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 	free(buf);
 	return 0;
 }
-
-/* * * * * * * * * * * * * * * * * Boards definition * * * * * * * * * * * * */
-#define FMCADC_ZIO_TRG_MASK (1LL << FMCADC_CONF_TRG_SOURCE) |      \
-			    (1LL << FMCADC_CONF_TRG_SOURCE_CHAN) | \
-			    (1LL << FMCADC_CONF_TRG_THRESHOLD) |   \
-			    (1LL << FMCADC_CONF_TRG_POLARITY) |    \
-			    (1LL << FMCADC_CONF_TRG_DELAY)
-#define FMCADC_ZIO_ACQ_MASK (1LL << FMCADC_CONF_ACQ_N_SHOTS) |     \
-			    (1LL << FMCADC_CONF_ACQ_POST_SAMP) |   \
-			    (1LL << FMCADC_CONF_ACQ_PRE_SAMP) |    \
-			    (1LL << FMCADC_CONF_ACQ_DECIMATION) |  \
-			    (1LL << FMCADC_CONF_ACQ_FREQ_HZ) |     \
-			    (1LL << FMCADC_CONF_ACQ_N_BITS)
-#define FMCADC_ZIO_CHN_MASK (1LL << FMCADC_CONF_CHN_RANGE) |       \
-			    (1LL << FMCADC_CONF_CHN_TERMINATION) | \
-			    (1LL << FMCADC_CONF_CHN_OFFSET)
-#define FMCADC_ZIO_BRD_MASK (1LL << FMCADC_CONF_BRD_STATE_MACHINE_STATUS) | \
-			    (1LL << FMCADC_CONF_BRD_N_CHAN)
-
-struct fmcadc_op fa_100ms_4ch_14bit_op = {
-	.open = fmcadc_zio_open,
-	.open_by_lun = fmcadc_zio_open_by_lun,
-	.close = fmcadc_zio_close,
-	.start_acquisition = fmcadc_zio_start_acquisition,
-	.stop_acquisition = fmcadc_zio_stop_acquisition,
-	.apply_config = fmcadc_zio_apply_config,
-	.retrieve_config = fmcadc_zio_retrieve_config,
-	.request_buffer = fmcadc_zio_request_buffer,
-	.release_buffer = fmcadc_zio_release_buffer,
-};
-struct fmcadc_board_type fmcadc_100ms_4ch_14bit = {
-	.name = "fmcadc_100MS_4ch_14bit",
-	.devname = "adc-100m14b",
-	.driver_type = "zio",
-	.capabilities = {
-		FMCADC_ZIO_TRG_MASK,
-		FMCADC_ZIO_ACQ_MASK,
-		FMCADC_ZIO_CHN_MASK,
-		FMCADC_ZIO_BRD_MASK,
-	},
-	.fa_op = &fa_100ms_4ch_14bit_op,
-};
 

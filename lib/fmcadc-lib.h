@@ -5,6 +5,9 @@
 
 #ifndef FMCADC_LIB_H_
 #define FMCADC_LIB_H_
+#include <stdint.h>
+#include <stdlib.h>
+#include <sys/time.h>
 
 /* Error codes start from 1024 to void conflicting with libc codes */
 #define __FMCADC_ERRNO_START 1024

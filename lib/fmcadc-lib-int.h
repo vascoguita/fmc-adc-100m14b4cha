@@ -106,4 +106,31 @@ struct fmcadc_gid {
 /* Definition of board types */
 extern struct fmcadc_board_type fmcadc_100ms_4ch_14bit;
 
+
+/* The following functions are defined in fmc-adc-zio, at the time being */
+
+struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
+				   unsigned int dev_id,
+				   unsigned int details);
+struct fmcadc_dev *fmcadc_zio_open_by_lun(char *name, int lun);
+int fmcadc_zio_close(struct fmcadc_dev *dev);
+int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
+				 unsigned int flags, struct timeval *timeout);
+int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
+				unsigned int flags);
+int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
+			    struct fmcadc_conf *conf);
+int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
+			       struct fmcadc_conf *conf);
+struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
+						int nsamples,
+						void *(*alloc)(size_t),
+						unsigned int flags,
+						struct timeval *timeout);
+int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
+			      struct fmcadc_buffer *buf,
+			      void (*free_fn)(void *));
+
+
+
 #endif /* FMCADC_LIB_INT_H_ */
