@@ -68,7 +68,7 @@ static void zfad_setup_dma_scatter(struct fa_dev *fa,
 	int mapbytes;
 	int i, i_blk;
 
-	dev_dbg(&fa->zdev->head.dev, "Setup dma scatterlist for %zu bytes",
+	dev_dbg(&fa->zdev->head.dev, "Setup dma scatterlist for %zu bytes\n",
 			zfad_block->block->datalen);
 
 	i_blk = 0;

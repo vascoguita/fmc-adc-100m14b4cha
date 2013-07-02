@@ -721,7 +721,7 @@ static void zfad_dma_done(struct zio_cset *cset)
 		zfa_hardware_write(fa, ZFAT_CFG_SW_EN,
 				    ti->zattr_set.ext_zattr[5].value);
 	} else {
-		dev_dbg(&fa->fmc->dev, "Software acquisition over");
+		dev_dbg(&fa->fmc->dev, "Software acquisition over\n");
 		zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
 	}
 
@@ -986,7 +986,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	struct fa_dev *fa = zdev->priv_d;
 	int err = 0, i, addr;
 
-	dev_dbg(&zdev->head.dev, "%s:%d", __func__, __LINE__);
+	dev_dbg(&zdev->head.dev, "%s:%d\n", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
 

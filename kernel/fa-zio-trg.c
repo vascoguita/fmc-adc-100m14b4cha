@@ -319,7 +319,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		zfad_block[i].block = block;
 		zfad_block[i].dev_mem_off = dev_mem_off;
 		dev_mem_off += size;
-		dev_dbg(msgdev, "next dev_mem_off 0x%x (+%d)",
+		dev_dbg(msgdev, "next dev_mem_off 0x%x (+%d)\n",
 			dev_mem_off, size);
 	}
 
@@ -352,7 +352,7 @@ static void zfat_abort(struct zio_ti *ti)
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	unsigned int i;
 
-	dev_dbg(&fa->fmc->dev, "Aborting trigger");
+	dev_dbg(&fa->fmc->dev, "Aborting trigger\n");
 	/* Free all blocks */
 	for(i = 0; i < fa->n_shots; ++i)
 		bi->b_op->free_block(bi, zfad_block[i].block);
@@ -364,7 +364,7 @@ static void zfat_abort(struct zio_ti *ti)
 static int zfat_push(struct zio_ti *ti, struct zio_channel *chan,
 		     struct zio_block *block)
 {
-	dev_err(&ti->head.dev, "trigger \"%s\" does not support output",
+	dev_err(&ti->head.dev, "trigger \"%s\" does not support output\n",
 		ti->head.name);
 	return -EIO;
 }
