@@ -533,10 +533,14 @@ not described.
 
 @item fsm-auto-start
 
-	This attribute can be set to 1 or 0. If set to 1, the acquisition
+	This attribute can be set to 1 or 0. It is 0 by default.
+        If set to 1, the acquisition
         state-machine is automatically restarted after the previous run
-        is complete. The default is 0 (i.e., each acquisition must be
-        individually requested).
+        is complete.  Thus, for example, a card configured for external
+        trigger, after the first acquisition will continue aquiring
+        and storing blocks to the ZIO buffer every time a new trigger
+        event is detected.  Applications can read such blocks from the
+        char device.
 
 @item fsm-command
 
