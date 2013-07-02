@@ -271,6 +271,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	unsigned int size;
 	uint32_t dev_mem_off;
 	int i, err = 0;
+	gfp_t gfp;
+
+	/* if fsm-auto-start is active, we re-allocate at interrupt time */
+	gfp = in_atomic() ? GFP_ATOMIC : GFP_KERNEL;
 
 	dev_dbg(msgdev, "Arming trigger\n");
 	/* Update the current control: sequence, nsamples and tstamp */
@@ -286,8 +290,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	}
 
 	/* Allocate a new block for DMA transfer */
-	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots,
-				GFP_KERNEL);
+	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots, gfp);
 	if (!zfad_block)
 		return -ENOMEM;
 
@@ -304,8 +307,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
 		dev_dbg(msgdev, "Allocating block %d ...\n", i);
-		block = zbuf->b_op->alloc_block(interleave->bi, size,
-						GFP_KERNEL);
+		block = zbuf->b_op->alloc_block(interleave->bi, size, gfp);
 		if (!block) {
 			dev_err(msgdev,
 				"arm trigger fail, cannot allocate block\n");
