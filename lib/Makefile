@@ -3,6 +3,7 @@ ZIO ?= ../zio
 
 LIB = libfmcadc.a
 LOBJ := route.o
+LOBJ += init.o
 LOBJ += boards.o
 LOBJ += config-zio.o
 LOBJ += buffer-zio.o
