@@ -318,8 +318,11 @@ The following parameters are used:
 @item enable_test_data=1
 
 	This is for testing purpose. This option enables the testing
-        data, so the ADC doesn't store samples, but fill the memory with
-        sequential numbers. Again, this applies to all cards in the system.
+        data, so the ADC doesn't store samples, but fills memory with
+        sequential numbers. The 64 bit data vector is filled with
+        sequential values from a free-running 25 bit counter: channel 0
+        sweeps the full range, channel 1 goes from 0 to 511, other channel
+        always report 0. Trigger detection is unaffected by use of test data.
 
 @item busid=NUMBER[,NUMBER...]
 
