@@ -6,6 +6,15 @@
 #define FMCADC_LIB_INT_H_
 
 /*
+ * offsetof and container_of come from kernel.h header file
+ */
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#define container_of(ptr, type, member) ({			\
+	const typeof( ((type *)0)->member ) *__mptr = ((void *)ptr);	\
+	(type *)( (char *)__mptr - offsetof(type,member) );})
+#define to_dev_zio(dev) (container_of(dev, struct __fmcadc_dev_zio, gid))
+
+/*
  * fmcadc_op: it describes the set of operation that a device library should
  * 	      support
  *
@@ -106,6 +115,19 @@ struct fmcadc_gid {
 /* Definition of board types */
 extern struct fmcadc_board_type fmcadc_100ms_4ch_14bit;
 
+/* Internal structure (ZIO specific, for ZIO drivers only) */
+struct __fmcadc_dev_zio {
+	unsigned int cset;
+	int fdc;
+	int fdd;
+	uint32_t dev_id;
+	unsigned long flags;
+	char *devbase;
+	char *sysbase;
+	/* Mandatory field */
+	struct fmcadc_gid gid;
+};
+#define FMCADC_FLAG_VERBOSE 0x00000001
 
 /* The following functions are defined in fmc-adc-zio, at the time being */
 
@@ -118,10 +140,6 @@ int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 				 unsigned int flags, struct timeval *timeout);
 int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
 				unsigned int flags);
-int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
-			    struct fmcadc_conf *conf);
-int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
-			       struct fmcadc_conf *conf);
 struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 						int nsamples,
 						void *(*alloc)(size_t),
@@ -132,5 +150,12 @@ int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 			      void (*free_fn)(void *));
 
 
+/* The following functions are in config-zio.c */
+int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
+			    struct fmcadc_conf *conf);
+int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
+			       struct fmcadc_conf *conf);
+int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
+		     uint32_t *value);
 
 #endif /* FMCADC_LIB_INT_H_ */
