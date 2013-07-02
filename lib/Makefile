@@ -6,7 +6,7 @@ LOBJ := route.o
 LOBJ += boards.o
 LOBJ += config-zio.o
 LOBJ += lib.o
-LOBJ += fmcadc-lib-zio.o
+LOBJ += fmc-adc-100m14b4cha.o
 
 CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include
 LDFLAGS = -L. -lfmcadc

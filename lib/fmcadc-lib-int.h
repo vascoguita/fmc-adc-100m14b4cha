@@ -129,13 +129,14 @@ struct __fmcadc_dev_zio {
 };
 #define FMCADC_FLAG_VERBOSE 0x00000001
 
-/* The following functions are defined in fmc-adc-zio, at the time being */
-
+/* Open and close live in board.c, as open scans the list of boards */ 
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 				   unsigned int dev_id,
 				   unsigned int details);
 struct fmcadc_dev *fmcadc_zio_open_by_lun(char *name, int lun);
 int fmcadc_zio_close(struct fmcadc_dev *dev);
+
+/* The board-specific functions are defined in fmc-adc-100m14b4cha.c */
 int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 				 unsigned int flags, struct timeval *timeout);
 int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
@@ -148,7 +149,6 @@ struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 			      struct fmcadc_buffer *buf,
 			      void (*free_fn)(void *));
-
 
 /* The following functions are in config-zio.c */
 int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
