@@ -4,6 +4,7 @@ ZIO ?= ../zio
 LIB = libfmcadc.a
 LOBJ := route.o
 LOBJ += boards.o
+LOBJ += lib.o
 LOBJ += fmcadc-lib-zio.o
 
 CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include
