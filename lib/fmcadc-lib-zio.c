@@ -24,8 +24,8 @@
 
 #include <linux/zio-user.h>
 
-#define FMCADCLIB_INTERNAL
 #include "fmcadc-lib.h"
+#include "fmcadc-lib-int.h"
 
 #define ZIO_DEV_PATH "/dev/zio"
 #define ZIO_SYS_PATH "/sys/bus/zio/devices"

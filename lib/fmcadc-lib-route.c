@@ -18,8 +18,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define FMCADCLIB_INTERNAL
 #include "fmcadc-lib.h"
+#include "fmcadc-lib-int.h"
 
 const struct fmcadc_board_type
 		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX] = {
