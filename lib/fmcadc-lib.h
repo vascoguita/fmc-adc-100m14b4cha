@@ -32,7 +32,9 @@ struct fmcadc_buffer {
 	void *metadata;
 	int samplesize;
 	int nsamples;
-	char *drivername;
+	struct fmcadc_dev *dev;
+	void *mapaddr;
+	unsigned long maplen;
 	unsigned long flags; /* internal to the library */
 };
 
