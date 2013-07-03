@@ -35,8 +35,10 @@ struct fmcadc_operations fa_100ms_4ch_14bit_op = {
 	.open =			fmcadc_zio_open,
 	.close =		fmcadc_zio_close,
 
-	.start_acquisition = fmcadc_zio_start_acquisition,
-	.stop_acquisition = fmcadc_zio_stop_acquisition,
+	.acq_start =		fmcadc_zio_acq_start,
+	.acq_poll =		fmcadc_zio_acq_poll,
+	.acq_stop =		fmcadc_zio_acq_stop,
+
 	.apply_config = fmcadc_zio_apply_config,
 	.retrieve_config = fmcadc_zio_retrieve_config,
 	.request_buffer = fmcadc_zio_request_buffer,

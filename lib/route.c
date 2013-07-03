@@ -21,60 +21,33 @@
 #include "fmcadc-lib.h"
 #include "fmcadc-lib-int.h"
 
-/* * * * * * * * * * * * * * * * * Handle Device * * * * * * * * * * * * * */
-
-/* * * * * * * * * * * * * * * Handle Acquisition * * * * * * * * * * * * * */
-/*
- * fmcadc_acq_start
- * @dev: device where to start acquiring
- * @flags:
- * @timeout: it can be used to specify how much time wait that acquisition is
- *           over. This value follow the select() policy: NULL to wait until
- *           acquisition is over; {0, 0} to return immediately without wait;
- *           {x, y} to wait acquisition end for a specified time
- */
 int fmcadc_acq_start(struct fmcadc_dev *dev,
 			     unsigned int flags,
 			     struct timeval *timeout)
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
 
-	if (!dev) {
-		/* dev cannot be NULL */
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (b->board->fa_op->start_acquisition) {
-		return b->board->fa_op->start_acquisition(dev, flags, timeout);
-	} else {
-		errno = FMCADC_ENOP;
-		return -1;
-	}
+	return b->fa_op->acq_start(dev, flags, timeout);
 }
 
-/*
- * fmcadc_acq_stop
- * @dev: device where to stop acquisition
- * @flags:
- */
+int fmcadc_acq_poll(struct fmcadc_dev *dev, unsigned int flags,
+		    struct timeval *timeout)
+{
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
+
+	return b->fa_op->acq_poll(dev, flags, timeout);
+}
+
 int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
 
-	if (!dev) {
-		/* dev cannot be NULL */
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (b->board->fa_op->stop_acquisition) {
-		return b->board->fa_op->stop_acquisition(dev, flags);
-	} else {
-		errno = FMCADC_ENOP;
-		return -1;
-	}
+	return b->fa_op->acq_stop(dev, flags);
 }
+
 
 
 /* * * * * * * * * * * * * * Handle Configuration * * * * * * * * * * * * * */

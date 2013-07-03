@@ -30,12 +30,10 @@ struct fmcadc_operations {
 	typeof(fmcadc_internal_open)	*open;
 	typeof(fmcadc_close)		*close;
 
-	/* Handle acquisition */
-	int (*start_acquisition)(struct fmcadc_dev *dev,
-				 unsigned int flags,
-				 struct timeval *timeout);
-	int (*stop_acquisition)(struct fmcadc_dev *dev,
-				unsigned int flags);
+	typeof(fmcadc_acq_start)	*acq_start;
+	typeof(fmcadc_acq_poll)		*acq_poll;
+	typeof(fmcadc_acq_stop)		*acq_stop;
+
 	/* Handle configuration */
 	int (*apply_config)(struct fmcadc_dev *dev,
 			    unsigned int flags,
@@ -102,10 +100,12 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 				   unsigned long flags);
 int fmcadc_zio_close(struct fmcadc_dev *dev);
 
-int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
-				 unsigned int flags, struct timeval *timeout);
-int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
-				unsigned int flags);
+int fmcadc_zio_acq_start(struct fmcadc_dev *dev,
+			 unsigned int flags, struct timeval *timeout);
+int fmcadc_zio_acq_poll(struct fmcadc_dev *dev, unsigned int flags,
+			struct timeval *timeout);
+int fmcadc_zio_acq_stop(struct fmcadc_dev *dev,
+			unsigned int flags);
 struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 						int nsamples,
 						void *(*alloc)(size_t),

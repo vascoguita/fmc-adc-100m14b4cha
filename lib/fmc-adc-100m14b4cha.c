@@ -31,9 +31,6 @@
 #define FMCADC_NCHAN 4
 
 /* * * * * * * * * *  Library Operations Implementation * * * * * * * * * * */
-int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
-				       unsigned int flags);
-
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 				   unsigned int dev_id,
 				   unsigned long totalsize,
@@ -107,20 +104,41 @@ int fmcadc_zio_close(struct fmcadc_dev *dev)
 	fa->fdd = -1;
 
 	/* Stop active acquisition */
-	fmcadc_zio_stop_acquisition(dev, 0);
+	fmcadc_zio_acq_stop(dev, 0);
 
 	free(fa->sysbase);
 	free(fa->devbase);
 	free(fa);
 	return 0;
 }
-/* Handle acquisition */
-int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
-		unsigned int flags, struct timeval *timeout)
+
+/* poll is used by start, so it's defined first */
+int fmcadc_zio_acq_poll(struct fmcadc_dev *dev,
+			unsigned int flags, struct timeval *timeout)
+{
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	fd_set set;
+	int err;
+
+	FD_ZERO(&set);
+	FD_SET(fa->fdc, &set);
+	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
+	switch (err) {
+	case 0:
+		errno = EAGAIN;
+		return -1;
+	case 1:
+		return 0;
+	default:
+		return err;
+	}
+}
+
+int fmcadc_zio_acq_start(struct fmcadc_dev *dev,
+			 unsigned int flags, struct timeval *timeout)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	uint32_t cmd;
-	fd_set set;
 	int err;
 
 	if (fa->fdc < 0) {
@@ -137,22 +155,13 @@ int fmcadc_zio_start_acquisition(struct fmcadc_dev *dev,
 		return err;
 	}
 
-	/* So, first sample and blocking read. Wait.. */
-	FD_ZERO(&set);
-	FD_SET(fa->fdc, &set);
-	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
-	switch (err) {
-	case 0:
-		errno = EAGAIN;
-		return -1;
-	case 1:
+	if (timeout && timeout->tv_sec == 0 && timeout->tv_usec == 0)
 		return 0;
-	default:
-		return err;
-	}
+
+	return fmcadc_zio_acq_poll(dev, flags, timeout);
 }
-int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
-		unsigned int flags)
+
+int fmcadc_zio_acq_stop(struct fmcadc_dev *dev,	unsigned int flags)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	uint32_t cmd = 2;
