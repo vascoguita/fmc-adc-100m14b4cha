@@ -29,6 +29,7 @@ static void fald_help()
 	printf("  --under-sample|-U <num>  pick 1 sample every <num>\n");
 	printf("  --threshold|-t <num>     internal trigger threshold\n");
 	printf("  --channel|-c <num>       internal channel to use as trigger (0..3)\n");
+	printf("  --tiemout|-T <millisec>  timeout for acquisition\n");
 	printf("  --negative-edge          internal trigger is falling edge\n");
 	printf("  --binary|-B <file>       save binary to <file>\n");
 	printf("  --multi-binary|-M <file> save two files per shot: <file>.0000.ctrl etc\n");
@@ -47,6 +48,7 @@ static struct option options[] = {
 	{"under-sample",required_argument, 0, 'u'},
 	{"threshold",	required_argument, 0, 't'},
 	{"channel",	required_argument, 0, 'c'},
+	{"timeout",	required_argument, 0, 'T'},
 	{"negative-edge", no_argument, &trgval[FMCADC_CONF_TRG_POLARITY], 1},
 
 	/* new options, to help stress-test */
@@ -63,7 +65,7 @@ static struct option options[] = {
 	{0, 0, 0, 0}
 };
 
-#define GETOPT_STRING "b:a:n:d:u:t:c:B:M:Np:P:D:h"
+#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:Np:P:D:h"
 
 int main(int argc, char *argv[])
 {
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
 	struct fmcadc_conf trg, acq;
 	int i, c, err, opt_index, binmode = 0;
 	int nshots = 1, presamples = 0, postsamples = 16;
+	int timeout = -1;
 	unsigned int dev_id = 0;
 	char *basefile = NULL;
 	char fname[PATH_MAX];
@@ -128,6 +131,9 @@ int main(int argc, char *argv[])
 			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE, 0);
 			fmcadc_set_conf(&trg, FMCADC_CONF_TRG_SOURCE_CHAN,
 					atoi(optarg));
+			break;
+		case 'T':
+			timeout = atoi(optarg);
 			break;
 		case 'B':
 			binmode = 1; /* do binary (default is 0) */
@@ -210,11 +216,30 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* Start acquisition and wait until it completes */
-	err = fmcadc_acq_start(adc, 0 , NULL);
+	if (timeout < 0) {
+		/* Start acquisition and wait until it completes */
+		err = fmcadc_acq_start(adc, 0 , NULL);
+	} else {
+		/* Start acquisition and don't wait. We use acq_poll() later */
+		struct timeval tv = {0, 0};
+
+		err = fmcadc_acq_start(adc, 0 , &tv);
+	}
 	if (err) {
 		fprintf(stderr, "%s: cannot start acquisition: %s\n",
 			argv[0], fmcadc_strerror(errno));
+		exit(1);
+	}
+
+	/* Now, if a timeout was specified, use the poll method */
+	if (timeout >= 0) {
+		struct timeval tv = {timeout / 1000, timeout % 1000};
+
+		err = fmcadc_acq_poll(adc, 0 , &tv);
+	}
+	if (err) {
+		fprintf(stderr, "%s: timeout after %i ms: %s\n", argv[0],
+			timeout, strerror(errno));
 		exit(1);
 	}
 
