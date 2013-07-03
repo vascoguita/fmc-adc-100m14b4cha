@@ -2,15 +2,17 @@
 ZIO ?= ../zio
 
 LIB = libfmcadc.a
-LOBJ := fmcadc-lib-route.o
-LOBJ += fmcadc-lib-zio.o
+LOBJ := route.o
+LOBJ += boards.o
+LOBJ += config-zio.o
+LOBJ += buffer-zio.o
+LOBJ += lib.o
+LOBJ += fmc-adc-100m14b4cha.o
 
 CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include
 LDFLAGS = -L. -lfmcadc
 
-modules all: lib
-
-lib: $(LIB)
+modules all: $(LIB)
 
 
 %: %.c $(LIB)

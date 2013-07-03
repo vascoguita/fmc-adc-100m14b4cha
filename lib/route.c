@@ -1,5 +1,5 @@
 /*
- * Initializing and cleaning up the fmc adc library
+ * Routing public functions to device-specific code
  *
  * Copyright (C) 2013 CERN (www.cern.ch)
  * Author: Federico Vaga <federico.vaga@gmail.com>
@@ -18,8 +18,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define FMCADCLIB_INTERNAL
 #include "fmcadc-lib.h"
+#include "fmcadc-lib-int.h"
 
 const struct fmcadc_board_type
 		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX] = {
@@ -28,85 +28,6 @@ const struct fmcadc_board_type
 
 
 /* * * * * * * * * * * * * * * * * Handle Device * * * * * * * * * * * * * */
-/* fmcadc_open
- * @name: name of the device type to open
- * @dev_id: device identificator of a particular device connected to the system
- */
-struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-				      unsigned long buffersize,
-				      unsigned int nbuffer,
-				      unsigned long flags)
-{
-	struct fmcadc_dev *dev = NULL;
-	int i, found = 0;
-
-	/* name cannot be NULL */
-	if (!name)
-		return NULL;
-
-	/* Look in the list of supported board if the "name" board is there */
-	for (i = 0; i < __FMCADC_SUPPORTED_BOARDS_LAST_INDEX; ++i) {
-		if (!strcmp(name, fmcadc_board_types[i]->name)) {
-			found = 1;
-			break;
-		}
-	}
-	if (!found) {
-		errno = ENODEV;
-		return NULL; /* Not found */
-	}
-
-	/* The library supports this board */
-	if (fmcadc_board_types[i]->fa_op && fmcadc_board_types[i]->fa_op->open) {
-		dev = fmcadc_board_types[i]->fa_op->open(fmcadc_board_types[i],
-							 dev_id, flags);
-	} else {
-		errno = FMCADC_ENOP;
-	}
-
-	return dev;
-}
-
-/*
- * fmcadc_open_by_lun
- * @name: name of the device type to open
- * @lun: Logical Unit Number of the device
- *
- * TODO
- */
-struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
-					     unsigned long buffersize,
-					     unsigned int nbuffer,
-					     unsigned long flags)
-{
-	if (!name)
-		return NULL;
-
-	return NULL;
-}
-
-/*
- * fmcadc_close
- * @dev: the device to close
- */
-int fmcadc_close(struct fmcadc_dev *dev)
-{
-	struct fmcadc_gid *b = (void *)dev;
-
-	if (!dev) {
-		/* dev cannot be NULL */
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (b->board->fa_op->close) {
-		return b->board->fa_op->close(dev);
-	} else {
-		errno = FMCADC_ENOP;
-		return -1;
-	}
-}
-
 
 /* * * * * * * * * * * * * * * Handle Acquisition * * * * * * * * * * * * * */
 /*
@@ -301,49 +222,4 @@ int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf,
 		errno = FMCADC_ENOP;
 		return -1;
 	}
-}
-
-
-/* * * * * * * * * * * * * * * * Utilities * * * * * * * * * * * * * * * * */
-/*
- * fmcadc_strerror
- * @dev: device for which you want to know the meaning of the error
- * @errnum: error number
- */
-
-static struct fmcadc_errors {
-	int num;
-	char *str;
-} fmcadc_errors[] = {
-	{ FMCADC_ENOP,		"Operation not supported"},
-	{ FMCADC_ENOCAP,	"Capabilities not supported"},
-	{ FMCADC_ENOCFG,	"Configuration type not supported"},
-	{ FMCADC_ENOGET,	"Cannot get capabilities information"},
-	{ FMCADC_ENOSET,	"Cannot set capabilities information"},
-	{ FMCADC_ENOCHAN,	"Invalid channel"},
-	{ FMCADC_ENOMASK,	"Missing configuration mask"},
-	{ 0, }
-};
-
-char *fmcadc_strerror(int errnum)
-{
-	struct fmcadc_errors *p;
-
-	if (errnum < __FMCADC_ERRNO_START)
-		return strerror(errnum);
-	for (p = fmcadc_errors; p->num; p++)
-		if (p->num == errnum)
-			return p->str;
-	return "Unknown error code";
-}
-
-/*
- * fmcadc_get_driver_type
- * @dev: device which want to know the driver type
- */
-char *fmcadc_get_driver_type(struct fmcadc_dev *dev)
-{
-	struct fmcadc_gid *b = (void *)dev;
-
-	return b->board->driver_type;
 }
