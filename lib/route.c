@@ -21,12 +21,6 @@
 #include "fmcadc-lib.h"
 #include "fmcadc-lib-int.h"
 
-const struct fmcadc_board_type
-		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX] = {
-	&fmcadc_100ms_4ch_14bit,
-};
-
-
 /* * * * * * * * * * * * * * * * * Handle Device * * * * * * * * * * * * * */
 
 /* * * * * * * * * * * * * * * Handle Acquisition * * * * * * * * * * * * * */

@@ -26,7 +26,6 @@
 #include "fmcadc-lib.h"
 #include "fmcadc-lib-int.h"
 
-#define ZIO_DEV_PATH "/dev/zio"
 #define ZIO_SYS_PATH "/sys/bus/zio/devices"
 
 #define FMCADC_NCHAN 4
@@ -35,48 +34,35 @@
 int fmcadc_zio_stop_acquisition(struct fmcadc_dev *dev,
 				       unsigned int flags);
 
-struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
-					  unsigned int dev_id,
-					  unsigned int details)
+struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
+				   unsigned int dev_id,
+				   unsigned long totalsize,
+				   unsigned int nbuffer,
+				   unsigned long flags)
 {
-	struct __fmcadc_dev_zio *fa = NULL;
+	struct __fmcadc_dev_zio *fa;
 	struct stat st;
 	char *syspath, *devpath, fname[128];
 	int udev_zio_dir = 1;
 
-	if (strlen(dev->devname) > 12) {
-		fprintf(stderr,
-				"%s: name \"%s\" is too long. ZIO's name are 12byte\n",
-				__func__, dev->devname);
-		return NULL ;
-	}
-
 	/* check if device exists by looking in ZIO sysfs */
-	asprintf(&syspath, "%s/%s-%04x", ZIO_SYS_PATH, dev->devname, dev_id);
-	if (stat(syspath, &st)) {
-		goto out_fa_stat;
-	}
+	asprintf(&syspath, "%s/%s-%04x", ZIO_SYS_PATH, b->devname, dev_id);
+	if (stat(syspath, &st))
+		goto out_fa_stat; /* ENOENT or equivalent */
 
-	/* Check where are ZIO char devices x*/
-	if (stat(ZIO_DEV_PATH, &st)) {
-		/*
-		 * ZIO driver are not in /dev/zio, but in /dev with all other
-		 * drivers
-		 */
+	/* ZIO char devices are in /dev/zio or just /dev (older udev) */
+	if (stat("/dev/zio", &st) < 0)
 		udev_zio_dir = 0;
-	}
-	asprintf(&devpath, "%s/%s-%04x", (udev_zio_dir ? ZIO_DEV_PATH : "/dev"),
-			dev->devname, dev_id);
+	asprintf(&devpath, "%s/%s-%04x", (udev_zio_dir ? "/dev/zio" : "/dev"),
+		 b->devname, dev_id);
 
-	/* Path exists, so device is there */
-
+	/* Sysds path exists, so device is there, hopefully */
 	fa = calloc(1, sizeof(*fa));
-	if (!fa) {
+	if (!fa)
 		goto out_fa_alloc;
-	}
 	fa->sysbase = syspath;
 	fa->devbase = devpath;
-	fa->cset = details;
+	fa->cset = 0;
 
 	/* Open char devices */
 	sprintf(fname, "%s-0-i-ctrl", fa->devbase);
@@ -84,9 +70,9 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 	sprintf(fname, "%s-0-i-data", fa->devbase);
 	fa->fdd = open(fname, O_RDONLY);
 	if (fa->fdc < 0 || fa->fdd < 0)
-	    goto out_fa_open;
+		goto out_fa_open;
 
-	fa->gid.board = dev;
+	fa->gid.board = b;
 
 	/* Finally, support verbose operation */
 	if (getenv("LIB_FMCADC_VERBOSE"))
@@ -95,20 +81,19 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *dev,
 	return (void *) &fa->gid;
 
 out_fa_open:
+	if (fa->fdc >= 0)
+		close(fa->fdc);
+	if (fa->fdd >= 0)
+		close(fa->fdd);
 	free(fa);
 out_fa_alloc:
 	free(devpath);
 out_fa_stat:
 	free(syspath);
 
-	return NULL ;
+	return NULL;
 }
 
-struct fmcadc_dev *fmcadc_zio_open_by_lun(char *name, int lun)
-{
-	/* TODO implement*/
-	return NULL ;
-}
 int fmcadc_zio_close(struct fmcadc_dev *dev)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);

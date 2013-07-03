@@ -26,9 +26,6 @@ enum fmcadc_supported_board {
 	__FMCADC_SUPPORTED_BOARDS_LAST_INDEX,
 };
 
-extern const struct fmcadc_board_type
-		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX];
-
 /* The buffer hosts data and metadata, plus informative fields */
 struct fmcadc_buffer {
 	void *data;
