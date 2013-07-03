@@ -30,7 +30,6 @@
 
 #define FMCADC_NCHAN 4
 
-/* * * * * * * * * *  Library Operations Implementation * * * * * * * * * * */
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 				   unsigned int dev_id,
 				   unsigned long totalsize,
@@ -42,7 +41,7 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 	char *syspath, *devpath, fname[128];
 	int udev_zio_dir = 1;
 
-	/* check if device exists by looking in ZIO sysfs */
+	/* Check if device exists by looking in sysfs */
 	asprintf(&syspath, "%s/%s-%04x", ZIO_SYS_PATH, b->devname, dev_id);
 	if (stat(syspath, &st))
 		goto out_fa_stat; /* ENOENT or equivalent */
@@ -53,7 +52,7 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 	asprintf(&devpath, "%s/%s-%04x", (udev_zio_dir ? "/dev/zio" : "/dev"),
 		 b->devname, dev_id);
 
-	/* Sysds path exists, so device is there, hopefully */
+	/* Sysfs path exists, so device is there, hopefully */
 	fa = calloc(1, sizeof(*fa));
 	if (!fa)
 		goto out_fa_alloc;
@@ -95,17 +94,8 @@ int fmcadc_zio_close(struct fmcadc_dev *dev)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 
-	/* If char device are open, close it */
-	if (fa->fdc >= 0)
-		close(fa->fdc);
-	fa->fdc = -1;
-	if (fa->fdd >= 0)
-		close(fa->fdd);
-	fa->fdd = -1;
-
-	/* Stop active acquisition */
-	fmcadc_zio_acq_stop(dev, 0);
-
+	close(fa->fdc);
+	close(fa->fdd);
 	free(fa->sysbase);
 	free(fa->devbase);
 	free(fa);
@@ -138,22 +128,12 @@ int fmcadc_zio_acq_start(struct fmcadc_dev *dev,
 			 unsigned int flags, struct timeval *timeout)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
-	uint32_t cmd;
+	uint32_t cmd = 1; /* hw command for "start" */
 	int err;
 
-	if (fa->fdc < 0) {
-		errno = EIO;
-		return -1;
-	}
-
-	cmd = 1;
 	err = fa_zio_sysfs_set(fa, "cset0/fsm-command", &cmd);
-	if (err) {
-		/*
-		 * It returns error when we cannot start
-		 */
+	if (err)
 		return err;
-	}
 
 	if (timeout && timeout->tv_sec == 0 && timeout->tv_usec == 0)
 		return 0;
@@ -164,7 +144,7 @@ int fmcadc_zio_acq_start(struct fmcadc_dev *dev,
 int fmcadc_zio_acq_stop(struct fmcadc_dev *dev,	unsigned int flags)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
-	uint32_t cmd = 2;
+	uint32_t cmd = 2; /* hw command for "stop" */
 
 	return fa_zio_sysfs_set(fa, "cset0/fsm-command", &cmd);
 }
