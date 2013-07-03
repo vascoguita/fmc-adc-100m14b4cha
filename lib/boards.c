@@ -39,8 +39,9 @@ struct fmcadc_operations fa_100ms_4ch_14bit_op = {
 	.acq_poll =		fmcadc_zio_acq_poll,
 	.acq_stop =		fmcadc_zio_acq_stop,
 
-	.apply_config = fmcadc_zio_apply_config,
-	.retrieve_config = fmcadc_zio_retrieve_config,
+	.apply_config =		fmcadc_zio_apply_config,
+	.retrieve_config =	fmcadc_zio_retrieve_config,
+
 	.request_buffer = fmcadc_zio_request_buffer,
 	.release_buffer = fmcadc_zio_release_buffer,
 };

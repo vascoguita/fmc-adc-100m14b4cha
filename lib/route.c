@@ -48,87 +48,43 @@ int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 	return b->fa_op->acq_stop(dev, flags);
 }
 
-
-
-/* * * * * * * * * * * * * * Handle Configuration * * * * * * * * * * * * * */
-/*
- * fmcadc_apply_config
- * @dev: device to configure
- * @flags:
- * @conf: configuration to apply on device.
- */
 int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			struct fmcadc_conf *conf)
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
 	uint64_t cap_mask;
 
-	if (!conf || !dev) {
-		/* conf and dev cannot be NULL*/
-		errno = EINVAL;
-		return -1;
-	}
 	if (!conf->mask) {
 		errno = FMCADC_ENOMASK;
 		return -1; /* Nothing to do */
 	}
-	cap_mask = b->board->capabilities[conf->type];
+	cap_mask = b->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
-		fprintf(stderr, "Apply Config, wrong mask 0x%llx (0x%llx)",
-			conf->mask, cap_mask);
 		errno = FMCADC_ENOCAP;
 		return -1;
 	}
-
-	if (b->board->fa_op->apply_config) {
-		/* Apply config */
-		return b->board->fa_op->apply_config(dev, flags, conf);
-	} else {
-		/* Unsupported */
-		errno = FMCADC_ENOP;
-		return -1;
-	}
+	return b->fa_op->apply_config(dev, flags, conf);
 }
 
-/*
- * fmcadc_retrieve_config
- * @dev: device where retireve configuration
- * @flags:
- * @conf: configuration to retrieve. The mask tell which value acquire, then
- *        the library will acquire and set the value in the "value" array
- */
 int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
 	uint64_t cap_mask;
 
-	if (!conf || !dev) {
-		/* conf and dev cannot be NULL*/
-		errno = EINVAL;
-		return -1;
-	}
 	if (!conf->mask) {
 		errno = FMCADC_ENOMASK;
 		return -1; /* Nothing to do */
 	}
-	cap_mask = b->board->capabilities[conf->type];
+	cap_mask = b->capabilities[conf->type];
 	if ((cap_mask & conf->mask) != conf->mask) {
 		/* Unsupported capabilities */
-		fprintf(stderr, "Apply Config, wrong mask 0x%llx (0x%llx)",
-			conf->mask, cap_mask);
 		errno = FMCADC_ENOCAP;
 		return -1;
 	}
-
-	if (b->board->fa_op->retrieve_config) {
-		/* Apply config */
-		return b->board->fa_op->retrieve_config(dev, conf);
-	} else {
-		/* Unsupported */
-		errno = FMCADC_ENOP;
-		return -1;
-	}
+	return b->fa_op->retrieve_config(dev, conf);
 }
 
 /*

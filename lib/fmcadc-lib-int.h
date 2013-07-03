@@ -34,12 +34,9 @@ struct fmcadc_operations {
 	typeof(fmcadc_acq_poll)		*acq_poll;
 	typeof(fmcadc_acq_stop)		*acq_stop;
 
-	/* Handle configuration */
-	int (*apply_config)(struct fmcadc_dev *dev,
-			    unsigned int flags,
-			    struct fmcadc_conf *conf);
-	int (*retrieve_config)(struct fmcadc_dev *dev,
-			       struct fmcadc_conf *conf);
+	typeof(fmcadc_apply_config)	*apply_config;
+	typeof(fmcadc_retrieve_config)	*retrieve_config;
+
 	/* Handle buffers */
 	struct fmcadc_buffer *(*request_buffer)(struct fmcadc_dev *dev,
 					       int nsamples,
