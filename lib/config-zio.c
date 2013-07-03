@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -24,33 +25,20 @@
 #define FMCADC_CONF_GET 0
 #define FMCADC_CONF_SET 1
 
-/*
- * __fa_zio_sysfs_get
- * @path: path to the sysfs attribute
- * @resp: value returned by the sysfs attribute
- */
 static int __fa_zio_sysfs_get(char *path, uint32_t *resp)
 {
 	FILE *f = fopen(path, "r");
+	int ret;
 
 	if (!f)
 		return -1;
-	errno = 0;
-	if (fscanf(f, "%i", resp) != 1) {
-		fclose(f);
-		if (!errno)
-			errno = EINVAL;
-		return -1;
-	}
+	errno = EINVAL; /* in case it's a scanf-only error */
+	if (fscanf(f, "%i", resp) != 1)
+		ret = -1;
 	fclose(f);
 	return 0;
 }
 
-/*
- * __fa_zio_sysfs_set
- * @path: path to the sysfs attribute
- * @value: value to set in the sysfs attribute
- */
 static int __fa_zio_sysfs_set(char *path, uint32_t *value)
 {
 	char s[16];
@@ -70,25 +58,20 @@ static int __fa_zio_sysfs_set(char *path, uint32_t *value)
 	return -1;
 }
 
-/*
- * fa_zio_sysfs_get
- * @fa: device owner of the attribute
- * @name: relative path to the sysfs attribute within the device
- * @resp: value returned by the sysfs attribute
- */
 static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *resp)
 {
 	char pathname[128];
 	int ret;
 
-	sprintf(pathname, "%s/%s", fa->sysbase, name);
+	snprintf(pathname, sizeof(pathname), "%s/%s", fa->sysbase, name);
 	ret = __fa_zio_sysfs_get(pathname, resp);
 	if (!(fa->flags & FMCADC_FLAG_VERBOSE))
 		return ret;
 	/* verbose tail */
 	if (ret)
-		fprintf(stderr, "lib-fmcadc: Error reading %s\n", pathname);
+		fprintf(stderr, "lib-fmcadc: Error reading %s (%s)\n",
+			pathname, strerror(errno));
 	else
 		fprintf(stderr, "lib-fmcadc: %08x %5i <- %s\n",
 			(int)*resp, (int)*resp, pathname);
@@ -107,13 +90,14 @@ int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 	char pathname[128];
 	int ret;
 
-	sprintf(pathname, "%s/%s", fa->sysbase, name);
+	snprintf(pathname, sizeof(pathname), "%s/%s", fa->sysbase, name);
 	ret = __fa_zio_sysfs_set(pathname, value);
 	if (!(fa->flags & FMCADC_FLAG_VERBOSE))
 		return ret;
 	/* verbose tail */
 	if (ret)
-		fprintf(stderr, "lib-fmcadc: Error writing %s\n", pathname);
+		fprintf(stderr, "lib-fmcadc: Error writing %s (%s)\n",
+			pathname, strerror(errno));
 	else
 		fprintf(stderr, "lib-fmcadc: %08x %5i -> %s\n",
 			(int)*value, (int)*value, pathname);
