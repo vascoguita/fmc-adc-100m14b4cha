@@ -153,6 +153,10 @@ extern int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			       struct fmcadc_conf *conf);
 extern int fmcadc_retrieve_config(struct fmcadc_dev *dev,
 				 struct fmcadc_conf *conf);
+extern int fmcadc_get_param(struct fmcadc_dev *dev, char *name,
+			    char *sptr, int *iptr);
+extern int fmcadc_set_param(struct fmcadc_dev *dev, char *name,
+			    char *sptr, int *iptr);
 
 extern struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 						   int nsamples,

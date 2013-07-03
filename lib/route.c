@@ -87,61 +87,63 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 	return b->fa_op->retrieve_config(dev, conf);
 }
 
-/*
- * fmcadc_request_buffer
- * @dev: device where look for a buffer
- * @nsamples: size of this buffer
- * @alloc: user-defined allocator
- * @flags:
- * @timeout: it can be used to specify how much time wait that a buffer is
- *           ready. This value follow the select() policy: NULL to wait until
- *           acquisition is over; {0, 0} to return immediately without wait;
- *           {x, y} to wait acquisition end for a specified time
- */
+int fmcadc_get_param(struct fmcadc_dev *dev, char *name,
+		     char *sptr, int *iptr)
+{
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
+
+	return b->fa_op->get_param(dev, name, sptr, iptr);
+}
+
+int fmcadc_set_param(struct fmcadc_dev *dev, char *name,
+		     char *sptr, int *iptr)
+{
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
+
+	return b->fa_op->set_param(dev, name, sptr, iptr);
+}
+
 struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 					    int nsamples,
 					    void *(*alloc)(size_t),
 					    unsigned int flags)
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
 
-	if (!dev) {
-		/* dev cannot be NULL */
-		errno = EINVAL;
-		return NULL;
-	}
-
-	if (b->board->fa_op->request_buffer) {
-		return b->board->fa_op->request_buffer(dev, nsamples,
-						       alloc, flags);
-	} else {
-		/* Unsupported */
-		errno = FMCADC_ENOP;
-		return NULL;
-	}
+	return b->fa_op->request_buffer(dev, nsamples, alloc, flags);
 }
 
-/*
- * fmcadc_release_buffer
- * @dev: device that generate the buffer
- * @buf: buffer to release
- */
+int fmcadc_fill_buffer(struct fmcadc_dev *dev,
+		       struct fmcadc_buffer *buf,
+		       unsigned int flags,
+		       struct timeval *timeout)
+{
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
+
+	return b->fa_op->fill_buffer(dev, buf, flags, timeout);
+}
+
+struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
+					      struct fmcadc_timestamp *ts)
+{
+	struct fmcadc_gid *g = (void *)buf->dev;
+	const struct fmcadc_board_type *b = g->board;
+
+	return b->fa_op->tstamp_buffer(buf, ts);
+}
+
 int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf,
 			  void (*free)(void *))
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *g = (void *)dev;
+	const struct fmcadc_board_type *b = g->board;
 
-	if (!dev || !buf) {
-		/* dev and buf cannot be NULL */
-		errno = EINVAL;
-		return -1;
-	}
+	if (!buf)
+		return 0;
 
-	if (b->board->fa_op->release_buffer) {
-		return b->board->fa_op->release_buffer(dev, buf, free);
-	} else {
-		/* Unsupported */
-		errno = FMCADC_ENOP;
-		return -1;
-	}
+	return b->fa_op->release_buffer(dev, buf, free);
 }

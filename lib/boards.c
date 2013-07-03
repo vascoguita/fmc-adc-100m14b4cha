@@ -42,6 +42,9 @@ struct fmcadc_operations fa_100ms_4ch_14bit_op = {
 	.apply_config =		fmcadc_zio_apply_config,
 	.retrieve_config =	fmcadc_zio_retrieve_config,
 
+	.get_param =		fmcadc_zio_get_param,
+	.set_param =		fmcadc_zio_set_param,
+
 	.request_buffer =	fmcadc_zio_request_buffer,
 	.fill_buffer =		fmcadc_zio_fill_buffer,
 	.tstamp_buffer =	fmcadc_zio_tstamp_buffer,

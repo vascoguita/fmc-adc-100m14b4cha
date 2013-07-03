@@ -36,6 +36,8 @@ struct fmcadc_operations {
 
 	typeof(fmcadc_apply_config)	*apply_config;
 	typeof(fmcadc_retrieve_config)	*retrieve_config;
+	typeof(fmcadc_get_param)	*get_param;
+	typeof(fmcadc_set_param)	*set_param;
 
 	typeof(fmcadc_request_buffer)	*request_buffer;
 	typeof(fmcadc_fill_buffer)	*fill_buffer;
@@ -78,10 +80,14 @@ struct __fmcadc_dev_zio {
 	unsigned long flags;
 	char *devbase;
 	char *sysbase;
+	unsigned long samplesize;
+	unsigned long pagesize;
 	/* Mandatory field */
 	struct fmcadc_gid gid;
 };
 #define FMCADC_FLAG_VERBOSE 0x00000001
+#define FMCADC_FLAG_MALLOC  0x00000002 /* allocate data */
+#define FMCADC_FLAG_MMAP    0x00000004 /* mmap data */
 
 /* The board-specific functions are defined in fmc-adc-100m14b4cha.c */
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
@@ -116,6 +122,12 @@ int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			    struct fmcadc_conf *conf);
 int fmcadc_zio_retrieve_config(struct fmcadc_dev *dev,
 			       struct fmcadc_conf *conf);
+int fmcadc_zio_set_param(struct fmcadc_dev *dev, char *name,
+			 char *sptr, int *iptr);
+int fmcadc_zio_get_param(struct fmcadc_dev *dev, char *name,
+			 char *sptr, int *iptr);
+
+
 int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 		     uint32_t *value);
 

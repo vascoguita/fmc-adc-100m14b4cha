@@ -70,6 +70,13 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 
 	fa->gid.board = b;
 
+	/*
+	 * We need to save the page size and samplesize.
+	 * Samplesize includes the nchan in the count.
+	 */
+	fa->samplesize = 8; /* FIXME: should read sysfs instead -- where? */
+	fa->pagesize = getpagesize();
+
 	/* Finally, support verbose operation */
 	if (getenv("LIB_FMCADC_VERBOSE"))
 		fa->flags |= FMCADC_FLAG_VERBOSE;

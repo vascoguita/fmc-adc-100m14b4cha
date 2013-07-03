@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/select.h>
@@ -24,68 +25,91 @@
 #include "fmcadc-lib.h"
 #include "fmcadc-lib-int.h"
 
-
-struct zio_control *fmcadc_zio_read_ctrl(struct __fmcadc_dev_zio *fa)
+/* Internal function to read the control, already allocated in the buffer */
+static int fmcadc_zio_read_ctrl(struct __fmcadc_dev_zio *fa,
+				struct fmcadc_buffer *buf)
 {
 	struct zio_control *ctrl;
 	int i;
 
-	ctrl = malloc(sizeof(struct zio_control));
-	if (!ctrl)
-		return NULL;
+	i = read(fa->fdc, buf->metadata, sizeof(struct zio_control));
 
-	i = read(fa->fdc, ctrl, sizeof(struct zio_control));
 	switch (i) {
-	case -1:
-		fprintf(stderr, "control read: %s\n",
-			strerror(errno));
-		return NULL;
-	case 0:
-		fprintf(stderr, "control read: unexpected EOF\n");
-		return NULL;
-	default:
-		fprintf(stderr, "ctrl read: %i bytes (expected %zi)\n",
-			i, sizeof(ctrl));
-		return NULL;
 	case sizeof(struct zio_control):
-		break; /* ok */
+		return 0; /* ok */
+
+	case -1:
+		if (fa->flags & FMCADC_FLAG_VERBOSE)
+			fprintf(stderr, "%s: read: %s\n", __func__,
+				strerror(errno));
+		return -1;
+	case 0:
+		if (fa->flags & FMCADC_FLAG_VERBOSE)
+			fprintf(stderr, "%s: unexpected EOF\n", __func__);
+		return -1;
+	default:
+		if (fa->flags & FMCADC_FLAG_VERBOSE)
+			fprintf(stderr, "%s: read: %i bytes (expected %zi)\n",
+				__func__, i, sizeof(ctrl));
+		return -1;
 	}
-
-	return ctrl;
-}
-static void fmcadc_zio_release_ctrl(struct zio_control *ctrl)
-{
-	free(ctrl);
 }
 
-static void *fmcadc_zio_read_data(struct __fmcadc_dev_zio *fa,
-				  unsigned int datalen)
+/* Internal function to read or map the data, already allocated in the buffer */
+static int fmcadc_zio_read_data(struct __fmcadc_dev_zio *fa,
+				  struct fmcadc_buffer *buf)
 {
-	void *data;
+	struct zio_control *ctrl = buf->metadata;
+	int datalen;
+	int samplesize = buf->samplesize; /* Careful: includes n_chan */
 	int i;
 
-	data = malloc(datalen);
-	if (!data)
-		return NULL;
+	/* we allocated buf->nsamples, we can have more or less */
+	if (buf->nsamples < ctrl->nsamples)
+		 datalen = samplesize * buf->nsamples;
+	else
+		datalen = samplesize * ctrl->nsamples;
 
-	i = read(fa->fdd, data, datalen);
-	if (i > 0 && i <= datalen){
-		if (i < datalen)
-			fprintf(stderr, "data read: %i bytes (expected %i)\n",
-				i, datalen);
-		return data;
-	} else {
-		if (i == 0)
-			fprintf(stderr, "data read: unexpected EOF\n");
-		else
-			fprintf(stderr, "data read: %s\n", strerror(errno));
-		return NULL;
+	if (fa->flags & FMCADC_FLAG_MMAP) {
+		unsigned long mapoffset  = ctrl->mem_offset;
+		unsigned long pagemask = fa->pagesize - 1;
+
+		if (buf->mapaddr) /* unmap previous block */
+			munmap(buf->mapaddr, buf->maplen);
+
+		buf->maplen = (mapoffset & pagemask) + datalen;
+		buf->mapaddr = mmap(0, buf->maplen, PROT_READ, MAP_SHARED,
+				    fa->fdd, mapoffset & ~pagemask);
+		if (buf->mapaddr == MAP_FAILED)
+			return -1;
+		buf->data = buf->mapaddr + (mapoffset & pagemask);
+		return 0;
 	}
+
+	/* read */
+	i = read(fa->fdd, buf->data, datalen);
+	if (i == datalen)
+		return 0;
+	if (i > 0) {
+		if (fa->flags & FMCADC_FLAG_VERBOSE)
+			fprintf(stderr, "%s: read %i bytes (exp. %i)\n",
+				__func__, i, datalen);
+		buf->nsamples = i / fa->samplesize;
+		/* short read is allowed */
+		return 0;
+	}
+	if (i == 0) {
+		if (fa->flags & FMCADC_FLAG_VERBOSE)
+			fprintf(stderr, "%s: unexpected EOF\n", __func__);
+		errno = ENODATA;
+		return -1;
+	}
+	if (fa->flags & FMCADC_FLAG_VERBOSE)
+		fprintf(stderr, "%s: %s\n", __func__, strerror(errno));
+	return -1;
 }
-static void fmcadc_zio_release_data(void *data)
-{
-	free(data);
-}
+
+/* externally-called: malloc buffer and metadata, do your best with data */
 struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 						int nsamples,
 						void *(*alloc)(size_t),
@@ -93,45 +117,51 @@ struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	struct fmcadc_buffer *buf;
-	struct zio_control *ctrl;
-	void *data;
-	fd_set set;
-	int err;
-	unsigned int len;
+	char s[16];
+
+	/* If this is the first buffer, we need to know which kind it is */
+	if ((fa->flags & (FMCADC_FLAG_MALLOC | FMCADC_FLAG_MMAP)) == 0) {
+		fmcadc_get_param(dev, "cset0/current_buffer", s, NULL);
+		if (!strcmp(s, "vmalloc"))
+			fa->flags |= FMCADC_FLAG_MMAP;
+		else
+			fa->flags |= FMCADC_FLAG_MALLOC;
+	}
 
 	buf = calloc(1, sizeof(*buf));
-	if (!buf)
+	if (!buf) {
+		errno = ENOMEM;
 		return NULL;
-
-	/* So, first sample and blocking read. Wait.. */
-	FD_ZERO(&set);
-	FD_SET(fa->fdc, &set);
-	err = select(fa->fdc + 1, &set, NULL, NULL, NULL);
-	if (err == 0) {
-		errno = EAGAIN;
-		return NULL; /* no free, but the function is wrong generally */
-	} else if (err < 0) {
+	}
+	buf->metadata = calloc(1, sizeof(struct zio_control));
+	if (!buf->metadata) {
+		free(buf);
+		errno = ENOMEM;
 		return NULL;
 	}
 
-	/* Ready to read */
-	ctrl = fmcadc_zio_read_ctrl(fa);
-	if (!ctrl)
-		goto out_ctrl;
+	/* Allocate data: custom allocator, or malloc, or mmap */
+	if (!alloc && fa->flags & FMCADC_FLAG_MALLOC)
+		alloc = malloc;
+	if (alloc) {
+		buf->data = alloc(nsamples * fa->samplesize);
+		if (!buf->data) {
+			free(buf->metadata);
+			free(buf);
+			errno = ENOMEM;
+			return NULL;
+		}
+	} else {
+		/* mmap is done later */
+		buf->data = NULL;
+	}
 
-	len = (ctrl->nsamples * ctrl->ssize);
-	data = fmcadc_zio_read_data(fa, len);
-	if (!data)
-		goto out_data;
-
-	buf->data = data;
-	buf->metadata = (void *) ctrl;
+	/* Copy other information */
+	buf->samplesize = fa->samplesize;
+	buf->nsamples = nsamples;
+	buf->dev = (void *)&fa->gid;
+	buf->flags = flags;
 	return buf;
-
-out_data:
-	fmcadc_zio_release_ctrl(ctrl);
-out_ctrl:
-	return NULL;
 }
 
 int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
@@ -139,21 +169,55 @@ int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
 			   unsigned int flags,
 			   struct timeval *timeout)
 {
-	return -1;
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	fd_set set;
+	int ret;
+
+	/* So, first sample and blocking read. Wait.. */
+	FD_ZERO(&set);
+	FD_SET(fa->fdc, &set);
+	ret = select(fa->fdc + 1, &set, NULL, NULL, timeout);
+	if (ret == 0) {
+		errno = EAGAIN;
+		return -1;
+	} else if (ret < 0) {
+		return -1;
+	}
+
+	ret = fmcadc_zio_read_ctrl(fa, buf);
+	if (ret < 0)
+		return ret;
+	ret = fmcadc_zio_read_data(fa, buf);
+	if (ret < 0)
+		return ret;
+	return 0;
 }
 
 struct fmcadc_timestamp *fmcadc_zio_tstamp_buffer(struct fmcadc_buffer *buf,
 						  struct fmcadc_timestamp *ts)
 {
-	return NULL;
+	struct zio_control *ctrl = buf->metadata;
+	if (ts) {
+		memcpy(ts, &ctrl->tstamp, sizeof(*ts)); /* FIXME: endianness */
+		return ts;
+	}
+	return (struct fmcadc_timestamp *)&ctrl->tstamp;
 }
 
 int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 				     struct fmcadc_buffer *buf,
 				     void (*free_fn)(void *))
 {
-	fmcadc_zio_release_ctrl(buf->metadata);
-	fmcadc_zio_release_data(buf->data);
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+
+	free(buf->metadata);
+	if (!free_fn && fa->flags & FMCADC_FLAG_MALLOC)
+		free_fn = free;
+
+	if (free_fn)
+		free_fn(buf->data);
+	else if (buf->mapaddr && buf->mapaddr != MAP_FAILED)
+			munmap(buf->mapaddr, buf->maplen);
 	free(buf);
 	return 0;
 }
