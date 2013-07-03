@@ -135,6 +135,19 @@ out_ctrl:
 	return NULL;
 }
 
+int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
+			   struct fmcadc_buffer *buf,
+			   unsigned int flags)
+{
+	return -1;
+}
+
+struct fmcadc_timestamp *fmcadc_zio_tstamp_buffer(struct fmcadc_buffer *buf,
+						  struct fmcadc_timestamp *ts)
+{
+	return NULL;
+}
+
 int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 				     struct fmcadc_buffer *buf,
 				     void (*free_fn)(void *))

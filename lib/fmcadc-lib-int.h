@@ -37,16 +37,10 @@ struct fmcadc_operations {
 	typeof(fmcadc_apply_config)	*apply_config;
 	typeof(fmcadc_retrieve_config)	*retrieve_config;
 
-	/* Handle buffers */
-	struct fmcadc_buffer *(*request_buffer)(struct fmcadc_dev *dev,
-					       int nsamples,
-					       void *(*alloc_fn)(size_t),
-					       unsigned int flags,
-					       struct timeval *timeout);
-	int (*release_buffer)(struct fmcadc_dev *dev,
-			      struct fmcadc_buffer *buf,
-			      void (*free_fn)(void *));
-	char *(*strerror)(int errnum);
+	typeof(fmcadc_request_buffer)	*request_buffer;
+	typeof(fmcadc_fill_buffer)	*fill_buffer;
+	typeof(fmcadc_tstamp_buffer)	*tstamp_buffer;
+	typeof(fmcadc_release_buffer)	*release_buffer;
 };
 /*
  * This structure describes the board supported by the library
@@ -108,6 +102,11 @@ struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 						void *(*alloc)(size_t),
 						unsigned int flags,
 						struct timeval *timeout);
+int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
+			   struct fmcadc_buffer *buf,
+			   unsigned int flags);
+struct fmcadc_timestamp *fmcadc_zio_tstamp_buffer(struct fmcadc_buffer *buf,
+						  struct fmcadc_timestamp *);
 int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,
 			      struct fmcadc_buffer *buf,
 			      void (*free_fn)(void *));

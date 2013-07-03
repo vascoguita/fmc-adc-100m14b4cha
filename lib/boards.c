@@ -42,8 +42,10 @@ struct fmcadc_operations fa_100ms_4ch_14bit_op = {
 	.apply_config =		fmcadc_zio_apply_config,
 	.retrieve_config =	fmcadc_zio_retrieve_config,
 
-	.request_buffer = fmcadc_zio_request_buffer,
-	.release_buffer = fmcadc_zio_release_buffer,
+	.request_buffer =	fmcadc_zio_request_buffer,
+	.fill_buffer =		fmcadc_zio_fill_buffer,
+	.tstamp_buffer =	fmcadc_zio_tstamp_buffer,
+	.release_buffer =	fmcadc_zio_release_buffer,
 };
 struct fmcadc_board_type fmcadc_100ms_4ch_14bit = {
 	.name = "fmcadc_100MS_4ch_14bit",
