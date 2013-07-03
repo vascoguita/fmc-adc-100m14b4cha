@@ -255,8 +255,7 @@ int main(int argc, char *argv[])
 		/* Currently this request_buffer() actually reads data */
 		buf = fmcadc_request_buffer(adc,
 					    presamples + postsamples,
-					    NULL /* alloc */,
-					    0, NULL /* timeout */);
+					    NULL /* alloc */, 0);
 		if (!buf) {
 			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
 				" %s\n", argv[0], i + i,

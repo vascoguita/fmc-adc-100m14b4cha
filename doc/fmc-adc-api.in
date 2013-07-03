@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month June 2013
+@set update-month July 2013
 
 @finalout
 
@@ -429,11 +429,11 @@ The following functions are related to buffers:
 struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
                                             int nsamples,
                                             void *(*alloc_fn)(size_t),
-                                            unsigned int flags,
-                                            struct timeval *timeout);
+                                            unsigned int flags);
 int fmcadc_fill_buffer(struct fmcadc_dev *dev,
                        struct fmcadc_buffer *buf,
-                       unsigned int flags);
+                       unsigned int flags,
+                       struct timeval *timeout);
 struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
                                               struct fmcadc_timestamp *ts);
 int fmcadc_release_buffer(struct fmcadc_dev *dev,
@@ -498,16 +498,17 @@ they appear:
 
 	Currently unused, available for future special cases.
 
-@item timeout
-
-	The timeout for allocation is used like the timeout in @i{select(2)}.
-        If NULL, there is no timeout, if set, it is used as a maximum waiting
-        time. If allocation times out, @t{NULL} is returned, with
-        @t{-ETIMEDOUT} as @i{errno}.
-
 @item buf
 
 	The buffer pointer, as returned by the allocation function.
+
+@item timeout
+
+	The timeout for filling the buffer is used like
+        the timeout in @i{select(2)}.
+        If NULL, there is no timeout, if set, it is used as a maximum waiting
+        time. If allocation times out, @t{NULL} is returned, with
+        @t{-ETIMEDOUT} as @i{errno}.
 
 @item ts
 

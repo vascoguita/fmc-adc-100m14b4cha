@@ -100,11 +100,11 @@ int fmcadc_zio_acq_stop(struct fmcadc_dev *dev,
 struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 						int nsamples,
 						void *(*alloc)(size_t),
-						unsigned int flags,
-						struct timeval *timeout);
+						unsigned int flags);
 int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
 			   struct fmcadc_buffer *buf,
-			   unsigned int flags);
+			   unsigned int flags,
+			   struct timeval *timeout);
 struct fmcadc_timestamp *fmcadc_zio_tstamp_buffer(struct fmcadc_buffer *buf,
 						  struct fmcadc_timestamp *);
 int fmcadc_zio_release_buffer(struct fmcadc_dev *dev,

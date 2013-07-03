@@ -155,11 +155,11 @@ extern int fmcadc_retrieve_config(struct fmcadc_dev *dev,
 extern struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 						   int nsamples,
 						   void *(*alloc_fn)(size_t),
-						   unsigned int flags,
-						   struct timeval *timeout);
+						   unsigned int flags);
 extern int fmcadc_fill_buffer(struct fmcadc_dev *dev,
 			      struct fmcadc_buffer *buf,
-			      unsigned int flags);
+			      unsigned int flags,
+			      struct timeval *timeout);
 extern struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
 						     struct fmcadc_timestamp *);
 extern int fmcadc_release_buffer(struct fmcadc_dev *dev,

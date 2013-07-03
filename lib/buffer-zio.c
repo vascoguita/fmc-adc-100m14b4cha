@@ -89,8 +89,7 @@ static void fmcadc_zio_release_data(void *data)
 struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 						int nsamples,
 						void *(*alloc)(size_t),
-						unsigned int flags,
-						struct timeval *timeout)
+						unsigned int flags)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	struct fmcadc_buffer *buf;
@@ -107,7 +106,7 @@ struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 	/* So, first sample and blocking read. Wait.. */
 	FD_ZERO(&set);
 	FD_SET(fa->fdc, &set);
-	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
+	err = select(fa->fdc + 1, &set, NULL, NULL, NULL);
 	if (err == 0) {
 		errno = EAGAIN;
 		return NULL; /* no free, but the function is wrong generally */
@@ -137,7 +136,8 @@ out_ctrl:
 
 int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
 			   struct fmcadc_buffer *buf,
-			   unsigned int flags)
+			   unsigned int flags,
+			   struct timeval *timeout)
 {
 	return -1;
 }

@@ -101,8 +101,7 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 					    int nsamples,
 					    void *(*alloc)(size_t),
-					    unsigned int flags,
-					    struct timeval *timeout)
+					    unsigned int flags)
 {
 	struct fmcadc_gid *b = (void *)dev;
 
@@ -114,7 +113,7 @@ struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 
 	if (b->board->fa_op->request_buffer) {
 		return b->board->fa_op->request_buffer(dev, nsamples,
-						       alloc, flags, timeout);
+						       alloc, flags);
 	} else {
 		/* Unsupported */
 		errno = FMCADC_ENOP;
