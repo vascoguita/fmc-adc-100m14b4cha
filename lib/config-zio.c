@@ -73,7 +73,7 @@ static int __fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 
 /*
  * Public functions (through ops and ./route.c).
- * Thhey mabage both strings and integers
+ * They manage both strings and integers
  */
 int fmcadc_zio_set_param(struct fmcadc_dev *dev, char *name,
                          char *sptr, int *iptr)
