@@ -122,7 +122,7 @@ The choice of arrays is driven by the need for generic structures
 that can be used unchanged with different hardware cards.
 
 While there is a little overhead in parsing the generic structures,
-configuration is not something that happens in hot paths, and wr see
+configuration is not something that happens in hot paths, and we see
 no problems in that.  Also, please note that setting the configuration
 and applying it are different steps, and the configuration data structures
 can be prepared and saved for later use. 
@@ -549,7 +549,7 @@ To be documented in a later version.
 During June 2013 we defined the final API as documented here. However,
 code written before June 28th may use the initial conventions, that are
 no more active. The current API is designed to be persistent over
-the yeears, and work with any ADC card belonging to the same family
+the years, and work with any ADC card belonging to the same family
 as our first board, the ``fmc-adc-100m14b4cha'' one.
 
 This is the list of incompatibilities. I list the commit, so you
