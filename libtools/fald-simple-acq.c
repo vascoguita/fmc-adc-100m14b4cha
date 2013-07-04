@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Open the ADC */
-	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id,
+	adc = fmcadc_open("fmc-adc-100m14b4cha", dev_id,
 			  nshots * (presamples + postsamples),
 			  nshots,
 			  0);

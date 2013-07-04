@@ -222,7 +222,7 @@ This is the meaning of the various arguments:
 @item name
 
 	Devices are opened by name, and the name for the only supported
-        card at the moment is ``@t{fmc-adc-100m}''.
+        card at the moment is ``@t{fmc-adc-100m14b4cha}''.
 
 @item dev_id
 

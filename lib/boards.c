@@ -48,8 +48,8 @@ struct fmcadc_operations fa_100ms_4ch_14bit_op = {
 	.release_buffer =	fmcadc_zio_release_buffer,
 };
 struct fmcadc_board_type fmcadc_100ms_4ch_14bit = {
-	.name = "fmcadc_100MS_4ch_14bit",
-	.devname = "adc-100m14b",
+	.name = "fmc-adc-100m14b4cha",	/* for library open() */
+	.devname = "adc-100m14b",	/* for device named in /dev/zio */
 	.driver_type = "zio",
 	.capabilities = {
 		FMCADC_ZIO_TRG_MASK,
