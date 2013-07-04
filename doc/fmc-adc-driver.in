@@ -729,10 +729,6 @@ This is the list of attributes (excluding kernel-generic and ZIO-generic ones):
         total number of samples acquired corresponds to the sum of the
         two numbers.  For multi-shot acquisition, each shot acquires that
         many sample, but pre + post must be at most 2048.
-        @b{Note:} hardware acquires @i{pre+1+post}, while software
-        always used buffers of @i{pre+post} and documented it to be so.
-        The driver fixes the @t{post-samples} value
-        before writing it to hardware.
 
 @item sw-trg-enable
 @itemx sw-trg-fire
