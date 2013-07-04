@@ -243,7 +243,16 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* Retrieve buffer for each shot */
+	/* Allocate a buffer in the default way */
+	buf = fmcadc_request_buffer(adc, presamples + postsamples,
+				    NULL /* alloc */, 0);
+	if (!buf) {
+		fprintf(stderr, "Cannot allocate buffer (%s)\n",
+			fmcadc_strerror(errno));
+		exit(1);
+	}
+
+	/* Fill the buffer once for each shot */
 	for (i = 0; i < acq.value[FMCADC_CONF_ACQ_N_SHOTS]; ++i) {
 		struct zio_control *ctrl;
 		int j, ch;
@@ -252,15 +261,12 @@ int main(int argc, char *argv[])
 		if (binmode < 0) /* no data must be acquired */
 			break;
 
-		/* Currently this request_buffer() actually reads data */
-		buf = fmcadc_request_buffer(adc,
-					    presamples + postsamples,
-					    NULL /* alloc */, 0);
-		if (!buf) {
-			fprintf(stderr, "%s: shot %i/%i: cannot get a buffer:"
+		err = fmcadc_fill_buffer(adc, buf, 0, NULL);
+		if (err) {
+			fprintf(stderr, "%s: shot %i/%i: cannot fill buffer:"
 				" %s\n", argv[0], i + i,
 				acq.value[FMCADC_CONF_ACQ_N_SHOTS],
-				fmcadc_strerror(errno));
+			fmcadc_strerror(errno));
 			exit(1);
 		}
 		ctrl = buf->metadata;
@@ -325,11 +331,11 @@ int main(int argc, char *argv[])
 				printf("%7i", *(data++));
 			printf("\n");
 		}
-		fmcadc_release_buffer(adc, buf, NULL);
 	}
 	if (binmode == 1)
 		fclose(f);
 
+	fmcadc_release_buffer(adc, buf, NULL);
 	fmcadc_close(adc);
 	exit(0);
 }
