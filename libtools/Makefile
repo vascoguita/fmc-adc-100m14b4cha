@@ -6,6 +6,7 @@ LDFLAGS = -static -L$(LIBADC) -lfmcadc
 
 DEMOS := fald-simple-acq
 DEMOS += fald-simple-get-conf
+DEMOS += fald-test
 
 all: demo
 
