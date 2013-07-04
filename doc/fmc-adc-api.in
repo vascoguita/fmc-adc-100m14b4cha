@@ -65,13 +65,6 @@ David Cobas, Federico Vaga and Alessandro Rubini in March 2013.  Ideas
 have later been refined during real use.  Alessandro wrote this
 document.
 
-@b{Warning}: this file documents the library as we want it to be
-when we release it. Currently, the prototypes match documentation
-but the semantics are still old-fashioned (they match the first
-development implementation, that revealed suboptimal).
-I'll remove this warning when I'm done with porting the code to the new
-conventions.
-
 @c ##########################################################################
 @node General Ideas and Rationale
 @chapter General Ideas and Rationale

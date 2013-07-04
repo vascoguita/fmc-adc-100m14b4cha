@@ -1058,14 +1058,6 @@ other devices, when they become available.
 The library, also called API in some contexts, is described by a separate
 document, because over time we expect it to live in its own package.
 
-@b{Warning}: the library code, as included in this version, is not
-consistent with documentation: the prototypes match, but the semantics
-are different (during June 2013 we refined the API and the new, semantics,
-that will remain over time, are not yet implemented as of today).
-The tools work as advertised, but not according the documented behavior
-of the library. When everything is fixed, I'll remove this warning,
-so the document always matches the code it is distributed with.
-
 @c ##########################################################################
 @node Library-based Tools
 @chapter Library-based Tools
@@ -1083,11 +1075,6 @@ All library-based tools filenames use @t{fald-} as a prefix, for
 @c ==========================================================================
 @node Simple Acquisition
 @subsection Simple Acquisition
-
-@b{Warning}: while the program works as documented, but the source
-code uses a non-compliant version of the library. Please don't look
-at the source at this point. I'll remove this warning when the
-library is fixed.
 
 The most important tool is @file{fald-simple-acq}, which perform
 and ADC acquisition according to the specified parameters.  The source code
@@ -1264,13 +1251,21 @@ or other programs, while still using @i{fald-simple-acq} to configure
 the acquisition.
 
 @c ==========================================================================
+@node Test Program
+@subsection Test Program
+
+The program called @t{fald-test} is a very simple test program,
+that can allocate several buffers and fill them all, or use a single
+buffer over and over for multi-shot acquisition.
+
+It is not documented for lack of time, but the source is meant to be
+readable.  We used it and @i{strace} to check that stuff happens
+properly as documented. Configuration is done mainly by setting
+environment variables.
+
+@c ==========================================================================
 @node Retrieve Configuration
 @subsection Retrieve Configuration
-
-@b{Warning}: while the program is expected to work as documented, but
-the source code uses a non-compliant version of the library. Please
-don't look at the source at this point. I'll remove this warning when
-the library is fixed.
 
 To retrieve the current configuration from a device you can use the
 demo program @file{fald-simple-get-conf}:
