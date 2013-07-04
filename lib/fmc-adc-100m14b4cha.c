@@ -32,7 +32,7 @@
 
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 				   unsigned int dev_id,
-				   unsigned long totalsize,
+				   unsigned long totalsamples,
 				   unsigned int nbuffer,
 				   unsigned long flags)
 {

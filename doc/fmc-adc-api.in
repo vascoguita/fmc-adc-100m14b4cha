@@ -200,11 +200,11 @@ may release it in future versions.
 @findex fmcadc_close
 @example
 fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-                        unsigned long totalsize,
+                        unsigned long totalsamples,
                         unsigned int nbuffer,
                         unsigned long flags)
 struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
-                                      unsigned long totalsize,
+                                      unsigned long totalsamples,
                                       unsigned int nbuffer,
                                       unsigned long flags);
 extern int fmcadc_close(struct fmcadc_dev *dev);
@@ -235,13 +235,14 @@ This is the meaning of the various arguments:
 	Logical Unit Number. This number comes from a database description
         of the system (@i{open_by_lun} is not currently implemented).
 
-@item totalsize
+@item totalsamples
 
 	This is a a hint about how big a buffer the application will use.
         Managing big acquisitions (hundreds of megabytes, or gigabytes)
         requires some pre-allocation of the data, and sometimes this
         configuration happens at device level, so it's good to have
-        the information at open time.
+        the information at open time. This is a number of samples,
+	i.e. @t{nshots * (presamples + postsamples)}, not a number of bytes.
 
 @item nbuffer
 

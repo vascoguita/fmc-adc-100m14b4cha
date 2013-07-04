@@ -19,7 +19,7 @@
 struct fmcadc_board_type;
 struct fmcadc_dev *fmcadc_internal_open(const struct fmcadc_board_type *b,
 					unsigned int dev_id,
-					unsigned long totalsize,
+					unsigned long totalsamples,
 					unsigned int nbuffer,
 					unsigned long flags);
 
@@ -86,7 +86,7 @@ struct __fmcadc_dev_zio {
 /* The board-specific functions are defined in fmc-adc-100m14b4cha.c */
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 				   unsigned int dev_id,
-				   unsigned long totalsize,
+				   unsigned long totalsamples,
 				   unsigned int nbuffer,
 				   unsigned long flags);
 int fmcadc_zio_close(struct fmcadc_dev *dev);

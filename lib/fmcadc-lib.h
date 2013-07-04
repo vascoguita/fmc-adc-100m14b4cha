@@ -132,11 +132,11 @@ extern void fmcadc_exit(void);
 extern char *fmcadc_strerror(int errnum);
 
 extern struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-				      unsigned long totalsize,
+				      unsigned long totalsamples,
 				      unsigned int nbuffer,
 				      unsigned long flags);
 extern struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
-					     unsigned long totalsize,
+					     unsigned long totalsamples,
 					     unsigned int nbuffer,
 					     unsigned long flags);
 extern int fmcadc_close(struct fmcadc_dev *dev);
