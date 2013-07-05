@@ -26,16 +26,15 @@ enum fmcadc_supported_board {
 	__FMCADC_SUPPORTED_BOARDS_LAST_INDEX,
 };
 
-extern const struct fmcadc_board_type
-		*fmcadc_board_types[__FMCADC_SUPPORTED_BOARDS_LAST_INDEX];
-
 /* The buffer hosts data and metadata, plus informative fields */
 struct fmcadc_buffer {
 	void *data;
 	void *metadata;
 	int samplesize;
 	int nsamples;
-	char *drivername;
+	struct fmcadc_dev *dev;
+	void *mapaddr;
+	unsigned long maplen;
 	unsigned long flags; /* internal to the library */
 };
 
@@ -133,11 +132,11 @@ extern void fmcadc_exit(void);
 extern char *fmcadc_strerror(int errnum);
 
 extern struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-				      unsigned long totalsize,
+				      unsigned long totalsamples,
 				      unsigned int nbuffer,
 				      unsigned long flags);
 extern struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
-					     unsigned long totalsize,
+					     unsigned long totalsamples,
 					     unsigned int nbuffer,
 					     unsigned long flags);
 extern int fmcadc_close(struct fmcadc_dev *dev);
@@ -154,15 +153,19 @@ extern int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			       struct fmcadc_conf *conf);
 extern int fmcadc_retrieve_config(struct fmcadc_dev *dev,
 				 struct fmcadc_conf *conf);
+extern int fmcadc_get_param(struct fmcadc_dev *dev, char *name,
+			    char *sptr, int *iptr);
+extern int fmcadc_set_param(struct fmcadc_dev *dev, char *name,
+			    char *sptr, int *iptr);
 
 extern struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 						   int nsamples,
 						   void *(*alloc_fn)(size_t),
-						   unsigned int flags,
-						   struct timeval *timeout);
+						   unsigned int flags);
 extern int fmcadc_fill_buffer(struct fmcadc_dev *dev,
 			      struct fmcadc_buffer *buf,
-			      unsigned int flags);
+			      unsigned int flags,
+			      struct timeval *timeout);
 extern struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
 						     struct fmcadc_timestamp *);
 extern int fmcadc_release_buffer(struct fmcadc_dev *dev,

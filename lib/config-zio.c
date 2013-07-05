@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -25,98 +26,135 @@
 #define FMCADC_CONF_SET 1
 
 /*
- * __fa_zio_sysfs_get
- * @path: path to the sysfs attribute
- * @resp: value returned by the sysfs attribute
+ * Internal functions to read and write a string.
+ * Trailing newlines are added/removed as needed
  */
-static int __fa_zio_sysfs_get(char *path, uint32_t *resp)
+static int __fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
+			      char *val, int maxlen)
 {
-	FILE *f = fopen(path, "r");
-
-	if (!f)
-		return -1;
-	errno = 0;
-	if (fscanf(f, "%i", resp) != 1) {
-		fclose(f);
-		if (!errno)
-			errno = EINVAL;
-		return -1;
-	}
-	fclose(f);
-	return 0;
-}
-
-/*
- * __fa_zio_sysfs_set
- * @path: path to the sysfs attribute
- * @value: value to set in the sysfs attribute
- */
-static int __fa_zio_sysfs_set(char *path, uint32_t *value)
-{
-	char s[16];
+	char pathname[128];
+	char newval[maxlen + 1];
 	int fd, ret, len;
 
-	len = sprintf(s, "%i\n", *value);
-	fd = open(path, O_WRONLY);
+	snprintf(pathname, sizeof(pathname), "%s/%s", fa->sysbase, name);
+	len = sprintf(newval, "%s\n", val);
+
+	fd = open(pathname, O_WRONLY);
 	if (fd < 0)
 		return -1;
-	ret = write(fd, s, len);
+	ret = write(fd, newval, len);
 	close(fd);
 	if (ret < 0)
 		return -1;
 	if (ret == len)
+		return 0;
+	errno = EIO; /* short write */
+	return -1;
+}
+
+static int __fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
+			      char *val /* no maxlen: reader knows */ ) 
+{
+	char pathname[128];
+	int fd, ret;
+
+	snprintf(pathname, sizeof(pathname), "%s/%s", fa->sysbase, name);
+	fd = open(pathname, O_RDONLY);
+	if (fd < 0)
+		return -1;
+	ret = read(fd, val, 128 /* well... user knows... */);
+	close(fd);
+	if (ret < 0)
+		return -1;
+	if (val[ret - 1] == '\n')
+		val[ret - 1] = '\0';
+	return 0;
+}
+
+/*
+ * Public functions (through ops and ./route.c).
+ * They manage both strings and integers
+ */
+int fmcadc_zio_set_param(struct fmcadc_dev *dev, char *name,
+                         char *sptr, int *iptr)
+{
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	char istr[12];
+	int len;
+
+	if (sptr)
+		return __fa_zio_sysfs_set(fa, name, sptr, strlen(sptr + 2));
+	len = sprintf(istr, "%i", *iptr);
+	return __fa_zio_sysfs_set(fa, name, istr, len + 2);
+}
+
+int fmcadc_zio_get_param(struct fmcadc_dev *dev, char *name,
+                         char *sptr, int *iptr)
+{
+	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
+	char istr[12];
+	int ret;
+
+	if (sptr)
+		return __fa_zio_sysfs_get(fa, name, sptr);
+
+	ret = __fa_zio_sysfs_get(fa, name, istr);
+	if (ret < 0)
+		return ret;
+	if (sscanf(istr, "%i", iptr) == 1)
 		return 0;
 	errno = EINVAL;
 	return -1;
 }
 
 /*
- * fa_zio_sysfs_get
- * @fa: device owner of the attribute
- * @name: relative path to the sysfs attribute within the device
- * @resp: value returned by the sysfs attribute
+ * Previous functions, now based on the public ones above
+ * Note: they are swapped: get, then set (above is set then get)
+ * FIXME: code using these must be refactored using data structures
  */
 static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *resp)
 {
-	char pathname[128];
+	struct fmcadc_dev *dev = (void *)&fa->gid; /* hack: back and forth.. */
 	int ret;
+	int val;
 
-	sprintf(pathname, "%s/%s", fa->sysbase, name);
-	ret = __fa_zio_sysfs_get(pathname, resp);
+	ret = fmcadc_zio_get_param(dev, name, NULL, &val);
+	if (!ret) {
+		*resp = val; /* different type */
+		return 0;
+	}
 	if (!(fa->flags & FMCADC_FLAG_VERBOSE))
 		return ret;
 	/* verbose tail */
 	if (ret)
-		fprintf(stderr, "lib-fmcadc: Error reading %s\n", pathname);
+		fprintf(stderr, "lib-fmcadc: Error reading %s (%s)\n",
+			name, strerror(errno));
 	else
 		fprintf(stderr, "lib-fmcadc: %08x %5i <- %s\n",
-			(int)*resp, (int)*resp, pathname);
+			(int)*resp, (int)*resp, name);
 	return ret;
 }
 
-/*
- * fa_zio_sysfs_set
- * @fa: device owner of the attribute
- * @name: relative path to the sysfs attribute within the device
- * @value: value to set in the sysfs attribute
- */
 int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *value)
 {
-	char pathname[128];
+	struct fmcadc_dev *dev = (void *)&fa->gid; /* hack: back and forth.. */
 	int ret;
+	int val = *value; /* different type */
 
-	sprintf(pathname, "%s/%s", fa->sysbase, name);
-	ret = __fa_zio_sysfs_set(pathname, value);
+	ret = fmcadc_zio_set_param(dev, name, NULL, &val);
+	if (!ret)
+		return 0;
 	if (!(fa->flags & FMCADC_FLAG_VERBOSE))
 		return ret;
 	/* verbose tail */
 	if (ret)
-		fprintf(stderr, "lib-fmcadc: Error writing %s\n", pathname);
+		fprintf(stderr, "lib-fmcadc: Error writing %s (%s)\n",
+			name, strerror(errno));
 	else
 		fprintf(stderr, "lib-fmcadc: %08x %5i -> %s\n",
-			(int)*value, (int)*value, pathname);
+			(int)*value, (int)*value, name);
 	return ret;
 }
 

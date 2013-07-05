@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month June 2013
+@set update-month July 2013
 
 @finalout
 
@@ -64,13 +64,6 @@ This design is the outcome of email discussion between Michel Arruat,
 David Cobas, Federico Vaga and Alessandro Rubini in March 2013.  Ideas
 have later been refined during real use.  Alessandro wrote this
 document.
-
-@b{Warning}: this file documents the library as we want it to be
-when we release it. Currently, the prototypes match documentation
-but the semantics are still old-fashioned (they match the first
-development implementation, that revealed suboptimal).
-I'll remove this warning when I'm done with porting the code to the new
-conventions.
 
 @c ##########################################################################
 @node General Ideas and Rationale
@@ -122,7 +115,7 @@ The choice of arrays is driven by the need for generic structures
 that can be used unchanged with different hardware cards.
 
 While there is a little overhead in parsing the generic structures,
-configuration is not something that happens in hot paths, and wr see
+configuration is not something that happens in hot paths, and we see
 no problems in that.  Also, please note that setting the configuration
 and applying it are different steps, and the configuration data structures
 can be prepared and saved for later use. 
@@ -200,11 +193,11 @@ may release it in future versions.
 @findex fmcadc_close
 @example
 fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
-                        unsigned long totalsize,
+                        unsigned long totalsamples,
                         unsigned int nbuffer,
                         unsigned long flags)
 struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
-                                      unsigned long totalsize,
+                                      unsigned long totalsamples,
                                       unsigned int nbuffer,
                                       unsigned long flags);
 extern int fmcadc_close(struct fmcadc_dev *dev);
@@ -222,7 +215,7 @@ This is the meaning of the various arguments:
 @item name
 
 	Devices are opened by name, and the name for the only supported
-        card at the moment is ``@t{fmc-adc-100m}''.
+        card at the moment is ``@t{fmc-adc-100m14b4cha}''.
 
 @item dev_id
 
@@ -235,13 +228,14 @@ This is the meaning of the various arguments:
 	Logical Unit Number. This number comes from a database description
         of the system (@i{open_by_lun} is not currently implemented).
 
-@item totalsize
+@item totalsamples
 
 	This is a a hint about how big a buffer the application will use.
         Managing big acquisitions (hundreds of megabytes, or gigabytes)
         requires some pre-allocation of the data, and sometimes this
         configuration happens at device level, so it's good to have
-        the information at open time.
+        the information at open time. This is a number of samples,
+	i.e. @t{nshots * (presamples + postsamples)}, not a number of bytes.
 
 @item nbuffer
 
@@ -266,9 +260,9 @@ The timestamp structrure is defined as follows:
 
 @smallexample
 struct fmcadc_timestamp {
-	uint64_t secs;
-	uint64_t ticks;
-	uint64_t bins;
+        uint64_t secs;
+        uint64_t ticks;
+        uint64_t bins;
 };
 @end smallexample
 
@@ -408,12 +402,14 @@ of the hardware), as well as other informative fields:
 
 @smallexample
 struct fmcadc_buffer {
-	void *data;
-	void *metadata;
-	int samplesize;
-	int nsamples;
-	char *drivername;
-	unsigned long flags; /* internal to the library */
+        void *data;
+        void *metadata;
+        int samplesize;
+        int nsamples;
+        struct fmcadc_dev *dev;
+        unsigned long flags; /* internal to the library */
+        void *mapaddr;
+        unsignef long maplen;
 };
 @end smallexample
 
@@ -429,11 +425,11 @@ The following functions are related to buffers:
 struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
                                             int nsamples,
                                             void *(*alloc_fn)(size_t),
-                                            unsigned int flags,
-                                            struct timeval *timeout);
+                                            unsigned int flags);
 int fmcadc_fill_buffer(struct fmcadc_dev *dev,
                        struct fmcadc_buffer *buf,
-                       unsigned int flags);
+                       unsigned int flags,
+                       struct timeval *timeout);
 struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
                                               struct fmcadc_timestamp *ts);
 int fmcadc_release_buffer(struct fmcadc_dev *dev,
@@ -498,16 +494,17 @@ they appear:
 
 	Currently unused, available for future special cases.
 
-@item timeout
-
-	The timeout for allocation is used like the timeout in @i{select(2)}.
-        If NULL, there is no timeout, if set, it is used as a maximum waiting
-        time. If allocation times out, @t{NULL} is returned, with
-        @t{-ETIMEDOUT} as @i{errno}.
-
 @item buf
 
 	The buffer pointer, as returned by the allocation function.
+
+@item timeout
+
+	The timeout for filling the buffer is used like
+        the timeout in @i{select(2)}.
+        If NULL, there is no timeout, if set, it is used as a maximum waiting
+        time. If allocation times out, @t{NULL} is returned, with
+        @t{-ETIMEDOUT} as @i{errno}.
 
 @item ts
 
@@ -545,7 +542,7 @@ To be documented in a later version.
 During June 2013 we defined the final API as documented here. However,
 code written before June 28th may use the initial conventions, that are
 no more active. The current API is designed to be persistent over
-the yeears, and work with any ADC card belonging to the same family
+the years, and work with any ADC card belonging to the same family
 as our first board, the ``fmc-adc-100m14b4cha'' one.
 
 This is the list of incompatibilities. I list the commit, so you
