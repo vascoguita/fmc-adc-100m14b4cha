@@ -19,10 +19,3 @@
 .cproject
 .project
 .settings
-# binary
-tools/fau-acq-time
-tools/fau-trg-config
-tools/parport-burst
-libtools/fald-simple-acq
-libtools/fald-simple-get-conf
-lib/.depend
