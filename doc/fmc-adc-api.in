@@ -66,6 +66,49 @@ have later been refined during real use.  Alessandro wrote this
 document.
 
 @c ##########################################################################
+@node Bugs and Missing Features
+@chapter Bugs and Missing Features
+
+To set the record straight, we'd better list the known issues right
+off at the start.  A new release will follow shortly (summer 2013),
+dealing with most of these details.
+
+@itemize @bullet
+
+@item The ``parameters'' functions are not documented, although they
+are here to stay.
+
+@item The library should automatically choose the buffering options:
+for zio, buffer type and size adjustment. This is not implemented
+and users must do that by themselves (see the driver manual about how
+to do it).
+
+@item Internals are not documented, while we think some guidance in
+understanding the code is useful, in case users need to trace unexpected
+behaviours that may be library bugs or application bugs. Also,
+verbose mode exists but it not documented.
+
+@item Verbose mode is not verbose enough: @i{sysfs} accesses are only
+reported in case of error, while a complete trace of them is often
+useful to understand what is going on. Similarly, ``log to file''
+instead of ``verbose to stderr'' should be added as an option.
+
+@item Internally, a number of functions must be renamed, and a better
+split between api-generic, zio-generic and driver-specific code must
+be put in place.
+
+@item Some code parts, especially configuration, should be
+restructured to use data tables instead of open-coded conditionals.
+This is important for maintainance and easy addition of new boards.
+
+@item We need to add @i{reset_conf} and related functions, that
+are currently missing. Also, direct access to configuration structures
+inside the device structure should be provided.  The curent API will
+remain, though, we plan to just add easier use cases.
+
+@end itemize
+
+@c ##########################################################################
 @node General Ideas and Rationale
 @chapter General Ideas and Rationale
 
