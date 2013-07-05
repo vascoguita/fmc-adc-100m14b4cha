@@ -780,14 +780,22 @@ before making a 1000-long multishot acquisition you can do:
 @end smallexample
 
 The @i{vmalloc} buffer allows @i{mmap} support, so when using
-@i{vmalloc} you can save a copy of your data. However, a @i{vmalloc}
+@i{vmalloc} you can save a copy of your data (actually,
+you save it automatically if you use the library calls to allocate
+and fill the user-space buffer). However, a @i{vmalloc}
 buffer allocates the whole data space at the beginning, which may
 be unsuitable if you have several cards and acquire from one of them
 at a time.
 
-Currently there is no way to change the size of a @i{vmalloc} buffer
-instance, which is fixed to 128kB. We are working on this, though,
-specifically for the needs of this driver.
+The @i{vmalloc} buffer type starts off with a size of 128kB, but you
+can change it (while not aquiring), by writing to the associated
+attribute of the interleaved channel. For example this sets it
+to 10MB:
+
+@smallexample
+# DEV=/sys/bus/zio/devices/adc-100m14b-0200
+# echo 10000 > $DEV/cset0/chani/buffer/max-buffer-kb
+@end smallexample
 
 @c ##########################################################################
 @node Summary of Attributes

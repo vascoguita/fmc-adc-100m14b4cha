@@ -102,6 +102,11 @@ this.  Also, the application should tell the number of buffers and
 expected data size at the beginning, so the library can properly
 configure the underlying driver, if this is needed.
 
+For ZIO drivers, you can use two buffer types: @i{kmalloc} and
+@i{vmalloc}.  Please check section @i{Buffers} in the
+@i{fmc-adc-driver} manual (discussion will be moved here as we
+finalized automatic setting of buffer features).
+
 @c ==========================================================================
 @node Configuration Overview
 @section Configuration
