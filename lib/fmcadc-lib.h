@@ -5,6 +5,11 @@
 
 #ifndef FMCADC_LIB_H_
 #define FMCADC_LIB_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -173,5 +178,9 @@ extern int fmcadc_release_buffer(struct fmcadc_dev *dev,
 				 void (*free_fn)(void *));
 
 extern char *fmcadc_get_driver_type(struct fmcadc_dev *dev);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FMCADC_LIB_H_ */
