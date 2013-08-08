@@ -193,11 +193,6 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 			}
 		}
 
-
-		pr_debug("configure DMA item %d "
-			"(addr: 0x%llx len: %d)(dev off: 0x%x)\n",
-			i, (long long)sg_dma_address(sg),
-			sg_dma_len(sg), dev_mem_off);
 		/* Prepare DMA item */
 		items[i].start_addr = dev_mem_off;
 		items[i].dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
@@ -214,6 +209,12 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		} else {
 			items[i].attribute = 0x0;	/* last item */
 		}
+
+		pr_debug("configure DMA item %d "
+			"(addr: 0x%llx len: %d)(dev off: 0x%x)"
+			"(next item: 0x%x)",
+			i, (long long)sg_dma_address(sg),
+			sg_dma_len(sg), dev_mem_off, items[i].next_addr_l);
 
 		/* The first item is written on the device */
 		if (i == 0) {
