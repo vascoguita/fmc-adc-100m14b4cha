@@ -740,7 +740,9 @@ static void zfad_dma_done(struct zio_cset *cset)
  */
 static void zfad_dma_error(struct zio_cset *cset)
 {
+	struct zio_channel *chan;
 	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zio_bi *bi = cset->interleave->bi;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	uint32_t val;
 
@@ -751,6 +753,17 @@ static void zfad_dma_error(struct zio_cset *cset)
 		"DMA error (status 0x%x). All acquisition lost\n", val);
 	zfad_fsm_command(fa, ZFA_STOP);
 	fa->n_dma_err++;
+
+	if (fa->n_fires == 0)
+		dev_err(&fa->fmc->dev,
+			"DMA error (status 0x%x) occurs but no block was acquired\n", val);
+
+	/* Remove invalid blocks */
+	for(i = 0; i < fa->n_shots; ++i) {
+		bi->b_op->store_block(bi, zfad_block[i].block);
+	}
+	kfree(zfad_block);
+	cset->interleave->priv_d = NULL;
 }
 
 
