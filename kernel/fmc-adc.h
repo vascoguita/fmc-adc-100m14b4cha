@@ -77,6 +77,7 @@ struct fa_dma_item {
 	uint32_t next_addr_l;	/* 0x10 */
 	uint32_t next_addr_h;	/* 0x14 */
 	uint32_t attribute;	/* 0x18 */
+	uint32_t reserved;	/* ouch */
 };
 
 /*
