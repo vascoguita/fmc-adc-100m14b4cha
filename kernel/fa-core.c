@@ -92,12 +92,22 @@ int fa_remove(struct fmc_device *fmc)
 	devm_kfree(&fmc->dev, fa);
 	return 0;
 }
+
+static struct fmc_fru_id fa_fru_id[] = {
+	{
+		.product_name = "FmcAdc100m14b4cha",
+	},
+};
+
 static struct fmc_driver fa_dev_drv = {
 	.version = FMC_VERSION,
 	.driver.name = KBUILD_MODNAME,
 	.probe = fa_probe,
 	.remove = fa_remove,
-	/* no table, as the current match just matches everything */
+	.id_table = {
+		.fru_id = fa_fru_id,
+		.fru_id_nr = ARRAY_SIZE(fa_fru_id),
+	},
 };
 
 static int fa_init(void)
