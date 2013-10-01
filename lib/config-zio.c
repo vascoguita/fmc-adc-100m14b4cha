@@ -328,6 +328,18 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 {
 
 	int err, i;
+	uint32_t trg_enabled;
+
+	err = fa_zio_sysfs_get(fa, "cset0/trigger/enable", &trg_enabled);
+	if (err)
+		return err;
+	if (trg_enabled) {
+		/* disable the trigger before changing config */
+	        trg_enabled = 0;
+		err = fa_zio_sysfs_set(fa, "cset0/trigger/enable", &trg_enabled);
+		/* restore the initial value */
+		trg_enabled = 1;
+	}
 
 	for (i = 0; i < __FMCADC_CONF_LEN; ++i) {
 		if (!(conf->mask & (1LL << i)))
@@ -364,7 +376,11 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 			return err;
 	}
 
-	return 0;
+	/* if the trigger was enabled restore it */ 
+	if (trg_enabled)
+		err = fa_zio_sysfs_set(fa, "cset0/trigger/enable", &trg_enabled);
+
+	return err;
 }
 
 int fmcadc_zio_apply_config(struct fmcadc_dev *dev, unsigned int flags,
