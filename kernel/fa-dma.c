@@ -73,7 +73,7 @@ static void zfad_setup_dma_scatter(struct fa_dev *fa,
 
 	i_blk = 0;
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
-		if (i == zfad_block[i_blk].first_nent) {
+		if (i_blk < n_blocks && i == zfad_block[i_blk].first_nent) {
 			WARN(bytesleft, "unmapped byte in block %i\n",
 			     i_blk - 1);
 			/*
@@ -179,7 +179,7 @@ int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 	/* Configure DMA items */
 	i_blk = 0;
 	for_each_sg(fa->sgt.sgl, sg, fa->sgt.nents, i) {
-		if (i == zfad_block[i_blk].first_nent) {
+		if (i_blk < n_blocks && i == zfad_block[i_blk].first_nent) {
 			/*
 			 * FIXME if we trust our configuration, dev_mem_off is
 			 * useless in multishot
