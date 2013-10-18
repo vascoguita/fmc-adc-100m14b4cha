@@ -36,12 +36,13 @@
 @setchapternewpage off
 
 @set update-month July 2013
+@set release __RELEASE_GIT_ID__
 
 @finalout
 
 @titlepage
 @title FMC ADC Programmer's Interface
-@subtitle @value{update-month}
+@subtitle @value{update-month} (@value{release})
 @subtitle A generic API for ADC devices
 @author CERN BE-CO-HT / Alessandro Rubini and others
 @end titlepage

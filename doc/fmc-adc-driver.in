@@ -36,14 +36,13 @@
 @setchapternewpage off
 
 @set update-month July 2013
-@set release 1.0 (almost...)
-@c @set tagname fmc-adc-sw-v1.0
+@set release __RELEASE_GIT_ID__
 
 @finalout
 
 @titlepage
 @title FMC ADC User's Manual
-@subtitle @value{update-month}
+@subtitle @value{update-month} (@value{release})
 @c -- Release @value{release}
 @subtitle FMC ADC 100M 14b 4ch -- software manual
 @author CERN BE-CO-HT / Federico Vaga / Alessandro Rubini
