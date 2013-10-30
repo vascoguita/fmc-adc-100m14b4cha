@@ -13,13 +13,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/select.h>
 #include <linux/zio-user.h>
 
 #include "fmcadc-lib.h"
@@ -167,20 +167,29 @@ struct fmcadc_buffer *fmcadc_zio_request_buffer(struct fmcadc_dev *dev,
 int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
 			   struct fmcadc_buffer *buf,
 			   unsigned int flags,
-			   struct timeval *timeout)
+			   struct timeval *to)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
-	fd_set set;
-	int ret;
+	struct pollfd p;
+	int to_ms, ret;
 
 	/* So, first sample and blocking read. Wait.. */
-	FD_ZERO(&set);
-	FD_SET(fa->fdc, &set);
-	ret = select(fa->fdc + 1, &set, NULL, NULL, timeout);
-	if (ret == 0) {
+	p.fd = fa->fdc;
+	p.events = POLLIN | POLLERR;
+	if (!to)
+		to_ms = -1;
+	else
+		to_ms = to->tv_sec / 1000 + (to->tv_usec + 500) / 1000;
+	ret = poll(&p, 1, to_ms);
+	switch(ret) {
+	case 0:
 		errno = EAGAIN;
+		/* fall through */
+	case -1:
 		return -1;
-	} else if (ret < 0) {
+	}
+	if (p.revents & POLLERR) {
+		errno = FMCADC_EDISABLED;
 		return -1;
 	}
 

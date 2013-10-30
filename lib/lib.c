@@ -31,6 +31,7 @@ static struct fmcadc_errors {
 	{ FMCADC_ENOSET,	"Cannot set capabilities information"},
 	{ FMCADC_ENOCHAN,	"Invalid channel"},
 	{ FMCADC_ENOMASK,	"Missing configuration mask"},
+	{ FMCADC_EDISABLED,	"Trigger is disabled: I/O aborted"},
 	{ 0, }
 };
 

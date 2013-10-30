@@ -136,24 +136,33 @@ int fmcadc_zio_close(struct fmcadc_dev *dev)
 
 /* poll is used by start, so it's defined first */
 int fmcadc_zio_acq_poll(struct fmcadc_dev *dev,
-			unsigned int flags, struct timeval *timeout)
+			unsigned int flags, struct timeval *to)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
-	fd_set set;
-	int err;
+	struct pollfd p;
+	int to_ms, ret;
 
-	FD_ZERO(&set);
-	FD_SET(fa->fdc, &set);
-	err = select(fa->fdc + 1, &set, NULL, NULL, timeout);
-	switch (err) {
+	/* So, first sample and blocking read. Wait.. */
+	p.fd = fa->fdc;
+	p.events = POLLIN | POLLERR;
+	if (!to)
+		to_ms = -1;
+	else
+		to_ms = to->tv_sec / 1000 + (to->tv_usec + 500) / 1000;
+	ret = poll(&p, 1, to_ms);
+	switch(ret) {
 	case 0:
 		errno = EAGAIN;
+		/* fall through */
+	case -1:
 		return -1;
-	case 1:
-		return 0;
-	default:
-		return err;
 	}
+	if (p.revents & POLLERR) {
+		errno = FMCADC_EDISABLED;
+		return -1;
+	}
+
+	return 0;
 }
 
 int fmcadc_zio_acq_start(struct fmcadc_dev *dev,
