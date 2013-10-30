@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -29,6 +30,26 @@
 #define ZIO_SYS_PATH "/sys/bus/zio/devices"
 
 #define FMCADC_NCHAN 4
+
+static int fmcadc_flush_input(struct __fmcadc_dev_zio *fa)
+{
+	struct zio_control ctrl;
+	struct pollfd p = {
+		.fd = fa->fdc,
+		.events = POLLIN | POLLERR,
+	};
+	int i;
+
+	/* Read the control until one is there; data is discarded by zio */
+	while(1) {
+		i = poll(&p, 1, 0);
+		if (i < 0)
+			return -1;
+		if ((p.revents & POLLIN) == 0)
+			return 0;
+		read(fa->fdc, &ctrl, sizeof(ctrl));
+	}
+}
 
 struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 				   unsigned int dev_id,
@@ -67,6 +88,10 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 	fa->fdd = open(fname, O_RDONLY);
 	if (fa->fdc < 0 || fa->fdd < 0)
 		goto out_fa_open;
+
+	if (flags & FMCADC_F_FLUSH)
+		if (fmcadc_flush_input(fa) < 0)
+			goto out_fa_open;
 
 	fa->gid.board = b;
 
@@ -137,6 +162,10 @@ int fmcadc_zio_acq_start(struct fmcadc_dev *dev,
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	uint32_t cmd = 1; /* hw command for "start" */
 	int err;
+
+	if (flags & FMCADC_F_FLUSH)
+		if (fmcadc_flush_input(fa) < 0)
+			return -1;
 
 	err = fa_zio_sysfs_set(fa, "cset0/fsm-command", &cmd);
 	if (err)

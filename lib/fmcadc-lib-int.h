@@ -85,6 +85,7 @@ struct __fmcadc_dev_zio {
 	/* Mandatory field */
 	struct fmcadc_gid gid;
 };
+/* Note: bit 16 and up are passed by users, see fmcadc-lib.h */
 #define FMCADC_FLAG_VERBOSE 0x00000001
 #define FMCADC_FLAG_MALLOC  0x00000002 /* allocate data */
 #define FMCADC_FLAG_MMAP    0x00000004 /* mmap data */

@@ -129,6 +129,10 @@ static inline int fmcadc_get_conf(struct fmcadc_conf *conf,
 	}
 }
 
+/* Flags used in open/acq/config -- note: low-bits are used by lib-int.h */
+#define FMCSDC_F_USERMASK	0xffff0000
+#define FMCADC_F_FLUSH		0x00010000
+
 /*
  * Actual functions follow
  */
