@@ -423,6 +423,13 @@ still-missing shots, but this is not yet supported.
 The @i{stop} function stops an already-begun acquisition. It is not
 expected to be of frequent use.
 
+According to the low-level implementation, functions waiting for data
+(i.e. @i{start} when passed a timeout and @i{poll}) may fail with
+@t{FMCADC_EDISABLED} if the acquisition is externally disabled by
+other entities. ZIO supports that (since Nov 2013) by setting
+@t{POLLERR} when a user disables the trigger through a sysfs write.
+Other backends may offer their own notification means.
+
 This is the meaning of the arguments:
 
 @table @code
@@ -508,7 +515,8 @@ until the buffer is filled.
 The @t{fill_buffer} function is run after an acquisition, and fills
 the buffer with the next available shot. The size of the buffer must
 be at least equal to the size of the shot; otherwise the result is
-undefined.
+undefined.  The function may fail with @t{FMCADC_EDISABLED} if the
+acquisition is externally disabled/aborted by other entities.
 
 @findex fmcadc_tstamp_buffer
 @t{tstamp_buffer} extracts the acquisition timestamp from the buffer,
