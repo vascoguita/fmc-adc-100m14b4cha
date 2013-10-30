@@ -294,11 +294,14 @@ This is the meaning of the various arguments:
         information may require device-level configuration at open time.
 
 @findex FMCADC_F_FLUSH
+@findex FMCADC_F_VERBOSE
 @item flags
 
 	This argument is used to pass user flags. The library currently
-        supports @t{FMCADC_F_FLUSH}, that reads and discards any
-        input samples possibly left over by a previous acquisition.
+        supports @t{FMCADC_F_FLUSH} (that reads and discards any
+        input samples possibly left over by a previous acquisition)
+        and @t{FMCADC_F_VERBOSE} (that enables diagnostic messages to
+        @i{stderr}).
 
  currently unused, but some driver may need to
         have some more information, or flags, at open time.

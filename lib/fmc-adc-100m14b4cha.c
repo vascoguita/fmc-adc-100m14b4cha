@@ -102,8 +102,8 @@ struct fmcadc_dev *fmcadc_zio_open(const struct fmcadc_board_type *b,
 	fa->samplesize = 8; /* FIXME: should read sysfs instead -- where? */
 	fa->pagesize = getpagesize();
 
-	/* Finally, support verbose operation */
-	if (getenv("LIB_FMCADC_VERBOSE"))
+	/* Support verbose operation (turn user flag into internal flag)*/
+	if (flags & FMCADC_F_VERBOSE || getenv("LIB_FMCADC_VERBOSE"))
 		fa->flags |= FMCADC_FLAG_VERBOSE;
 
 	return (void *) &fa->gid;
