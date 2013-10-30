@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 	adc = fmcadc_open("fmc-adc-100m14b4cha", dev_id,
 			  nshots * (presamples + postsamples),
 			  nshots,
-			  0);
+			  FMCADC_F_FLUSH);
 	if (!adc) {
 		fprintf(stderr, "%s: cannot open device: %s",
 			argv[0], fmcadc_strerror(errno));

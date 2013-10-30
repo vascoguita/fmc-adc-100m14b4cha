@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
 
 	fmcadc_init();
 
-	dev = fmcadc_open(CARD_NAME, dev_id, totalsamples, n_buffers, 0);
+	dev = fmcadc_open(CARD_NAME, dev_id, totalsamples, n_buffers,
+		FMCADC_F_FLUSH);
 	if (!dev) {
 		fprintf(stderr, "%s: fmcadc_open(%s, 0x%x): %s\n", argv[0],
 			CARD_NAME, dev_id, strerror(errno));

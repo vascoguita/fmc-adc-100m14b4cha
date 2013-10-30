@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 	/* Open the ADC */
 	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id,
 			  /* no buffers expexted */ 0, 0,
-			  0);
+			  /* no flush either */ 0);
 	if (!adc) {
 		fprintf(stderr, "%s: cannot open device: %s",
 			argv[0], fmcadc_strerror(errno));
