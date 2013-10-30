@@ -71,8 +71,8 @@ document.
 @chapter Bugs and Missing Features
 
 To set the record straight, we'd better list the known issues right
-off at the start.  A new release will follow shortly (summer 2013),
-dealing with most of these details.
+off at the start.  We are aware of the issues, but they are not fixed
+at this point in time.
 
 @itemize @bullet
 
@@ -104,7 +104,7 @@ This is important for maintainance and easy addition of new boards.
 
 @item We need to add @i{reset_conf} and related functions, that
 are currently missing. Also, direct access to configuration structures
-inside the device structure should be provided.  The curent API will
+inside the device structure should be provided.  The current API will
 remain, though, we plan to just add easier use cases.
 
 @end itemize
@@ -149,7 +149,7 @@ configure the underlying driver, if this is needed.
 For ZIO drivers, you can use two buffer types: @i{kmalloc} and
 @i{vmalloc}.  Please check section @i{Buffers} in the
 @i{fmc-adc-driver} manual (discussion will be moved here as we
-finalized automatic setting of buffer features).
+finalize automatic setting of buffer features).
 
 @c ==========================================================================
 @node Configuration Overview
@@ -158,8 +158,8 @@ finalized automatic setting of buffer features).
 Configuration is performed by passing parameters as 32-bit numbers.
 The library defines arrays of such parameters, one for each
 aspect of the overall problem (triggers, data, and so on).
-Each item in the array has a symbolic name, and each array is
-helped by a bitmask that specifies which parameters have been set.
+Each item in the array has a symbolic name, and each array is associated
+with a bitmask that specifies which parameters have been set.
 The choice of arrays is driven by the need for generic structures
 that can be used unchanged with different hardware cards.
 
@@ -269,7 +269,7 @@ This is the meaning of the various arguments:
 @item dev_id
 
 	The device identifier is used to enumerate several cards in the
-        same system.  The number is usually depenendent on the geographic
+        same system.  The number is usually dependent on the geographic
         placement of the card (bus number, slot number).
 
 @item lun
@@ -330,12 +330,12 @@ the timestamp of the acquired buffers. See @ref{Buffers}
 Configuration is the most intensive part of the library, because
 there are a number of parameters that can be set or retrieved.
 
-Unfortunately, for lack of time, on my side, it is not properly
+Unfortunately, for lack of time on my side, it is not properly
 documented here.
 @c FIXME: document configuration
 
 Briefly, configuration is described by a few data structures. Each
-structure includes a ``type'' indentifier, some internal fields
+structure includes a ``type'' identifier, some internal fields
 and an array of configuration values.  A bitmask (in the structure
 itself) states which configuration values are active. All parameters
 are 32 bits wide; each structure includes 64 values.  The position
@@ -344,7 +344,7 @@ to this library we may need to add new values for unforeseen requirements.
 We don't expect to change the API, nor replace the meaning of the
 already-defined array members.
 
-Please see the header file, to know the currently-defined parameters.
+Please check the header file to know the currently-defined parameters.
 
 The library offsers the following functions related to configuration:
 
@@ -371,7 +371,8 @@ future revisions of this library may include a non-ambiguous naming,
 while still keeping the current API for compatibility.
 
 @findex fmcadc_reset_conf
-The @i{reset} function sets all items in the structure to the
+The @i{reset} function (which is not yet implemented)
+sets all items in the structure to the
 advertised default for the specific device (it can only be called
 after opening the device). Like the previous two, it is only concerned
 with data structures, and it makes no hardware access.
@@ -458,14 +459,14 @@ struct fmcadc_buffer {
         struct fmcadc_dev *dev;
         unsigned long flags; /* internal to the library */
         void *mapaddr;
-        unsignef long maplen;
+        unsigned long maplen;
 };
 @end smallexample
 
 The buffer is allocated and released by the library. The rationale is
 described in @ref{Buffers Overview}. the application is not allowed to
 pass its own buffer.  It is possible, however, for the application to
-override the allocation for data by passing a pointer to the chosen
+override the allocation for data by passing a pointer to its own preferred
 allocator.
 
 The following functions are related to buffers:
@@ -563,7 +564,7 @@ they appear:
 @item free_fn
 
 	If the data section of the buffer was allocated by a custom allocator,
-        this is the pointer to matching @i{free} function. The two function
+        this is the pointer to associated @i{free} function. The two function
         pointers match the prototypes of @i{malloc} and @i{free}.
 
 @end table
@@ -604,7 +605,7 @@ across all configuration macros. Change applied in commit 78a2ac0b.
 
 @item The data structures have 64 configuration items, not 32.
 This requires to use @t{long long} for the mask, but users are
-steongly encouraged to use the helpers @i{conf_set} and @i{conf_get}.
+strongly encouraged to use the helpers @i{conf_set} and @i{conf_get}.
 Change applied in commit aa1eae16.
 
 @item Configuration functions use @t{conf} in their name, not
@@ -613,7 +614,7 @@ Change applied in commit aa1eae16.
 @item The @i{fmcadc_strerror} function takes only the @t{errnum}
 argument, not @t{dev} any more. Applied in commit e83791de.
 
-@item Applications are adked to call @i{fmcadc_init} and @i{fmcadc_exit}
+@item Applications are asked to call @i{fmcadc_init} and @i{fmcadc_exit}
 (but the latter is optional at program termination).
 
 @item The open function states the number of shots and the total data
@@ -625,6 +626,7 @@ library (not by the caller any more) and there is a new function to
 fill the buffer. Commit 3e83241e implements the prototype, but keeps
 the previous semantic; code and examples have been fixed later.
 
+@c FIXME: touches hardware or not? See description above
 @item A new @i{reset_conf} function exists, to force default values
 on all configuration variables. This can be used to prevent configuration
 leakage from the previous acquisition to the next. Resetting configuration
@@ -633,8 +635,8 @@ to acquire (I personally set range and gain before I run acquisition
 programs, for example).
 
 @item There is a new function to poll for acquisition. This is useful
-since whil the process is waiting for the trigger it may want to
-do something else.
+since the process may want to
+do something else while waiting for the trigger.
 
 @end itemize
 
@@ -645,3 +647,5 @@ do something else.
 @printindex fn
 
 @bye
+
+@c  LocalWords:  fmcadc struct timestamp bitmask conf config metadata
