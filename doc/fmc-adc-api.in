@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2013
+@set update-month October 2013
 @set release __RELEASE_GIT_ID__
 
 @finalout
@@ -293,9 +293,14 @@ This is the meaning of the various arguments:
         requires all buffers to be available at the same time. Again, this
         information may require device-level configuration at open time.
 
+@findex FMCADC_F_FLUSH
 @item flags
 
-	This argument is currently unused, but some driver may need to
+	This argument is used to pass user flags. The library currently
+        supports @t{FMCADC_F_FLUSH}, that reads and discards any
+        input samples possibly left over by a previous acquisition.
+
+ currently unused, but some driver may need to
         have some more information, or flags, at open time.
 
 @end table
@@ -404,7 +409,9 @@ The @i{start} function tells hardware to start acquisition according
 to the current configuration (but starting in itself is usually a fast
 operation, because it doesn't rewrite configuration to the
 hardware, at least with currently supported boards). It can return
-immediately or wait for completion, with a timeout.
+immediately or wait for completion, with a timeout. The function supports
+@t{FMCADC_F_FLUSH}, to discard previous leftover data before activating
+the acquisition, if any is there.
 
 @findex fmcadc_acq_poll
 The @i{poll} function waits for acquisition to complete. Again, it
@@ -426,8 +433,12 @@ This is the meaning of the arguments:
 
 @item flags
 
-	Flags to request special actions. Currently no flag is defined,
-        and 0 will always select the default behavior. For example, we
+	Flags to request special actions.
+        0 always selects the default behavior. Currently, the @i{start}
+        function supports @t{FMCADC_F_FLUSH} -- this is not
+        supported by the @i{poll} function, because after telling hardware
+        to start I/O we cannot safely discard ``old'' data.
+        Flags can be used for other things: for example, we
         may soon define a flags to automatically enable a new acquisition
         when the previous one is over, for stream-like applications.
         (In that case after each successful @i{poll} the next call would
