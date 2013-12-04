@@ -130,6 +130,7 @@ static int fa_init(void)
 	ret = fmc_driver_register(&fa_dev_drv);
 	if (ret) {
 		fmc_driver_unregister(&fa_dev_drv);
+		fa_trig_exit();
 		fa_zio_unregister();
 		return ret;
 	}
