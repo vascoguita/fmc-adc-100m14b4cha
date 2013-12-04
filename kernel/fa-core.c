@@ -27,11 +27,11 @@ struct fa_modlist {
 	int (*init)(struct fa_dev *);
 	void (*exit)(struct fa_dev *);
 };
-#define SUBSYS(x) { #x, fa_ ## x ## _init, fa_ ## x ## _exit }
+
 static struct fa_modlist mods[] = {
-	SUBSYS(spi),
-	SUBSYS(onewire),
-	SUBSYS(zio),
+	{"spi", fa_spi_init, fa_spi_exit}, 
+	{"onewire", fa_onewire_init, fa_onewire_exit},
+	{"zio", fa_zio_init, fa_zio_exit},
 };
 
 /* probe and remove are called by fa-spec.c */
