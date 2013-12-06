@@ -403,10 +403,18 @@ extern void fa_trig_exit(void);
 /* Functions exported by fa-spec.c */
 extern int fa_spec_init(void);
 extern void fa_spec_exit(void);
+
 /* Functions exported by onewire.c */
 extern int fa_onewire_init(struct fa_dev *fa);
 extern void fa_onewire_exit(struct fa_dev *fa);
 extern int fa_read_temp(struct fa_dev *fa, int verbose);
+
+/* Functions exported by fa-irq.c */
+extern void zfad_dma_start(struct zio_cset *cset);
+extern void zfad_dma_done(struct zio_cset *cset);
+extern void zfad_dma_error(struct zio_cset *cset);
+extern void zfat_irq_acq_end(struct zio_cset *cset);
+
 /* functions exported by spi.c */
 extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		       uint32_t tx, uint32_t *rx);
