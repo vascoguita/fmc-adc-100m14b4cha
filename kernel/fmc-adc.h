@@ -406,5 +406,8 @@ extern void fa_spi_exit(struct fa_dev *fd);
 /* function in fa-zio-drv.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 
+/* function exporetd by fa-calibration.c */
+extern void fa_read_eeprom_calib(struct fa_dev *fa);
+
 #endif /* __KERNEL__ */
 #endif /*  FMC_ADC_H_ */
