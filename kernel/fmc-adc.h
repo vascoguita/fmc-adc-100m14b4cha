@@ -380,6 +380,15 @@ static inline void zfa_hardware_read(struct fa_dev *fa,
 	*usr_val = zfa_get_field(&zfad_regs[index], cur);
 }
 
+/* Functions exported by fa-core.c */
+extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
+extern int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
+				  uint32_t usr_val);
+extern void zfad_reset_offset(struct fa_dev *fa);
+extern int zfad_convert_hw_range(uint32_t bitmask);
+extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
+			  int range);
+extern int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan);
 
 /* Functions exported by fa-zio-drv.c */
 extern int fa_zio_register(void);
