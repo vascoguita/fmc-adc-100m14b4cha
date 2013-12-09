@@ -310,8 +310,15 @@ out:
 int fa_remove(struct fmc_device *fmc)
 {
 	struct fa_dev *fa = fmc_get_drvdata(fmc);
+	struct fa_modlist *m;
+	int i = ARRAY_SIZE(mods);
 
-	fa_zio_exit(fa);
+	while (--i >= 0) {
+		m = mods + i;
+		if (m->exit)
+			m->exit(fa);
+	}
+
 	return 0;
 }
 
