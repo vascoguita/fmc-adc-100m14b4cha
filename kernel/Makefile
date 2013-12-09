@@ -24,7 +24,7 @@ fmc-adc-100m14b-objs += fa-zio-drv.o
 fmc-adc-100m14b-objs += fa-calibration.o
 fmc-adc-100m14b-objs += fa-regtable.o
 fmc-adc-100m14b-objs += fa-zio-trg.o
-fmc-adc-100m14b-objs += fa-dma.o
+fmc-adc-100m14b-objs += fa-spec-dma.o
 fmc-adc-100m14b-objs += onewire.o
 fmc-adc-100m14b-objs += spi.o
 
