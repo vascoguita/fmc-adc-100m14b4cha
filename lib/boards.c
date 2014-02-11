@@ -9,8 +9,11 @@
  * version 2 as published by the Free Software Foundation or, at your
  * option, any later version.
  */
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 #include "fmcadc-lib.h"
 #include "fmcadc-lib-int.h"
 
@@ -98,24 +101,32 @@ struct fmcadc_dev *fmcadc_open(char *name, unsigned int dev_id,
 	return b->fa_op->open(b, dev_id, buffersize, nbuffer, flags);
 }
 
+#define FMCADC_PATH_PATTERN "/dev/%s.%d"
+
 /* Open by lun should lookup a database */
 struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
 				      unsigned long buffersize,
 				      unsigned int nbuffer,
 				      unsigned long flags)
 {
-	const struct fmcadc_board_type *b;
+	ssize_t ret;
+	char dev_id_str[8];
+	char path[PATH_MAX];
+	int dev_id;
 
-	b = find_board(name);
-	if (!b)
+	ret = snprintf(path, sizeof(path), "/dev/%s.%d",
+		       "adc-100m14b" /* FIXME: this must be generic */,
+		       lun);
+	if (ret < 0 || ret >= sizeof(path)) {
+		errno = EINVAL;
 		return NULL;
-
-	/*
-	 * FIXME: open_by_lun should lookup the database and get dev_id
-	 * return b->fa_op->open( .... dev_id ...);
-	 */
-	errno = ENOSYS;
-	return NULL;
+	}
+	ret = readlink(path, dev_id_str, sizeof(dev_id_str));
+	if (sscanf(dev_id_str, "%4x", &dev_id) != 1) {
+		errno = ENODEV;
+		return NULL;
+	}
+	return fmcadc_open(name, dev_id, buffersize, nbuffer, flags);
 
 }
 
