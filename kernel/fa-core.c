@@ -81,7 +81,6 @@ out:
 	while (--m, --i >= 0)
 		if (m->exit)
 			m->exit(fa);
-	devm_kfree(&fmc->dev, fa);
 	return err;
 }
 int fa_remove(struct fmc_device *fmc)
@@ -89,7 +88,6 @@ int fa_remove(struct fmc_device *fmc)
 	struct fa_dev *fa = fmc_get_drvdata(fmc);
 
 	fa_zio_exit(fa);
-	devm_kfree(&fmc->dev, fa);
 	return 0;
 }
 
