@@ -853,7 +853,7 @@ static void zfat_irq_trg_fire(struct zio_cset *cset)
 static void zfat_irq_acq_end(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	uint32_t val = 0;
+	uint32_t val;
 	int try = 5;
 
 	dev_dbg(&fa->fmc->dev, "Acquisition done\n");
@@ -867,10 +867,9 @@ static void zfat_irq_acq_end(struct zio_cset *cset)
 	 * If the state machine is _idle_ we can start the DMA transfer.
 	 * If the state machine it is not idle, try again 5 times
 	 */
-	while (try-- && val != ZFA_STATE_IDLE) {
-		//udelay(2);
+	do {
 		zfa_hardware_read(fa, ZFA_STA_FSM, &val);
-	}
+	} while (try-- && val != ZFA_STATE_IDLE);
 
 	if (val != ZFA_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
