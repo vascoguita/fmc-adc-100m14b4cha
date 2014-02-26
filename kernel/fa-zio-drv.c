@@ -163,12 +163,13 @@ static inline int zfad_get_chx_index(unsigned long addr,
  * @fa: the fmc-adc descriptor
  * @command: the command to apply to FSM
  *
- * This function check if the command can be done and perform some
- * preliminary operation before
+ * This function checks if the command can be done and performs some
+ * preliminary operation beforehand
  */
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	struct device *dev = &fa->fmc->dev;
+	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
 
 	if (command != ZFA_START && command != ZFA_STOP) {
@@ -190,8 +191,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	 * The case of fmc-adc-trg is optimized because is the most common
 	 * case
 	 */
-	if (likely(fa->zdev->cset->trig == &zfat_type || command == ZFA_STOP))
-		zio_trigger_abort_disable(fa->zdev->cset, 0);
+	if (likely(cset->trig == &zfat_type || command == ZFA_STOP))
+		zio_trigger_abort_disable(cset, 0);
 
 	/* Reset counters */
 	fa->n_shots = 0;
@@ -215,7 +216,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		}
 
 		/* Now we can arm the trigger for the incoming acquisition */
-		zio_arm_trigger(fa->zdev->cset->ti);
+		zio_arm_trigger(cset->ti);
 		/*
 		 *  FIXME maybe zio_arm_trigger() can return an error when it
 		 * is not able to arm a trigger.
@@ -223,7 +224,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		 * It returns -EPERM, but the error can be -ENOMEM or -EINVAL
 		 * from zfat_arm_trigger() or zfad_input_cset()
 		 */
-		if (!(fa->zdev->cset->ti->flags & ZIO_TI_ARMED)) {
+		if (!(cset->ti->flags & ZIO_TI_ARMED)) {
 			dev_info(dev, "Cannot start acquisition: "
 				 "Trigger refuses to arm\n");
 			return -EIO;
@@ -613,23 +614,24 @@ static int zfad_input_cset(struct zio_cset *cset)
  * @cset: channel set to stop
  *
  * Stop an acquisition, reset indexes and disable interrupts. This function
- * is useful only if the driver is using a software trigger.
+ * not used when using our internal trigger, which offers t_op->abort:
+ * only if the trigger misses its own abort, ZIO calls cset->stop_io.
  */
 static void zfad_stop_cset(struct zio_cset *cset)
 {
 
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	/* If the user is using a software trigger */
-	if (cset->trig != &zfat_type) {
-		/* Force the acquisition to stop */
-		zfad_fsm_command(fa, ZFA_STOP);
-		/* Release zfad_block */
-		kfree(cset->interleave->priv_d);
-		cset->interleave->priv_d = NULL;
-		/* Clear active block */
-		cset->interleave->active_block = NULL;
-	}
+	if (cset->trig == &zfat_type) /* paranoid (see above comment) */
+		return;
+
+	/* Force the acquisition to stop */
+	zfad_fsm_command(fa, ZFA_STOP);
+	/* Release zfad_block */
+	kfree(cset->interleave->priv_d);
+	cset->interleave->priv_d = NULL;
+	/* Clear active block */
+	cset->interleave->active_block = NULL;
 }
 /* * * * * * * * * * * * * IRQ functions handler * * * * * * * * * * * * * * */
 
