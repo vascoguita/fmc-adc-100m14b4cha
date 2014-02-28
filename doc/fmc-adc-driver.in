@@ -269,6 +269,12 @@ and each of them is retrieved at the right version to be compatible with this
 driver.  This means you may just ignore software dependencies and everything
 should work.
 
+In February 2014 we also added @i{spec-sw} as a submodule. While the
+carrier driver (i.e. the @i{device} object in a Linux bus) should not
+be needed to build the mezzanine driver (the @i{driver} in the bus),
+we think it's easier for our users.  Also, we need the header because
+DMA operations are carrier-specific.
+
 @c ==========================================================================
 @node Software Installation
 @section Software Installation
@@ -330,7 +336,10 @@ environment variables (again, this is mostly for developers):
 @table @code
 @item ZIO
 @item FMC_BUS
-	The top-level directory of the @i{fmc-bus}/@i{zio} repository checkout.
+@item SPEC_SW
+	The top-level directory of the repository checkouts for the
+        pacakges. If unset, the top-level @t{Makefile} refers to the
+        submodules of this package.
 
 @end table
 
