@@ -72,7 +72,7 @@ static int ow_reset(struct fa_dev *fa, int port)
 	data = ((port << CSR_SEL_OFS) & CSR_SEL_MSK)
 		| CSR_CYC_MSK | CSR_RST_MSK;
 	ow_writel(fa, data, R_CSR);
-	while(ow_readl(fa, R_CSR) & CSR_CYC_MSK)
+	while (ow_readl(fa, R_CSR) & CSR_CYC_MSK)
 		/* FIXME: timeout */;
 	reg = ow_readl(fa, R_CSR);
 	return ~reg & CSR_DAT_MSK;
@@ -85,7 +85,7 @@ static int slot(struct fa_dev *fa, int port, int bit)
 	data = ((port<<CSR_SEL_OFS) & CSR_SEL_MSK)
 		| CSR_CYC_MSK | (bit & CSR_DAT_MSK);
 	ow_writel(fa, data, R_CSR);
-	while(ow_readl(fa, R_CSR) & CSR_CYC_MSK)
+	while (ow_readl(fa, R_CSR) & CSR_CYC_MSK)
 		/* FIXME: timeout */;
 	reg = ow_readl(fa, R_CSR);
 	return reg & CSR_DAT_MSK;
@@ -105,7 +105,7 @@ static int ow_read_byte(struct fa_dev *fa, int port)
 {
 	int byte = 0, i;
 
-	for(i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 		byte |= (read_bit(fa, port) << i);
 	return byte;
 }
@@ -115,7 +115,7 @@ static int ow_write_byte(struct fa_dev *fa, int port, int byte)
 	int data = 0;
 	int i;
 
-	for (i = 0; i < 8; i++){
+	for (i = 0; i < 8; i++) {
 		data |= write_bit(fa, port, (byte & 0x1)) << i;
 		byte >>= 1;
 	}
@@ -126,7 +126,7 @@ static int ow_write_block(struct fa_dev *fa, int port, uint8_t *block, int len)
 {
 	int i;
 
-	for(i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		ow_write_byte(fa, port, block[i]);
 	return 0;
 }
@@ -134,14 +134,14 @@ static int ow_write_block(struct fa_dev *fa, int port, uint8_t *block, int len)
 static int ow_read_block(struct fa_dev *fa, int port, uint8_t *block, int len)
 {
 	int i;
-	for(i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		block[i] = ow_read_byte(fa, port);
 	return 0;
 }
 
 static int ds18x_read_serial(struct fa_dev *fa)
 {
-	if(!ow_reset(fa, 0)) {
+	if (!ow_reset(fa, 0)) {
 		pr_err("%s: Failure in resetting one-wire channel\n",
 		       KBUILD_MODNAME);
 		return -EIO;
@@ -153,7 +153,7 @@ static int ds18x_read_serial(struct fa_dev *fa)
 
 static int ds18x_access(struct fa_dev *fa)
 {
-	if(!ow_reset(fa, 0))
+	if (!ow_reset(fa, 0))
 		goto out;
 
 	if (0) {
@@ -207,10 +207,11 @@ int fa_read_temp(struct fa_dev *fa, int verbose)
 	if (verbose > 1) {
 		pr_info("%s: Scratchpad: ", __func__);
 		for (i = 0; i < 9; i++)
-			printk("%02x%c", data[i], i == 8 ? '\n' : ':');
+			printk(KERN_CONT "%02x%c", data[i],
+			       i == 8 ? '\n' : ':');
 	}
 	temp = ((int)data[1] << 8) | ((int)data[0]);
-	if(temp & 0x1000)
+	if (temp & 0x1000)
 		temp = -0x10000 + temp;
 	fa->temp = temp;
 	if (verbose) {
@@ -229,7 +230,7 @@ int fa_onewire_init(struct fa_dev *fa)
 		       | (( CLK_DIV_OVD << CDR_OVD_OFS) & CDR_OVD_MSK)),
 		  R_CDR);
 
-	if(ds18x_read_serial(fa) < 0)
+	if (ds18x_read_serial(fa) < 0)
 		return -EIO;
 
 	/* read the temperature once, to ensure it works, and print it */
