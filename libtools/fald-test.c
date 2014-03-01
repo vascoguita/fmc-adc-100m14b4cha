@@ -23,7 +23,7 @@ unsigned presamples = 10;
 unsigned postsamples = 10;
 int print_data = 1;
 
-void print_buffer_content(struct fmcadc_buffer * buf);
+void print_buffer_content(struct fmcadc_buffer *buf);
 int read_with_one_buffer(struct fmcadc_dev *dev);
 int read_with_n_buffer(struct fmcadc_dev *dev);
 
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	switch(test) {
+	switch (test) {
 	case 0:
 		err = read_with_one_buffer(dev);
 		break;
@@ -183,7 +183,7 @@ int read_with_n_buffer(struct fmcadc_dev *dev)
 }
 
 
-void print_buffer_content(struct fmcadc_buffer * buf)
+void print_buffer_content(struct fmcadc_buffer *buf)
 {
 	int16_t *data = buf->data;		  /* get data */
 	struct fmcadc_timestamp *ts;

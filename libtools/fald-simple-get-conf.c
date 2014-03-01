@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 	struct fmcadc_dev *adc;
 	struct fmcadc_conf trg, acq, brd, chn;
 	static struct option options[] = {
-		{"help",no_argument, 0, 'h'},
+		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 	int opt_index = 0, err = 0, i;
@@ -47,9 +47,8 @@ int main(int argc, char *argv[])
 	acq.mask = 0;
 
 	/* Parse options */
-	while( (c = getopt_long(argc, argv, "h",
-						options, &opt_index)) >=0 ){
-		switch(c){
+	while((c = getopt_long(argc, argv, "h",	options, &opt_index)) >= 0) {
+		switch (c) {
 		case 'h':
 			fald_help();
 			exit(1);
@@ -57,7 +56,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (optind != argc - 1 ) {
+	if (optind != argc - 1) {
 		fprintf(stderr, "%s: DEVICE-ID is a mandatory argument\n",
 			argv[0]);
 		fald_help();
@@ -148,9 +147,9 @@ int main(int argc, char *argv[])
 		fmcadc_set_conf_mask(&chn, FMCADC_CONF_CHN_OFFSET);
 		err = fmcadc_retrieve_config(adc, &chn);
 		if (err) {
-		fprintf(stderr, "%s: cannot get channel config: %s\n",
-			argv[0], fmcadc_strerror(errno));
-		exit(1);
+			fprintf(stderr, "%s: cannot get channel config: %s\n",
+				argv[0], fmcadc_strerror(errno));
+			exit(1);
 		}
 		printf("    range: %d\n", chn.value[FMCADC_CONF_CHN_RANGE]);
 		printf("    50Ohm Termination: %s\n",

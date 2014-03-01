@@ -23,16 +23,17 @@ static void fald_help()
 	printf("\nfald-simple-acq [OPTIONS] <DEVID>\n\n");
 	printf("  <DEVID>: hexadecimal identifier (e.g.: \"0x200\")\n");
 	printf("  --before|-b <num>        number of pre samples\n");
-	printf("  --after|-a <num>         number of post samples (default: 16)\n");
+	printf("  --after|-a <num>         n. of post samples (default: 16)\n");
 	printf("  --nshots|-n <num>        number of trigger shots\n");
 	printf("  --delay|-d <num>         delay sample after trigger\n");
 	printf("  --under-sample|-U <num>  pick 1 sample every <num>\n");
 	printf("  --threshold|-t <num>     internal trigger threshold\n");
-	printf("  --channel|-c <num>       internal channel to use as trigger (0..3)\n");
+	printf("  --channel|-c <num>       channel used as trigger (0..3)\n");
 	printf("  --tiemout|-T <millisec>  timeout for acquisition\n");
 	printf("  --negative-edge          internal trigger is falling edge\n");
 	printf("  --binary|-B <file>       save binary to <file>\n");
-	printf("  --multi-binary|-M <file> save two files per shot: <file>.0000.ctrl etc\n");
+	printf("  --multi-binary|-M <file> save two files per shot: "
+						"<file>.0000.ctrl etc\n");
 	printf("  --dont-read|-N           config-only, use with zio-dump\n");
 
 	printf("  --help|-h                show this help\n\n");
@@ -61,7 +62,7 @@ static struct option options[] = {
 	{"post",	required_argument, 0, 'P'},
 	{"decimation",	required_argument, 0, 'D'},
 
-	{"help",no_argument, 0, 'h'},
+	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
 };
 
@@ -96,9 +97,9 @@ int main(int argc, char *argv[])
 	fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_N_SHOTS, nshots);
 
 	/* Parse options */
-	while( (c = getopt_long(argc, argv, GETOPT_STRING,
-				options, &opt_index)) >=0 ){
-		switch(c){
+	while ((c = getopt_long(argc, argv, GETOPT_STRING,
+				options, &opt_index)) >=0) {
+		switch (c) {
 		case 'b': case 'p': /* before */
 			presamples = atoi(optarg);
 			fmcadc_set_conf(&acq, FMCADC_CONF_ACQ_PRE_SAMP,
@@ -154,7 +155,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (optind != argc - 1 ) {
+	if (optind != argc - 1) {
 		fprintf(stderr, "%s: DEVICE-ID is a mandatory argument\n",
 			argv[0]);
 		fald_help();
