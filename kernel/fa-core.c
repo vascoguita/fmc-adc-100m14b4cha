@@ -252,7 +252,7 @@ struct fa_modlist {
 };
 
 static struct fa_modlist mods[] = {
-	{"spi", fa_spi_init, fa_spi_exit}, 
+	{"spi", fa_spi_init, fa_spi_exit},
 	{"onewire", fa_onewire_init, fa_onewire_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
 };

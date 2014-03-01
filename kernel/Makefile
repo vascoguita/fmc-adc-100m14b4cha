@@ -20,7 +20,7 @@ subdirs-ccflags-y = $(ccflags-y)
 
 obj-m := fmc-adc-100m14b.o
 fmc-adc-100m14b-objs =  fa-core.o
-fmc-adc-100m14b-objs += fa-zio-drv.o 
+fmc-adc-100m14b-objs += fa-zio-drv.o
 fmc-adc-100m14b-objs += fa-calibration.o
 fmc-adc-100m14b-objs += fa-regtable.o
 fmc-adc-100m14b-objs += fa-zio-trg.o
