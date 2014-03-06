@@ -15,7 +15,10 @@ gitmodules:
 	@test -d fmc-bus/doc || echo "Checking out submodules"
 	@test -d fmc-bus/doc || git submodule update --init
 
-# The user can override, using environment variables, all these three:
+# The user can override, using environment variables, the place for our
+# three submodules. Note that svec-sw is not built, as it uses cern-internal
+# pathnames, and thus won't build elsewhere. We have it as a submodule to
+# find needed headers to build kernel code.
 FMC_BUS ?= fmc-bus
 ZIO ?= zio
 SPEC_SW ?= spec-sw

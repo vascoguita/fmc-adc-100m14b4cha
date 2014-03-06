@@ -269,11 +269,15 @@ and each of them is retrieved at the right version to be compatible with this
 driver.  This means you may just ignore software dependencies and everything
 should work.
 
-In February 2014 we also added @i{spec-sw} as a submodule. While the
+In February 2014 we also added @i{spec-sw} as a submodule, and
+later @i{svec-sw} too. While the
 carrier driver (i.e. the @i{device} object in a Linux bus) should not
 be needed to build the mezzanine driver (the @i{driver} in the bus),
 we think it's easier for our users.  Also, we need the header because
-DMA operations are carrier-specific.
+DMA operations are carrier-specific.  The @i{svec-sw} submodule is not
+build by default: while we need to include its headers, it refers to
+some absolute pathnames that are internal to us, so it won't build
+for our external users.
 
 @c ==========================================================================
 @node Software Installation
