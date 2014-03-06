@@ -22,8 +22,6 @@
 #define FA_SPI_DIV 0x14
 #define FA_SPI_CS 0x18
 
-#define FA_SPI_REG(_off) (FA_SPI_MEM_OFF + _off)
-
 /* SPI control register fields mask */
 #define FA_SPI_CTRL_CHAR_LEN	0x007F
 #define FA_SPI_CTRL_GO		0x0100 /* go/busy */
@@ -43,18 +41,20 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 	int err = 0;
 
 	/* Put out value (LSB-aligned) in the T0 register (bits 0..31) */
-	fmc_writel(fa->fmc, tx, FA_SPI_MEM_OFF + FA_SPI_TX(0));
+	fmc_writel(fa->fmc, tx, fa->fa_spi_base + FA_SPI_TX(0));
 	/* Configure SPI controller */
 	regval = FA_SPI_CTRL_ASS |	/* Automatic Slave Select*/
 		FA_SPI_CTRL_Tx_NEG |	/* Change on falling edge */
 		num_bits;		/* In CHAR_LEN field */
-	fmc_writel(fa->fmc, regval, FA_SPI_REG(FA_SPI_CTRL));
+	fmc_writel(fa->fmc, regval, fa->fa_spi_base + FA_SPI_CTRL);
 	/* Set Chip Select */
-	fmc_writel(fa->fmc, (1 << cs), FA_SPI_REG(FA_SPI_CS));
+	fmc_writel(fa->fmc, (1 << cs), fa->fa_spi_base + FA_SPI_CS);
 	/* Start transfer */
-	fmc_writel(fa->fmc, regval | FA_SPI_CTRL_GO, FA_SPI_REG(FA_SPI_CTRL));
+	fmc_writel(fa->fmc, regval | FA_SPI_CTRL_GO,
+		   fa->fa_spi_base + FA_SPI_CTRL);
 	/* Wait transfer complete */
-	while(fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_CTRL)) & FA_SPI_CTRL_BUSY) {
+	while (fmc_readl(fa->fmc, fa->fa_spi_base + FA_SPI_CTRL)
+	       & FA_SPI_CTRL_BUSY) {
 		if (jiffies > j) {
 			dev_err(&fa->fmc->dev, "SPI transfer error\n");
 			err = -EIO;
@@ -62,12 +62,12 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		}
 	}
 	/* Transfer compleate, read data */
-	regval = fmc_readl(fa->fmc, FA_SPI_REG(FA_SPI_RX(0)));
+	regval = fmc_readl(fa->fmc, fa->fa_spi_base + FA_SPI_RX(0));
 	if (rx)
 		*rx = regval;
 out:
 	/* Clear Chip Select */
-	fmc_writel(fa->fmc, 0, FA_SPI_REG(FA_SPI_CTRL));
+	fmc_writel(fa->fmc, 0, fa->fa_spi_base + FA_SPI_CTRL);
 
 	return err;
 }
@@ -79,7 +79,7 @@ int fa_spi_init(struct fa_dev *fa)
 	int i;
 
 	/* Divider must be 100, according to firmware guide */
-	fmc_writel(fa->fmc, 100, FA_SPI_REG(FA_SPI_DIV));
+	fmc_writel(fa->fmc, 100, fa->fa_spi_base + FA_SPI_DIV);
 
 	/* Force 2's complement data output (register 1, bit 5) */
 	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, (1 << 8) | (1 << 5), &rx);
