@@ -67,7 +67,7 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		*rx = regval;
 out:
 	/* Clear Chip Select */
-	fmc_writel(fa->fmc, 0, FA_SPI_REG(FA_SPI_CTRL_ASS));
+	fmc_writel(fa->fmc, 0, FA_SPI_REG(FA_SPI_CTRL));
 
 	return err;
 }
