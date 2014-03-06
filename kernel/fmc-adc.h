@@ -93,9 +93,21 @@ struct fa_dma_item {
  * @dma_list_item is a DMA address pointer to the fa_dma_item list
  */
 struct fa_dev {
+	/* the pointer to the fmc_device generic structure */
 	struct fmc_device	*fmc;
+	/* the pointer to the real zio_device in use */
 	struct zio_device	*zdev;
+	/* the pointer to the fake zio_device, used for init/remove */
 	struct zio_device	*hwzdev;
+
+	/* carrier common base offset addresses obtained from SDB */
+	unsigned int fa_adc_csr_base;
+	unsigned int fa_spi_base;
+	unsigned int fa_ow_base;
+	unsigned int fa_carrier_csr_base;
+	unsigned int fa_irq_vic_base;
+	unsigned int fa_irq_adc_base;
+	unsigned int fa_utc_base;
 
 	/* Acquisition */
 	unsigned int		n_shots;

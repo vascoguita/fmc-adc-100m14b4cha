@@ -291,6 +291,14 @@ int fa_probe(struct fmc_device *fmc)
 	}
 	dev_info(fmc->hwdev, "Gateware successfully loaded\n");
 
+	/* Mark base addresses (will come from sdb, later) */
+	//fa->fa_irq_vic_base  -- not existent yet in this gateware
+	//fa->fa_adc_csr_base = CHx_GAIN;
+	//fa->fa_irq_adc_base = ENABLE_MASK;
+	fa->fa_utc_base = FA_UTC_MEM_OFF;
+	fa->fa_spi_base = FA_SPI_MEM_OFF;
+	fa->fa_ow_base = FA_OWI_MEM_OFF;
+
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
 		dev_dbg(&fmc->dev, "Calling init for \"%s\"\n", m->name);
