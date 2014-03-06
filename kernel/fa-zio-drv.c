@@ -23,7 +23,6 @@
 
 #include "fmc-adc.h"
 
-int enable_auto_start = 0;
 static int enable_test_data = 0;
 
 module_param(enable_test_data, int, 0444);
@@ -172,7 +171,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		 */
 
 	case ZFA_SW_R_NOADDERS_AUTO:
-		enable_auto_start = usr_val;
+		fa->enable_auto_start = usr_val;
 		return 0;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:

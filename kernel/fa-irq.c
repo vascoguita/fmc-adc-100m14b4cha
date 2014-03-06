@@ -84,7 +84,7 @@ void zfad_dma_done(struct zio_cset *cset)
 	}
 
 	/* Automatic start next acquisition */
-	if (enable_auto_start) {
+	if (fa->enable_auto_start) {
 		dev_dbg(&fa->fmc->dev, "Automatic start\n");
 		zfad_fsm_command(fa, ZFA_START);
 	}

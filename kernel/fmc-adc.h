@@ -10,10 +10,10 @@
 #include <linux/scatterlist.h>
 #include <linux/fmc.h>
 #include <linux/zio.h>
+
 #include "field-desc.h"
 
 #define FA_GATEWARE_DEFAULT_NAME "fmc/adc-100m14b.bin"
-extern int enable_auto_start;
 
 #define FA_NCHAN 4 /* We have 4 of them,no way out of it */
 
@@ -119,6 +119,9 @@ struct fa_dev {
 
 	/* Calibration Data */
 	struct fa_calib calib;
+
+	/* flag  */
+	int enable_auto_start;
 
 	/* DMA attributes */
 	struct sg_table	sgt;
