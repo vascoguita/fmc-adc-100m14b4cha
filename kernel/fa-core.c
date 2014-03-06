@@ -19,10 +19,6 @@ static struct fmc_driver fa_dev_drv;
 FMC_PARAM_BUSID(fa_dev_drv);
 FMC_PARAM_GATEWARE(fa_dev_drv);
 
-static char *fa_binary = FA_GATEWARE_DEFAULT_NAME;
-module_param_named(file, fa_binary, charp, 0444);
-
-
 static const int zfad_hw_range[] = {
 	[ZFA_RANGE_10V]   = 0x45,
 	[ZFA_RANGE_1V]    = 0x11,
@@ -264,6 +260,7 @@ int fa_probe(struct fmc_device *fmc)
 	struct fa_modlist *m = NULL;
 	struct fa_dev *fa;
 	int err, i = 0;
+	char *fwname;
 
 	/* Validate the new FMC device */
 	i = fmc->op->validate(fmc, &fa_dev_drv);
@@ -273,7 +270,6 @@ int fa_probe(struct fmc_device *fmc)
 		return -ENODEV;
 	}
 
-	pr_info("%s:%d\n", __func__, __LINE__);
 	/* Driver data */
 	fa = devm_kzalloc(&fmc->dev, sizeof(struct fa_dev), GFP_KERNEL);
 	if (!fa)
@@ -281,13 +277,19 @@ int fa_probe(struct fmc_device *fmc)
 	fmc_set_drvdata(fmc, fa);
 	fa->fmc = fmc;
 
+	if (fa_dev_drv.gw_n)
+		fwname = "";	/* reprogram will pick from module parameter */
+	else
+		fwname = FA_GATEWARE_DEFAULT_NAME;
+	dev_info(fmc->hwdev, "Gateware (%s)\n", fwname);
 	/* We first write a new binary (and lm32) within the carrier */
-	err = fmc->op->reprogram(fmc, &fa_dev_drv, fa_binary);
+	err = fmc->op->reprogram(fmc, &fa_dev_drv, fwname);
 	if (err) {
 		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
-				fa_binary, err);
+				fwname, err);
 		goto out;
 	}
+	dev_info(fmc->hwdev, "Gateware successfully loaded\n");
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
