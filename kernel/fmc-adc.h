@@ -52,11 +52,6 @@ struct fa_calib {
 	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
 };
 
-#define FA_CAL_OFFSET		 0x0100 /* Offset in EEPROM */
-
-#define FA_CAL_NO_OFFSET	((int16_t)0x0000)
-#define FA_CAL_NO_GAIN		((uint16_t)0x8000)
-
 /*
  * fa_dma_item: The information about a DMA transfer
  * @start_addr: pointer where start to retrieve data from device memory
@@ -300,6 +295,16 @@ enum zfat_irq {
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 
+#define FA_CAL_OFFSET		 0x0100 /* Offset in EEPROM */
+
+#define FA_CAL_NO_OFFSET	((int16_t)0x0000)
+#define FA_CAL_NO_GAIN		((uint16_t)0x8000)
+
+/* SPI Slave Select lines (as defined in spec_top_fmc_adc_100Ms.vhd) */
+#define FA_SPI_SS_ADC		0
+#define FA_SPI_SS_DAC(ch)	((ch) + 1)
+
+/* Global variable exported by fa-zio-trg.c */
 extern struct zio_trigger_type zfat_type;
 
 static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
@@ -346,10 +351,6 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 	}
 	return NULL;
 }
-
-/* SPI Slave Select lines (as defined in spec_top_fmc_adc_100Ms.vhd) */
-#define FA_SPI_SS_ADC		0
-#define FA_SPI_SS_DAC(ch)	((ch) + 1)
 
 /* Hardware filed-based access */
 static inline int zfa_hardware_write(struct fa_dev *fa,
