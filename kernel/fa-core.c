@@ -17,6 +17,7 @@
 
 static struct fmc_driver fa_dev_drv;
 FMC_PARAM_BUSID(fa_dev_drv);
+FMC_PARAM_GATEWARE(fa_dev_drv);
 
 static char *fa_binary = FA_GATEWARE_DEFAULT_NAME;
 module_param_named(file, fa_binary, charp, 0444);
@@ -45,9 +46,8 @@ int zfad_convert_hw_range(uint32_t bitmask)
 	return -EINVAL;
 }
 
-/* Calculate correct index for channel from CHx indexes */
-int zfad_get_chx_index(unsigned long addr,
-				     struct zio_channel *chan)
+/* Calculate correct index in fa_regfield array for channel from CHx indexes */
+int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan)
 {
 	int offset;
 
@@ -92,7 +92,8 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	}
 
 	hwval = uval * 0x8000 / 5000;
-	if (hwval == 0x8000) hwval = 0x7fff; /* -32768 .. 32767 */
+	if (hwval == 0x8000)
+		hwval = 0x7fff; /* -32768 .. 32767 */
 
 	hwval = ((hwval + offset) * gain) >> 15; /* signed */
 	hwval += 0x8000; /* offset binary */
@@ -335,8 +336,6 @@ static int fa_init(void)
 {
 	int ret;
 
-	pr_debug("%s\n",__func__);
-
 	/* First trigger and zio driver */
 	ret = fa_trig_init();
 	if (ret)
@@ -350,7 +349,6 @@ static int fa_init(void)
 	/* Finally the fmc driver, whose probe instantiates zio devices */
 	ret = fmc_driver_register(&fa_dev_drv);
 	if (ret) {
-		fmc_driver_unregister(&fa_dev_drv);
 		fa_trig_exit();
 		fa_zio_unregister();
 		return ret;
