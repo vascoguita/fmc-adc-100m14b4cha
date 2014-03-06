@@ -7,3 +7,6 @@
 [submodule "spec-sw"]
 	path = spec-sw
 	url = git://ohwr.org/fmc-projects/spec/spec-sw.git
+[submodule "svec-sw"]
+	path = svec-sw
+	url = git://ohwr.org/fmc-projects/svec/svec-sw.git
