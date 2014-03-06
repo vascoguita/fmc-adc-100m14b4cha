@@ -41,7 +41,7 @@ static int fmcadc_flush_input(struct __fmcadc_dev_zio *fa)
 	int i;
 
 	/* Read the control until one is there; data is discarded by zio */
-	while(1) {
+	while (1) {
 		i = poll(&p, 1, 0);
 		if (i < 0)
 			return -1;
@@ -150,7 +150,7 @@ int fmcadc_zio_acq_poll(struct fmcadc_dev *dev,
 	else
 		to_ms = to->tv_sec / 1000 + (to->tv_usec + 500) / 1000;
 	ret = poll(&p, 1, to_ms);
-	switch(ret) {
+	switch (ret) {
 	case 0:
 		errno = EAGAIN;
 		/* fall through */

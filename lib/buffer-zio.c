@@ -66,7 +66,7 @@ static int fmcadc_zio_read_data(struct __fmcadc_dev_zio *fa,
 
 	/* we allocated buf->nsamples, we can have more or less */
 	if (buf->nsamples < ctrl->nsamples)
-		 datalen = samplesize * buf->nsamples;
+		datalen = samplesize * buf->nsamples;
 	else
 		datalen = samplesize * ctrl->nsamples;
 
@@ -181,7 +181,7 @@ int fmcadc_zio_fill_buffer(struct fmcadc_dev *dev,
 	else
 		to_ms = to->tv_sec / 1000 + (to->tv_usec + 500) / 1000;
 	ret = poll(&p, 1, to_ms);
-	switch(ret) {
+	switch (ret) {
 	case 0:
 		errno = EAGAIN;
 		/* fall through */

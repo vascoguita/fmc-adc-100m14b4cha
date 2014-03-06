@@ -53,7 +53,7 @@ static int __fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 }
 
 static int __fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
-			      char *val /* no maxlen: reader knows */ ) 
+			      char *val /* no maxlen: reader knows */ )
 {
 	char pathname[128];
 	int fd, ret;
@@ -76,7 +76,7 @@ static int __fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
  * They manage both strings and integers
  */
 int fmcadc_zio_set_param(struct fmcadc_dev *dev, char *name,
-                         char *sptr, int *iptr)
+			 char *sptr, int *iptr)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	char istr[12];
@@ -89,7 +89,7 @@ int fmcadc_zio_set_param(struct fmcadc_dev *dev, char *name,
 }
 
 int fmcadc_zio_get_param(struct fmcadc_dev *dev, char *name,
-                         char *sptr, int *iptr)
+			 char *sptr, int *iptr)
 {
 	struct __fmcadc_dev_zio *fa = to_dev_zio(dev);
 	char istr[12];
@@ -328,17 +328,17 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 {
 
 	int err, i;
-	uint32_t trg_enabled;
+	uint32_t enabled;
 
-	err = fa_zio_sysfs_get(fa, "cset0/trigger/enable", &trg_enabled);
+	err = fa_zio_sysfs_get(fa, "cset0/trigger/enable", &enabled);
 	if (err)
 		return err;
-	if (trg_enabled) {
+	if (enabled) {
 		/* disable the trigger before changing config */
-	        trg_enabled = 0;
-		err = fa_zio_sysfs_set(fa, "cset0/trigger/enable", &trg_enabled);
+		enabled = 0;
+		err = fa_zio_sysfs_set(fa, "cset0/trigger/enable", &enabled);
 		/* restore the initial value */
-		trg_enabled = 1;
+		enabled = 1;
 	}
 
 	for (i = 0; i < __FMCADC_CONF_LEN; ++i) {
@@ -373,13 +373,12 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 			return -1;
 		}
 		if (err)
-			return err;
+			break; /* stop the config process: an error occurs */
 	}
 
-	/* if the trigger was enabled restore it */ 
-	if (trg_enabled)
-		err = fa_zio_sysfs_set(fa, "cset0/trigger/enable", &trg_enabled);
-
+	/* if the trigger was enabled restore it */
+	if (enabled)
+		err |= fa_zio_sysfs_set(fa, "cset0/trigger/enable", &enabled);
 	return err;
 }
 
