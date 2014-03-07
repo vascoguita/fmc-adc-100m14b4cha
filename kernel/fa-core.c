@@ -403,6 +403,8 @@ int fa_probe(struct fmc_device *fmc)
 	/* apply carrier-specific hacks and workarounds */
 	if (!strcmp(fmc->carrier_name, "SPEC"))
 		fa->carrier_op = &fa_spec_op;
+	else if (!strcmp(fmc->carrier_name, "SVEC"))
+		fa->carrier_op = &fa_svec_op;
 	else {
 		dev_err(fmc->hwdev, "unsupported carrier\n");
 		return -ENODEV;

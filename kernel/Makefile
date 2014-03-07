@@ -25,17 +25,19 @@ subdirs-ccflags-y = $(ccflags-y)
 obj-m := fmc-adc-100m14b.o
 fmc-adc-100m14b-objs =  fa-core.o
 fmc-adc-100m14b-objs += fa-spec-core.o
+fmc-adc-100m14b-objs += fa-svec-core.o
 fmc-adc-100m14b-objs += fa-zio-drv.o
 fmc-adc-100m14b-objs += fa-calibration.o
 fmc-adc-100m14b-objs += fa-regtable.o
 fmc-adc-100m14b-objs += fa-spec-regtable.o
+fmc-adc-100m14b-objs += fa-svec-regtable.o
 fmc-adc-100m14b-objs += fa-zio-trg.o
 fmc-adc-100m14b-objs += fa-spec-dma.o
+fmc-adc-100m14b-objs += fa-svec-dma.o
 fmc-adc-100m14b-objs += fa-irq.o fa-spec-irq.o
 fmc-adc-100m14b-objs += onewire.o
 fmc-adc-100m14b-objs += spi.o
-fmc-adc-100m14b-objs += fmc-util.o
-
+fmc-adc-100m14b-objs += fmc-util.o 
 
 all modules:
 	$(MAKE) -C $(LINUX) M=$(shell /bin/pwd) modules
