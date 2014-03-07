@@ -248,17 +248,37 @@ static void fa_irq_work(struct work_struct *work)
 	struct zio_cset *cset = fa->zdev->cset;
 	int res;
 
+	zfat_irq_acq_end(cset);
+
 	res = zfad_dma_start(cset);
 	if (res)
 		zfad_dma_error(cset);
-	/*
-	 * No error.
-	 * If there is not an IRQ DMA src to notify the ends of the DMA,
-	 * process data immediately.
-	 * Otherwhise this job is delayed till an IRQ DMA occurs
-	 */
-	else if (!(fa->irq_src & FA_IRQ_SRC_DMA))
+	else {
+		/*
+		 * No error.
+		 * If there is an IRQ DMA src to notify the ends of the DMA,
+		 * leave the workqueue.
+		 * dma_done will be proceed on DMA_END reception.
+		 * Otherwhise call dma_done in sequence
+		 */
+		if (fa->irq_src & FA_IRQ_SRC_DMA)
+			/*
+			 * waiting for END_OF_DMA IRQ
+			 * with the CSET_BUSY flag Raised
+			 * The flag will be lowered by the irq_handler
+			 * handling END_DMA
+			 */
+			goto end;
+
 		zfad_dma_done(cset);
+	}
+	/*
+	 * Lower CSET_BUSY
+	 */
+	spin_lock(&cset->lock);
+	cset->flags &= ~ZIO_CSET_BUSY;
+	spin_unlock(&cset->lock);
+end:
 	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
 }
@@ -307,6 +327,8 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 	struct fa_dev *fa = fmc_get_drvdata(fmc);
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t status;
+	unsigned long flags;
+	struct zfad_block *zfad_block;
 
 	/* irq to handle */
 	fa_get_irq_status(fa, irq_core_base, &status);
@@ -317,19 +339,36 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 		fmc->slot_id);
 
 	if (status & FA_IRQ_ADC_ACQ_END) {
-		zfat_irq_acq_end(cset);
-		/* Job delegated to the workqueue: */
-		/* Start DMA  and acknowledge of the irq on the carrier */
-		schedule_work(&fa->irq_work);
-		/* register the core which just fired the IRQ */
-		/* check proper sequence of IRQ  for multi IRQ (ACQ + DMA)*/
-		fa->last_irq_core_src = irq_core_base;
+		/*
+		 * Acquiring samples is a critical section
+		 * protected against any concurrent abbort trigger.
+		 * This is done by raising the flag CSET_BUSY at ACQ_END
+		 * and lowered it at the end of DMA_END.
+		 */
+		spin_lock_irqsave(&cset->lock, flags);
+		zfad_block = cset->interleave->priv_d;
+		/* Check first if any concurrent trigger stop */
+		/* has deleted zio blocks. In such a case */
+		/* the flag is not raised and nothing is done */
+		if (zfad_block != NULL)
+			cset->flags |= ZIO_CSET_BUSY;
+		spin_unlock_irqrestore(&cset->lock, flags);
+		if (cset->flags & ZIO_CSET_BUSY) {
+			/* Job deferred to the workqueue: */
+			/* Start DMA and ack irq on the carrier */
+			schedule_work(&fa->irq_work);
+			/* register the core firing the IRQ in order to */
+			/* check right IRQ seq.: ACQ_END followed by DMA_END */
+			fa->last_irq_core_src = irq_core_base;
+		} else /* current Acquiistion has been stopped */
+			fmc->op->irq_ack(fmc);
 	} else { /* unexpected interrupt we have to ack anyway */
 		dev_err(&fa->fmc->dev,
 			"%s unexpected interrupt 0x%x\n",
 			__func__, status);
 		fmc->op->irq_ack(fmc);
 	}
+
 	return IRQ_HANDLED;
 
 }

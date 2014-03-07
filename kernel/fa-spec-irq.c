@@ -90,6 +90,14 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 	/* check proper sequence of IRQ in case of multi IRQ (ACQ + DMA)*/
 	fa->last_irq_core_src = irq_core_base;
 
+	/*
+	 * DMA transaction is finished
+	 * we can safely lower CSET_BUSY
+	 */
+	spin_lock(&cset->lock);
+	cset->flags &= ~ZIO_CSET_BUSY;
+	spin_unlock(&cset->lock);
+
 	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
 
