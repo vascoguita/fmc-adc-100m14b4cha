@@ -87,18 +87,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
 	uint32_t tmp_val = usr_val;
-	int err = 0;
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
 		if (!tmp_val) {
 			dev_err(dev, "nshots cannot be 0\n");
 			return -EINVAL;
-		}
-		if (tmp_val > 1) { /* multishot restricts samples count */
-			err = zfat_overflow_detection(ti, zattr->id, tmp_val);
-			if (err)
-				return err;
 		}
 		break;
 	case ZFAT_POST:
@@ -117,10 +111,6 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EINVAL;
 		}
 		tmp_val -= 1;
-	case ZFAT_PRE:
-		err = zfat_overflow_detection(ti, zattr->id, tmp_val);
-		if (err)
-			return err;
 		break;
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
@@ -295,12 +285,20 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	unsigned int size;
 	uint32_t dev_mem_off;
 	int i, err = 0;
+	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
 	gfp_t gfp;
 
 	/* if fsm-auto-start is active, we re-allocate at interrupt time */
 	gfp = in_atomic() ? GFP_ATOMIC : GFP_KERNEL;
 
 	dev_dbg(msgdev, "Arming trigger\n");
+
+	/* Check if device memory allows this trigger configuration */
+	err = zfat_overflow_detection(ti, ZFAT_POST,
+			ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value);
+	if (err)
+		return err;
+
 	/* Update the current control: sequence, nsamples and tstamp */
 	interleave->current_ctrl->nsamples = ti->nsamples;
 
