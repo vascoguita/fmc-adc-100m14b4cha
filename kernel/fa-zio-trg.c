@@ -36,7 +36,7 @@ static ZIO_ATTR_DEFINE_STD(ZIO_TRG, zfat_std_zattr) = {
 	/* Number of shots */
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_N_SHOTS, ZIO_RW_PERM, ZFAT_SHOTS_NB, 1),
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_PRE_SAMP, ZIO_RW_PERM, ZFAT_PRE, 0),
-	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, ZIO_RW_PERM, ZFAT_POST, 0),
+	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, ZIO_RW_PERM, ZFAT_POST, 1),
 };
 static struct zio_attribute zfat_ext_zattr[] = {
 	/* Config register */
@@ -95,8 +95,29 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			dev_err(dev, "nshots cannot be 0\n");
 			return -EINVAL;
 		}
-	case ZFAT_PRE:
+		if (tmp_val > 1) { /* multishot restricts samples count */
+			err = zfat_overflow_detection(ti, zattr->id, tmp_val);
+			if (err)
+				return err;
+		}
+		break;
 	case ZFAT_POST:
+		/*
+		 * actually the HW adds systematically a sample
+		 * corresponding to the trigger itself.  therefore the
+		 * client ask pre-samp+post-samp and the HW returns
+		 * pre-samp+1+post-samp To make this behaviour
+		 * invisible from the user we consider that the sample
+		 * corresponding to the trigger is part of the post
+		 * samples.  Therefore the value written in the HW is
+		 * post-samples-1 and value 0 is excluded
+		 */
+		if (!tmp_val) {
+			dev_err(dev, "post samples cannot be 0 (minimum 1)\n");
+			return -EINVAL;
+		}
+		tmp_val -= 1;
+	case ZFAT_PRE:
 		err = zfat_overflow_detection(ti, zattr->id, tmp_val);
 		if (err)
 			return err;
@@ -120,7 +141,8 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	}
 
-	return zfa_hardware_write(fa, zattr->id, tmp_val);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id], tmp_val);
+	return 0;
 }
 
 
@@ -133,7 +155,14 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 
-	zfa_hardware_read(fa, zattr->id, usr_val);
+	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
+
+	/*
+	 * See in zfat-conf-set explanations (just above)
+	 * Post sample value read from the HW is incrmented by 1
+	 */
+	if (zattr->id == ZFAT_POST)
+		*usr_val += 1;
 
 	return 0;
 }
@@ -162,9 +191,9 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 		return ERR_PTR(-ENOMEM);
 
 	/* Disable Software trigger*/
-	zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 	/* Enable Hardware trigger*/
-	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 1);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 1);
 
 	zfat->fa = fa;
 	zfat->ti.cset = cset;
@@ -178,15 +207,15 @@ static void zfat_destroy(struct zio_ti *ti)
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
 	/* Enable Software trigger */
-	zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 1);
 	/* Disable Hardware trigger */
-	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 0);
 	/* Other triggers cannot use pre-samples */
-	zfa_hardware_write(fa, ZFAT_PRE, 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_PRE], 0);
 	/* Reset post samples */
-	zfa_hardware_write(fa, ZFAT_POST, 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_POST], 0);
 	/* Other triggers can handle only 1 shot */
-	zfa_hardware_write(fa, ZFAT_SHOTS_NB, 1);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
 
 	kfree(zfat);
 }
@@ -201,7 +230,7 @@ static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 
-	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, !status);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], !status);
 }
 
 /*
@@ -228,7 +257,7 @@ static int zfat_data_done(struct zio_cset *cset)
 		return 0;
 
 	/* Store blocks */
-	for(i = 0; i < fa->n_shots; ++i)
+	for (i = 0; i < fa->n_shots; ++i)
 		if (likely(i < fa->n_fires)) {/* Store filled blocks */
 			dev_dbg(&fa->fmc->dev, "Store Block %i/%i\n",
 				i + 1, fa->n_shots);
@@ -292,12 +321,25 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	interleave->priv_d = zfad_block;
 
 	/*
-	 * Calculate the required size to store all channels.
-	 * This is an interleaved acquisition, so nsamples represents the
+	 * Calculate the required size to store all channels.  This is
+	 * an interleaved acquisition, so nsamples represents the
 	 * number of sample on all channels (n_chan * chan_samples)
+	 * Trig time stamp are appended after the post samples
+	 * (4*32bits word) size should be 32bits word aligned
+	 * ti->nsamples is the sum of (pre-samp+ post-samp)*4chan
+	 * because it's the interleave channel.
 	 */
-	size = interleave->current_ctrl->ssize * ti->nsamples;
-
+	size = (interleave->current_ctrl->ssize * ti->nsamples)
+		+ FA_TRIG_TIMETAG_BYTES;
+	/* check if size is 32 bits word aligned: should be always the case */
+	if (size % 4) {
+		/* should never happen: increase the size accordling */
+		dev_warn(msgdev,
+			"\nzio data block size should 32bit word aligned."
+			"original size:%d was increased by %d bytes\n",
+			size, size%4);
+		size += size % 4;
+	}
 	dev_mem_off = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
@@ -305,7 +347,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		block = zbuf->b_op->alloc_block(interleave->bi, size, gfp);
 		if (!block) {
 			dev_err(msgdev,
-				"arm trigger fail, cannot allocate block\n");
+				"\narm trigger fail, cannot allocate block\n");
 			err = -ENOMEM;
 			goto out_allocate;
 		}
@@ -327,7 +369,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	return err;
 
 out_allocate:
-	while((--i) >= 0)
+	while ((--i) >= 0)
 		zbuf->b_op->free_block(interleave->bi, zfad_block[i].block);
 	kfree(zfad_block);
 	interleave->priv_d = NULL;
@@ -351,7 +393,7 @@ static void zfat_abort(struct zio_ti *ti)
 
 	dev_dbg(&fa->fmc->dev, "Aborting trigger\n");
 	/* Free all blocks */
-	for(i = 0; i < fa->n_shots; ++i)
+	for (i = 0; i < fa->n_shots; ++i)
 		bi->b_op->free_block(bi, zfad_block[i].block);
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;

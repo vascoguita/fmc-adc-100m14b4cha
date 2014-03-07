@@ -23,10 +23,6 @@
 
 #include "fmc-adc.h"
 
-static int enable_test_data = 0;
-
-module_param(enable_test_data, int, 0444);
-
 /*
  * zio device attributes
  */
@@ -241,7 +237,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return zfad_fsm_command(fa, usr_val);
 	}
 
-	return zfa_hardware_write(fa, reg_index, usr_val);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[reg_index], usr_val);
+	return 0;
 }
 
 /*
@@ -293,7 +290,8 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
-		zfa_hardware_read(fa, reg_index, usr_val);
+		*usr_val = fa_readl(fa, fa->fa_adc_csr_base,
+				    &zfad_regs[reg_index]);
 		i = (int16_t)(*usr_val); /* now signed integer */
 		*usr_val = i;
 		break;
@@ -301,7 +299,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		reg_index = zattr->id;
 	}
 
-	zfa_hardware_read(fa, reg_index, usr_val);
+	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg_index]);
 	return 0;
 }
 static const struct zio_sysfs_operations zfad_s_op = {
@@ -338,13 +336,14 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 	tmp->dev_mem_off = 0; /* Always the first block */
 
 	/* Configure post samples */
-	zfa_hardware_write(fa, ZFAT_POST, cset->ti->nsamples);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_POST],
+		  cset->ti->nsamples);
 	/* Start the acquisition */
 	zfad_fsm_command(fa, ZFA_START);
 
 	fa->n_shots = 1;
 	/* Fire software trigger */
-	zfa_hardware_write(fa, ZFAT_SW, 1);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SW], 1);
 
 	return -EAGAIN;
 }
@@ -371,9 +370,8 @@ static int zfad_input_cset(struct zio_cset *cset)
 	}
 
 	/* If not the fmc-adc-trg, then is a ZIO software trigger */
-	if (unlikely(cset->trig != &zfat_type)) {
+	if (unlikely(cset->trig != &zfat_type))
 		return zfad_input_cset_software(fa, cset);
-	}
 
 	return -EAGAIN; /* data_done on DMA_DONE interrupt */
 }
@@ -383,220 +381,24 @@ static int zfad_input_cset(struct zio_cset *cset)
  * @cset: channel set to stop
  *
  * Stop an acquisition, reset indexes and disable interrupts. This function
- * not used when using our internal trigger, which offers t_op->abort:
- * only if the trigger misses its own abort, ZIO calls cset->stop_io.
+ * is useful only if the driver is using a software trigger.
  */
 static void zfad_stop_cset(struct zio_cset *cset)
 {
 
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	if (cset->trig == &zfat_type) /* paranoid (see above comment) */
-		return;
-
-	/* Force the acquisition to stop */
-	zfad_fsm_command(fa, ZFA_STOP);
-	/* Release zfad_block */
-	kfree(cset->interleave->priv_d);
-	cset->interleave->priv_d = NULL;
-	/* Clear active block */
-	cset->interleave->active_block = NULL;
-}
-/* * * * * * * * * * * * * IRQ functions handler * * * * * * * * * * * * * * */
-
-/*
- * zfat_get_irq_status
- * @fa: adc descriptor
- * @irq_status: destination of irq status
- * @irq_multi: destination of irq multi
- *
- * Get irq and clear the register. To clear an interrupt we have to write 1
- * on the handled interrupt. We handle all interrupt so we clear all interrupts
- */
-static void zfat_get_irq_status(struct fa_dev *fa,
-				uint32_t *irq_status, uint32_t *irq_multi)
-{
-
-	/* Get current interrupts status */
-	zfa_hardware_read(fa, ZFA_IRQ_SRC, irq_status);
-	zfa_hardware_read(fa, ZFA_IRQ_MULTI, irq_multi);
-	dev_dbg(&fa->fmc->dev, "irq status = 0x%x multi = 0x%x\n",
-			*irq_status, *irq_multi);
-
-	/* Clear current interrupts status */
-	zfa_hardware_write(fa, ZFA_IRQ_SRC, *irq_status);
-	zfa_hardware_write(fa, ZFA_IRQ_MULTI, *irq_multi);
-}
-
-/*
- * zfat_get_time_stamp
- *
- * Get the last trigger time-stamp from device
- */
-static void zfat_get_time_stamp(struct fa_dev *fa, struct zio_timestamp *ts)
-{
-	uint32_t val;
-
-	/* We can't  read directly to ts->, as they are 64-bit values */
-	zfa_hardware_read(fa, ZFA_UTC_TRIG_SECONDS, &val);  ts->secs = val;
-	zfa_hardware_read(fa, ZFA_UTC_TRIG_COARSE, &val);   ts->ticks = val;
-	zfa_hardware_read(fa, ZFA_UTC_TRIG_FINE, &val);     ts->bins = val;
-}
-
-
-/*
- * zfat_irq_trg_fire
- * @fa: fmc-adc descriptor
- *
- * Trigger fires. This function stores the time-stamp in the current_ctrl and
- * in the pre-allocated block. Then it increments the sequence number both in
- * current_ctrl and in the pre-allocated block.
- *
- * If the device is working in single-shot mode, once the trigger fire
- * interrupt occurs we must fix the dev_mem_addr of the block.
- */
-static void zfat_irq_trg_fire(struct zio_cset *cset)
-{
-	struct zio_channel *interleave = cset->interleave;
-	struct fa_dev *fa = cset->zdev->priv_d;
-	struct zfad_block *zfad_block = interleave->priv_d;
-	struct zio_control *ctrl;
-	uint32_t dev_mem_off, trg_pos, pre_samp;
-
-	dev_dbg(&fa->fmc->dev, "Trigger fire %i/%i\n",
-		fa->n_fires + 1, fa->n_shots);
-	if (fa->n_fires >= fa->n_shots) {
-		WARN(1, "Invalid Fire, STOP acquisition");
+	/* If the user is using a software trigger */
+	if (cset->trig != &zfat_type) {
+		/* Force the acquisition to stop */
 		zfad_fsm_command(fa, ZFA_STOP);
-		return;
+		/* Release zfad_block */
+		kfree(cset->interleave->priv_d);
+		cset->interleave->priv_d = NULL;
+		/* Clear active block */
+		cset->interleave->active_block = NULL;
 	}
-
-	/* Fix dev_mem_addr in single-shot mode */
-	if (fa->n_shots == 1) {
-		int nchan = FA_NCHAN;
-		struct zio_control *ctrl = cset->chan[FA_NCHAN].current_ctrl;
-
-		/* get pre-samples from the current control (interleave chan) */
-		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
-		/* Get trigger position in DDR */
-		zfa_hardware_read(fa, ZFAT_POS, &trg_pos);
-		/* translate from sample count to memory offset */
-		dev_mem_off = (trg_pos - pre_samp) * cset->ssize * nchan;
-		dev_dbg(&fa->fmc->dev,
-			"Trigger @ 0x%08x, pre %i, offset 0x%08x\n",
-			trg_pos, pre_samp, dev_mem_off);
-
-		zfad_block[fa->n_fires].dev_mem_off = dev_mem_off;
-	}
-
-	/* Get control from pre-allocated block */
-	ctrl = zio_get_ctrl(zfad_block[fa->n_fires].block);
-	/* Update timestamp */
-	zfat_get_time_stamp(fa, &interleave->current_ctrl->tstamp);
-	memcpy(&ctrl->tstamp, &interleave->current_ctrl->tstamp,
-	       sizeof(struct zio_timestamp));
-	/* Update sequence number */
-	interleave->current_ctrl->seq_num++;
-	ctrl->seq_num = interleave->current_ctrl->seq_num;
-
-	/* Count fire */
-	fa->n_fires++;
 }
-
-
-
-
-/*
- * zfad_irq
- * @irq:
- * @ptr: pointer to fmc_device
- *
- * The different irq status are handled in different if statement. At the end
- * of the if statement we don't call return because it is possible that there
- * are others irq to handle. The order of irq handlers is based on the
- * possibility to have many irq rised at the same time. It is possible that
- * ZFAT_TRG_FIRE and ZFAT_ACQ_END happens simultaneously, so we handle FIRE
- * before END. It should be impossible to have simultaneously both DMA
- * interrupts and acquisition interrupts active at the same time.
- */
-static irqreturn_t zfad_irq(int irq, void *ptr)
-{
-	struct fmc_device *fmc = ptr;
-	struct fa_dev *fa = fmc_get_drvdata(fmc);
-	struct zio_cset *cset = fa->zdev->cset;
-	uint32_t status, multi;
-	int max_try = 10;
-
-	/* irq to handle */
-	zfat_get_irq_status(fa, &status, &multi);
-	if (!status)
-		return IRQ_NONE;
-
-irq_handler:
-	dev_dbg(&fa->fmc->dev, "Handle ADC interrupts\n");
-	if (unlikely((status & (ZFAT_DMA_DONE | ZFAT_DMA_ERR)) &&
-	    (status & (ZFAT_TRG_FIRE | ZFAT_ACQ_END)))) {
-		WARN(1, "Cannot handle trigger interrupt and DMA interrupt at "
-			"the same time\n");
-		/* Stop Acquisition, ADC it is not working properly */
-		zfad_fsm_command(fa, ZFA_STOP);
-		return IRQ_HANDLED;
-	}
-	/*
-	 * It cannot happen that DMA_DONE is in the multi register.
-	 * It should not happen ...
-	 */
-	if (status & ZFAT_DMA_DONE) {
-		zfad_dma_done(cset);
-	}
-	if (unlikely((status | multi) & ZFAT_DMA_ERR)) {
-		zfad_dma_error(cset);
-	}
-
-	/* Fire the trigger for each interrupt */
-	if (status & ZFAT_TRG_FIRE)
-		zfat_irq_trg_fire(cset);
-	if (multi & ZFAT_TRG_FIRE)
-		zfat_irq_trg_fire(cset);
-	/*
-	 * If it is too fast the ACQ_END interrupt can be in the
-	 * multi register.
-	 */
-	if ((status | multi) & ZFAT_ACQ_END)
-		zfat_irq_acq_end(cset);
-
-	/* ack the irq */
-	fa->fmc->op->irq_ack(fa->fmc);
-
-	/*
-	 * Read again the interrupt status. It can happen that an interrupt
-	 * is raised while we was processing a previous interrupt. If there
-	 * are new active interrupts, then handle them.
-	 * This handler cannot monopolize the processor, so it check for
-	 * new interrupts only 'max_try' times.
-	 */
-	zfat_get_irq_status(fa, &status, &multi);
-	if ((status || multi) && --max_try)
-		goto irq_handler;
-
-	return IRQ_HANDLED;
-}
-
-
-/*
- * zfat_gpio_cfg
- *
- * GPIO configuration for FMC ADC. It configure only the interrupt GPIO
- */
-struct fmc_gpio zfat_gpio_cfg[] = {
-	{
-		.gpio = FMC_GPIO_IRQ(0),
-		.mode = GPIOF_DIR_IN,
-		.irqmode = IRQF_TRIGGER_RISING,
-	}
-};
-
-/* * * * * * * * * * * * * * * * Initialization * * * * * * * * * * * * * * */
 
 /*
  * zfad_zio_probe
@@ -608,66 +410,13 @@ struct fmc_gpio zfat_gpio_cfg[] = {
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
-	int err = 0, i, addr;
 
 	dev_dbg(&zdev->head.dev, "%s:%d\n", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
 
-	/* Retrieve calibration data from the eeprom, then verify it */
-	fa_read_eeprom_calib(fa);
-
-	/* Configure GPIO for IRQ */
-	fa->fmc->op->gpio_config(fa->fmc, zfat_gpio_cfg,
-				 ARRAY_SIZE(zfat_gpio_cfg));
-	/* Request IRQ */
-	err = fa->fmc->op->irq_request(fa->fmc, zfad_irq, "fmc-adc-100m14b",
-				       IRQF_SHARED);
-	if (err)
-		dev_err(&fa->fmc->dev, "can't request irq %i (error %i)\n",
-			fa->fmc->irq, err);
-
-	/* Force stop FSM to prevent early trigger fire */
-	zfa_hardware_write(fa, ZFA_CTL_FMS_CMD, ZFA_STOP);
-	/* Initialize channels to use 1V range */
-	for (i = 0; i < 4; ++i) {
-		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
-					  &zdev->cset->chan[i]);
-		zfa_hardware_write(fa, addr, ZFA_RANGE_1V);
-		zfad_set_range(fa, &zdev->cset->chan[i], ZFA_RANGE_1V);
-	}
-	zfad_reset_offset(fa);
-
-	/* Enable mezzanine clock */
-	zfa_hardware_write(fa, ZFA_CTL_CLK_EN, 1);
-	/* Set DMA to transfer data from device to host */
-	zfa_hardware_write(fa, ZFA_DMA_BR_DIR, 0);
-	/* Set decimation to minimum */
-	zfa_hardware_write(fa, ZFAT_SR_DECI, 1);
-	/* Set test data register */
-	zfa_hardware_write(fa, ZFA_CTL_TEST_DATA_EN, enable_test_data);
-	/* Set to single shot mode by default */
-	zfa_hardware_write(fa, ZFAT_SHOTS_NB, 1);
-	if (zdev->cset->ti->cset->trig == &zfat_type) {
-		/* Select external trigger (index 0) */
-		zfa_hardware_write(fa, ZFAT_CFG_HW_SEL, 1);
-		zdev->cset->ti->zattr_set.ext_zattr[0].value = 1;
-	} else {
-		/* Enable Software trigger*/
-		zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
-		/* Disable Hardware trigger*/
-		zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 0);
-	}
-
-	/* Zero offsets and release the DAC clear */
-	zfad_reset_offset(fa);
-	zfa_hardware_write(fa, ZFA_CTL_DAC_CLR_N, 1);
-
-
-	/* Set UTC seconds from the kernel seconds */
-	zfa_hardware_write(fa, ZFA_UTC_SECONDS, get_seconds());
-
-	return err;
+	/* We don't have csets at this point, so don't do anything more */
+	return 0;
 }
 
 /*
@@ -678,9 +427,6 @@ static int zfad_zio_probe(struct zio_device *zdev)
  */
 static int zfad_zio_remove(struct zio_device *zdev)
 {
-	struct fa_dev *fa = zdev->priv_d;
-
-	fa->fmc->op->irq_free(fa->fmc);
 	return 0;
 }
 
@@ -774,46 +520,15 @@ void fa_zio_unregister(void)
  */
 int fa_zio_init(struct fa_dev *fa)
 {
-	struct device *hwdev = fa->fmc->hwdev;
 	struct device *msgdev = &fa->fmc->dev;
-	uint32_t val;
 	int err;
 
-	/* Check if hardware supports 64-bit DMA */
-	if(dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
-		/* Check if hardware supports 32-bit DMA */
-		if(dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
-			dev_err(msgdev, "32-bit DMA addressing not available\n");
-			return -EINVAL;
-		}
-	}
-	/* Wait 50ms, so device has time to calibrate */
-	mdelay(50);
-	/* Verify that the FMC is plugged (0 is plugged) */
-	zfa_hardware_read(fa, ZFA_CAR_FMC_PRES, &val);
-	if (val) {
-		dev_err(msgdev, "No FCM ADC plugged\n");
-		return -ENODEV;
-	}
-	/* Verify that system PLL is locked (1 is calibrated) */
-	zfa_hardware_read(fa, ZFA_CAR_SYS_PLL, &val);
-	if (!val) {
-		dev_err(msgdev, "System PLL not locked\n");
-		return -ENODEV;
-	}
-	/* Verify that DDR3 calibration is done (1 is calibrated) */
-	zfa_hardware_read(fa, ZFA_CAR_DDR_CAL, &val);
-	if (!val) {
-		dev_err(msgdev, "DDR3 Calibration not done\n");
-		return -ENODEV;
-	}
 
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev)) {
 		dev_err(msgdev, "Cannot allocate ZIO device\n");
-		err = PTR_ERR(fa->hwzdev);
-		goto out_allocate;
+		return PTR_ERR(fa->hwzdev);
 	}
 
 	/* Mandatory fields */
@@ -825,13 +540,8 @@ int fa_zio_init(struct fa_dev *fa)
 				  fa->fmc->device_id);
 	if (err) {
 		dev_err(msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
-		goto out_dev;
+		zio_free_device(fa->hwzdev);
 	}
-	return 0;
-
-out_dev:
-	zio_free_device(fa->hwzdev);
-out_allocate:
 	return err;
 }
 

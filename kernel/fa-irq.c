@@ -16,6 +16,7 @@
 #include <linux/zio-trigger.h>
 
 #include "fmc-adc.h"
+#include "fa-spec.h"
 
 /**
  * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
@@ -23,21 +24,17 @@
  *
  * @param cset
  */
-void zfad_dma_start(struct zio_cset *cset)
+int zfad_dma_start(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	struct zio_channel *interleave = cset->interleave;
-	struct zfad_block *zfad_block = interleave->priv_d;
 	int err;
 
-	/* Map ZIO block for DMA acquisition */
-	err = zfad_map_dma(cset, zfad_block, fa->n_shots);
-	if (err)
-		return;
-
-	/* Start DMA transefer */
-	zfa_hardware_write(fa, ZFA_DMA_CTL_START, 1);
 	dev_dbg(&fa->fmc->dev, "Start DMA transfer\n");
+	err = fa->carrier_op->dma_start(cset);
+	if (err)
+		return err;
+
+	return 0;
 }
 
 /**
@@ -54,16 +51,47 @@ void zfad_dma_done(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zio_channel *interleave = cset->interleave;
 	struct zfad_block *zfad_block = interleave->priv_d;
+	struct zio_control *ctrl = NULL;
 	struct zio_ti *ti = cset->ti;
+	struct zio_block *block;
+	int i;
+	uint32_t *trig_timetag;
 
-	zfad_unmap_dma(cset, zfad_block);
+	fa->carrier_op->dma_done(cset);
+
+	/* for each shot, set the timetag of each ctrl block by reading the
+	 * trig-timetag appended after the samples
+	 */
+	for (i = 0; i < fa->n_shots; ++i) {
+		block = zfad_block[i].block;
+		ctrl = zio_get_ctrl(block);
+		trig_timetag = (uint32_t *)(block->data + block->datalen
+					    - FA_TRIG_TIMETAG_BYTES);
+		/* Timetag marker (metadata) used for debugging */
+		dev_dbg(&fa->fmc->dev, "trig_timetag metadata of the shot %d"
+			" (expected value: 0x6fc8ad2d): 0x%x\n",
+			i, *trig_timetag);
+		ctrl->tstamp.secs = *(++trig_timetag);
+		ctrl->tstamp.ticks = *(++trig_timetag);
+		ctrl->tstamp.bins = *(++trig_timetag);
+		/* resize the datalen and clear stamp from data block */
+		block->datalen -= FA_TRIG_TIMETAG_BYTES;
+		memset(block->data+block->datalen, 0, FA_TRIG_TIMETAG_BYTES);
+		/* update seq num */
+		ctrl->seq_num = i;
+	}
+	/* Sync the channel current control with the last ctrl block*/
+	memcpy(&interleave->current_ctrl->tstamp,
+		&ctrl->tstamp, sizeof(struct zio_timestamp));
+	/* Update sequence number */
+	interleave->current_ctrl->seq_num = ctrl->seq_num;
 
 	/*
 	 * All DMA transfers done! Inform the trigger about this, so
 	 * it can store blocks into the buffer
 	 */
-	zio_trigger_data_done(cset);
 	dev_dbg(&fa->fmc->dev, "%i blocks transfered\n", fa->n_shots);
+	zio_trigger_data_done(cset);
 
 	/*
 	 * we can safely re-enable triggers.
@@ -74,13 +102,14 @@ void zfad_dma_done(struct zio_cset *cset)
 	 * trigger.
 	 */
 	if (cset->trig == &zfat_type) {
-		zfa_hardware_write(fa, ZFAT_CFG_HW_EN,
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
-		zfa_hardware_write(fa, ZFAT_CFG_SW_EN,
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
 				    ti->zattr_set.ext_zattr[5].value);
 	} else {
 		dev_dbg(&fa->fmc->dev, "Software acquisition over\n");
-		zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 1);
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
+			  1);
 	}
 
 	/* Automatic start next acquisition */
@@ -89,6 +118,7 @@ void zfad_dma_done(struct zio_cset *cset)
 		zfad_fsm_command(fa, ZFA_START);
 	}
 }
+
 
 /**
  * It handles the error condition of a DMA transfer.
@@ -102,24 +132,19 @@ void zfad_dma_error(struct zio_cset *cset)
 	struct zio_bi *bi = cset->interleave->bi;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	int i;
-	uint32_t val;
 
-	zfad_unmap_dma(cset, zfad_block);
+	fa->carrier_op->dma_error(cset);
 
-	zfa_hardware_read(fa, ZFA_DMA_STA, &val);
-	dev_err(&fa->fmc->dev,
-		"DMA error (status 0x%x). All acquisition lost\n", val);
 	zfad_fsm_command(fa, ZFA_STOP);
 	fa->n_dma_err++;
 
 	if (fa->n_fires == 0)
 		dev_err(&fa->fmc->dev,
-			"DMA error (status 0x%x) occurs but no block was acquired\n", val);
+			"DMA error occurs but no block was acquired\n");
 
 	/* Remove invalid blocks */
-	for (i = 0; i < fa->n_shots; ++i) {
+	for (i = 0; i < fa->n_shots; ++i)
 		bi->b_op->store_block(bi, zfad_block[i].block);
-	}
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;
 }
@@ -134,23 +159,40 @@ void zfad_dma_error(struct zio_cset *cset)
 void zfat_irq_acq_end(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	uint32_t val;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
+	uint32_t dev_mem_off, trg_pos, pre_samp;
+	uint32_t val = 0;
 	int try = 5;
 
 	dev_dbg(&fa->fmc->dev, "Acquisition done\n");
+	/*FIXME: because the driver doesn't listen anymore trig-event
+	 * we agreed that the HW will provide a dedicated register
+	 * to check the real number of shots in order to compare it
+	 * with the requested one.
+	 * This ultimate check is not crucial because the HW implements
+	 * a solid state machine and acq-end can happens only after
+	 * the execution of the n requested shots.
+	 */
+	/*
+	fa->n_fires = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_NSHOTS...);
 	if (fa->n_fires != fa->n_shots) {
 		dev_err(&fa->fmc->dev,
 			"Expected %i trigger fires, but %i occurs\n",
 			fa->n_shots, fa->n_fires);
 	}
+	*/
+	/* for the time being let assume n_shots have been executed */
+	fa->n_fires = fa->n_shots;
 	/*
 	 * All programmed triggers fire, so the acquisition is ended.
 	 * If the state machine is _idle_ we can start the DMA transfer.
 	 * If the state machine it is not idle, try again 5 times
 	 */
-	do {
-		zfa_hardware_read(fa, ZFA_STA_FSM, &val);
-	} while (try-- && val != ZFA_STATE_IDLE);
+	while (try-- && val != ZFA_STATE_IDLE) {
+		//udelay(2);
+		val = fa_readl(fa, fa->fa_adc_csr_base,
+			       &zfad_regs[ZFA_STA_FSM]);
+	}
 
 	if (val != ZFA_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
@@ -165,9 +207,218 @@ void zfat_irq_acq_end(struct zio_cset *cset)
 	 * Disable all triggers to prevent fires between
 	 * different DMA transfers required for multi-shots
 	 */
-	zfa_hardware_write(fa, ZFAT_CFG_HW_EN, 0);
-	zfa_hardware_write(fa, ZFAT_CFG_SW_EN, 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 0);
 
-	/* Start the DMA transfer */
-	zfad_dma_start(cset);
+	/* Fix dev_mem_addr in single-shot mode */
+	if (fa->n_shots == 1) {
+		int nchan = FA_NCHAN;
+		struct zio_control *ctrl = cset->chan[FA_NCHAN].current_ctrl;
+
+		/* get pre-samples from the current control (interleave chan) */
+		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
+		/* Get trigger position in DDR */
+		trg_pos = fa_readl(fa, fa->fa_adc_csr_base,
+				   &zfad_regs[ZFAT_POS]);
+		/* compute mem offset (in bytes): pre-samp is converted to bytes */
+		dev_mem_off = trg_pos - (pre_samp * cset->ssize * nchan);
+		dev_dbg(&fa->fmc->dev,
+			"Trigger @ 0x%08x, pre_samp %i, offset 0x%08x\n",
+			trg_pos, pre_samp, dev_mem_off);
+
+		zfad_block[0].dev_mem_off = dev_mem_off;
+	}
 }
+
+/*
+ * job executed within a work thread
+ * Depending of the carrier the job slightly differs:
+ * SVEC: dma_start() blocks till the the DMA ends
+ *      (fully managed by the vmebus driver)
+ * Therefore the DMA outcome can be processed immediately
+ * SPEC: dma_start() launch the job an returns immediately.
+ * An interrupt DMA_DONE or ERROR is expecting to signal the end
+ *       of the DMA transaction
+ * (See fa-spec-irq.c::fa-spec_irq_handler)
+ */
+
+static void fa_irq_work(struct work_struct *work)
+{
+	struct fa_dev *fa = container_of(work, struct fa_dev, irq_work);
+	struct zio_cset *cset = fa->zdev->cset;
+	int res;
+
+	res = zfad_dma_start(cset);
+	if (res)
+		zfad_dma_error(cset);
+	/*
+	 * No error.
+	 * If there is not an IRQ DMA src to notify the ends of the DMA,
+	 * process data immediately.
+	 * Otherwhise this job is delayed till an IRQ DMA occurs
+	 */
+	else if (!(fa->irq_src & FA_IRQ_SRC_DMA))
+		zfad_dma_done(cset);
+	/* ack the irq */
+	fa->fmc->op->irq_ack(fa->fmc);
+}
+
+/*
+ * fat_get_irq_status
+ * @fa: adc descriptor
+ * @irq_status: destination of irq status
+ *
+ * Get irq and clear the register. To clear an interrupt we have to write 1
+ * on the handled interrupt. We handle all interrupt so we clear all interrupts
+ */
+static void fa_get_irq_status(struct fa_dev *fa, int irq_core_base,
+			      uint32_t *irq_status)
+{
+
+	/* Get current interrupts status */
+	*irq_status = fa_readl(fa, irq_core_base, &zfad_regs[ZFA_IRQ_ADC_SRC]);
+	dev_dbg(&fa->fmc->dev, "core ADC: 0x%x fired an interrupt. IRQ status register: 0x%x\n",
+			irq_core_base, *irq_status);
+
+	if (*irq_status)
+		/* Clear current interrupts status */
+		fa_writel(fa, irq_core_base, &zfad_regs[ZFA_IRQ_ADC_SRC],
+				*irq_status);
+}
+
+/*
+ * fa_irq_handler
+ * @irq:
+ * @ptr: pointer to fmc_device
+ *
+ * The ADC svec firmware fires interrupt from a single wishbone core
+ * and throught the VIC ACQ_END and TRIG events.  Note about "TRIG"
+ * event: the main reason to listen this interrupt was to read the
+ * intermediate time stamps in case of multishots.
+ * With the new firmware (>=3.0) the stamps come with the data,
+ * therefore the driver doesn't have to listen "TRIG" event. This
+ * enhancement remove completely the risk of loosing interrupt in case
+ * of small number of samples and makes the retry loop in the hanlder
+ * obsolete.
+ */
+irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
+{
+	struct fmc_device *fmc = dev_id;
+	struct fa_dev *fa = fmc_get_drvdata(fmc);
+	struct zio_cset *cset = fa->zdev->cset;
+	uint32_t status;
+
+	/* irq to handle */
+	fa_get_irq_status(fa, irq_core_base, &status);
+	if (!status)
+		return IRQ_NONE; /* No interrupt fired by this mezzanine */
+
+	dev_dbg(&fa->fmc->dev, "Handle ADC interrupts fmc slot: %d\n",
+		fmc->slot_id);
+
+	if (status & FA_IRQ_ADC_ACQ_END) {
+		zfat_irq_acq_end(cset);
+		/* Job delegated to the workqueue: */
+		/* Start DMA  and acknowledge of the irq on the carrier */
+		schedule_work(&fa->irq_work);
+		/* register the core which just fired the IRQ */
+		/* check proper sequence of IRQ  for multi IRQ (ACQ + DMA)*/
+		fa->last_irq_core_src = irq_core_base;
+	} else { /* unexpected interrupt we have to ack anyway */
+		dev_err(&fa->fmc->dev,
+			"%s unexpected interrupt 0x%x\n",
+			__func__, status);
+		fmc->op->irq_ack(fmc);
+	}
+	return IRQ_HANDLED;
+
+}
+
+int fa_setup_irqs(struct fa_dev *fa)
+{
+	struct fmc_device *fmc = fa->fmc;
+	int err;
+
+	/* Request IRQ */
+	dev_dbg(&fa->fmc->dev, "%s request irq fmc slot: %d\n",
+		__func__, fa->fmc->slot_id);
+	/* VIC svec setup */
+	fa_writel(fa, fa->fa_irq_vic_base,
+			&zfad_regs[ZFA_IRQ_VIC_CTRL],
+			0x3);
+	fa_writel(fa, fa->fa_irq_vic_base,
+			&zfad_regs[ZFA_IRQ_VIC_ENABLE_MASK],
+			0x3);
+
+	fa_writel(fa, fa->fa_irq_vic_base,
+			&zfad_regs[ZFA_IRQ_VIC_MASK_STATUS],
+			0x3);
+	/* trick : vic needs the base address of teh core firing the irq
+	 * It cannot provided throught irq_request() call therefore the trick
+	 * is to set it by means of the field irq provided by the fmc device
+	 */
+	fmc->irq = fa->fa_irq_adc_base;
+	err = fmc->op->irq_request(fmc, fa_irq_handler,
+					"fmc-adc-100m14b",
+					0 /*VIC is used */);
+	if (err) {
+		dev_err(&fa->fmc->dev, "can't request irq %i (error %i)\n",
+			fa->fmc->irq, err);
+		return err;
+	}
+	/* workqueue is required to execute DMA transaction */
+	INIT_WORK(&fa->irq_work, fa_irq_work);
+
+	/* set IRQ sources to listen */
+	fa->irq_src = FA_IRQ_SRC_ACQ;
+
+	if (fa->carrier_op->setup_irqs)
+		err = fa->carrier_op->setup_irqs(fa);
+
+	return err;
+}
+
+int fa_free_irqs(struct fa_dev *fa)
+{
+	struct fmc_device *fmc = fa->fmc;
+
+	if (fa->carrier_op->free_irqs)
+		fa->carrier_op->free_irqs(fa);
+	fmc->op->irq_free(fmc);
+
+	return 0;
+}
+
+int fa_enable_irqs(struct fa_dev *fa)
+{
+	dev_dbg(&fa->fmc->dev, "%s Enable interrupts fmc slot:%d\n",
+		__func__, fa->fmc->slot_id);
+
+	fa_writel(fa, fa->fa_irq_adc_base,
+			&zfad_regs[ZFA_IRQ_ADC_ENABLE_MASK],
+			FA_IRQ_ADC_ACQ_END);
+
+	if (fa->carrier_op->enable_irqs)
+		fa->carrier_op->enable_irqs(fa);
+	return 0;
+}
+
+int fa_disable_irqs(struct fa_dev *fa)
+{
+	dev_dbg(&fa->fmc->dev, "%s Disable interrupts fmc slot:%d\n",
+		__func__, fa->fmc->slot_id);
+
+	fa_writel(fa, fa->fa_irq_adc_base,
+			&zfad_regs[ZFA_IRQ_ADC_DISABLE_MASK],
+			FA_IRQ_ADC_ACQ_END);
+
+	if (fa->carrier_op->disable_irqs)
+		fa->carrier_op->disable_irqs(fa);
+	return 0;
+}
+
+int fa_ack_irq(struct fa_dev *fa, int irq_id)
+{
+	return 0;
+}
+

@@ -12,12 +12,21 @@
 #include <linux/init.h>
 
 #include <linux/fmc.h>
+#include <linux/fmc-sdb.h>
 
 #include "fmc-adc.h"
 
+/* Module parameters */
 static struct fmc_driver fa_dev_drv;
 FMC_PARAM_BUSID(fa_dev_drv);
 FMC_PARAM_GATEWARE(fa_dev_drv);
+
+static int fa_show_sdb;
+module_param_named(show_sdb, fa_show_sdb, int, 0444);
+MODULE_PARM_DESC(show_sdb, "Print a dump of the gateware's SDB tree.");
+
+static int fa_enable_test_data = 0;
+module_param_named(enable_test_data, fa_enable_test_data, int, 0444);
 
 static const int zfad_hw_range[] = {
 	[ZFA_RANGE_10V]   = 0x45,
@@ -73,7 +82,7 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 		return -EINVAL;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
-	zfa_hardware_read(fa, i, &range_reg);
+	range_reg = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[i]);
 
 	range = zfad_convert_hw_range(range_reg);
 	if (range < 0)
@@ -131,7 +140,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 
 	/* Actually set the range */
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
-	zfa_hardware_write(fa, i, zfad_hw_range[range]);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
 	if (range == ZFA_RANGE_OPEN) {
 		offset = FA_CAL_NO_OFFSET;
@@ -147,16 +156,16 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	}
 
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
-	zfa_hardware_write(fa, i, offset & 0xffff); /* prevent warning */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
+		  offset & 0xffff /* prevent warning */ );
 	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
-	zfa_hardware_write(fa, i, gain);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
 
 	/* recalculate user offset for the new range */
 	zfad_apply_user_offset(fa, chan, fa->user_offset[chan->index]);
 
 	return 0;
 }
-
 
 /*
  * zfad_fsm_command
@@ -201,14 +210,16 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	/* If START, check if we can start */
 	if (command == ZFA_START) {
 		/* Verify that SerDes PLL is lockes */
-		zfa_hardware_read(fa, ZFA_STA_SERDES_PLL, &val);
+		val = fa_readl(fa, fa->fa_adc_csr_base,
+			       &zfad_regs[ZFA_STA_SERDES_PLL]);
 		if (!val) {
 			dev_info(dev, "Cannot start acquisition: "
 				 "SerDes PLL not locked\n");
 			return -EBUSY;
 		}
 		/* Verify that SerDes is synched */
-		zfa_hardware_read(fa, ZFA_STA_SERDES_SYNCED, &val);
+		val = fa_readl(fa, fa->fa_adc_csr_base,
+			       &zfad_regs[ZFA_STA_SERDES_SYNCED]);
 		if (!val) {
 			dev_info(dev, "Cannot start acquisition: "
 				 "SerDes not synchronized\n");
@@ -231,13 +242,125 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		}
 
 		dev_dbg(dev, "FSM START Command, Enable interrupts\n");
-		zfa_hardware_write(fa, ZFA_IRQ_MASK, ZFAT_ALL);
+		fa_enable_irqs(fa);
 	} else {
 		dev_dbg(dev, "FSM STOP Command, Disable interrupts\n");
-		zfa_hardware_write(fa, ZFA_IRQ_MASK, ZFAT_NONE);
+		fa_disable_irqs(fa);
 	}
 
-	zfa_hardware_write(fa, ZFA_CTL_FMS_CMD, command);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
+		  command);
+	return 0;
+}
+
+/* Extract from SDB the base address of the core components */
+/* which are not carrier specific */
+static int __fa_sdb_get_device(struct fa_dev *fa)
+{
+	struct fmc_device *fmc = fa->fmc;
+	struct device *dev = fmc->hwdev;
+	int ret;
+
+	ret = fmc_scan_sdb_tree(fmc, 0);
+	if (ret < 0) {
+		dev_err(dev,
+			"%s: no SDB in the bitstream."
+			"Are you sure you've provided the correct one?\n",
+			KBUILD_MODNAME);
+		return ret;
+	}
+
+	/* FIXME: this is obsoleted by fmc-bus internal parameters */
+	if (fa_show_sdb)
+		fmc_show_sdb_tree(fmc);
+
+	/* Now use SDB to find the base addresses */
+	fa->fa_irq_vic_base = fmc_find_sdb_device(fmc->sdb, 0xce42,
+						  0x13, NULL);
+	fa->fa_adc_csr_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
+						      0x608,
+						      fmc->slot_id, NULL);
+	fa->fa_irq_adc_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
+						      0x26ec6086,
+						      fmc->slot_id, NULL);
+	fa->fa_utc_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
+						  0x604, fmc->slot_id, NULL);
+	fa->fa_spi_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42, 0xe503947e,
+							fmc->slot_id, NULL);
+	fa->fa_ow_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42, 0x779c5443,
+							fmc->slot_id, NULL);
+
+	return ret;
+}
+
+/*
+ * Specific check and init
+ */
+static int __fa_init(struct fa_dev *fa)
+{
+	struct device *hwdev = fa->fmc->hwdev;
+	struct device *msgdev = &fa->fmc->dev;
+	struct zio_device *zdev = fa->zdev;
+	int i, addr;
+
+	/* Check if hardware supports 64-bit DMA */
+	if (dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
+		/* Check if hardware supports 32-bit DMA */
+		if (dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
+			dev_err(msgdev, "32-bit DMA addressing not available\n");
+			return -EINVAL;
+		}
+	}
+
+	/* Retrieve calibration from the eeprom and validate*/
+	fa_read_eeprom_calib(fa);
+
+	/* Force stop FSM to prevent early trigger fire */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
+		   ZFA_STOP);
+	/* Initialize channels to use 1V range */
+	for (i = 0; i < 4; ++i) {
+		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
+						&zdev->cset->chan[i]);
+		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
+			  ZFA_RANGE_1V);
+		zfad_set_range(fa, &zdev->cset->chan[i], ZFA_RANGE_1V);
+	}
+	zfad_reset_offset(fa);
+
+	/* Enable mezzanine clock */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
+	/* Set decimation to minimum */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_DECI], 1);
+	/* Set test data register */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
+		  fa_enable_test_data);
+	/* Set to single shot mode by default */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
+	if (zdev->cset->ti->cset->trig == &zfat_type) {
+		/* Select external trigger (index 0) */
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_SEL],
+			  1);
+		zdev->cset->ti->zattr_set.ext_zattr[0].value = 1;
+	} else {
+		/* Enable Software trigger*/
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
+			  1);
+		/* Disable Hardware trigger*/
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
+			  0);
+	}
+
+	/* Zero offsets and release the DAC clear */
+	zfad_reset_offset(fa);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
+
+	/* Set UTC seconds from the kernel seconds */
+	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
+		  get_seconds());
+
+	/* disable auto_start */
+	fa->enable_auto_start = 0;
 	return 0;
 }
 
@@ -277,10 +400,18 @@ int fa_probe(struct fmc_device *fmc)
 	fmc_set_drvdata(fmc, fa);
 	fa->fmc = fmc;
 
+	/* apply carrier-specific hacks and workarounds */
+	if (!strcmp(fmc->carrier_name, "SPEC"))
+		fa->carrier_op = &fa_spec_op;
+	else {
+		dev_err(fmc->hwdev, "unsupported carrier\n");
+		return -ENODEV;
+	}
+
 	if (fa_dev_drv.gw_n)
 		fwname = "";	/* reprogram will pick from module parameter */
 	else
-		fwname = FA_GATEWARE_DEFAULT_NAME;
+		fwname = fa->carrier_op->get_gwname();
 	dev_info(fmc->hwdev, "Gateware (%s)\n", fwname);
 	/* We first write a new binary (and lm32) within the carrier */
 	err = fmc->op->reprogram(fmc, &fa_dev_drv, fwname);
@@ -291,13 +422,18 @@ int fa_probe(struct fmc_device *fmc)
 	}
 	dev_info(fmc->hwdev, "Gateware successfully loaded\n");
 
-	/* Mark base addresses (will come from sdb, later) */
-	//fa->fa_irq_vic_base  -- not existent yet in this gateware
-	//fa->fa_adc_csr_base = CHx_GAIN;
-	//fa->fa_irq_adc_base = ENABLE_MASK;
-	fa->fa_utc_base = FA_UTC_MEM_OFF;
-	fa->fa_spi_base = FA_SPI_MEM_OFF;
-	fa->fa_ow_base = FA_OWI_MEM_OFF;
+	/* Extract whisbone core base address fron SDB */
+	err = __fa_sdb_get_device(fa);
+	if (err < 0)
+		goto out;
+
+	err = fa->carrier_op->init(fa);
+	if (err < 0)
+		goto out;
+
+	err = fa->carrier_op->reset_core(fa);
+	if (err < 0)
+		goto out;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
@@ -307,27 +443,41 @@ int fa_probe(struct fmc_device *fmc)
 			dev_err(&fmc->dev, "error initializing %s\n", m->name);
 			goto out;
 		}
-
 	}
 
+	/* time to execute specific driver init */
+	err = __fa_init(fa);
+	if (err < 0)
+		goto out;
+
+	err = fa_setup_irqs(fa);
+	if (err < 0)
+		goto out;
+
 	return 0;
+
 out:
 	while (--m, --i >= 0)
 		if (m->exit)
 			m->exit(fa);
 	return err;
 }
+
 int fa_remove(struct fmc_device *fmc)
 {
 	struct fa_dev *fa = fmc_get_drvdata(fmc);
 	struct fa_modlist *m;
 	int i = ARRAY_SIZE(mods);
 
+	fa_free_irqs(fa);
+
 	while (--i >= 0) {
 		m = mods + i;
 		if (m->exit)
 			m->exit(fa);
 	}
+
+	fa->carrier_op->exit(fa);
 
 	return 0;
 }

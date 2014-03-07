@@ -7,38 +7,32 @@
 
 #ifndef FMC_ADC_H_ /* too generic, maybe */
 #define FMC_ADC_H_
-#include <linux/scatterlist.h>
+
+#include <linux/workqueue.h>
+
 #include <linux/fmc.h>
 #include <linux/zio.h>
 
 #include "field-desc.h"
 
-#define FA_GATEWARE_DEFAULT_NAME "fmc/adc-100m14b.bin"
-
-#define FA_NCHAN 4 /* We have 4 of them,no way out of it */
-
-/* ADC register offset */
-#define FA_DMA_MEM_OFF	0x01000
-#define FA_CAR_MEM_OFF	0x01300
-#define FA_UTC_MEM_OFF	0x01400
-#define FA_IRQ_MEM_OFF	0x01500
-#define FA_SPI_MEM_OFF	0x01700
-#define FA_ADC_MEM_OFF	0x01900
-#define FA_OWI_MEM_OFF	0X01A00 /* one-wire */
-
-/* ADC DDR memory */
-#define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
-
-
-enum fa_input_range {
-	ZFA_RANGE_10V = 0x0,
-	ZFA_RANGE_1V,
-	ZFA_RANGE_100mV,
-	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
+/* Carrier-specific operations (gateware does not fully decouple
+   carrier specific stuff, such as DMA or resets, from
+   mezzanine-specific operations). */
+struct fa_dev; /* forward declaration */
+struct fa_carrier_op {
+	char* (*get_gwname)(void);
+	int (*init) (struct fa_dev *);
+	int (*reset_core) (struct fa_dev *);
+	void (*exit) (struct fa_dev *);
+	int (*setup_irqs) (struct fa_dev *);
+	int (*free_irqs) (struct fa_dev *);
+	int (*enable_irqs) (struct fa_dev *);
+	int (*disable_irqs) (struct fa_dev *);
+	int (*ack_irq) (struct fa_dev *, int irq_id);
+	int (*dma_start)(struct zio_cset *cset);
+	void (*dma_done)(struct zio_cset *cset);
+	void (*dma_error)(struct zio_cset *cset);
 };
-#define ZFA_RANGE_MIN  0 /* 10V above */
-#define ZFA_RANGE_MAX  2 /* 100mV above */
-
 
 /* ADC and DAC Calibration, from  EEPROM */
 struct fa_calib_stanza {
@@ -50,29 +44,6 @@ struct fa_calib_stanza {
 struct fa_calib {
 	struct fa_calib_stanza adc[3];  /* For input, one per range */
 	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
-};
-
-/*
- * fa_dma_item: The information about a DMA transfer
- * @start_addr: pointer where start to retrieve data from device memory
- * @dma_addr_l: low 32bit of the dma address on host memory
- * @dma_addr_h: high 32bit of the dma address on host memory
- * @dma_len: number of bytes to transfer from device to host
- * @next_addr_l: low 32bit of the address of the next memory area to use
- * @next_addr_h: high 32bit of the address of the next memory area to use
- * @attribute: dma information about data transferm. At the moment it is used
- *             only to provide the "last item" bit, direction is fixed to
- *             device->host
- */
-struct fa_dma_item {
-	uint32_t start_addr;	/* 0x00 */
-	uint32_t dma_addr_l;	/* 0x04 */
-	uint32_t dma_addr_h;	/* 0x08 */
-	uint32_t dma_len;	/* 0x0C */
-	uint32_t next_addr_l;	/* 0x10 */
-	uint32_t next_addr_h;	/* 0x14 */
-	uint32_t attribute;	/* 0x18 */
-	uint32_t reserved;	/* ouch */
 };
 
 /*
@@ -88,9 +59,6 @@ struct fa_dma_item {
  *
  * @n_dma_err: number of errors
  *
- * @sgt is the scatter/gather table that describe the DMA acquisition
- * @item a list on fa_dma_item to describe
- * @dma_list_item is a DMA address pointer to the fa_dma_item list
  */
 struct fa_dev {
 	/* the pointer to the fmc_device generic structure */
@@ -108,6 +76,18 @@ struct fa_dev {
 	unsigned int fa_irq_vic_base;
 	unsigned int fa_irq_adc_base;
 	unsigned int fa_utc_base;
+
+	/* carrier specific functions (init/exit/reset/readout/irq handling) */
+	struct fa_carrier_op *carrier_op;
+	/* carrier private data */
+	void *carrier_data;
+	int irq_src; /* list of irq sources to listen */
+	struct work_struct irq_work;
+	/*
+	 * keep last core having fired an IRQ
+	 * Used to check irq sequence: ACQ followed by DMA
+	 */
+	int last_irq_core_src;
 
 	/* Acquisition */
 	unsigned int		n_shots;
@@ -129,31 +109,8 @@ struct fa_dev {
 
 	/* flag  */
 	int enable_auto_start;
-
-	/* DMA attributes */
-	struct sg_table	sgt;
-	struct fa_dma_item	*items;
-	dma_addr_t		dma_list_item;
 };
 
-/*
- * zfad_block
- * @block is zio_block which contains data and metadata from a single shot
- * @dev_mem_off is the offset in ADC internal memory. It points to the first
- *              sample of the stored shot
- * @first_nent is the index of the first nent used for this block
- */
-struct zfad_block {
-	struct zio_block *block;
-	uint32_t	dev_mem_off;
-	unsigned int first_nent;
-};
-
-extern int zfad_map_dma(struct zio_cset *cset,
-			struct zfad_block *zfad_block,
-			unsigned int n_blocks);
-extern void zfad_unmap_dma(struct zio_cset *cset,
-			   struct zfad_block *zfad_block);
 
 /* Device registers */
 enum zfadc_dregs_enum {
@@ -193,53 +150,53 @@ enum zfadc_dregs_enum {
 	ZFAT_POST,
 	/* Sample counter */
 	ZFAT_CNT,
+	/* start:declaration block requiring some order */
 	/* Channel 1 */
 	ZFA_CH1_CTL_RANGE,
+	ZFA_CH1_CTL_TERM,
 	ZFA_CH1_STA,
 	ZFA_CH1_GAIN,
 	ZFA_CH1_OFFSET,
-	ZFA_CH1_CTL_TERM,
 	/* Channel 2 */
 	ZFA_CH2_CTL_RANGE,
+	ZFA_CH2_CTL_TERM,
 	ZFA_CH2_STA,
 	ZFA_CH2_GAIN,
 	ZFA_CH2_OFFSET,
-	ZFA_CH2_CTL_TERM,
 	/* Channel 3 */
 	ZFA_CH3_CTL_RANGE,
+	ZFA_CH3_CTL_TERM,
 	ZFA_CH3_STA,
 	ZFA_CH3_GAIN,
 	ZFA_CH3_OFFSET,
-	ZFA_CH3_CTL_TERM,
 	/* Channel 4 */
 	ZFA_CH4_CTL_RANGE,
+	ZFA_CH4_CTL_TERM,
 	ZFA_CH4_STA,
 	ZFA_CH4_GAIN,
 	ZFA_CH4_OFFSET,
-	ZFA_CH4_CTL_TERM,
-	/* Other*/
+	/*
+	 * CHx__ are specifc ids used by some internal arithmetic
+	 * Be carefull: the arithmetic expects
+	 * that ch1 to ch4 are declared in the enum just above
+	 * in the right order and grouped.
+	 * Don't insert any other id in this area
+	 */
 	ZFA_CHx_CTL_RANGE,
+	ZFA_CHx_CTL_TERM,
 	ZFA_CHx_STA,
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
-	ZFA_CHx_CTL_TERM,
-	/* DMA */
-	ZFA_DMA_CTL_SWP,
-	ZFA_DMA_CTL_ABORT,
-	ZFA_DMA_CTL_START,
-	ZFA_DMA_STA,
-	ZFA_DMA_ADDR,
-	ZFA_DMA_ADDR_L,
-	ZFA_DMA_ADDR_H,
-	ZFA_DMA_LEN,
-	ZFA_DMA_NEXT_L,
-	ZFA_DMA_NEXT_H,
-	ZFA_DMA_BR_DIR,
-	ZFA_DMA_BR_LAST,
-	/* IRQ */
-	ZFA_IRQ_MULTI,
-	ZFA_IRQ_SRC,
-	ZFA_IRQ_MASK,
+	/* end:declaration block requiring some order */
+	/* two wishbone core for IRQ: VIC, ADC */
+	ZFA_IRQ_ADC_DISABLE_MASK,
+	ZFA_IRQ_ADC_ENABLE_MASK,
+	ZFA_IRQ_ADC_MASK_STATUS,
+	ZFA_IRQ_ADC_SRC,
+	ZFA_IRQ_VIC_CTRL,
+	ZFA_IRQ_VIC_DISABLE_MASK,
+	ZFA_IRQ_VIC_ENABLE_MASK,
+	ZFA_IRQ_VIC_MASK_STATUS,
 	/* UTC core */
 	ZFA_UTC_SECONDS,
 	ZFA_UTC_COARSE,
@@ -259,24 +216,47 @@ enum zfadc_dregs_enum {
 	ZFA_UTC_ACQ_END_SECONDS,
 	ZFA_UTC_ACQ_END_COARSE,
 	ZFA_UTC_ACQ_END_FINE,
-	/* Carrier CSR */
-	ZFA_CAR_FMC_PRES,
-	ZFA_CAR_P2L_PLL,
-	ZFA_CAR_SYS_PLL,
-	ZFA_CAR_DDR_CAL,
-	/* Other "address" */
-	ZFA_SW_R_NOADDRES_NBIT,
-	ZFA_SW_R_NOADDRES_TEMP,
-	ZFA_SW_R_NOADDERS_AUTO,
+	ZFA_HW_PARAM_COMMON_LAST,
 };
-/* Registers lists used in fd-zio-drv.c */
-extern const struct zfa_field_desc zfad_regs[];
 
 /*
- * ZFA_CHx_MULT
+ * ADC parameter id not mapped to Hw register
+ * Id is used as zio attribute id
+ */
+enum fa_sw_param_id {
+	/* to guarantee unique zio attr id */
+	ZFA_SW_R_NOADDRES_NBIT = ZFA_HW_PARAM_COMMON_LAST,
+
+	ZFA_SW_R_NOADDRES_TEMP,
+	ZFA_SW_R_NOADDERS_AUTO,
+	ZFA_SW_PARAM_COMMON_LAST,
+};
+
+/* trigger timestamp block size in bytes */
+/* This block is added after the post trigger samples */
+/* in the DDR and contains the trigger timestamp */
+#define FA_TRIG_TIMETAG_BYTES 0x10
+
+#define FA_NCHAN 4 /* We have 4 of them,no way out of it */
+/*
+ * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
  */
 #define ZFA_CHx_MULT 5
+
+/* ADC DDR memory */
+#define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
+/* In Multi shot mode samples go through a dpram which has a limited size */
+#define FA_MAX_MSHOT_ACQ_BYTE 0x3FE8 /* 2045 samples (2045*8 bytes) */
+
+enum fa_input_range {
+	ZFA_RANGE_10V = 0x0,
+	ZFA_RANGE_1V,
+	ZFA_RANGE_100mV,
+	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
+};
+#define ZFA_RANGE_MIN  0 /* 10V above */
+#define ZFA_RANGE_MAX  2 /* 100mV above */
 
 enum zfa_fsm_cmd {
 	ZFA_NONE =	0x0,
@@ -291,14 +271,22 @@ enum zfa_fsm_state {
 	ZFA_STATE_WAIT,
 	ZFA_STATE_DECR,
 };
-/* All possible interrupt available */
-enum zfat_irq {
-	ZFAT_NONE =	0x0,
-	ZFAT_DMA_DONE =	0x1,
-	ZFAT_DMA_ERR =	0x2,
-	ZFAT_TRG_FIRE =	0x4,
-	ZFAT_ACQ_END =	0x8,
-	ZFAT_ALL =	0xF,
+
+/*
+ * Bit pattern used in order to factorize code  between SVEC and SPEC
+ * Depending of the carrier, ADC may have to listen vaious IRQ sources
+ * SVEC: only ACQ irq source (end DMA irq is manged by vmebus driver)
+ * SPEC: ACQ and DMA irq source
+ */
+enum fa_irq_src {
+	FA_IRQ_SRC_ACQ = 0x1,
+	FA_IRQ_SRC_DMA = 0x2,
+};
+
+/* adc IRQ values */
+enum fa_irq_adc {
+	FA_IRQ_ADC_NONE =	0x0,
+	FA_IRQ_ADC_ACQ_END =	0x2,
 };
 
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
@@ -306,6 +294,19 @@ enum zfat_irq {
 
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
+
+/*
+ * zfad_block
+ * @block is zio_block which contains data and metadata from a single shot
+ * @dev_mem_off is the offset in ADC internal memory. It points to the first
+ *              sample of the stored shot
+ * @first_nent is the index of the first nent used for this block
+ */
+struct zfad_block {
+	struct zio_block *block;
+	uint32_t	dev_mem_off;
+	unsigned int first_nent;
+};
 
 #define FA_CAL_OFFSET		 0x0100 /* Offset in EEPROM */
 
@@ -324,7 +325,7 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 {
 	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
 	uint32_t pre_t, post_t, nshot_t;
-	size_t size;
+	size_t shot_size;
 
 	if (!addr)
 		return 0;
@@ -339,9 +340,18 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 		nshot_t = addr == ZFAT_SHOTS_NB ? val :
 			  ti_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
 
-	size = ((pre_t + post_t) * ti->cset->ssize * nshot_t) * FA_NCHAN;
-	if (size >= FA_MAX_ACQ_BYTE) {
+	shot_size = ((pre_t + post_t + 1) * ti->cset->ssize) * FA_NCHAN;
+	if ( (shot_size * nshot_t) >= FA_MAX_ACQ_BYTE ) {
 		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
+		return -ENOMEM;
+	}
+	/* in case of multi shot, each shot cannot exceed the dpram size */
+	if ( (nshot_t > 1) &&
+	     (shot_size >= FA_MAX_MSHOT_ACQ_BYTE) ) {
+		dev_err(&ti->head.dev, "Cannot acquire such amount of samples "
+				"(shot_size: %d pre-samp:%d post-samp:%d) in multi shot mode."
+				"dev memory overflow\n",
+				(int)shot_size, pre_t, post_t);
 		return -ENOMEM;
 	}
 	return 0;
@@ -364,37 +374,50 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 	return NULL;
 }
 
-/* Hardware filed-based access */
-static inline int zfa_hardware_write(struct fa_dev *fa,
-				      enum zfadc_dregs_enum index,
-				      uint32_t usr_val)
-{
-	uint32_t cur, val;
-
-	if ((usr_val & (~zfad_regs[index].mask))) {
-		dev_info(&fa->fmc->dev, "value 0x%x must fit mask 0x%x\n",
-			usr_val, zfad_regs[index].mask);
-		return -EINVAL;
-	}
-	/* Read current register*/
-	cur = fmc_readl(fa->fmc, zfad_regs[index].addr);
-	val = zfa_set_field(&zfad_regs[index], cur, usr_val);
-	/* FIXME re-write usr_val when possible (zio need a patch) */
-	/* If the attribute has a valid address */
-	fmc_writel(fa->fmc, val, zfad_regs[index].addr);
-	return 0;
-}
-static inline void zfa_hardware_read(struct fa_dev *fa,
-				       enum zfadc_dregs_enum index,
-				       uint32_t *usr_val)
+static inline uint32_t fa_readl(struct fa_dev *fa,
+				unsigned int base_off,
+				const struct zfa_field_desc *field)
 {
 	uint32_t cur;
 
-	/* Read current register*/
-	cur = fmc_readl(fa->fmc, zfad_regs[index].addr);
-	/* Return the value */
-	*usr_val = zfa_get_field(&zfad_regs[index], cur);
+	cur = fmc_readl(fa->fmc, base_off+field->offset);
+	if (field->is_bitfield) {
+		/* apply mask and shift right accordlying to the mask */
+		cur &= field->mask;
+		cur /= (field->mask & -(field->mask));
+	} else {
+		cur &= field->mask; /* bitwise and with the mask */
+	}
+	return cur;
 }
+
+static inline void fa_writel(struct fa_dev *fa,
+				unsigned int base_off,
+				const struct zfa_field_desc *field,
+				uint32_t usr_val)
+{
+	uint32_t cur, val;
+
+	val = usr_val;
+	/* Read current register value first if it's a bitfield */
+	if (field->is_bitfield) {
+		cur = fmc_readl(fa->fmc, base_off+field->offset);
+		/* */
+		cur &= ~field->mask; /* clear bits according to the mask */
+		val = usr_val * (field->mask & -(field->mask));
+		val |= cur;
+	}
+	fmc_writel(fa->fmc, val, base_off+field->offset);
+}
+
+/* Global variable exported by fa-spec.c */
+extern struct fa_carrier_op fa_spec_op;
+
+/* Global variable exported by fa-svec.c */
+extern struct fa_carrier_op fa_svec_op;
+
+/* Global variable exported by fa-regfield.c */
+extern const struct zfa_field_desc zfad_regs[];
 
 /* Functions exported by fa-core.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
@@ -416,28 +439,32 @@ extern void fa_zio_exit(struct fa_dev *fa);
 extern int fa_trig_init(void);
 extern void fa_trig_exit(void);
 
-/* Functions exported by fa-spec.c */
-extern int fa_spec_init(void);
-extern void fa_spec_exit(void);
+/* Functions exported by fa-irq.c */
+extern int zfad_dma_start(struct zio_cset *cset);
+extern void zfad_dma_done(struct zio_cset *cset);
+extern void zfad_dma_error(struct zio_cset *cset);
+extern void zfat_irq_trg_fire(struct zio_cset *cset);
+extern void zfat_irq_acq_end(struct zio_cset *cset);
+extern int fa_setup_irqs(struct fa_dev *fa);
+extern int fa_free_irqs(struct fa_dev *fa);
+extern int fa_enable_irqs(struct fa_dev *fa);
+extern int fa_disable_irqs(struct fa_dev *fa);
 
 /* Functions exported by onewire.c */
 extern int fa_onewire_init(struct fa_dev *fa);
 extern void fa_onewire_exit(struct fa_dev *fa);
 extern int fa_read_temp(struct fa_dev *fa, int verbose);
 
-/* Functions exported by fa-irq.c */
-extern void zfad_dma_start(struct zio_cset *cset);
-extern void zfad_dma_done(struct zio_cset *cset);
-extern void zfad_dma_error(struct zio_cset *cset);
-extern void zfat_irq_acq_end(struct zio_cset *cset);
-
 /* functions exported by spi.c */
 extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 		       uint32_t tx, uint32_t *rx);
 extern int fa_spi_init(struct fa_dev *fd);
 extern void fa_spi_exit(struct fa_dev *fd);
-/* function in fa-zio-drv.c */
-extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
+
+/* fmc extended function */
+signed long fmc_find_sdb_device_ext(struct sdb_array *tree,
+					uint64_t vid, uint32_t did, int index,
+					unsigned long *sz);
 
 /* function exporetd by fa-calibration.c */
 extern void fa_read_eeprom_calib(struct fa_dev *fa);
