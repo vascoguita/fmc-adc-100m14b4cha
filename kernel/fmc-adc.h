@@ -410,6 +410,9 @@ static inline void fa_writel(struct fa_dev *fa,
 	fmc_writel(fa->fmc, val, base_off+field->offset);
 }
 
+/* Global variable exported by fa-core.c */
+extern struct workqueue_struct *fa_workqueue;
+
 /* Global variable exported by fa-spec.c */
 extern struct fa_carrier_op fa_spec_op;
 

@@ -356,7 +356,7 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 		if (cset->flags & ZIO_CSET_BUSY) {
 			/* Job deferred to the workqueue: */
 			/* Start DMA and ack irq on the carrier */
-			schedule_work(&fa->irq_work);
+			queue_work(fa_workqueue, &fa->irq_work);
 			/* register the core firing the IRQ in order to */
 			/* check right IRQ seq.: ACQ_END followed by DMA_END */
 			fa->last_irq_core_src = irq_core_base;

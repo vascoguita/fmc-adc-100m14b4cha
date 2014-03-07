@@ -10,6 +10,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/workqueue.h>
 
 #include <linux/fmc.h>
 #include <linux/fmc-sdb.h>
@@ -34,6 +35,9 @@ static const int zfad_hw_range[] = {
 	[ZFA_RANGE_100mV] = 0x23,
 	[ZFA_RANGE_OPEN]  = 0x00,
 };
+
+/* fmc-adc specific workqueue */
+struct workqueue_struct *fa_workqueue;
 
 /*
  * zfad_convert_hw_range
@@ -472,6 +476,7 @@ int fa_remove(struct fmc_device *fmc)
 	int i = ARRAY_SIZE(mods);
 
 	fa_free_irqs(fa);
+	flush_workqueue(fa_workqueue);
 
 	while (--i >= 0) {
 		m = mods + i;
@@ -505,24 +510,35 @@ static int fa_init(void)
 {
 	int ret;
 
+	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
+					WQ_NON_REENTRANT | WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
+	if (fa_workqueue == NULL)
+		return -ENOMEM;
+
 	/* First trigger and zio driver */
 	ret = fa_trig_init();
 	if (ret)
-		return ret;
+		goto out1;
 
 	ret = fa_zio_register();
-	if (ret) {
-		fa_trig_exit();
-		return ret;
-	}
+	if (ret)
+		goto out2;
+
 	/* Finally the fmc driver, whose probe instantiates zio devices */
 	ret = fmc_driver_register(&fa_dev_drv);
-	if (ret) {
-		fa_trig_exit();
-		fa_zio_unregister();
-		return ret;
-	}
-	return 0;
+	if (ret)
+		goto out3;
+
+	return ret;
+
+out3:
+	fa_zio_unregister();
+out2:
+	fa_trig_exit();
+out1:
+	destroy_workqueue(fa_workqueue);
+
+	return ret;
 }
 
 static void fa_exit(void)
@@ -530,6 +546,8 @@ static void fa_exit(void)
 	fmc_driver_unregister(&fa_dev_drv);
 	fa_zio_unregister();
 	fa_trig_exit();
+	if (fa_workqueue != NULL)
+		destroy_workqueue(fa_workqueue);
 }
 
 module_init(fa_init);
