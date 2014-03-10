@@ -35,7 +35,7 @@ const struct zfa_field_desc zfad_regs[] = {
 		/* Number of shots */
 	[ZFAT_SHOTS_NB] =		{0x14, 0x0000FFFF, 0},
 		/* Sample rate */
-	[ZFAT_SR_DECI] =		{0x1C, 0x0000FFFF, 0},
+	[ZFAT_SR_DECI] =		{0x1C, 0xFFFFFFFF, 0},
 		/* Position address */
 	[ZFAT_POS] =			{0x18, 0xFFFFFFFF, 0},
 		/* Pre-sample */
