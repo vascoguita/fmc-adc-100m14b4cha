@@ -363,7 +363,18 @@ struct zfad_block {
 	unsigned int first_nent;
 };
 
-#define FA_CAL_OFFSET		 0x0100 /* Offset in EEPROM */
+/*
+ * Channel signal transmission delay
+ * Trigger and channel signals are not going through the
+ * same path on the board and trigger is faster.
+ * Trying to sample the trigger itself by connecting
+ * it to a channel, one can see a delay of 20ns between trigger and
+ * its sampling. This constant is added to the trigger delay to
+ * conpensate the channel signal transmission delay.
+ * Expressed in tick count 2*10ns = 20ns
+ */
+#define FA_CH_TX_DELAY		2
+#define FA_CAL_OFFSET		0x0100 /* Offset in EEPROM */
 
 #define FA_CAL_NO_OFFSET	((int16_t)0x0000)
 #define FA_CAL_NO_GAIN		((uint16_t)0x8000)

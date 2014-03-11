@@ -129,6 +129,11 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		 * acquisition or other problems:
 		 */
 		break;
+	case ZFAT_DLY:
+		/* 
+		 * Add channel signal transmision delay
+		 */
+		tmp_val += FA_CH_TX_DELAY;
 	}
 
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id], tmp_val);

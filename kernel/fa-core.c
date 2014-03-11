@@ -363,6 +363,12 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
 		  get_seconds());
 
+	/* 
+	 * Set Trigger delay in order to compensate
+	 * the channel signal transmission delay
+	 */
+	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFAT_DLY], FA_CH_TX_DELAY);
+
 	/* disable auto_start */
 	fa->enable_auto_start = 0;
 	return 0;
