@@ -161,7 +161,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
-		  offset & 0xffff /* prevent warning */ );
+		  offset & 0xffff /* prevent warning */);
 	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
 
@@ -517,7 +517,8 @@ static int fa_init(void)
 	int ret;
 
 	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
-					WQ_NON_REENTRANT | WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
+					WQ_NON_REENTRANT | WQ_UNBOUND |
+					WQ_MEM_RECLAIM, 1);
 	if (fa_workqueue == NULL)
 		return -ENOMEM;
 

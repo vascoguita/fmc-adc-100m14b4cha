@@ -12,7 +12,7 @@
 #define lower_32_bits(n) ((u32)(n))
 #endif /* lower_32_bits */
 
-static void build_dma_desc(struct vme_dma* desc, unsigned long vme_addr,
+static void build_dma_desc(struct vme_dma *desc, unsigned long vme_addr,
 			void *addr_dest, ssize_t len)
 {
 	struct vme_dma_attr *vme;
@@ -34,7 +34,7 @@ static void build_dma_desc(struct vme_dma* desc, unsigned long vme_addr,
 
 	vme->data_width = VME_D32;
 	vme->am         = VME_A24_USER_DATA_SCT;
-//	vme->am         = VME_A24_USER_MBLT;
+	/*vme->am         = VME_A24_USER_MBLT;*/
 	vme->addru	= upper_32_bits(vme_addr);
 	vme->addrl	= lower_32_bits(vme_addr);
 
@@ -102,7 +102,7 @@ int fa_svec_dma_start(struct zio_cset *cset)
 			&fa_svec_regfield[FA_DMA_DDR_ADDR],
 			fa_dma_block[0].dev_mem_off/4);
 	/* Execute DMA shot by shot */
-	for (i = 0; i<fa->n_shots; ++i) {
+	for (i = 0; i < fa->n_shots; ++i) {
 		pr_debug("configure DMA descriptor shot %d "
 			"vme addr: 0x%llx destination address: 0x%p len: %d \n",
 			i, (long long)vme_addr, fa_dma_block[i].block->data,
@@ -113,7 +113,8 @@ int fa_svec_dma_start(struct zio_cset *cset)
 
 		if (vme_do_dma_kernel(&desc))
 			return -1;
-		__endianness(fa_dma_block[i].block->datalen, fa_dma_block[i].block->data);
+		__endianness(fa_dma_block[i].block->datalen,
+			     fa_dma_block[i].block->data);
 	}
 
 	return 0;

@@ -204,7 +204,7 @@ static int zfad_map_dma(struct zio_cset *cset, struct zfad_block *zfad_block,
 		if (!sg_is_last(sg)) {/* more transfers */
 			/* uint64_t so it works on 32 and 64 bit */
 			tmp = spec_data->dma_list_item;
-			tmp += (sizeof(struct fa_dma_item) * (i+ 1));
+			tmp += (sizeof(struct fa_dma_item) * (i + 1));
 			items[i].next_addr_l = ((uint64_t)tmp) & 0xFFFFFFFF;
 			items[i].next_addr_h = ((uint64_t)tmp) >> 32;
 			items[i].attribute = 0x1;	/* more items */

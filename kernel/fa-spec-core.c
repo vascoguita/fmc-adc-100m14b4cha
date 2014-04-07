@@ -40,9 +40,9 @@ static int fa_spec_init(struct fa_dev *fa)
 	    fmc_find_sdb_device(fa->fmc->sdb, 0xce42, 0xd5735ab4, NULL);
 
 	dev_info(msgdev,
-		 "Spec Base addrs: irq_dmma:0x%x, dma_ctrl:0x%x, csr:0x%x \n",
-		 cdata->fa_irq_dma_base, cdata->fa_dma_base,
-		 fa->fa_carrier_csr_base);
+		"Spec Base addrs: irq_dmma:0x%x, dma_ctrl:0x%x, csr:0x%x \n",
+		cdata->fa_irq_dma_base, cdata->fa_dma_base,
+		fa->fa_carrier_csr_base);
 
 	/* Wait 50ms, so device has time to calibrate */
 	mdelay(50);
@@ -85,7 +85,7 @@ static int fa_spec_init(struct fa_dev *fa)
 
 static int fa_spec_reset(struct fa_dev *fa)
 {
-//	struct spec_dev *spec = fa->fmc->carrier_data;
+	/*struct spec_dev *spec = fa->fmc->carrier_data;*/
 
 	dev_info(&fa->fmc->dev, "%s: resetting TDC core through Gennum.\n",
 		 __func__);
