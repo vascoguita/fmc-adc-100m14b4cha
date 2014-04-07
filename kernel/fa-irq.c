@@ -204,7 +204,7 @@ void zfad_dma_error(struct zio_cset *cset)
 
 	/* Remove invalid blocks */
 	for (i = 0; i < fa->n_shots; ++i)
-		bi->b_op->store_block(bi, zfad_block[i].block);
+		zio_buffer_free_block(bi, zfad_block[i].block);
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;
 }
