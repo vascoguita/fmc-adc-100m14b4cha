@@ -179,16 +179,16 @@ static int fa_spec_ack_irq(struct fa_dev *fa, int irq_id)
 }
 
 struct fa_carrier_op fa_spec_op = {
-	fa_spec_get_gwname,
-	fa_spec_init,
-	fa_spec_reset,
-	fa_spec_exit,
-	fa_spec_setup_irqs,
-	fa_spec_free_irqs,
-	fa_spec_enable_irqs,
-	fa_spec_disable_irqs,
-	fa_spec_ack_irq,
-	fa_spec_dma_start,
-	fa_spec_dma_done,
-	fa_spec_dma_error,
+	.get_gwname = fa_spec_get_gwname,
+	.init = fa_spec_init,
+	.reset_core = fa_spec_reset,
+	.exit = fa_spec_exit,
+	.setup_irqs = fa_spec_setup_irqs,
+	.free_irqs = fa_spec_free_irqs,
+	.enable_irqs = fa_spec_enable_irqs,
+	.disable_irqs = fa_spec_disable_irqs,
+	.ack_irq = fa_spec_ack_irq,
+	.dma_start = fa_spec_dma_start,
+	.dma_done = fa_spec_dma_done,
+	.dma_error = fa_spec_dma_error,
 };

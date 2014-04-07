@@ -68,16 +68,11 @@ static void fa_svec_exit(struct fa_dev *fa)
 }
 
 struct fa_carrier_op fa_svec_op = {
-	fa_svec_get_gwname,
-	fa_svec_init,
-	fa_svec_reset,
-	fa_svec_exit,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	fa_svec_dma_start,
-	fa_svec_dma_done,
-	fa_svec_dma_error,
+	.get_gwname = fa_svec_get_gwname,
+	.init = fa_svec_init,
+	.reset_core = fa_svec_reset,
+	.exit = fa_svec_exit,
+	.dma_start = fa_svec_dma_start,
+	.dma_done = fa_svec_dma_done,
+	.dma_error = fa_svec_dma_error,
 };
