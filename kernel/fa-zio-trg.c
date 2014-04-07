@@ -291,10 +291,6 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	uint32_t dev_mem_off;
 	int i, err = 0;
 	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
-	gfp_t gfp;
-
-	/* if fsm-auto-start is active, we re-allocate at interrupt time */
-	gfp = in_atomic() ? GFP_ATOMIC : GFP_KERNEL;
 
 	dev_dbg(msgdev, "Arming trigger\n");
 
@@ -316,8 +312,12 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		return -EINVAL;
 	}
 
-	/* Allocate a new block for DMA transfer */
-	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots, gfp);
+	/*
+	 * Allocate a new block for DMA transfer. Sometimes we are in an
+	 * atomic context and we cannot use in_atomic()
+	 */
+	zfad_block = kmalloc(sizeof(struct zfad_block) * fa->n_shots,
+			     GFP_ATOMIC);
 	if (!zfad_block)
 		return -ENOMEM;
 
@@ -347,7 +347,8 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
 		dev_dbg(msgdev, "Allocating block %d ...\n", i);
-		block = zio_buffer_alloc_block(interleave->bi, size, gfp);
+		block = zio_buffer_alloc_block(interleave->bi, size,
+					       GFP_ATOMIC);
 		if (!block) {
 			dev_err(msgdev,
 				"\narm trigger fail, cannot allocate block\n");
