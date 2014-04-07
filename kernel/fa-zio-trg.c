@@ -256,12 +256,12 @@ static int zfat_data_done(struct zio_cset *cset)
 		if (likely(i < fa->n_fires)) {/* Store filled blocks */
 			dev_dbg(&fa->fmc->dev, "Store Block %i/%i\n",
 				i + 1, fa->n_shots);
-			bi->b_op->store_block(bi, zfad_block[i].block);
+			zio_buffer_store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
 			dev_dbg(&fa->fmc->dev, "Free un-acquired block %d/%d "
 					"(received %d shots)\n",
 					i + 1, fa->n_shots, fa->n_fires);
-			bi->b_op->free_block(bi, zfad_block[i].block);
+			zio_buffer_free_block(bi, zfad_block[i].block);
 		}
 	/* Clear active block */
 	fa->n_shots = 0;
@@ -347,7 +347,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
 		dev_dbg(msgdev, "Allocating block %d ...\n", i);
-		block = zbuf->b_op->alloc_block(interleave->bi, size, gfp);
+		block = zio_buffer_alloc_block(interleave->bi, size, gfp);
 		if (!block) {
 			dev_err(msgdev,
 				"\narm trigger fail, cannot allocate block\n");
@@ -373,7 +373,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 
 out_allocate:
 	while ((--i) >= 0)
-		zbuf->b_op->free_block(interleave->bi, zfad_block[i].block);
+		zio_buffer_free_block(interleave->bi, zfad_block[i].block);
 	kfree(zfad_block);
 	interleave->priv_d = NULL;
 	return err;
@@ -397,7 +397,7 @@ static void zfat_abort(struct zio_ti *ti)
 	dev_dbg(&fa->fmc->dev, "Aborting trigger\n");
 	/* Free all blocks */
 	for (i = 0; i < fa->n_shots; ++i)
-		bi->b_op->free_block(bi, zfad_block[i].block);
+		zio_buffer_free_block(bi, zfad_block[i].block);
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;
 }
