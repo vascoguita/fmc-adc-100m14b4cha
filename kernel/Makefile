@@ -42,6 +42,7 @@ fmc-adc-100m14b-y += fa-spec-irq.o
 fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-core.o
 fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-regtable.o
 fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-dma.o
+fmc-adc-100m14b-y += zio-helpers.o
 
 all modules:
 	$(MAKE) -C $(LINUX) M=$(shell /bin/pwd) modules
