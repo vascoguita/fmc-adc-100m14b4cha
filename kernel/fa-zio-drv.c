@@ -110,7 +110,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	/* Reset all channel offset */
 	ZIO_PARAM_EXT("rst-ch-offset", ZIO_WO_PERM, ZFA_CTL_DAC_CLR_N, 1),
 
-
+	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 };
 
 #if 0 /* FIXME Unused until TLV control will be available */
