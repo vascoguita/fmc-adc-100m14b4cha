@@ -171,7 +171,7 @@ void zfad_dma_done(struct zio_cset *cset)
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
-				    ti->zattr_set.ext_zattr[5].value);
+				    ti->zattr_set.ext_zattr[6].value);
 	} else {
 		dev_dbg(&fa->fmc->dev, "Software acquisition over\n");
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
