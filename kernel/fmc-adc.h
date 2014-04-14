@@ -197,6 +197,7 @@ enum zfadc_dregs_enum {
 	ZFA_CHx_STA,
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
+	ZFA_CHx_SAT,
 	/* end:declaration block requiring some order */
 	/* two wishbone core for IRQ: VIC, ADC */
 	ZFA_IRQ_ADC_DISABLE_MASK,
@@ -307,7 +308,7 @@ enum fa_sw_param_id {
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
  */
-#define ZFA_CHx_MULT 5
+#define ZFA_CHx_MULT 6
 
 /* ADC DDR memory */
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */

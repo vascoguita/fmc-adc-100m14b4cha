@@ -130,6 +130,20 @@ void zfad_reset_offset(struct fa_dev *fa)
 }
 
 /*
+ * zfad_init_saturation
+ * @fa: the fmc-adc descriptor
+ *
+ * Initialize all saturation registers to the maximum value
+ */
+void zfad_init_saturation(struct fa_dev *fa)
+{
+	int idx, i;
+
+	for (i = 0, idx = ZFA_CH1_SAT; i < FA_NCHAN; ++i, idx += ZFA_CHx_MULT)
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[idx], 0x7fff);
+}
+
+/*
  * zfad_set_range
  * @fa: the fmc-adc descriptor
  * @chan: the channel to calibrate
@@ -358,6 +372,9 @@ static int __fa_init(struct fa_dev *fa)
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
+
+	/* Initialize channel saturation values */
+	zfad_init_saturation(fa);
 
 	/* Set UTC seconds from the kernel seconds */
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],

@@ -56,6 +56,11 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("ch2-vref", ZIO_RW_PERM, ZFA_CH3_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch3-vref", ZIO_RW_PERM, ZFA_CH4_CTL_RANGE, 0),
 
+	ZIO_ATTR_EXT("ch0-saturation", ZIO_RW_PERM, ZFA_CH1_SAT, 0),
+	ZIO_ATTR_EXT("ch1-saturation", ZIO_RW_PERM, ZFA_CH2_SAT, 0),
+	ZIO_ATTR_EXT("ch2-saturation", ZIO_RW_PERM, ZFA_CH3_SAT, 0),
+	ZIO_ATTR_EXT("ch3-saturation", ZIO_RW_PERM, ZFA_CH4_SAT, 0),
+
 	ZIO_ATTR_EXT("ch0-50ohm-term", ZIO_RW_PERM, ZFA_CH1_CTL_TERM, 0),
 	ZIO_ATTR_EXT("ch1-50ohm-term", ZIO_RW_PERM, ZFA_CH2_CTL_TERM, 0),
 	ZIO_ATTR_EXT("ch2-50ohm-term", ZIO_RW_PERM, ZFA_CH3_CTL_TERM, 0),
@@ -129,6 +134,9 @@ static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_chan_std_zattr) = {
 #endif
 
 static struct zio_attribute zfad_chan_ext_zattr[] = {
+#if 0 /* FIXME Unused until TLV control will be available */
+	ZIO_ATTR("saturation", ZIO_RW_PERM, ZFA_CHx_SAT, 0),
+#endif
 	/*ZIO_ATTR(zdev, "50ohm-termination", ZIO_RW_PERM, ZFA_CHx_CTL_TERM, 0x11),*/
 	ZIO_PARAM_EXT("current-value", ZIO_RO_PERM, ZFA_CHx_STA, 0),
 };
@@ -284,6 +292,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		*usr_val = fa_read_temp(fa, 0);
 		*usr_val = (*usr_val * 1000 + 8) / 16;
 		return 0;
+	case ZFA_CHx_SAT:
 	case ZFA_CHx_CTL_TERM:
 	case ZFA_CHx_CTL_RANGE:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
