@@ -34,9 +34,9 @@ static void fald_help()
 	printf("  --after|-a <num>         n. of post samples (default: 16)\n");
 	printf("  --nshots|-n <num>        number of trigger shots\n");
 	printf("  --delay|-d <num>         delay sample after trigger\n");
-	printf("  --under-sample|-U <num>  pick 1 sample every <num>\n");
+	printf("  --under-sample|-u|-D <num>  pick 1 sample every <num>\n");
 	printf("  --threshold|-t <num>     internal trigger threshold\n");
-	printf("  --channel|-c <num>       channel used as trigger (0..3)\n");
+	printf("  --channel|-c <num>       channel used as trigger (1..4)\n");
 	printf("  --range|-r <num>         channel input range: "
 						"100(100mv) 1(1v) 10(10v)\n");
 	printf("  --tiemout|-T <millisec>  timeout for acquisition\n");
