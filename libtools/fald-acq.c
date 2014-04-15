@@ -627,6 +627,11 @@ int main(int argc, char *argv[])
 			}
 			ctrl = buf->metadata;
 			data = buf->data;
+			/* FIXME adc-lib should provide enums to retrive
+			 * attributes values */
+			fprintf(stderr, "Acquisition started at secs:%u ticks:%u\n",
+				ctrl->attr_channel.ext_val[13],
+				ctrl->attr_channel.ext_val[14]);
 			fprintf(stderr, "Read %d samples from shot %i/%i secs:%lld ticks:%lld (loop: %d)\n",
 				ctrl->nsamples,
 				i + 1, acq_cfg.value[FMCADC_CONF_ACQ_N_SHOTS],
