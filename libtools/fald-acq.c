@@ -217,12 +217,18 @@ void parse_args(int argc, char *argv[])
 					val);
 			break;
 		case 'c':
+			val = atoi(optarg);
+			if (val < 1 || val > 4) {
+				fprintf(stderr, "Invalid channel %d\n", val);
+				fald_help();
+				exit(1);
+			}
 			fprintf(stdout, "FMCADC_CONF_TRG_SOURCE_CHAN: %d\n",
 				atoi(optarg));
 			/* set internal, and then the channel */
 			fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE, 0);
 			fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE_CHAN,
-					atoi(optarg)-1);
+					val - 1);
 			break;
 		case 'T':
 			timeout = atoi(optarg);
@@ -246,6 +252,12 @@ void parse_args(int argc, char *argv[])
 			break;
 		case 'g':
 			plot_chno = atoi(optarg);
+			if (plot_chno < 1 || plot_chno > 4) {
+				fprintf(stderr, "Invalid channel %d\n",
+					plot_chno);
+				fald_help();
+				exit(1);
+			}
 			fprintf(stdout, "Plot channel %d\n", plot_chno);
 			break;
 		case 'X':
