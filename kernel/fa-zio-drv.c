@@ -61,6 +61,14 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("ch2-50ohm-term", ZIO_RW_PERM, ZFA_CH3_CTL_TERM, 0),
 	ZIO_ATTR_EXT("ch3-50ohm-term", ZIO_RW_PERM, ZFA_CH4_CTL_TERM, 0),
 
+	/* last acquisition start time stamp */
+	ZIO_ATTR_EXT("tstamp-acq-str-s", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_SECONDS, 0),
+	ZIO_ATTR_EXT("tstamp-acq-str-t", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_COARSE, 0),
+	ZIO_ATTR_EXT("tstamp-acq-str-b", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_FINE, 0),
+
 	/* Parameters (not attributes) follow */
 
 	/*
@@ -85,13 +93,6 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * 7: Illegal
 	 * */
 	ZIO_PARAM_EXT("fsm-state", ZIO_RO_PERM, ZFA_STA_FSM, 0),
-	/* last acquisition start time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-str-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_SECONDS, 0),
-	ZIO_PARAM_EXT("tstamp-acq-str-t", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-str-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_FINE, 0),
 	/* last acquisition end time stamp */
 	ZIO_PARAM_EXT("tstamp-acq-end-s", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_END_SECONDS, 0),

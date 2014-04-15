@@ -54,14 +54,22 @@ void zfad_dma_done(struct zio_cset *cset)
 	struct zio_control *ctrl = NULL;
 	struct zio_ti *ti = cset->ti;
 	struct zio_block *block;
+	struct zio_timestamp ztstamp;
 	int i;
 	uint32_t *trig_timetag;
 
 	fa->carrier_op->dma_done(cset);
 
 	/* for each shot, set the timetag of each ctrl block by reading the
-	 * trig-timetag appended after the samples
+	 * trig-timetag appended after the samples. Set also the acquisition
+	 * start timetag on every blocks
 	 */
+	ztstamp.secs = fa_readl(fa, fa->fa_utc_base,
+				&zfad_regs[ZFA_UTC_ACQ_START_SECONDS]);
+	ztstamp.ticks = fa_readl(fa, fa->fa_utc_base,
+				 &zfad_regs[ZFA_UTC_ACQ_START_COARSE]);
+	ztstamp.bins = fa_readl(fa, fa->fa_utc_base,
+				&zfad_regs[ZFA_UTC_ACQ_START_FINE]);
 	for (i = 0; i < fa->n_shots; ++i) {
 		block = zfad_block[i].block;
 		ctrl = zio_get_ctrl(block);
@@ -74,6 +82,12 @@ void zfad_dma_done(struct zio_cset *cset)
 		ctrl->tstamp.secs = *(++trig_timetag);
 		ctrl->tstamp.ticks = *(++trig_timetag);
 		ctrl->tstamp.bins = *(++trig_timetag);
+
+		/* Acquisition start Timetag */
+		ctrl->attr_channel.ext_val[13] = ztstamp.secs;
+		ctrl->attr_channel.ext_val[14] = ztstamp.ticks;
+		ctrl->attr_channel.ext_val[15] = ztstamp.bins;
+
 		/* resize the datalen and clear stamp from data block */
 		block->datalen -= FA_TRIG_TIMETAG_BYTES;
 		memset(block->data+block->datalen, 0, FA_TRIG_TIMETAG_BYTES);
