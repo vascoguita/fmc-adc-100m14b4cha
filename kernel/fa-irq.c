@@ -84,9 +84,9 @@ void zfad_dma_done(struct zio_cset *cset)
 		ctrl->tstamp.bins = *(++trig_timetag);
 
 		/* Acquisition start Timetag */
-		ctrl->attr_channel.ext_val[13] = ztstamp.secs;
-		ctrl->attr_channel.ext_val[14] = ztstamp.ticks;
-		ctrl->attr_channel.ext_val[15] = ztstamp.bins;
+		ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_S] = ztstamp.secs;
+		ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_C] = ztstamp.ticks;
+		ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_F] = ztstamp.bins;
 
 		/* resize the datalen and clear stamp from data block */
 		block->datalen -= FA_TRIG_TIMETAG_BYTES;
