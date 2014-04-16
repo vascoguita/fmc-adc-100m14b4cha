@@ -471,6 +471,11 @@ static inline void fa_writel(struct fa_dev *fa,
 		/* */
 		cur &= ~field->mask; /* clear bits according to the mask */
 		val = usr_val * (field->mask & -(field->mask));
+		if (val & ~field->mask)
+			dev_warn(fa->fmc->hwdev,
+				"addr 0x%x: value 0x%x doesn't fit mask 0x%x\n",
+				base_off+field->offset, val, field->mask);
+		val &= field->mask;
 		val |= cur;
 	}
 	fmc_writel(fa->fmc, val, base_off+field->offset);
