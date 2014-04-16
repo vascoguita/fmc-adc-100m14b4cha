@@ -202,6 +202,14 @@ static int fmcadc_zio_config_trg(struct __fmcadc_dev_zio *fa,
 			return fa_zio_sysfs_get(fa, "cset0/trigger/delay",
 					value);
 		break;
+	case FMCADC_CONF_TRG_THRESHOLD_FILTER:
+		if (direction)
+			return fa_zio_sysfs_set(fa, "cset0/trigger/int-threshold-filter",
+					value);
+		else
+			return fa_zio_sysfs_get(fa, "cset0/trigger/int-threshold-filter",
+					value);
+		break;
 	default:
 		errno = FMCADC_ENOCAP;
 		return -1;

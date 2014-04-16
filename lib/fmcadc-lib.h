@@ -58,6 +58,7 @@ enum fmcadc_configuration_trigger {
 	FMCADC_CONF_TRG_THRESHOLD,
 	FMCADC_CONF_TRG_POLARITY,
 	FMCADC_CONF_TRG_DELAY,
+	FMCADC_CONF_TRG_THRESHOLD_FILTER,
 	__FMCADC_CONF_TRG_ATTRIBUTE_LAST_INDEX,
 };
 enum fmcadc_configuration_acquisition {
