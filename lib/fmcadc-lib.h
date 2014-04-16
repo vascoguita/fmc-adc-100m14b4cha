@@ -73,6 +73,7 @@ enum fmcadc_configuration_channel {
 	FMCADC_CONF_CHN_RANGE = 0,
 	FMCADC_CONF_CHN_TERMINATION,
 	FMCADC_CONF_CHN_OFFSET,
+	FMCADC_CONF_CHN_SATURATION,
 	__FMCADC_CONF_CHN_ATTRIBUTE_LAST_INDEX,
 };
 enum fmcadc_board_status {

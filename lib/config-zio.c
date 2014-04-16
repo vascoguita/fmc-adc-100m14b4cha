@@ -293,6 +293,13 @@ static int fmcadc_zio_config_chn(struct __fmcadc_dev_zio *fa, unsigned int ch,
 		else
 			return fa_zio_sysfs_get(fa, path, value);
 		break;
+	case FMCADC_CONF_CHN_SATURATION:
+		sprintf(path, "cset%d/ch%d-saturation", fa->cset, ch);
+		if (direction)
+			return fa_zio_sysfs_set(fa, path, value);
+		else
+			return fa_zio_sysfs_get(fa, path, value);
+		break;
 	default:
 		errno = FMCADC_ENOCAP;
 		return -1;
