@@ -227,6 +227,10 @@ enum fa_trig_ext_attributes {
 	 * The trigger extended attribute order is the same in the declaration
 	 * and in the zio_control, so we can always use enumeration. But, the
 	 * enumeration must start with 0 followed by only consecutive value.
+	 *
+	 * NOTE: this values are temporary copied also in the userspace
+	 * library, so if you change the order you have to fix also the
+	 * library header.
 	 */
 	ZFAT_ATTR_EXT = 0,
 	ZFAT_ATTR_POL,
@@ -248,6 +252,9 @@ enum fa_dev_ext_attributes {
 	 * NOTE: At the moment the only extended attributes we have in
 	 * the device hierarchy are in the cset level, so we can safely
 	 * start from index 0
+	 * NOTE: this values are temporary copied also in the userspace
+	 * library, so if you change the order you have to fix also the
+	 * library header.
 	 */
 	ZFAD_ATTR_DECI = 0,
 	ZFAD_ATTR_CH0_OFFSET,

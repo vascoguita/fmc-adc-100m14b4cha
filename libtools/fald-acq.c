@@ -24,6 +24,7 @@
 
 #include <linux/zio-user.h>
 #include <fmcadc-lib.h>
+#include <fmc-adc-100m14b4cha.h>
 
 static void fald_help()
 {
@@ -630,8 +631,8 @@ int main(int argc, char *argv[])
 			/* FIXME adc-lib should provide enums to retrive
 			 * attributes values */
 			fprintf(stderr, "Acquisition started at secs:%u ticks:%u\n",
-				ctrl->attr_channel.ext_val[13],
-				ctrl->attr_channel.ext_val[14]);
+				ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_S],
+				ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_C]);
 			fprintf(stderr, "Read %d samples from shot %i/%i secs:%lld ticks:%lld (loop: %d)\n",
 				ctrl->nsamples,
 				i + 1, acq_cfg.value[FMCADC_CONF_ACQ_N_SHOTS],
