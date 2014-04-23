@@ -125,12 +125,6 @@ void zfad_dma_done(struct zio_cset *cset)
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
 			  1);
 	}
-
-	/* Automatic start next acquisition */
-	if (fa->enable_auto_start) {
-		dev_dbg(&fa->fmc->dev, "Automatic start\n");
-		zfad_fsm_command(fa, ZFA_START);
-	}
 }
 
 
@@ -292,6 +286,12 @@ static void fa_irq_work(struct work_struct *work)
 	spin_lock(&cset->lock);
 	cset->flags &= ~ZIO_CSET_BUSY;
 	spin_unlock(&cset->lock);
+
+	/* Automatic start next acquisition */
+	if (fa->enable_auto_start) {
+		dev_dbg(&fa->fmc->dev, "Automatic start\n");
+		zfad_fsm_command(fa, ZFA_START);
+	}
 end:
 	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
