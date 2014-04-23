@@ -220,6 +220,61 @@ enum zfadc_dregs_enum {
 };
 
 /*
+ * Trigger Extended Attribute Enumeration
+ */
+enum fa_trig_ext_attributes {
+	/*
+	 * The trigger extended attribute order is the same in the declaration
+	 * and in the zio_control, so we can always use enumeration. But, the
+	 * enumeration must start with 0 followed by only consecutive value.
+	 *
+	 * NOTE: this values are temporary copied also in the userspace
+	 * library, so if you change the order you have to fix also the
+	 * library header.
+	 */
+	ZFAT_ATTR_EXT = 0,
+	ZFAT_ATTR_POL,
+	ZFAT_ATTR_INT_CHAN,
+	ZFAT_ATTR_INT_THRES,
+	ZFAT_ATTR_DELAY,
+	ZFAT_ATTR_SW_EN,
+	ZFAT_ATTR_SW_FIRE,
+	ZFAT_ATTR_TRG_S,
+	ZFAT_ATTR_TRG_C,
+	ZFAT_ATTR_TRG_F,
+};
+
+/*
+ * Device Extended Attribute Enumeration
+ */
+enum fa_dev_ext_attributes {
+	/*
+	 * NOTE: At the moment the only extended attributes we have in
+	 * the device hierarchy are in the cset level, so we can safely
+	 * start from index 0
+	 * NOTE: this values are temporary copied also in the userspace
+	 * library, so if you change the order you have to fix also the
+	 * library header.
+	 */
+	ZFAD_ATTR_DECI = 0,
+	ZFAD_ATTR_CH0_OFFSET,
+	ZFAD_ATTR_CH1_OFFSET,
+	ZFAD_ATTR_CH2_OFFSET,
+	ZFAD_ATTR_CH3_OFFSET,
+	ZFAD_ATTR_CH0_VREF,
+	ZFAD_ATTR_CH1_VREF,
+	ZFAD_ATTR_CH2_VREF,
+	ZFAD_ATTR_CH3_VREF,
+	ZFAD_ATTR_CH0_50TERM,
+	ZFAD_ATTR_CH1_50TERM,
+	ZFAD_ATTR_CH2_50TERM,
+	ZFAD_ATTR_CH3_50TERM,
+	ZFAD_ATTR_ACQ_START_S,
+	ZFAD_ATTR_ACQ_START_C,
+	ZFAD_ATTR_ACQ_START_F,
+};
+
+/*
  * ADC parameter id not mapped to Hw register
  * Id is used as zio attribute id
  */
