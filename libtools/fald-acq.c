@@ -110,8 +110,8 @@ static char *basefile;
 static char buf_fifo[MAX_BUF];
 static char *_argv[16];
 static int _argc;
-#define  START_ACQ 1
-#define START_CHANGE_CFG 2
+#define ADC_STATE_START_ACQ (1 << 0)
+#define ADC_STATE_CHANGE_CFG (1 << 1)
 #define START_POLL 1
 
 /* default is 1 V*/
@@ -413,7 +413,7 @@ void *adc_wait_thread(void *arg)
 		}
 		fprintf(stdout, "%s fmc-adc_poll ends normally, send signal to readyToReadOrCfgCondVar requesting to read data\n", __func__);
 		pthread_mutex_lock(&mtx);
-		adc_state = START_ACQ; /* means start acquisition */
+		adc_state |= ADC_STATE_START_ACQ; /* means start acquisition */
 		pthread_mutex_unlock(&mtx);
 		// Wake up the change config thread
 		pthread_cond_signal(&readyToReadOrCfgCondVar);
@@ -583,8 +583,9 @@ int main(int argc, char *argv[])
 			pthread_cond_wait(&readyToReadOrCfgCondVar, &mtx);
 			//fprintf(stdout, "mainThread:  waked up adc_state:%d\n", adc_state);
 		}
-		//fprintf(stdout, "mainThread: wakeup readyToReadOrCfgCondVar with adc_state: %s\n", ((adc_state==1)?"Read data":"Change trigger config"));
-		if (adc_state == START_CHANGE_CFG) { /* change trigger config */
+
+		if (adc_state & ADC_STATE_CHANGE_CFG) { /* change trigger config */
+			/* ack all even a START_ACQ because we will stop/start adc */
 			adc_state = 0; /* ack */
 			pthread_mutex_unlock(&mtx);
 			fprintf(stdout, "mainThread: Change trig config starts .............\n");
@@ -603,7 +604,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		/* time to acquire data */
-		adc_state = 0; /* ack it's time to acquire data */
+		adc_state &= ~ADC_STATE_START_ACQ; /* ack time to acquire data */
 		pthread_mutex_unlock(&mtx);
 
 		if (buf == NULL) { /* buf has been released due to a change of trig config */
