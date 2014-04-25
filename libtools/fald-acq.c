@@ -361,11 +361,18 @@ void start_adc(char *called_from, int flag)
 
 	fald_print_debug("%s : call fmcadc_acq_start with %s\n",
 			 called_from, ((flag) ? "flush" : "no flush"));
-	err = fmcadc_acq_start(adc, flag, &tv);
-	if (err) {
-		fprintf(stderr, "%s: cannot start acquisition: %s\n",
-			_argv[0], fmcadc_strerror(errno));
-		exit(1);
+	err = -1;
+	while (err) {
+		err = fmcadc_acq_start(adc, flag, &tv);
+		if (err) {
+			fprintf(stderr, "%s: cannot start acquisition: %s\n",
+				_argv[0], fmcadc_strerror(errno));
+//			exit(1);
+			/* Instead of leaving try another stop/start sequence */
+			stop_adc("start_adc");
+			/* give a chance to breath in case the error persists */ 
+			sleep(1);
+		}
 	}
 
 	/* Start the poll */
