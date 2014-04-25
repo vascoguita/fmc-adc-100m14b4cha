@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
 {
 	struct fmcadc_buffer *buf;
 	int i, err;
-	unsigned int lun = 0;
+	unsigned int devid = 0;
 	FILE *f = NULL;
 	char fname[PATH_MAX];
 	char cmd[256];
@@ -468,11 +468,11 @@ int main(int argc, char *argv[])
 	}
 	/* set local _argv[0] with  pg name */
 	_argv[0] = argv[0];
-	/* lun is the last arg */
-	sscanf(argv[argc-1], "%x", &lun);
+	/* devid is the last arg */
+	sscanf(argv[argc-1], "%x", &devid);
 
 	/* Open the ADC */
-	adc = fmcadc_open_by_lun("fmc-adc-100m14b4cha", lun,
+	adc = fmcadc_open("fmc-adc-100m14b4cha", devid,
 		/* nshots * (presamples + postsamples) */
 		/*
 		acq.value[FMCADC_CONF_ACQ_N_SHOTS] *
@@ -726,7 +726,7 @@ int main(int argc, char *argv[])
 			start_adc("End of data processing", 0);
 		else if (plot_chno != -1) {
 			if ((plot_chno>=1) && (plot_chno <= 4) ) {
-				snprintf(fname, sizeof(fname), "/tmp/fmcadc.0x%04x.ch%d.dat", lun, plot_chno);
+				snprintf(fname, sizeof(fname), "/tmp/fmcadc.0x%04x.ch%d.dat", devid, plot_chno);
 				if (write_file(fname, plot_chno, (int16_t *)buf->data,
 						(ctrl->nsamples)/4) < 0) {
 					printf("Write data into file %s failed\n", fname);
