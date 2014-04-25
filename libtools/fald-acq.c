@@ -26,6 +26,14 @@
 #include <fmcadc-lib.h>
 #include <fmc-adc-100m14b4cha.h>
 
+#ifdef DEBUG
+#define fald_print_debug(format, ...) \
+	fprintf(stdout, "%s(%d)" format, __func__, __LINE__, ##__VA_ARGS__)
+
+#else
+#define fald_print_debug(format, ...)
+#endif
+
 static void fald_help()
 {
 	printf("\nfald-simple-acq [OPTIONS] <LUN>\n\n");
@@ -351,8 +359,8 @@ void start_adc(char *called_from, int flag)
 	int err;
 	struct timeval tv = {0, 0};
 
-	fprintf(stdout, "%s : call fmcadc_acq_start with %s\n",
-		called_from, ((flag) ? "flush" : "no flush"));
+	fald_print_debug("%s : call fmcadc_acq_start with %s\n",
+			 called_from, ((flag) ? "flush" : "no flush"));
 	err = fmcadc_acq_start(adc, flag, &tv);
 	if (err) {
 		fprintf(stderr, "%s: cannot start acquisition: %s\n",
@@ -365,8 +373,7 @@ void start_adc(char *called_from, int flag)
 	poll_state = START_POLL; /* adc has been flushed and started */
 	pthread_mutex_unlock(&mtx);
 	pthread_cond_signal(&readyToPollCondVar);
-	fprintf(stdout, "%s- %s send signal to readyToPollCondVar\n",
-		__func__, called_from);
+	fald_print_debug("%s send signal to readyToPollCondVar\n", called_from);
 }
 
 void stop_adc(char *called_from)
@@ -390,15 +397,13 @@ void *adc_wait_thread(void *arg)
 	for (;;) {
 		pthread_mutex_lock(&mtx);
 		while (!poll_state) {
-			fprintf(stdout, "%s- cond_wait readyToPollCondVar\n",
-				__func__);
+			fald_print_debug("cond_wait readyToPollCondVar\n");
 			adc_wait_thread_ready = 1;
 			pthread_cond_wait(&readyToPollCondVar, &mtx);
 		}
 		poll_state = 0;
 		pthread_mutex_unlock(&mtx);
-		fprintf(stdout, "%s It's time to call fmcadc_acq_poll\n",
-			__func__);
+		fald_print_debug("It's time to call fmcadc_acq_poll\n");
 		err = fmcadc_acq_poll(adc, 0 , NULL);
 		if (err) {
 			if (errno == FMCADC_EDISABLED) {
@@ -411,7 +416,7 @@ void *adc_wait_thread(void *arg)
 				exit(-1);
 			}
 		}
-		fprintf(stdout, "%s fmc-adc_poll ends normally, send signal to readyToReadOrCfgCondVar requesting to read data\n", __func__);
+		fald_print_debug("fmc-adc_poll ends normally, send signal to readyToReadOrCfgCondVar requesting to read data\n");
 		pthread_mutex_lock(&mtx);
 		adc_state |= ADC_STATE_START_ACQ; /* means start acquisition */
 		pthread_mutex_unlock(&mtx);
@@ -579,11 +584,13 @@ int main(int argc, char *argv[])
 	while (loop > 0) {
 		pthread_mutex_lock(&mtx);
 		while (!adc_state) {
-			//fprintf(stdout, "mainThread: cond_wait readyToReadOrCfgCondVar\n");
+			fald_print_debug("mainThread: cond_wait readyToReadOrCfgCondVar\n");
 			pthread_cond_wait(&readyToReadOrCfgCondVar, &mtx);
-			//fprintf(stdout, "mainThread:  waked up adc_state:%d\n", adc_state);
+			fald_print_debug("mainThread:  waked up adc_state:%d\n", adc_state);
 		}
 
+		fald_print_debug("mainThread: wakeup readyToReadOrCfgCondVar with adc_state: %s\n",
+				 ((adc_state==1)?"Read data":"Change trigger config"));
 		if (adc_state & ADC_STATE_CHANGE_CFG) { /* change trigger config */
 			/* ack all even a START_ACQ because we will stop/start adc */
 			adc_state = 0; /* ack */
