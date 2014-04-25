@@ -201,12 +201,6 @@ void zfad_dma_error(struct zio_cset *cset)
 	if (fa->n_fires == 0)
 		dev_err(&fa->fmc->dev,
 			"DMA error occurs but no block was acquired\n");
-
-	/* Remove invalid blocks */
-	for (i = 0; i < fa->n_shots; ++i)
-		zio_buffer_free_block(bi, zfad_block[i].block);
-	kfree(zfad_block);
-	cset->interleave->priv_d = NULL;
 }
 
 /*
