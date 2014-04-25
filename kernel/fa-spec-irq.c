@@ -95,7 +95,7 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 	 * we can safely lower CSET_BUSY
 	 */
 	spin_lock(&cset->lock);
-	cset->flags &= ~ZIO_CSET_BUSY;
+	cset->flags &= ~ZIO_CSET_HW_BUSY;
 	spin_unlock(&cset->lock);
 
 	/* ack the irq */

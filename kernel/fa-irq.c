@@ -272,10 +272,10 @@ static void fa_irq_work(struct work_struct *work)
 		zfad_dma_done(cset);
 	}
 	/*
-	 * Lower CSET_BUSY
+	 * Lower CSET_HW_BUSY
 	 */
 	spin_lock(&cset->lock);
-	cset->flags &= ~ZIO_CSET_BUSY;
+	cset->flags &= ~ZIO_CSET_HW_BUSY;
 	spin_unlock(&cset->lock);
 
 	if (res) {
@@ -360,9 +360,9 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 		/* has deleted zio blocks. In such a case */
 		/* the flag is not raised and nothing is done */
 		if (zfad_block != NULL)
-			cset->flags |= ZIO_CSET_BUSY;
+			cset->flags |= ZIO_CSET_HW_BUSY;
 		spin_unlock_irqrestore(&cset->lock, flags);
-		if (cset->flags & ZIO_CSET_BUSY) {
+		if (cset->flags & ZIO_CSET_HW_BUSY) {
 			/* Job deferred to the workqueue: */
 			/* Start DMA and ack irq on the carrier */
 			queue_work(fa_workqueue, &fa->irq_work);
