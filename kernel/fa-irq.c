@@ -4,6 +4,7 @@
  *
  * IRQ-related code
  */
+
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/timer.h>
@@ -27,7 +28,58 @@
 int zfad_dma_start(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	int err;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
+	uint32_t dev_mem_off, trg_pos, pre_samp;
+	uint32_t val = 0;
+	int try = 5, err;
+
+	/*
+	 * All programmed triggers fire, so the acquisition is ended.
+	 * If the state machine is _idle_ we can start the DMA transfer.
+	 * If the state machine it is not idle, try again 5 times
+	 */
+	while (try-- && val != ZFA_STATE_IDLE) {
+		/* udelay(2); */
+		val = fa_readl(fa, fa->fa_adc_csr_base,
+			       &zfad_regs[ZFA_STA_FSM]);
+	}
+
+	if (val != ZFA_STATE_IDLE) {
+		/* we can't DMA if the state machine is not idle */
+		dev_warn(&fa->fmc->dev,
+			 "Can't start DMA on the last acquisition, "
+			 "State Machine is not IDLE (status:%d)\n", val);
+		return -EBUSY;
+	}
+
+	/*
+	 * Disable all triggers to prevent fires between
+	 * different DMA transfers required for multi-shots
+	 */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 0);
+
+	/* Fix dev_mem_addr in single-shot mode */
+	if (fa->n_shots == 1) {
+		int nchan = FA_NCHAN;
+		struct zio_control *ctrl = cset->chan[FA_NCHAN].current_ctrl;
+
+		/* get pre-samples from the current control (interleave chan) */
+		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
+		/* Get trigger position in DDR */
+		trg_pos = fa_readl(fa, fa->fa_adc_csr_base,
+				   &zfad_regs[ZFAT_POS]);
+		/*
+		 * compute mem offset (in bytes): pre-samp is converted to
+		 * bytes
+		 */
+		dev_mem_off = trg_pos - (pre_samp * cset->ssize * nchan);
+		dev_dbg(&fa->fmc->dev,
+			"Trigger @ 0x%08x, pre_samp %i, offset 0x%08x\n",
+			trg_pos, pre_samp, dev_mem_off);
+
+		zfad_block[0].dev_mem_off = dev_mem_off;
+	}
 
 	dev_dbg(&fa->fmc->dev, "Start DMA transfer\n");
 	err = fa->carrier_op->dma_start(cset);
@@ -167,10 +219,6 @@ void zfad_dma_error(struct zio_cset *cset)
 void zfat_irq_acq_end(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	struct zfad_block *zfad_block = cset->interleave->priv_d;
-	uint32_t dev_mem_off, trg_pos, pre_samp;
-	uint32_t val = 0;
-	int try = 5;
 
 	dev_dbg(&fa->fmc->dev, "Acquisition done\n");
 	/*FIXME: because the driver doesn't listen anymore trig-event
@@ -191,51 +239,6 @@ void zfat_irq_acq_end(struct zio_cset *cset)
 	*/
 	/* for the time being let assume n_shots have been executed */
 	fa->n_fires = fa->n_shots;
-	/*
-	 * All programmed triggers fire, so the acquisition is ended.
-	 * If the state machine is _idle_ we can start the DMA transfer.
-	 * If the state machine it is not idle, try again 5 times
-	 */
-	while (try-- && val != ZFA_STATE_IDLE) {
-		//udelay(2);
-		val = fa_readl(fa, fa->fa_adc_csr_base,
-			       &zfad_regs[ZFA_STA_FSM]);
-	}
-
-	if (val != ZFA_STATE_IDLE) {
-		/* we can't DMA if the state machine is not idle */
-		dev_warn(&fa->fmc->dev,
-			 "Can't start DMA on the last acquisition, "
-			 "State Machine is not IDLE (status:%d)\n", val);
-		zfad_fsm_command(fa, ZFA_STOP);
-		return;
-	}
-
-	/*
-	 * Disable all triggers to prevent fires between
-	 * different DMA transfers required for multi-shots
-	 */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 0);
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 0);
-
-	/* Fix dev_mem_addr in single-shot mode */
-	if (fa->n_shots == 1) {
-		int nchan = FA_NCHAN;
-		struct zio_control *ctrl = cset->chan[FA_NCHAN].current_ctrl;
-
-		/* get pre-samples from the current control (interleave chan) */
-		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
-		/* Get trigger position in DDR */
-		trg_pos = fa_readl(fa, fa->fa_adc_csr_base,
-				   &zfad_regs[ZFAT_POS]);
-		/* compute mem offset (in bytes): pre-samp is converted to bytes */
-		dev_mem_off = trg_pos - (pre_samp * cset->ssize * nchan);
-		dev_dbg(&fa->fmc->dev,
-			"Trigger @ 0x%08x, pre_samp %i, offset 0x%08x\n",
-			trg_pos, pre_samp, dev_mem_off);
-
-		zfad_block[0].dev_mem_off = dev_mem_off;
-	}
 }
 
 /*
@@ -257,11 +260,8 @@ static void fa_irq_work(struct work_struct *work)
 	int res;
 
 	zfat_irq_acq_end(cset);
-
 	res = zfad_dma_start(cset);
-	if (res)
-		zfad_dma_error(cset);
-	else {
+	if (!res) {
 		/*
 		 * No error.
 		 * If there is an IRQ DMA src to notify the ends of the DMA,
@@ -287,11 +287,15 @@ static void fa_irq_work(struct work_struct *work)
 	cset->flags &= ~ZIO_CSET_BUSY;
 	spin_unlock(&cset->lock);
 
-	/* Automatic start next acquisition */
-	if (fa->enable_auto_start) {
+	if (res) {
+		/* Stop acquisition on error */
+		zfad_dma_error(cset);
+	} else if (fa->enable_auto_start) {
+		/* Automatic start next acquisition */
 		dev_dbg(&fa->fmc->dev, "Automatic start\n");
 		zfad_fsm_command(fa, ZFA_START);
 	}
+
 end:
 	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
