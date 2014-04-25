@@ -108,6 +108,7 @@ static pthread_cond_t readyToReadOrCfgCondVar;
 static int adc_wait_thread_ready;
 static int adc_state;
 static int poll_state;
+static int new_config = 0;
 static struct fmcadc_conf trg_cfg, acq_cfg, ch_cfg;
 static int show_ndata = INT_MAX; /* by default all values are displayed */
 static int plot_chno = -1;
@@ -155,11 +156,6 @@ void parse_args(int argc, char *argv[])
 	int c, opt_index, val;
 
 	optind = 1; /* set to 1 to make getopt_long happy */
-	/* set by default external in case chanel option is not specified */
-	fprintf(stdout, "Set first FMCADC_CONF_TRG_SOURCE to external.\n");
-	fprintf(stdout, "Will be override if a channel is given\n");
-	fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
-	fmcadc_set_conf(&ch_cfg, FMCADC_CONF_CHN_RANGE,	0x11); /* 1V range */
 	/* Parse options */
 	while ((c = getopt_long(argc, argv, GETOPT_STRING, options, &opt_index))
 	       >= 0 ) {
@@ -313,48 +309,10 @@ void apply_config()
 			_argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
-}
-
-void *change_config_thread(void *arg)
-{
-	int fd, ret;
-	char *adcfifo = "/tmp/adcfifo";
-	char *s, *t;
-	char buf[MAX_BUF];
-
-	if (access(adcfifo, F_OK) == -1) {
-		/* create the FIFO (named pipe) */
-		mkfifo(adcfifo, 0666);
-	}
-	/* open, read, and display the message from the FIFO */
-	fd = open(adcfifo, O_RDONLY);
-	for (;;) {
-		memset(buf, 0, MAX_BUF);
-		ret = read(fd, buf, MAX_BUF);
-		if (ret > 0) {
-			_argc = 1;
-			memcpy(buf_fifo, buf, MAX_BUF); /* for future parsing */
-			s = buf_fifo;
-			while ((t = strtok(s, " ")) != NULL) {
-				s = NULL;
-				_argv[_argc++] = t;
-			}
-			/* notify acqThread that new config is requested */
-			fprintf(stdout, "%s New trigger config, send signal to readyToReadOrCfgCondVar requesting to apply new config\n", __func__);
-			pthread_mutex_lock(&mtx);
-			adc_state = START_CHANGE_CFG;
-			pthread_mutex_unlock(&mtx);
-			// Wake up the change config thread
-			pthread_cond_signal(&readyToReadOrCfgCondVar);
-		} else {
-			fprintf(stdout, "read returns %d\n", ret);
-			/* writer close the fifo. Colse the reader side */
-			close(fd);
-			/* should block until the writer is back */
-			fd = open(adcfifo, O_RDONLY);
-			continue;
-		}
-	}
+	// raise new_config flag
+	pthread_mutex_lock(&mtx);
+	new_config = 1;
+	pthread_mutex_unlock(&mtx);
 }
 
 void start_adc(char *called_from, int flag)
@@ -455,6 +413,50 @@ void *adc_wait_thread(void *arg)
 		pthread_mutex_unlock(&mtx);
 		// Wake up the change config thread
 		pthread_cond_signal(&readyToReadOrCfgCondVar);
+	}
+}
+
+void *change_config_thread(void *arg)
+{
+	int fd, ret;
+	char *adcfifo = "/tmp/adcfifo";
+	char *s, *t;
+	char buf[MAX_BUF];
+
+	if (access(adcfifo, F_OK) == -1) {
+		/* create the FIFO (named pipe) */
+		mkfifo(adcfifo, 0666);
+	}
+	/* open, read, and display the message from the FIFO */
+	fd = open(adcfifo, O_RDONLY);
+	for (;;) {
+		memset(buf, 0, MAX_BUF);
+		ret = read(fd, buf, MAX_BUF);
+		if (ret > 0) {
+			_argc = 1;
+			memcpy(buf_fifo, buf, MAX_BUF); /* for future parsing */
+			s = buf_fifo;
+			while ((t = strtok(s, " ")) != NULL) {
+				s = NULL;
+				_argv[_argc++] = t;
+			}
+
+			/* async way of changing trig config */
+			stop_adc("change_config");
+			parse_args(_argc, _argv);
+			apply_config();
+			fprintf(stdout, "mainThread: Change trig config ................. done\n");
+
+			start_adc("change_config", FMCADC_F_FLUSH) ;
+
+		} else {
+			fprintf(stdout, "read returns %d\n", ret);
+			/* writer close the fifo. Colse the reader side */
+			close(fd);
+			/* should block until the writer is back */
+			fd = open(adcfifo, O_RDONLY);
+			continue;
+		}
 	}
 }
 
@@ -626,30 +628,19 @@ int main(int argc, char *argv[])
 				 ((adc_state==1)?"Read data":"Change trigger config"));
 
 		/* If the system fails stop the loop and close the program */
-		if (adc_state & ADC_STATE_FAILURE)
-			break;
-
-		if (adc_state & ADC_STATE_CHANGE_CFG) { /* change trigger config */
-			/* ack all even a START_ACQ because we will stop/start adc */
-			adc_state = 0; /* ack */
+		if (adc_state & ADC_STATE_FAILURE) {
 			pthread_mutex_unlock(&mtx);
-			fprintf(stdout, "mainThread: Change trig config starts .............\n");
-
-			stop_adc("change_config");
-			/* first relese previous bufffer */
-			fmcadc_release_buffer(adc, buf, NULL);
-			buf = NULL;
-
-			parse_args(_argc, _argv);
-			apply_config();
-			fprintf(stdout, "mainThread: Change trig config ................. done\n");
-
-			start_adc("change_config", FMCADC_F_FLUSH) ;
-
-			continue;
+			break;
 		}
+
 		/* time to acquire data */
 		adc_state &= ~ADC_STATE_START_ACQ; /* ack time to acquire data */
+		if (new_config && buf != NULL) {
+			/* first release previous buffer */
+			fmcadc_release_buffer(adc, buf, NULL);
+			buf = NULL;
+			new_config = 0;
+		}
 		pthread_mutex_unlock(&mtx);
 
 		if (buf == NULL) { /* buf has been released due to a change of trig config */
