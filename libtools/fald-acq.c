@@ -34,6 +34,8 @@
 #define fald_print_debug(format, ...)
 #endif
 
+void stop_adc(char *called_from);
+
 static void fald_help()
 {
 	printf("\nfald-simple-acq [OPTIONS] <LUN>\n\n");
@@ -120,6 +122,7 @@ static char *_argv[16];
 static int _argc;
 #define ADC_STATE_START_ACQ (1 << 0)
 #define ADC_STATE_CHANGE_CFG (1 << 1)
+#define ADC_STATE_FAILURE (1 << 2)
 #define START_POLL 1
 
 /* default is 1 V*/
@@ -356,47 +359,70 @@ void *change_config_thread(void *arg)
 
 void start_adc(char *called_from, int flag)
 {
-	int err;
+	int try = 5, err;
 	struct timeval tv = {0, 0};
 
 	fald_print_debug("%s : call fmcadc_acq_start with %s\n",
 			 called_from, ((flag) ? "flush" : "no flush"));
-	err = -1;
-	while (err) {
+	while (try) {
 		err = fmcadc_acq_start(adc, flag, &tv);
-		if (err) {
-			fprintf(stderr, "%s: cannot start acquisition: %s\n",
-				_argv[0], fmcadc_strerror(errno));
-//			exit(1);
-			/* Instead of leaving try another stop/start sequence */
-			stop_adc("start_adc");
-			/* give a chance to breath in case the error persists */ 
-			sleep(1);
-		}
+		if (!err)
+			break;
+
+		/* Cannot start acquisition right now */
+		fprintf(stderr, "%s: cannot start acquisition: %s\n(Retry)\n",
+			_argv[0], fmcadc_strerror(errno));
+		/* Instead of leaving try another stop/start sequence */
+		stop_adc("start_adc");
+		/* give a chance to breath in case the error persists */
+		sleep(1);
+		try--;
 	}
 
-	/* Start the poll */
-	pthread_mutex_lock(&mtx);
-	poll_state = START_POLL; /* adc has been flushed and started */
-	pthread_mutex_unlock(&mtx);
-	pthread_cond_signal(&readyToPollCondVar);
-	fald_print_debug("%s send signal to readyToPollCondVar\n", called_from);
+	/*
+	 * If also the last try fails, then set FAILURE state
+	 * Otherwise, start polling
+	 */
+	if (!try) {
+		fald_print_debug("%s: Cannot start acquisition. Exit\n");
+		pthread_mutex_lock(&mtx);
+		adc_state |= ADC_STATE_FAILURE;
+		pthread_mutex_unlock(&mtx);
+	} else {
+		/* Start the poll */
+		pthread_mutex_lock(&mtx);
+		poll_state = START_POLL; /* adc has been flushed and started */
+		pthread_mutex_unlock(&mtx);
+		pthread_cond_signal(&readyToPollCondVar);
+		fald_print_debug("%s send signal to readyToPollCondVar\n", called_from);
+	}
 }
 
 void stop_adc(char *called_from)
 {
-	int err;
+	int try = 5, err;
 
 	/* stop any pending acquisition */
-//	fprintf(stdout, "%s: call fmcadc_acq_stop\n", called_from);
-	err = fmcadc_acq_stop(adc, 0);
-	if (err) {
-		fprintf(stderr, "%s: cannot stop acquisition: %s\n",
+	fald_print_debug("%s: call fmcadc_acq_stop\n", called_from);
+	while (try) {
+		err = fmcadc_acq_stop(adc, 0);
+		if (!err)
+			break;
+
+		fprintf(stderr, "%s: cannot stop acquisition: %s\n(Retry)\n",
 			_argv[0], fmcadc_strerror(errno));
-		exit(1);
+
+		try--;
+	}
+
+	/* If also the last try fails, then set FAILURE state */
+	if (!try) {
+		fald_print_debug("%s: Cannot stop acquisition. Exit\n");
+		pthread_mutex_lock(&mtx);
+		adc_state |= ADC_STATE_FAILURE;
+		pthread_mutex_unlock(&mtx);
 	}
 }
-
 void *adc_wait_thread(void *arg)
 {
 	int err;
@@ -598,6 +624,11 @@ int main(int argc, char *argv[])
 
 		fald_print_debug("mainThread: wakeup readyToReadOrCfgCondVar with adc_state: %s\n",
 				 ((adc_state==1)?"Read data":"Change trigger config"));
+
+		/* If the system fails stop the loop and close the program */
+		if (adc_state & ADC_STATE_FAILURE)
+			break;
+
 		if (adc_state & ADC_STATE_CHANGE_CFG) { /* change trigger config */
 			/* ack all even a START_ACQ because we will stop/start adc */
 			adc_state = 0; /* ack */
