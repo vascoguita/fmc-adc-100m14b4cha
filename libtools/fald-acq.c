@@ -45,6 +45,7 @@ static void fald_help()
 	printf("  --nshots|-n <num>        number of trigger shots\n");
 	printf("  --delay|-d <num>         delay sample after trigger\n");
 	printf("  --under-sample|-u|-D <num>  pick 1 sample every <num>\n");
+	printf("  --external|-e            use external trigger\n");
 	printf("  --threshold|-t <num>     internal trigger threshold\n");
 	printf("  --channel|-c <num>       channel used as trigger (1..4)\n");
 	printf("  --range|-r <num>         channel input range: "
@@ -70,6 +71,8 @@ static struct option options[] = {
 	{"nshots",	required_argument, 0, 'n'},
 	{"delay",	required_argument, 0, 'd'},
 	{"under-sample",required_argument, 0, 'u'},
+	{"external", no_argument,
+			&trg_cfgval[FMCADC_CONF_TRG_SOURCE], 1},
 	{"threshold",	required_argument, 0, 't'},
 	{"channel",	required_argument, 0, 'c'},
 	{"timeout",	required_argument, 0, 'T'},
@@ -98,7 +101,7 @@ static struct option options[] = {
 	{0, 0, 0, 0}
 };
 
-#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:h"
+#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:he"
 
 /* variables shared between threads */
 static struct fmcadc_dev *adc;
@@ -233,9 +236,12 @@ void parse_args(int argc, char *argv[])
 			fprintf(stdout, "FMCADC_CONF_TRG_SOURCE_CHAN: %d\n",
 				atoi(optarg));
 			/* set internal, and then the channel */
-			fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE, 0);
+			trg_cfgval[FMCADC_CONF_TRG_SOURCE] = 0; /* set later */
 			fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE_CHAN,
 					val - 1);
+			break;
+		case 'e':
+			trg_cfgval[FMCADC_CONF_TRG_SOURCE] = 1;
 			break;
 		case 'T':
 			timeout = atoi(optarg);
@@ -281,6 +287,8 @@ void parse_args(int argc, char *argv[])
 	/* Configure trigger (pick trigger polarity from external array) */
 	fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_POLARITY,
 			trg_cfgval[FMCADC_CONF_TRG_POLARITY]);
+	fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE,
+			trg_cfgval[FMCADC_CONF_TRG_SOURCE]);
 }
 
 void apply_config()
