@@ -4,6 +4,7 @@ ZIO ?= $(M)/../zio
 FMC_BUS ?= $(M)/../fmc-bus
 SPEC_SW ?= $(M)/../spec-sw
 SVEC_SW ?= $(M)/../svec-sw
+CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
 KBUILD_EXTRA_SYMBOLS := \
 	$(ZIO)/Module.symvers \
@@ -19,25 +20,28 @@ ccflags-y = -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$M
 
 ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
+ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
+
 
 subdirs-ccflags-y = $(ccflags-y)
 
 obj-m := fmc-adc-100m14b.o
-fmc-adc-100m14b-objs =  fa-core.o
-fmc-adc-100m14b-objs += fa-spec-core.o
-fmc-adc-100m14b-objs += fa-svec-core.o
-fmc-adc-100m14b-objs += fa-zio-drv.o
-fmc-adc-100m14b-objs += fa-calibration.o
-fmc-adc-100m14b-objs += fa-regtable.o
-fmc-adc-100m14b-objs += fa-spec-regtable.o
-fmc-adc-100m14b-objs += fa-svec-regtable.o
-fmc-adc-100m14b-objs += fa-zio-trg.o
-fmc-adc-100m14b-objs += fa-spec-dma.o
-fmc-adc-100m14b-objs += fa-svec-dma.o
-fmc-adc-100m14b-objs += fa-irq.o fa-spec-irq.o
-fmc-adc-100m14b-objs += onewire.o
-fmc-adc-100m14b-objs += spi.o
-fmc-adc-100m14b-objs += fmc-util.o 
+fmc-adc-100m14b-y =  fa-core.o
+fmc-adc-100m14b-y += fa-zio-drv.o
+fmc-adc-100m14b-y += fa-calibration.o
+fmc-adc-100m14b-y += fa-regtable.o
+fmc-adc-100m14b-y += fa-zio-trg.o
+fmc-adc-100m14b-y += fa-irq.o
+fmc-adc-100m14b-y += onewire.o
+fmc-adc-100m14b-y += spi.o
+fmc-adc-100m14b-y += fmc-util.o
+fmc-adc-100m14b-y += fa-spec-core.o
+fmc-adc-100m14b-y += fa-spec-regtable.o
+fmc-adc-100m14b-y += fa-spec-dma.o
+fmc-adc-100m14b-y += fa-spec-irq.o
+fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-core.o
+fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-regtable.o
+fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-dma.o
 
 all modules:
 	$(MAKE) -C $(LINUX) M=$(shell /bin/pwd) modules

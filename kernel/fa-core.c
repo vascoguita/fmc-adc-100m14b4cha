@@ -411,12 +411,23 @@ int fa_probe(struct fmc_device *fmc)
 	fa->fmc = fmc;
 
 	/* apply carrier-specific hacks and workarounds */
-	if (!strcmp(fmc->carrier_name, "SPEC"))
+	fa->carrier_op = NULL;
+	if (!strcmp(fmc->carrier_name, "SPEC")) {
 		fa->carrier_op = &fa_spec_op;
-	else if (!strcmp(fmc->carrier_name, "SVEC"))
+	} else if (!strcmp(fmc->carrier_name, "SVEC")) {
+#ifdef CONFIG_FMC_ADC_SVEC
 		fa->carrier_op = &fa_svec_op;
-	else {
-		dev_err(fmc->hwdev, "unsupported carrier\n");
+#endif
+	}
+
+	/*
+	 * Check if carrier operations exists. Otherwise it means that the
+	 * driver was compiled without enable any carrier, so it cannot work
+	 */
+	if (!fa->carrier_op) {
+		dev_err(fmc->hwdev,
+			"This binary doesn't support the '%s' carrier\n",
+			fmc->carrier_name);
 		return -ENODEV;
 	}
 
