@@ -183,11 +183,9 @@ the same card. Before you get confused we'd better explain the reasoning.
 @node Names in the Repository
 @section Names in the Repository
 
-In the repository, the official releases are tagged as
-@code{fmc-adc-sw-v#maj.#min} where @i{#maj} represent the major release
-version of the driver and @i{#min} the minor one (e.g @code{fmc-adc-sw-v1.2}).
-In the future, though, we may switch to date-based releases, like
-@t{fmc-adc-sw-2013-09}.
+In the repository, the official releases are tagged with a date-based
+format @code{fmc-adc-sw-#yyyy-#mm} where @i{#yyyy} is the release year and
+@{#mm} is the release month (e.g @code{fmc-adc-sw-2014-04})
 
 Within @t{ohwr.org}, we got the habit to include the package name in the
 tag name: before we started using git submodules, we used to tag several
