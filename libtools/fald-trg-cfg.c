@@ -28,6 +28,10 @@ int main()
 		memset(msg, 0, 512);
 		fprintf(stdout, "Change trig config using standard args: -a -b -c -n -e\n >>>:  ");
 		ptr = fgets(msg, sizeof(msg), stdin);
+		if (!ptr) {
+			fprintf(stderr, "Error while reading options\n");
+			break;
+		}
 		/* removing newline at the end */
 		if (msg[strlen(msg)-1] == '\n')
 			msg[strlen(msg)-1] = '\0';
