@@ -282,7 +282,6 @@ static int zfat_data_done(struct zio_cset *cset)
 static int zfat_arm_trigger(struct zio_ti *ti)
 {
 	struct zio_channel *interleave = ti->cset->interleave;
-	struct zio_buffer_type *zbuf = ti->cset->zbuf;
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 	struct device *msgdev = &fa->fmc->dev;
 	struct zio_block *block;

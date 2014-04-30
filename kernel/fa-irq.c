@@ -189,9 +189,6 @@ void zfad_dma_done(struct zio_cset *cset)
 void zfad_dma_error(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	struct zio_bi *bi = cset->interleave->bi;
-	struct zfad_block *zfad_block = cset->interleave->priv_d;
-	int i;
 
 	fa->carrier_op->dma_error(cset);
 
