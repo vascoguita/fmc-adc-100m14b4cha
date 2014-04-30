@@ -478,9 +478,16 @@ void create_thread()
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	int res = pthread_create(&tid, &thread_attr, change_config_thread, NULL);
 
+	if (res)
+		fprintf(stderr, "Cannot create 'change_config_thread' (%d)\n",
+			res);
+
 	pthread_attr_init(&thread_attr);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	res = pthread_create(&tid, &thread_attr, adc_wait_thread, NULL);
+	if (res)
+		fprintf(stderr, "Cannot create 'adc_wait_thread' (%d)\n", res);
+
 	// initialize condition variables
 	pthread_condattr_t condVarAttr;
 	pthread_condattr_init(&condVarAttr);
