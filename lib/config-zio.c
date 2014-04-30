@@ -327,7 +327,7 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 		struct fmcadc_conf *conf, unsigned int direction)
 {
 
-	int err, i;
+	int err = 0, i;
 	uint32_t enabled;
 
 	/* Disabling the trigger before changing configuration */
@@ -380,7 +380,7 @@ static int fmcadc_zio_config(struct __fmcadc_dev_zio *fa, unsigned int flags,
 
 	/* if the trigger was enabled restore it */
 	if (direction && enabled)
-		err |= fa_zio_sysfs_set(fa, "cset0/trigger/enable", &enabled);
+		err = fa_zio_sysfs_set(fa, "cset0/trigger/enable", &enabled);
 	return err;
 }
 
