@@ -22,6 +22,9 @@ install:
 %: %.c $(LIBADC)/libfmcadc.a
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
+# make nothing for modules_install, but avoid errors
+modules_install:
+
 clean:
 	rm -f $(DEMOS) *.o *~
 
