@@ -26,6 +26,16 @@
 #include <fmcadc-lib.h>
 #include <fmc-adc-100m14b4cha.h>
 
+#ifdef DEBUG
+#define fald_print_debug(format, ...) \
+	fprintf(stdout, "%s(%d)" format, __func__, __LINE__, ##__VA_ARGS__)
+
+#else
+#define fald_print_debug(format, ...)
+#endif
+
+void stop_adc(char *called_from);
+
 static void fald_help()
 {
 	printf("\nfald-simple-acq [OPTIONS] <LUN>\n\n");
@@ -34,9 +44,10 @@ static void fald_help()
 	printf("  --after|-a <num>         n. of post samples (default: 16)\n");
 	printf("  --nshots|-n <num>        number of trigger shots\n");
 	printf("  --delay|-d <num>         delay sample after trigger\n");
-	printf("  --under-sample|-U <num>  pick 1 sample every <num>\n");
+	printf("  --under-sample|-u|-D <num>  pick 1 sample every <num>\n");
+	printf("  --external|-e            use external trigger\n");
 	printf("  --threshold|-t <num>     internal trigger threshold\n");
-	printf("  --channel|-c <num>       channel used as trigger (0..3)\n");
+	printf("  --channel|-c <num>       channel used as trigger (1..4)\n");
 	printf("  --range|-r <num>         channel input range: "
 						"100(100mv) 1(1v) 10(10v)\n");
 	printf("  --tiemout|-T <millisec>  timeout for acquisition\n");
@@ -60,6 +71,8 @@ static struct option options[] = {
 	{"nshots",	required_argument, 0, 'n'},
 	{"delay",	required_argument, 0, 'd'},
 	{"under-sample",required_argument, 0, 'u'},
+	{"external", no_argument,
+			&trg_cfgval[FMCADC_CONF_TRG_SOURCE], 1},
 	{"threshold",	required_argument, 0, 't'},
 	{"channel",	required_argument, 0, 'c'},
 	{"timeout",	required_argument, 0, 'T'},
@@ -88,7 +101,7 @@ static struct option options[] = {
 	{0, 0, 0, 0}
 };
 
-#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:h"
+#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:he"
 
 /* variables shared between threads */
 static struct fmcadc_dev *adc;
@@ -98,6 +111,7 @@ static pthread_cond_t readyToReadOrCfgCondVar;
 static int adc_wait_thread_ready;
 static int adc_state;
 static int poll_state;
+static int new_config = 0;
 static struct fmcadc_conf trg_cfg, acq_cfg, ch_cfg;
 static int show_ndata = INT_MAX; /* by default all values are displayed */
 static int plot_chno = -1;
@@ -110,8 +124,9 @@ static char *basefile;
 static char buf_fifo[MAX_BUF];
 static char *_argv[16];
 static int _argc;
-#define  START_ACQ 1
-#define START_CHANGE_CFG 2
+#define ADC_STATE_START_ACQ (1 << 0)
+#define ADC_STATE_CHANGE_CFG (1 << 1)
+#define ADC_STATE_FAILURE (1 << 2)
 #define START_POLL 1
 
 /* default is 1 V*/
@@ -144,11 +159,6 @@ void parse_args(int argc, char *argv[])
 	int c, opt_index, val;
 
 	optind = 1; /* set to 1 to make getopt_long happy */
-	/* set by default external in case chanel option is not specified */
-	fprintf(stdout, "Set first FMCADC_CONF_TRG_SOURCE to external.\n");
-	fprintf(stdout, "Will be override if a channel is given\n");
-	fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE, 1); /* external */
-	fmcadc_set_conf(&ch_cfg, FMCADC_CONF_CHN_RANGE,	0x11); /* 1V range */
 	/* Parse options */
 	while ((c = getopt_long(argc, argv, GETOPT_STRING, options, &opt_index))
 	       >= 0 ) {
@@ -217,12 +227,21 @@ void parse_args(int argc, char *argv[])
 					val);
 			break;
 		case 'c':
+			val = atoi(optarg);
+			if (val < 1 || val > 4) {
+				fprintf(stderr, "Invalid channel %d\n", val);
+				fald_help();
+				exit(1);
+			}
 			fprintf(stdout, "FMCADC_CONF_TRG_SOURCE_CHAN: %d\n",
 				atoi(optarg));
 			/* set internal, and then the channel */
-			fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE, 0);
+			trg_cfgval[FMCADC_CONF_TRG_SOURCE] = 0; /* set later */
 			fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE_CHAN,
-					atoi(optarg)-1);
+					val - 1);
+			break;
+		case 'e':
+			trg_cfgval[FMCADC_CONF_TRG_SOURCE] = 1;
 			break;
 		case 'T':
 			timeout = atoi(optarg);
@@ -246,6 +265,12 @@ void parse_args(int argc, char *argv[])
 			break;
 		case 'g':
 			plot_chno = atoi(optarg);
+			if (plot_chno < 1 || plot_chno > 4) {
+				fprintf(stderr, "Invalid channel %d\n",
+					plot_chno);
+				fald_help();
+				exit(1);
+			}
 			fprintf(stdout, "Plot channel %d\n", plot_chno);
 			break;
 		case 'X':
@@ -262,6 +287,8 @@ void parse_args(int argc, char *argv[])
 	/* Configure trigger (pick trigger polarity from external array) */
 	fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_POLARITY,
 			trg_cfgval[FMCADC_CONF_TRG_POLARITY]);
+	fmcadc_set_conf(&trg_cfg, FMCADC_CONF_TRG_SOURCE,
+			trg_cfgval[FMCADC_CONF_TRG_SOURCE]);
 }
 
 void apply_config()
@@ -290,6 +317,111 @@ void apply_config()
 			_argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
+	// raise new_config flag
+	pthread_mutex_lock(&mtx);
+	new_config = 1;
+	pthread_mutex_unlock(&mtx);
+}
+
+void start_adc(char *called_from, int flag)
+{
+	int try = 5, err;
+	struct timeval tv = {0, 0};
+
+	fald_print_debug("%s : call fmcadc_acq_start with %s\n",
+			 called_from, ((flag) ? "flush" : "no flush"));
+	while (try) {
+		err = fmcadc_acq_start(adc, flag, &tv);
+		if (!err)
+			break;
+
+		/* Cannot start acquisition right now */
+		fprintf(stderr, "%s: cannot start acquisition: %s\n(Retry)\n",
+			_argv[0], fmcadc_strerror(errno));
+		/* Instead of leaving try another stop/start sequence */
+		stop_adc("start_adc");
+		/* give a chance to breath in case the error persists */
+		sleep(1);
+		try--;
+	}
+
+	/*
+	 * If also the last try fails, then set FAILURE state
+	 * Otherwise, start polling
+	 */
+	if (!try) {
+		fald_print_debug("%s: Cannot start acquisition. Exit\n");
+		pthread_mutex_lock(&mtx);
+		adc_state |= ADC_STATE_FAILURE;
+		pthread_mutex_unlock(&mtx);
+	} else {
+		/* Start the poll */
+		pthread_mutex_lock(&mtx);
+		poll_state = START_POLL; /* adc has been flushed and started */
+		pthread_mutex_unlock(&mtx);
+		pthread_cond_signal(&readyToPollCondVar);
+		fald_print_debug("%s send signal to readyToPollCondVar\n", called_from);
+	}
+}
+
+void stop_adc(char *called_from)
+{
+	int try = 5, err;
+
+	/* stop any pending acquisition */
+	fald_print_debug("%s: call fmcadc_acq_stop\n", called_from);
+	while (try) {
+		err = fmcadc_acq_stop(adc, 0);
+		if (!err)
+			break;
+
+		fprintf(stderr, "%s: cannot stop acquisition: %s\n(Retry)\n",
+			_argv[0], fmcadc_strerror(errno));
+
+		try--;
+	}
+
+	/* If also the last try fails, then set FAILURE state */
+	if (!try) {
+		fald_print_debug("%s: Cannot stop acquisition. Exit\n");
+		pthread_mutex_lock(&mtx);
+		adc_state |= ADC_STATE_FAILURE;
+		pthread_mutex_unlock(&mtx);
+	}
+}
+void *adc_wait_thread(void *arg)
+{
+	int err;
+
+	for (;;) {
+		pthread_mutex_lock(&mtx);
+		while (!poll_state) {
+			fald_print_debug("cond_wait readyToPollCondVar\n");
+			adc_wait_thread_ready = 1;
+			pthread_cond_wait(&readyToPollCondVar, &mtx);
+		}
+		poll_state = 0;
+		pthread_mutex_unlock(&mtx);
+		fald_print_debug("It's time to call fmcadc_acq_poll\n");
+		err = fmcadc_acq_poll(adc, 0 , NULL);
+		if (err) {
+			if (errno == FMCADC_EDISABLED) {
+				fprintf(stderr, "fmcadc_acq_poll has been aborted due to a triiger stop:  err:%d errno:%s(%d)\n",
+					err, fmcadc_strerror(errno), errno);
+				continue;
+			} else {
+				fprintf(stderr, "fmcadc_acq_poll failed:  err:%d errno:%s(%d)\n",
+					err, strerror(errno), errno);
+				exit(-1);
+			}
+		}
+		fald_print_debug("fmc-adc_poll ends normally, send signal to readyToReadOrCfgCondVar requesting to read data\n");
+		pthread_mutex_lock(&mtx);
+		adc_state |= ADC_STATE_START_ACQ; /* means start acquisition */
+		pthread_mutex_unlock(&mtx);
+		// Wake up the change config thread
+		pthread_cond_signal(&readyToReadOrCfgCondVar);
+	}
 }
 
 void *change_config_thread(void *arg)
@@ -316,13 +448,15 @@ void *change_config_thread(void *arg)
 				s = NULL;
 				_argv[_argc++] = t;
 			}
-			/* notify acqThread that new config is requested */
-			fprintf(stdout, "%s New trigger config, send signal to readyToReadOrCfgCondVar requesting to apply new config\n", __func__);
-			pthread_mutex_lock(&mtx);
-			adc_state = START_CHANGE_CFG;
-			pthread_mutex_unlock(&mtx);
-			// Wake up the change config thread
-			pthread_cond_signal(&readyToReadOrCfgCondVar);
+
+			/* async way of changing trig config */
+			stop_adc("change_config");
+			parse_args(_argc, _argv);
+			apply_config();
+			fprintf(stdout, "mainThread: Change trig config ................. done\n");
+
+			start_adc("change_config", FMCADC_F_FLUSH) ;
+
 		} else {
 			fprintf(stdout, "read returns %d\n", ret);
 			/* writer close the fifo. Colse the reader side */
@@ -331,80 +465,6 @@ void *change_config_thread(void *arg)
 			fd = open(adcfifo, O_RDONLY);
 			continue;
 		}
-	}
-}
-
-void start_adc(char *called_from, int flag)
-{
-	int err;
-	struct timeval tv = {0, 0};
-
-	fprintf(stdout, "%s : call fmcadc_acq_start with %s\n",
-		called_from, ((flag) ? "flush" : "no flush"));
-	err = fmcadc_acq_start(adc, flag, &tv);
-	if (err) {
-		fprintf(stderr, "%s: cannot start acquisition: %s\n",
-			_argv[0], fmcadc_strerror(errno));
-		exit(1);
-	}
-
-	/* Start the poll */
-	pthread_mutex_lock(&mtx);
-	poll_state = START_POLL; /* adc has been flushed and started */
-	pthread_mutex_unlock(&mtx);
-	pthread_cond_signal(&readyToPollCondVar);
-	fprintf(stdout, "%s- %s send signal to readyToPollCondVar\n",
-		__func__, called_from);
-}
-
-void stop_adc(char *called_from)
-{
-	int err;
-
-	/* stop any pending acquisition */
-//	fprintf(stdout, "%s: call fmcadc_acq_stop\n", called_from);
-	err = fmcadc_acq_stop(adc, 0);
-	if (err) {
-		fprintf(stderr, "%s: cannot stop acquisition: %s\n",
-			_argv[0], fmcadc_strerror(errno));
-		exit(1);
-	}
-}
-
-void *adc_wait_thread(void *arg)
-{
-	int err;
-
-	for (;;) {
-		pthread_mutex_lock(&mtx);
-		while (!poll_state) {
-			fprintf(stdout, "%s- cond_wait readyToPollCondVar\n",
-				__func__);
-			adc_wait_thread_ready = 1;
-			pthread_cond_wait(&readyToPollCondVar, &mtx);
-		}
-		poll_state = 0;
-		pthread_mutex_unlock(&mtx);
-		fprintf(stdout, "%s It's time to call fmcadc_acq_poll\n",
-			__func__);
-		err = fmcadc_acq_poll(adc, 0 , NULL);
-		if (err) {
-			if (errno == FMCADC_EDISABLED) {
-				fprintf(stderr, "fmcadc_acq_poll has been aborted due to a triiger stop:  err:%d errno:%s(%d)\n",
-					err, fmcadc_strerror(errno), errno);
-				continue;
-			} else {
-				fprintf(stderr, "fmcadc_acq_poll failed:  err:%d errno:%s(%d)\n",
-					err, strerror(errno), errno);
-				exit(-1);
-			}
-		}
-		fprintf(stdout, "%s fmc-adc_poll ends normally, send signal to readyToReadOrCfgCondVar requesting to read data\n", __func__);
-		pthread_mutex_lock(&mtx);
-		adc_state = START_ACQ; /* means start acquisition */
-		pthread_mutex_unlock(&mtx);
-		// Wake up the change config thread
-		pthread_cond_signal(&readyToReadOrCfgCondVar);
 	}
 }
 
@@ -418,9 +478,16 @@ void create_thread()
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	int res = pthread_create(&tid, &thread_attr, change_config_thread, NULL);
 
+	if (res)
+		fprintf(stderr, "Cannot create 'change_config_thread' (%d)\n",
+			res);
+
 	pthread_attr_init(&thread_attr);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	res = pthread_create(&tid, &thread_attr, adc_wait_thread, NULL);
+	if (res)
+		fprintf(stderr, "Cannot create 'adc_wait_thread' (%d)\n", res);
+
 	// initialize condition variables
 	pthread_condattr_t condVarAttr;
 	pthread_condattr_init(&condVarAttr);
@@ -442,7 +509,7 @@ int main(int argc, char *argv[])
 {
 	struct fmcadc_buffer *buf;
 	int i, err;
-	unsigned int lun = 0;
+	unsigned int devid = 0;
 	FILE *f = NULL;
 	char fname[PATH_MAX];
 	char cmd[256];
@@ -456,11 +523,11 @@ int main(int argc, char *argv[])
 	}
 	/* set local _argv[0] with  pg name */
 	_argv[0] = argv[0];
-	/* lun is the last arg */
-	sscanf(argv[argc-1], "%x", &lun);
+	/* devid is the last arg */
+	sscanf(argv[argc-1], "%x", &devid);
 
 	/* Open the ADC */
-	adc = fmcadc_open_by_lun("fmc-adc-100m14b4cha", lun,
+	adc = fmcadc_open("fmc-adc-100m14b4cha", devid,
 		/* nshots * (presamples + postsamples) */
 		/*
 		acq.value[FMCADC_CONF_ACQ_N_SHOTS] *
@@ -567,31 +634,28 @@ int main(int argc, char *argv[])
 	while (loop > 0) {
 		pthread_mutex_lock(&mtx);
 		while (!adc_state) {
-			//fprintf(stdout, "mainThread: cond_wait readyToReadOrCfgCondVar\n");
+			fald_print_debug("mainThread: cond_wait readyToReadOrCfgCondVar\n");
 			pthread_cond_wait(&readyToReadOrCfgCondVar, &mtx);
-			//fprintf(stdout, "mainThread:  waked up adc_state:%d\n", adc_state);
+			fald_print_debug("mainThread:  waked up adc_state:%d\n", adc_state);
 		}
-		//fprintf(stdout, "mainThread: wakeup readyToReadOrCfgCondVar with adc_state: %s\n", ((adc_state==1)?"Read data":"Change trigger config"));
-		if (adc_state == START_CHANGE_CFG) { /* change trigger config */
-			adc_state = 0; /* ack */
-			pthread_mutex_unlock(&mtx);
-			fprintf(stdout, "mainThread: Change trig config starts .............\n");
 
-			stop_adc("change_config");
-			/* first relese previous bufffer */
+		fald_print_debug("mainThread: wakeup readyToReadOrCfgCondVar with adc_state: %s\n",
+				 ((adc_state==1)?"Read data":"Change trigger config"));
+
+		/* If the system fails stop the loop and close the program */
+		if (adc_state & ADC_STATE_FAILURE) {
+			pthread_mutex_unlock(&mtx);
+			break;
+		}
+
+		/* time to acquire data */
+		adc_state &= ~ADC_STATE_START_ACQ; /* ack time to acquire data */
+		if (new_config && buf != NULL) {
+			/* first release previous buffer */
 			fmcadc_release_buffer(adc, buf, NULL);
 			buf = NULL;
-
-			parse_args(_argc, _argv);
-			apply_config();
-			fprintf(stdout, "mainThread: Change trig config ................. done\n");
-
-			start_adc("change_config", FMCADC_F_FLUSH) ;
-
-			continue;
+			new_config = 0;
 		}
-		/* time to acquire data */
-		adc_state = 0; /* ack it's time to acquire data */
 		pthread_mutex_unlock(&mtx);
 
 		if (buf == NULL) { /* buf has been released due to a change of trig config */
@@ -714,7 +778,7 @@ int main(int argc, char *argv[])
 			start_adc("End of data processing", 0);
 		else if (plot_chno != -1) {
 			if ((plot_chno>=1) && (plot_chno <= 4) ) {
-				snprintf(fname, sizeof(fname), "/tmp/fmcadc.0x%04x.ch%d.dat", lun, plot_chno);
+				snprintf(fname, sizeof(fname), "/tmp/fmcadc.0x%04x.ch%d.dat", devid, plot_chno);
 				if (write_file(fname, plot_chno, (int16_t *)buf->data,
 						(ctrl->nsamples)/4) < 0) {
 					printf("Write data into file %s failed\n", fname);

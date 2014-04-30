@@ -1,4 +1,6 @@
 # user-space tools for spec-fine-delay
+M = $(shell /bin/pwd)/../kernel
+DESTDIR ?= /usr/local
 
 HOST_EXTRACFLAGS += -I$(M) -I$(ZIO)/include -Wno-trigraphs -Wall -ggdb
 
@@ -14,8 +16,12 @@ all modules: $(hostprogs-y)
 clean:
 	rm -f $(hostprogs-y) *.o *~
 
-# make nothing for module_install, but avoid errors
-module_install:
+# make nothing for modules_install, but avoid errors
+modules_install:
+
+install:
+	install -d $(DESTDIR)/bin
+	install -D $(hostprogs-y) $(DESTDIR)/bin
 
 # we need this as we are out of the kernel
 %: %.c
