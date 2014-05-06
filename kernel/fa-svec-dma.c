@@ -104,7 +104,7 @@ int fa_svec_dma_start(struct zio_cset *cset)
 	/* Execute DMA shot by shot */
 	for (i = 0; i < fa->n_shots; ++i) {
 		pr_debug("configure DMA descriptor shot %d "
-			"vme addr: 0x%llx destination address: 0x%p len: %d \n",
+			"vme addr: 0x%llx destination address: 0x%p len: %d\n",
 			i, (long long)vme_addr, fa_dma_block[i].block->data,
 			(int)fa_dma_block[i].block->datalen);
 		build_dma_desc(&desc, vme_addr,

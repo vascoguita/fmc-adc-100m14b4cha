@@ -26,7 +26,7 @@ static int fa_show_sdb;
 module_param_named(show_sdb, fa_show_sdb, int, 0444);
 MODULE_PARM_DESC(show_sdb, "Print a dump of the gateware's SDB tree.");
 
-static int fa_enable_test_data = 0;
+static int fa_enable_test_data;
 module_param_named(enable_test_data, fa_enable_test_data, int, 0444);
 
 static int fa_internal_trig_test = 0;
@@ -202,7 +202,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
 
-	if (command != FA100M14B4C_CMD_START && command != FA100M14B4C_CMD_STOP) {
+	if (command != FA100M14B4C_CMD_START &&
+	    command != FA100M14B4C_CMD_STOP) {
 		dev_info(dev, "Invalid command %i\n", command);
 		return -EINVAL;
 	}
@@ -387,7 +388,7 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
 		  get_seconds());
 
-	/* 
+	/*
 	 * Set Trigger delay in order to compensate
 	 * the channel signal transmission delay
 	 */

@@ -62,7 +62,7 @@ int zfad_dma_start(struct zio_cset *cset)
 	/* Fix dev_mem_addr in single-shot mode */
 	if (fa->n_shots == 1) {
 		int nchan = FA100M14B4C_NCHAN;
-		struct zio_control *ctrl = cset->chan[FA100M14B4C_NCHAN].current_ctrl;
+		struct zio_control *ctrl = cset->chan[nchan].current_ctrl;
 
 		/* get pre-samples from the current control (interleave chan) */
 		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
@@ -136,9 +136,12 @@ void zfad_dma_done(struct zio_cset *cset)
 		ctrl->tstamp.bins = *(++trig_timetag);
 
 		/* Acquisition start Timetag */
-		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_S] = ztstamp.secs;
-		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_C] = ztstamp.ticks;
-		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_F] = ztstamp.bins;
+		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_S] =
+								ztstamp.secs;
+		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_C] =
+								ztstamp.ticks;
+		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_F] =
+								ztstamp.bins;
 
 		/*
 		 * resize the datalen, by removing the trigger tstamp and the
@@ -314,8 +317,9 @@ static void fa_get_irq_status(struct fa_dev *fa, int irq_core_base,
 
 	/* Get current interrupts status */
 	*irq_status = fa_readl(fa, irq_core_base, &zfad_regs[ZFA_IRQ_ADC_SRC]);
-	dev_dbg(&fa->fmc->dev, "core ADC: 0x%x fired an interrupt. IRQ status register: 0x%x\n",
-			irq_core_base, *irq_status);
+	dev_dbg(&fa->fmc->dev,
+		"IRQ 0x%x fired an interrupt. IRQ status register: 0x%x\n",
+		irq_core_base, *irq_status);
 
 	if (*irq_status)
 		/* Clear current interrupts status */
