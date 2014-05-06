@@ -74,8 +74,6 @@ enum fa_input_range {
 	ZFA_RANGE_100mV,
 	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
 };
-#define ZFA_RANGE_MIN  0 /* 10V above */
-#define ZFA_RANGE_MAX  2 /* 100mV above */
 
 enum zfa_fsm_cmd {
 	ZFA_NONE =	0x0,
