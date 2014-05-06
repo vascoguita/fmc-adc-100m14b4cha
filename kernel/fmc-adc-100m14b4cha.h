@@ -8,109 +8,106 @@
 #ifndef FMC_ADC_100M14B4C_H_
 #define FMC_ADC_100M14B4C_H_
 
+/*
+ * Trigger Extended Attribute Enumeration
+ */
+enum fa_trig_ext_attributes {
+	/*
+	 * The trigger extended attribute order is the same in the declaration
+	 * and in the zio_control, so we can always use enumeration. But, the
+	 * enumeration must start with 0 followed by only consecutive value.
+	 *
+	 * The parameters are not exposed to user space by zio_controle, so it
+	 * is not necessary to export to user space the correspondent enum
+	 */
+	ZFAT_ATTR_EXT = 0,
+	ZFAT_ATTR_POL,
+	ZFAT_ATTR_INT_CHAN,
+	ZFAT_ATTR_INT_THRES,
+	ZFAT_ATTR_DELAY,
+#ifdef __KERNEL__
+	ZFAT_ATTR_SW_EN,
+	ZFAT_ATTR_SW_FIRE,
+	ZFAT_ATTR_TRG_S,
+	ZFAT_ATTR_TRG_C,
+	ZFAT_ATTR_TRG_F,
+#endif
+};
+
+/*
+ * Device Extended Attribute Enumeration
+ */
+enum fa_dev_ext_attributes {
+	/*
+	 * NOTE: At the moment the only extended attributes we have in
+	 * the device hierarchy are in the cset level, so we can safely
+	 * start from index 0
+	 */
+	ZFAD_ATTR_DECI = 0,
+	ZFAD_ATTR_CH0_OFFSET,
+	ZFAD_ATTR_CH1_OFFSET,
+	ZFAD_ATTR_CH2_OFFSET,
+	ZFAD_ATTR_CH3_OFFSET,
+	ZFAD_ATTR_CH0_VREF,
+	ZFAD_ATTR_CH1_VREF,
+	ZFAD_ATTR_CH2_VREF,
+	ZFAD_ATTR_CH3_VREF,
+	ZFAD_ATTR_CH0_50TERM,
+	ZFAD_ATTR_CH1_50TERM,
+	ZFAD_ATTR_CH2_50TERM,
+	ZFAD_ATTR_CH3_50TERM,
+	ZFAD_ATTR_ACQ_START_S,
+	ZFAD_ATTR_ACQ_START_C,
+	ZFAD_ATTR_ACQ_START_F,
+};
+
+#define FA_NCHAN 4 /* We have 4 of them,no way out of it */
+
+/* ADC DDR memory */
+#define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
+/* In Multi shot mode samples go through a dpram which has a limited size */
+#define FA_MAX_MSHOT_ACQ_BYTE 0x3FE8 /* 2045 samples (2045*8 bytes) */
+
+enum fa_input_range {
+	ZFA_RANGE_10V = 0x0,
+	ZFA_RANGE_1V,
+	ZFA_RANGE_100mV,
+	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
+};
+#define ZFA_RANGE_MIN  0 /* 10V above */
+#define ZFA_RANGE_MAX  2 /* 100mV above */
+
+enum zfa_fsm_cmd {
+	ZFA_NONE =	0x0,
+	ZFA_START =	0x1,
+	ZFA_STOP =	0x2,
+};
+/* All possible state of the state machine, other values are invalid*/
+enum zfa_fsm_state {
+	ZFA_STATE_IDLE = 0x1,
+	ZFA_STATE_PRE,
+	ZFA_STATE_POST,
+	ZFA_STATE_WAIT,
+	ZFA_STATE_DECR,
+};
+
+
+#ifdef __KERNEL__ /* All the rest is only of kernel users */
+#include <linux/dma-mapping.h>
+#include <linux/scatterlist.h>
 #include <linux/workqueue.h>
 
 #include <linux/fmc.h>
 #include <linux/zio.h>
+#include <linux/zio-trigger.h>
 
 #include "field-desc.h"
 
-/* Carrier-specific operations (gateware does not fully decouple
-   carrier specific stuff, such as DMA or resets, from
-   mezzanine-specific operations). */
-struct fa_dev; /* forward declaration */
-struct fa_carrier_op {
-	char* (*get_gwname)(void);
-	int (*init) (struct fa_dev *);
-	int (*reset_core) (struct fa_dev *);
-	void (*exit) (struct fa_dev *);
-	int (*setup_irqs) (struct fa_dev *);
-	int (*free_irqs) (struct fa_dev *);
-	int (*enable_irqs) (struct fa_dev *);
-	int (*disable_irqs) (struct fa_dev *);
-	int (*ack_irq) (struct fa_dev *, int irq_id);
-	int (*dma_start)(struct zio_cset *cset);
-	void (*dma_done)(struct zio_cset *cset);
-	void (*dma_error)(struct zio_cset *cset);
-};
-
-/* ADC and DAC Calibration, from  EEPROM */
-struct fa_calib_stanza {
-	int16_t offset[4]; /* One per channel */
-	uint16_t gain[4];  /* One per channel */
-	uint16_t temperature;
-};
-
-struct fa_calib {
-	struct fa_calib_stanza adc[3];  /* For input, one per range */
-	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
-};
-
 /*
- * fa_dev: is the descriptor of the FMC ADC mezzanine
- *
- * @fmc: the pointer to the fmc_device generic structure
- * @zdev: is the pointer to the real zio_device in use
- * @hwzdev: is the pointer to the fake zio_device, used to initialize and
- *          to remove a zio_device
- *
- * @n_shots: total number of programmed shots for an acquisition
- * @n_fires: number of trigger fire occurred within an acquisition
- *
- * @n_dma_err: number of errors
- *
+ * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
+ * address offset between two registers of the same type on consecutive channel
  */
-struct fa_dev {
-	/* the pointer to the fmc_device generic structure */
-	struct fmc_device	*fmc;
-	/* the pointer to the real zio_device in use */
-	struct zio_device	*zdev;
-	/* the pointer to the fake zio_device, used for init/remove */
-	struct zio_device	*hwzdev;
-
-	/* carrier common base offset addresses obtained from SDB */
-	unsigned int fa_adc_csr_base;
-	unsigned int fa_spi_base;
-	unsigned int fa_ow_base;
-	unsigned int fa_carrier_csr_base;
-	unsigned int fa_irq_vic_base;
-	unsigned int fa_irq_adc_base;
-	unsigned int fa_utc_base;
-
-	/* carrier specific functions (init/exit/reset/readout/irq handling) */
-	struct fa_carrier_op *carrier_op;
-	/* carrier private data */
-	void *carrier_data;
-	int irq_src; /* list of irq sources to listen */
-	struct work_struct irq_work;
-	/*
-	 * keep last core having fired an IRQ
-	 * Used to check irq sequence: ACQ followed by DMA
-	 */
-	int last_irq_core_src;
-
-	/* Acquisition */
-	unsigned int		n_shots;
-	unsigned int		n_fires;
-
-	/* Statistic informations */
-	unsigned int		n_dma_err;
-
-	/* Configuration */
-	int			user_offset[4]; /* one per channel */
-
-	/* one-wire */
-	uint8_t ds18_id[8];
-	unsigned long		next_t;
-	int			temp;	/* temperature: scaled by 4 bits */
-
-	/* Calibration Data */
-	struct fa_calib calib;
-
-	/* flag  */
-	int enable_auto_start;
-};
-
+#define ZFA_CHx_MULT 6
 
 /* Device registers */
 enum zfadc_dregs_enum {
@@ -230,60 +227,10 @@ enum zfadc_dregs_enum {
 	ZFA_HW_PARAM_COMMON_LAST,
 };
 
-/*
- * Trigger Extended Attribute Enumeration
- */
-enum fa_trig_ext_attributes {
-	/*
-	 * The trigger extended attribute order is the same in the declaration
-	 * and in the zio_control, so we can always use enumeration. But, the
-	 * enumeration must start with 0 followed by only consecutive value.
-	 *
-	 * NOTE: this values are temporary copied also in the userspace
-	 * library, so if you change the order you have to fix also the
-	 * library header.
-	 */
-	ZFAT_ATTR_EXT = 0,
-	ZFAT_ATTR_POL,
-	ZFAT_ATTR_INT_CHAN,
-	ZFAT_ATTR_INT_THRES,
-	ZFAT_ATTR_DELAY,
-	ZFAT_ATTR_SW_EN,
-	ZFAT_ATTR_SW_FIRE,
-	ZFAT_ATTR_TRG_S,
-	ZFAT_ATTR_TRG_C,
-	ZFAT_ATTR_TRG_F,
-};
-
-/*
- * Device Extended Attribute Enumeration
- */
-enum fa_dev_ext_attributes {
-	/*
-	 * NOTE: At the moment the only extended attributes we have in
-	 * the device hierarchy are in the cset level, so we can safely
-	 * start from index 0
-	 * NOTE: this values are temporary copied also in the userspace
-	 * library, so if you change the order you have to fix also the
-	 * library header.
-	 */
-	ZFAD_ATTR_DECI = 0,
-	ZFAD_ATTR_CH0_OFFSET,
-	ZFAD_ATTR_CH1_OFFSET,
-	ZFAD_ATTR_CH2_OFFSET,
-	ZFAD_ATTR_CH3_OFFSET,
-	ZFAD_ATTR_CH0_VREF,
-	ZFAD_ATTR_CH1_VREF,
-	ZFAD_ATTR_CH2_VREF,
-	ZFAD_ATTR_CH3_VREF,
-	ZFAD_ATTR_CH0_50TERM,
-	ZFAD_ATTR_CH1_50TERM,
-	ZFAD_ATTR_CH2_50TERM,
-	ZFAD_ATTR_CH3_50TERM,
-	ZFAD_ATTR_ACQ_START_S,
-	ZFAD_ATTR_ACQ_START_C,
-	ZFAD_ATTR_ACQ_START_F,
-};
+/* trigger timestamp block size in bytes */
+/* This block is added after the post trigger samples */
+/* in the DDR and contains the trigger timestamp */
+#define FA_TRIG_TIMETAG_BYTES 0x10
 
 /*
  * ADC parameter id not mapped to Hw register
@@ -298,45 +245,6 @@ enum fa_sw_param_id {
 	ZFA_SW_PARAM_COMMON_LAST,
 };
 
-/* trigger timestamp block size in bytes */
-/* This block is added after the post trigger samples */
-/* in the DDR and contains the trigger timestamp */
-#define FA_TRIG_TIMETAG_BYTES 0x10
-
-#define FA_NCHAN 4 /* We have 4 of them,no way out of it */
-/*
- * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
- * address offset between two registers of the same type on consecutive channel
- */
-#define ZFA_CHx_MULT 6
-
-/* ADC DDR memory */
-#define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
-/* In Multi shot mode samples go through a dpram which has a limited size */
-#define FA_MAX_MSHOT_ACQ_BYTE 0x3FE8 /* 2045 samples (2045*8 bytes) */
-
-enum fa_input_range {
-	ZFA_RANGE_10V = 0x0,
-	ZFA_RANGE_1V,
-	ZFA_RANGE_100mV,
-	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
-};
-#define ZFA_RANGE_MIN  0 /* 10V above */
-#define ZFA_RANGE_MAX  2 /* 100mV above */
-
-enum zfa_fsm_cmd {
-	ZFA_NONE =	0x0,
-	ZFA_START =	0x1,
-	ZFA_STOP =	0x2,
-};
-/* All possible state of the state machine, other values are invalid*/
-enum zfa_fsm_state {
-	ZFA_STATE_IDLE = 0x1,
-	ZFA_STATE_PRE,
-	ZFA_STATE_POST,
-	ZFA_STATE_WAIT,
-	ZFA_STATE_DECR,
-};
 
 /*
  * Bit pattern used in order to factorize code  between SVEC and SPEC
@@ -355,11 +263,101 @@ enum fa_irq_adc {
 	FA_IRQ_ADC_ACQ_END =	0x2,
 };
 
-#ifdef __KERNEL__ /* All the rest is only of kernel users */
-#include <linux/zio-trigger.h>
+/* Carrier-specific operations (gateware does not fully decouple
+   carrier specific stuff, such as DMA or resets, from
+   mezzanine-specific operations). */
+struct fa_dev; /* forward declaration */
+struct fa_carrier_op {
+	char* (*get_gwname)(void);
+	int (*init) (struct fa_dev *);
+	int (*reset_core) (struct fa_dev *);
+	void (*exit) (struct fa_dev *);
+	int (*setup_irqs) (struct fa_dev *);
+	int (*free_irqs) (struct fa_dev *);
+	int (*enable_irqs) (struct fa_dev *);
+	int (*disable_irqs) (struct fa_dev *);
+	int (*ack_irq) (struct fa_dev *, int irq_id);
+	int (*dma_start)(struct zio_cset *cset);
+	void (*dma_done)(struct zio_cset *cset);
+	void (*dma_error)(struct zio_cset *cset);
+};
 
-#include <linux/dma-mapping.h>
-#include <linux/scatterlist.h>
+/* ADC and DAC Calibration, from  EEPROM */
+struct fa_calib_stanza {
+	int16_t offset[4]; /* One per channel */
+	uint16_t gain[4];  /* One per channel */
+	uint16_t temperature;
+};
+
+struct fa_calib {
+	struct fa_calib_stanza adc[3];  /* For input, one per range */
+	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
+};
+
+/*
+ * fa_dev: is the descriptor of the FMC ADC mezzanine
+ *
+ * @fmc: the pointer to the fmc_device generic structure
+ * @zdev: is the pointer to the real zio_device in use
+ * @hwzdev: is the pointer to the fake zio_device, used to initialize and
+ *          to remove a zio_device
+ *
+ * @n_shots: total number of programmed shots for an acquisition
+ * @n_fires: number of trigger fire occurred within an acquisition
+ *
+ * @n_dma_err: number of errors
+ *
+ */
+struct fa_dev {
+	/* the pointer to the fmc_device generic structure */
+	struct fmc_device	*fmc;
+	/* the pointer to the real zio_device in use */
+	struct zio_device	*zdev;
+	/* the pointer to the fake zio_device, used for init/remove */
+	struct zio_device	*hwzdev;
+
+	/* carrier common base offset addresses obtained from SDB */
+	unsigned int fa_adc_csr_base;
+	unsigned int fa_spi_base;
+	unsigned int fa_ow_base;
+	unsigned int fa_carrier_csr_base;
+	unsigned int fa_irq_vic_base;
+	unsigned int fa_irq_adc_base;
+	unsigned int fa_utc_base;
+
+	/* carrier specific functions (init/exit/reset/readout/irq handling) */
+	struct fa_carrier_op *carrier_op;
+	/* carrier private data */
+	void *carrier_data;
+	int irq_src; /* list of irq sources to listen */
+	struct work_struct irq_work;
+	/*
+	 * keep last core having fired an IRQ
+	 * Used to check irq sequence: ACQ followed by DMA
+	 */
+	int last_irq_core_src;
+
+	/* Acquisition */
+	unsigned int		n_shots;
+	unsigned int		n_fires;
+
+	/* Statistic informations */
+	unsigned int		n_dma_err;
+
+	/* Configuration */
+	int			user_offset[4]; /* one per channel */
+
+	/* one-wire */
+	uint8_t ds18_id[8];
+	unsigned long		next_t;
+	int			temp;	/* temperature: scaled by 4 bits */
+
+	/* Calibration Data */
+	struct fa_calib calib;
+
+	/* flag  */
+	int enable_auto_start;
+};
 
 /*
  * zfad_block
