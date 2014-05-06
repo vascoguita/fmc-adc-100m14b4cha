@@ -44,38 +44,38 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 * 0: internal (data threshold)
 	 * 1: external (front panel trigger input)
 	 */
-	[ZFAT_ATTR_EXT] = ZIO_ATTR_EXT("external", ZIO_RW_PERM, ZFAT_CFG_HW_SEL, 0),
+	[FA100M14B4C_TATTR_EXT] = ZIO_ATTR_EXT("external", ZIO_RW_PERM, ZFAT_CFG_HW_SEL, 0),
 	/*
 	 * Internal Hardware trigger polarity
 	 * 0: positive edge/slope
 	 * 1: negative edge/slope
 	 */
-	[ZFAT_ATTR_POL] = ZIO_ATTR_EXT("polarity", ZIO_RW_PERM, ZFAT_CFG_HW_POL, 0),
+	[FA100M14B4C_TATTR_POL] = ZIO_ATTR_EXT("polarity", ZIO_RW_PERM, ZFAT_CFG_HW_POL, 0),
 	/*
 	 * Channel selection for internal trigger
 	 * 0: channel 1, 1: channel 2, 2: channel 3, 3: channel 4
 	 */
-	[ZFAT_ATTR_INT_CHAN] = ZIO_ATTR_EXT("int-channel", ZIO_RW_PERM, ZFAT_CFG_INT_SEL, 0),
+	[FA100M14B4C_TATTR_INT_CHAN] = ZIO_ATTR_EXT("int-channel", ZIO_RW_PERM, ZFAT_CFG_INT_SEL, 0),
 	/* Internal trigger threshold value is 2 complement format */
-	[ZFAT_ATTR_INT_THRES] = ZIO_ATTR_EXT("int-threshold", ZIO_RW_PERM, ZFAT_CFG_THRES, 0),
+	[FA100M14B4C_TATTR_INT_THRES] = ZIO_ATTR_EXT("int-threshold", ZIO_RW_PERM, ZFAT_CFG_THRES, 0),
 	/*
 	 * Delay to apply on the trigger in sampling clock period. The default
 	 * clock frequency is 100MHz (period = 10ns)
 	 */
-	[ZFAT_ATTR_DELAY] = ZIO_ATTR_EXT("delay", ZIO_RW_PERM, ZFAT_DLY, 0),
+	[FA100M14B4C_TATTR_DELAY] = ZIO_ATTR_EXT("delay", ZIO_RW_PERM, ZFAT_DLY, 0),
 
 	/* setup the maximum glith length to filter */
 	ZIO_ATTR_EXT("int-threshold-filter", ZIO_RW_PERM, ZFAT_CFG_THRES_FILT,
 			0),
 	/* Software Trigger */
 	/* Enable (1) or disable (0) software trigger */
-	[ZFAT_ATTR_SW_EN] = ZIO_PARAM_EXT("sw-trg-enable", ZIO_RW_PERM, ZFAT_CFG_SW_EN, 0),
-	[ZFAT_ATTR_SW_FIRE] = ZIO_PARAM_EXT("sw-trg-fire", ZIO_WO_PERM, ZFAT_SW, 0),
+	[FA100M14B4C_TATTR_SW_EN] = ZIO_PARAM_EXT("sw-trg-enable", ZIO_RW_PERM, ZFAT_CFG_SW_EN, 0),
+	[FA100M14B4C_TATTR_SW_FIRE] = ZIO_PARAM_EXT("sw-trg-fire", ZIO_WO_PERM, ZFAT_SW, 0),
 
 	/* last trigger time stamp */
-	[ZFAT_ATTR_TRG_S] = ZIO_PARAM_EXT("tstamp-trg-lst-s", ZIO_RO_PERM, ZFA_UTC_TRIG_SECONDS, 0),
-	[ZFAT_ATTR_TRG_C] = ZIO_PARAM_EXT("tstamp-trg-lst-t", ZIO_RO_PERM, ZFA_UTC_TRIG_COARSE, 0),
-	[ZFAT_ATTR_TRG_F] = ZIO_PARAM_EXT("tstamp-trg-lst-b", ZIO_RO_PERM, ZFA_UTC_TRIG_FINE, 0),
+	[FA100M14B4C_TATTR_TRG_S] = ZIO_PARAM_EXT("tstamp-trg-lst-s", ZIO_RO_PERM, ZFA_UTC_TRIG_SECONDS, 0),
+	[FA100M14B4C_TATTR_TRG_C] = ZIO_PARAM_EXT("tstamp-trg-lst-t", ZIO_RO_PERM, ZFA_UTC_TRIG_COARSE, 0),
+	[FA100M14B4C_TATTR_TRG_F] = ZIO_PARAM_EXT("tstamp-trg-lst-b", ZIO_RO_PERM, ZFA_UTC_TRIG_FINE, 0),
 };
 
 
@@ -106,7 +106,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
-		if (!ti->zattr_set.ext_zattr[ZFAT_ATTR_SW_EN].value) {
+		if (!ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SW_EN].value) {
 			dev_info(dev, "sw trigger is not enabled\n");
 			return -EPERM;
 		}
@@ -319,7 +319,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	 * +FA_NCHAN because of the trigger samples (1 for each channel) which
 	 * will discard later on DMA done
 	 */
-	size = (interleave->current_ctrl->ssize * (ti->nsamples + FA_NCHAN))
+	size = (interleave->current_ctrl->ssize * (ti->nsamples + FA100M14B4C_NCHAN))
 		+ FA_TRIG_TIMETAG_BYTES;
 	/* check if size is 32 bits word aligned: should be always the case */
 	if (size % 4) {

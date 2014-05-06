@@ -11,7 +11,7 @@
 /*
  * Trigger Extended Attribute Enumeration
  */
-enum fa_trig_ext_attributes {
+enum fa100m14b4c_trg_ext_attr {
 	/*
 	 * The trigger extended attribute order is the same in the declaration
 	 * and in the zio_control, so we can always use enumeration. But, the
@@ -20,77 +20,75 @@ enum fa_trig_ext_attributes {
 	 * The parameters are not exposed to user space by zio_controle, so it
 	 * is not necessary to export to user space the correspondent enum
 	 */
-	ZFAT_ATTR_EXT = 0,
-	ZFAT_ATTR_POL,
-	ZFAT_ATTR_INT_CHAN,
-	ZFAT_ATTR_INT_THRES,
-	ZFAT_ATTR_DELAY,
+	FA100M14B4C_TATTR_EXT = 0,
+	FA100M14B4C_TATTR_POL,
+	FA100M14B4C_TATTR_INT_CHAN,
+	FA100M14B4C_TATTR_INT_THRES,
+	FA100M14B4C_TATTR_DELAY,
 #ifdef __KERNEL__
-	ZFAT_ATTR_SW_EN,
-	ZFAT_ATTR_SW_FIRE,
-	ZFAT_ATTR_TRG_S,
-	ZFAT_ATTR_TRG_C,
-	ZFAT_ATTR_TRG_F,
+	FA100M14B4C_TATTR_SW_EN,
+	FA100M14B4C_TATTR_SW_FIRE,
+	FA100M14B4C_TATTR_TRG_S,
+	FA100M14B4C_TATTR_TRG_C,
+	FA100M14B4C_TATTR_TRG_F,
 #endif
 };
 
 /*
  * Device Extended Attribute Enumeration
  */
-enum fa_dev_ext_attributes {
+enum fa100m14b4c_dev_ext_attr {
 	/*
 	 * NOTE: At the moment the only extended attributes we have in
 	 * the device hierarchy are in the cset level, so we can safely
 	 * start from index 0
 	 */
-	ZFAD_ATTR_DECI = 0,
-	ZFAD_ATTR_CH0_OFFSET,
-	ZFAD_ATTR_CH1_OFFSET,
-	ZFAD_ATTR_CH2_OFFSET,
-	ZFAD_ATTR_CH3_OFFSET,
-	ZFAD_ATTR_CH0_VREF,
-	ZFAD_ATTR_CH1_VREF,
-	ZFAD_ATTR_CH2_VREF,
-	ZFAD_ATTR_CH3_VREF,
-	ZFAD_ATTR_CH0_50TERM,
-	ZFAD_ATTR_CH1_50TERM,
-	ZFAD_ATTR_CH2_50TERM,
-	ZFAD_ATTR_CH3_50TERM,
-	ZFAD_ATTR_ACQ_START_S,
-	ZFAD_ATTR_ACQ_START_C,
-	ZFAD_ATTR_ACQ_START_F,
-	ZFAD_ATTR_BASE_S,
-	ZFAD_ATTR_BASE_C,
+	FA100M14B4C_DATTR_DECI = 0,
+	FA100M14B4C_DATTR_CH0_OFFSET,
+	FA100M14B4C_DATTR_CH1_OFFSET,
+	FA100M14B4C_DATTR_CH2_OFFSET,
+	FA100M14B4C_DATTR_CH3_OFFSET,
+	FA100M14B4C_DATTR_CH0_VREF,
+	FA100M14B4C_DATTR_CH1_VREF,
+	FA100M14B4C_DATTR_CH2_VREF,
+	FA100M14B4C_DATTR_CH3_VREF,
+	FA100M14B4C_DATTR_CH0_50TERM,
+	FA100M14B4C_DATTR_CH1_50TERM,
+	FA100M14B4C_DATTR_CH2_50TERM,
+	FA100M14B4C_DATTR_CH3_50TERM,
+	FA100M14B4C_DATTR_ACQ_START_S,
+	FA100M14B4C_DATTR_ACQ_START_C,
+	FA100M14B4C_DATTR_ACQ_START_F,
 };
 
-#define FA_UTC_CLOCK_FREQ 125000000
-#define FA_UTC_CLOCK_NS  8
-#define FA_NCHAN 4 /* We have 4 of them,no way out of it */
+#define FA100M14B4C_UTC_CLOCK_FREQ 125000000
+#define FA100M14B4C_UTC_CLOCK_NS  8
+#define FA100M14B4C_NCHAN 4 /* We have 4 of them,no way out of it */
 
 /* ADC DDR memory */
-#define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */
+#define FA100M14B4C_MAX_ACQ_BYTE 0x10000000 /* 256MB */
 /* In Multi shot mode samples go through a dpram which has a limited size */
-#define FA_MAX_MSHOT_ACQ_BYTE 0x3FE8 /* 2045 samples (2045*8 bytes) */
+#define FA100M14B4C_MAX_MSHOT_ACQ_BYTE 0x3FE8 /* 2045 samples (2045*8 bytes) */
 
-enum fa_input_range {
-	ZFA_RANGE_10V = 0x0,
-	ZFA_RANGE_1V,
-	ZFA_RANGE_100mV,
-	ZFA_RANGE_OPEN,		/* Channel disconnected from ADC */
+enum fa100m14b4c_input_range {
+	FA100M14B4C_RANGE_10V = 0x0,
+	FA100M14B4C_RANGE_1V,
+	FA100M14B4C_RANGE_100mV,
+	FA100M14B4C_RANGE_OPEN,		/* Channel disconnected from ADC */
 };
 
-enum zfa_fsm_cmd {
-	ZFA_NONE =	0x0,
-	ZFA_START =	0x1,
-	ZFA_STOP =	0x2,
+enum fa100m14b4c_fsm_cmd {
+	FA100M14B4C_CMD_NONE =	0x0,
+	FA100M14B4C_CMD_START =	0x1,
+	FA100M14B4C_CMD_STOP =	0x2,
 };
 /* All possible state of the state machine, other values are invalid*/
-enum zfa_fsm_state {
-	ZFA_STATE_IDLE = 0x1,
-	ZFA_STATE_PRE,
-	ZFA_STATE_POST,
-	ZFA_STATE_WAIT,
-	ZFA_STATE_DECR,
+enum fa100m14b4c_fsm_state {
+	FA100M14B4C_STATE_IDLE = 0x1,
+	FA100M14B4C_STATE_PRE,
+	FA100M14B4C_STATE_POST,
+	FA100M14B4C_STATE_WAIT,
+	FA100M14B4C_STATE_DECR,
 };
 
 
@@ -420,14 +418,14 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 	 * +1 because of the trigger samples, which is not counted as
 	 * post-sample by the ADC
 	 */
-	shot_size = ((pre_t + post_t + 1) * ti->cset->ssize) * FA_NCHAN;
-	if ( (shot_size * nshot_t) >= FA_MAX_ACQ_BYTE ) {
+	shot_size = ((pre_t + post_t + 1) * ti->cset->ssize) * FA100M14B4C_NCHAN;
+	if ( (shot_size * nshot_t) >= FA100M14B4C_MAX_ACQ_BYTE ) {
 		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
 		return -ENOMEM;
 	}
 	/* in case of multi shot, each shot cannot exceed the dpram size */
 	if ( (nshot_t > 1) &&
-	     (shot_size >= FA_MAX_MSHOT_ACQ_BYTE) ) {
+	     (shot_size >= FA100M14B4C_MAX_MSHOT_ACQ_BYTE) ) {
 		dev_err(&ti->head.dev, "Cannot acquire such amount of samples "
 				"(shot_size: %d pre-samp:%d post-samp:%d) in multi shot mode."
 				"dev memory overflow\n",

@@ -71,7 +71,7 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 			"The ADC doesn't behave properly\n",
 			(irq_core_base == fa->fa_irq_adc_base) ? "ACQ" : "DMA");
 		/* Stop Acquisition, ADC it is not working properly */
-		zfad_fsm_command(fa, ZFA_STOP);
+		zfad_fsm_command(fa, FA100M14B4C_CMD_STOP);
 		fa->last_irq_core_src = FA_SPEC_IRQ_SRC_NONE;
 		return IRQ_HANDLED;
 	}

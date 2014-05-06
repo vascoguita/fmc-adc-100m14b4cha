@@ -33,10 +33,10 @@ static int fa_internal_trig_test = 0;
 module_param_named(internal_trig_test, fa_internal_trig_test, int, 0444);
 
 static const int zfad_hw_range[] = {
-	[ZFA_RANGE_10V]   = 0x45,
-	[ZFA_RANGE_1V]    = 0x11,
-	[ZFA_RANGE_100mV] = 0x23,
-	[ZFA_RANGE_OPEN]  = 0x00,
+	[FA100M14B4C_RANGE_10V]   = 0x45,
+	[FA100M14B4C_RANGE_1V]    = 0x11,
+	[FA100M14B4C_RANGE_100mV] = 0x23,
+	[FA100M14B4C_RANGE_OPEN]  = 0x00,
 };
 
 /* fmc-adc specific workqueue */
@@ -63,7 +63,7 @@ int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan)
 {
 	int offset;
 
-	offset = ZFA_CHx_MULT  * (FA_NCHAN - chan->index);
+	offset = ZFA_CHx_MULT  * (FA100M14B4C_NCHAN - chan->index);
 
 	return addr - offset;
 }
@@ -95,7 +95,7 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (range < 0)
 		return range;
 
-	if (range == ZFA_RANGE_OPEN) {
+	if (range == FA100M14B4C_RANGE_OPEN) {
 		offset = FA_CAL_NO_OFFSET;
 		gain = FA_CAL_NO_GAIN;
 	} else {
@@ -128,7 +128,7 @@ void zfad_reset_offset(struct fa_dev *fa)
 {
 	int i;
 
-	for (i = 0; i < FA_NCHAN; ++i)
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
 		zfad_apply_user_offset(fa, &fa->zdev->cset->chan[i], 0);
 }
 
@@ -142,7 +142,7 @@ void zfad_init_saturation(struct fa_dev *fa)
 {
 	int idx, i;
 
-	for (i = 0, idx = ZFA_CH1_SAT; i < FA_NCHAN; ++i, idx += ZFA_CHx_MULT)
+	for (i = 0, idx = ZFA_CH1_SAT; i < FA100M14B4C_NCHAN; ++i, idx += ZFA_CHx_MULT)
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[idx], 0x7fff);
 }
 
@@ -163,7 +163,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == ZFA_RANGE_OPEN) {
+	if (range == FA100M14B4C_RANGE_OPEN) {
 		offset = FA_CAL_NO_OFFSET;
 		gain = FA_CAL_NO_GAIN;
 	} else {
@@ -202,7 +202,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
 
-	if (command != ZFA_START && command != ZFA_STOP) {
+	if (command != FA100M14B4C_CMD_START && command != FA100M14B4C_CMD_STOP) {
 		dev_info(dev, "Invalid command %i\n", command);
 		return -EINVAL;
 	}
@@ -221,7 +221,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	 * The case of fmc-adc-trg is optimized because is the most common
 	 * case
 	 */
-	if (likely(cset->trig == &zfat_type || command == ZFA_STOP))
+	if (likely(cset->trig == &zfat_type || command == FA100M14B4C_CMD_STOP))
 		zio_trigger_abort_disable(cset, 0);
 
 	/* Reset counters */
@@ -229,7 +229,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	fa->n_fires = 0;
 
 	/* If START, check if we can start */
-	if (command == ZFA_START) {
+	if (command == FA100M14B4C_CMD_START) {
 		/* Verify that SerDes PLL is lockes */
 		val = fa_readl(fa, fa->fa_adc_csr_base,
 			       &zfad_regs[ZFA_STA_SERDES_PLL]);
@@ -338,14 +338,14 @@ static int __fa_init(struct fa_dev *fa)
 
 	/* Force stop FSM to prevent early trigger fire */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
-		   ZFA_STOP);
+		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
 		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
 						&zdev->cset->chan[i]);
 		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
-			  ZFA_RANGE_1V);
-		zfad_set_range(fa, &zdev->cset->chan[i], ZFA_RANGE_1V);
+			  FA100M14B4C_RANGE_1V);
+		zfad_set_range(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
 	}
 	zfad_reset_offset(fa);
 
@@ -366,7 +366,7 @@ static int __fa_init(struct fa_dev *fa)
 		/* Select external trigger (index 0) */
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_SEL],
 			  1);
-		zdev->cset->ti->zattr_set.ext_zattr[ZFAT_ATTR_EXT].value = 1;
+		zdev->cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_EXT].value = 1;
 	} else {
 		/* Enable Software trigger*/
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],

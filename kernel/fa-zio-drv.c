@@ -171,7 +171,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	int i, range, err, reg_index;
 
 	reg_index = zattr->id;
-	i = FA_NCHAN;
+	i = FA100M14B4C_NCHAN;
 
 	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
 		baseoff = fa->fa_utc_base;
@@ -252,10 +252,10 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		reg_index = zfad_get_chx_index(reg_index, to_zio_chan(dev));
 		break;
 	case ZFA_UTC_COARSE:
-		if (usr_val >= FA_UTC_CLOCK_FREQ) {
+		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {
 			dev_err(dev,
 				"ticks time must be in the range [0, %d]\n",
-				FA_UTC_CLOCK_FREQ);
+				FA100M14B4C_UTC_CLOCK_FREQ);
 			return -EINVAL;
 		}
 		break;
@@ -279,7 +279,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	unsigned int baseoff = fa->fa_adc_csr_base;
 	int i, reg_index;
 
-	i = FA_NCHAN;
+	i = FA100M14B4C_NCHAN;
 
 	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
 		baseoff = fa->fa_utc_base;
@@ -370,7 +370,7 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_POST],
 		  cset->ti->nsamples);
 	/* Start the acquisition */
-	zfad_fsm_command(fa, ZFA_START);
+	zfad_fsm_command(fa, FA100M14B4C_CMD_START);
 
 	fa->n_shots = 1;
 	/* Fire software trigger */
@@ -422,7 +422,7 @@ static void zfad_stop_cset(struct zio_cset *cset)
 	/* If the user is using a software trigger */
 	if (cset->trig != &zfat_type) {
 		/* Force the acquisition to stop */
-		zfad_fsm_command(fa, ZFA_STOP);
+		zfad_fsm_command(fa, FA100M14B4C_CMD_STOP);
 		/* Release zfad_block */
 		kfree(cset->interleave->priv_d);
 		cset->interleave->priv_d = NULL;
@@ -476,7 +476,7 @@ static struct zio_cset zfad_cset[] = {
 		.raw_io = zfad_input_cset,
 		.stop_io = zfad_stop_cset,
 		.ssize = 2,
-		.n_chan = FA_NCHAN,
+		.n_chan = FA100M14B4C_NCHAN,
 		.chan_template = &zfad_chan_tmpl,
 		.flags =  ZIO_CSET_TYPE_ANALOG |	/* is analog */
 			  ZIO_DIR_INPUT |	/* is input */

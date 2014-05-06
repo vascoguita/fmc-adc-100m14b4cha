@@ -38,13 +38,13 @@ int zfad_dma_start(struct zio_cset *cset)
 	 * If the state machine is _idle_ we can start the DMA transfer.
 	 * If the state machine it is not idle, try again 5 times
 	 */
-	while (try-- && val != ZFA_STATE_IDLE) {
+	while (try-- && val != FA100M14B4C_STATE_IDLE) {
 		/* udelay(2); */
 		val = fa_readl(fa, fa->fa_adc_csr_base,
 			       &zfad_regs[ZFA_STA_FSM]);
 	}
 
-	if (val != ZFA_STATE_IDLE) {
+	if (val != FA100M14B4C_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
 		dev_warn(&fa->fmc->dev,
 			 "Can't start DMA on the last acquisition, "
@@ -61,8 +61,8 @@ int zfad_dma_start(struct zio_cset *cset)
 
 	/* Fix dev_mem_addr in single-shot mode */
 	if (fa->n_shots == 1) {
-		int nchan = FA_NCHAN;
-		struct zio_control *ctrl = cset->chan[FA_NCHAN].current_ctrl;
+		int nchan = FA100M14B4C_NCHAN;
+		struct zio_control *ctrl = cset->chan[FA100M14B4C_NCHAN].current_ctrl;
 
 		/* get pre-samples from the current control (interleave chan) */
 		pre_samp = ctrl->attr_trigger.std_val[ZIO_ATTR_TRIG_PRE_SAMP];
@@ -136,16 +136,16 @@ void zfad_dma_done(struct zio_cset *cset)
 		ctrl->tstamp.bins = *(++trig_timetag);
 
 		/* Acquisition start Timetag */
-		ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_S] = ztstamp.secs;
-		ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_C] = ztstamp.ticks;
-		ctrl->attr_channel.ext_val[ZFAD_ATTR_ACQ_START_F] = ztstamp.bins;
+		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_S] = ztstamp.secs;
+		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_C] = ztstamp.ticks;
+		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_F] = ztstamp.bins;
 
 		/*
 		 * resize the datalen, by removing the trigger tstamp and the
 		 * extra samples (trigger samples, 1 for each channel)
 		 */
 		block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES
-						- (ctrl->ssize * FA_NCHAN);
+					- (ctrl->ssize * FA100M14B4C_NCHAN);
 
 		/* update seq num */
 		ctrl->seq_num = i;
@@ -196,7 +196,7 @@ void zfad_dma_error(struct zio_cset *cset)
 
 	fa->carrier_op->dma_error(cset);
 
-	zfad_fsm_command(fa, ZFA_STOP);
+	zfad_fsm_command(fa, FA100M14B4C_CMD_STOP);
 	fa->n_dma_err++;
 
 	if (fa->n_fires == 0)
@@ -292,7 +292,7 @@ static void fa_irq_work(struct work_struct *work)
 	} else if (fa->enable_auto_start) {
 		/* Automatic start next acquisition */
 		dev_dbg(&fa->fmc->dev, "Automatic start\n");
-		zfad_fsm_command(fa, ZFA_START);
+		zfad_fsm_command(fa, FA100M14B4C_CMD_START);
 	}
 
 end:

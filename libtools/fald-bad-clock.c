@@ -101,7 +101,7 @@ int main (int argc, char *argv[])
 
 	/* Configure ADC internal clock */
 	adc_sec = sys_start.tv_sec;
-	adc_ticks = sys_start.tv_nsec / FA_UTC_CLOCK_NS;
+	adc_ticks = sys_start.tv_nsec / FA100M14B4C_UTC_CLOCK_NS;
 	fmcadc_set_conf(&brd_cfg, FMCADC_CONF_UTC_TIMING_BASE_T, adc_ticks);
 	fmcadc_set_conf(&brd_cfg, FMCADC_CONF_UTC_TIMING_BASE_S, adc_sec);
 	err = fmcadc_apply_config(adc, 0 , &brd_cfg);
@@ -113,7 +113,7 @@ int main (int argc, char *argv[])
 	fprintf(stdout,
 		"ADC clock configured:  %010li s  %010li ns ( %i %ins ticks)\n",
 		sys_start.tv_sec, sys_start.tv_nsec,
-		adc_ticks, FA_UTC_CLOCK_NS);
+		adc_ticks, FA100M14B4C_UTC_CLOCK_NS);
 
 
 	/* Measure how clock diverge */
@@ -138,7 +138,7 @@ int main (int argc, char *argv[])
 		fmcadc_get_conf(&brd_cfg, FMCADC_CONF_UTC_TIMING_BASE_T,
 				&adc_ticks);
 		adc_cur.tv_sec = adc_sec;
-		adc_cur.tv_nsec = adc_ticks * FA_UTC_CLOCK_NS;
+		adc_cur.tv_nsec = adc_ticks * FA100M14B4C_UTC_CLOCK_NS;
 
 		/* Get the difference between system and ADC clock */
 		timespec_subtract(&dlt_ts, &sys_cur, &adc_cur);
