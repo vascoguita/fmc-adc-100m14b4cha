@@ -119,7 +119,7 @@ static int plot_chno = -1;
 static int x_display;
 static int binmode;
 static int timeout = -1;
-static int loop;
+static int loop = 1;
 static char *basefile;
 #define MAX_BUF 512
 static char buf_fifo[MAX_BUF];
