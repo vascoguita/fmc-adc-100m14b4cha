@@ -134,14 +134,20 @@ enum zfadc_dregs_enum {
 	ZFAT_CFG_SW_EN,
 	ZFAT_CFG_INT_SEL,
 	ZFAT_CFG_THRES,
+	ZFAT_CFG_TEST_EN,
+	ZFAT_CFG_THRES_FILT,
 	/* Delay*/
 	ZFAT_DLY,
 	/* Software */
 	ZFAT_SW,
 	/* Number of shots */
 	ZFAT_SHOTS_NB,
+	/* Remaining shots counter */
+	ZFAT_SHOTS_REM,
 	/* Sample rate */
 	ZFAT_SR_DECI,
+	/* Sampling clock frequency */
+	ZFAT_SAMPLING_HZ,
 	/* Position address */
 	ZFAT_POS,
 	/* Pre-sample */
@@ -157,24 +163,28 @@ enum zfadc_dregs_enum {
 	ZFA_CH1_STA,
 	ZFA_CH1_GAIN,
 	ZFA_CH1_OFFSET,
+	ZFA_CH1_SAT,
 	/* Channel 2 */
 	ZFA_CH2_CTL_RANGE,
 	ZFA_CH2_CTL_TERM,
 	ZFA_CH2_STA,
 	ZFA_CH2_GAIN,
 	ZFA_CH2_OFFSET,
+	ZFA_CH2_SAT,
 	/* Channel 3 */
 	ZFA_CH3_CTL_RANGE,
 	ZFA_CH3_CTL_TERM,
 	ZFA_CH3_STA,
 	ZFA_CH3_GAIN,
 	ZFA_CH3_OFFSET,
+	ZFA_CH3_SAT,
 	/* Channel 4 */
 	ZFA_CH4_CTL_RANGE,
 	ZFA_CH4_CTL_TERM,
 	ZFA_CH4_STA,
 	ZFA_CH4_GAIN,
 	ZFA_CH4_OFFSET,
+	ZFA_CH4_SAT,
 	/*
 	 * CHx__ are specifc ids used by some internal arithmetic
 	 * Be carefull: the arithmetic expects
@@ -187,6 +197,7 @@ enum zfadc_dregs_enum {
 	ZFA_CHx_STA,
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
+	ZFA_CHx_SAT,
 	/* end:declaration block requiring some order */
 	/* two wishbone core for IRQ: VIC, ADC */
 	ZFA_IRQ_ADC_DISABLE_MASK,
@@ -297,7 +308,7 @@ enum fa_sw_param_id {
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
  */
-#define ZFA_CHx_MULT 5
+#define ZFA_CHx_MULT 6
 
 /* ADC DDR memory */
 #define FA_MAX_ACQ_BYTE 0x10000000 /* 256MB */

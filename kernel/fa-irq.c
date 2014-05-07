@@ -171,7 +171,7 @@ void zfad_dma_done(struct zio_cset *cset)
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
 				    (ti->flags & ZIO_STATUS ? 0 : 1));
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
-				    ti->zattr_set.ext_zattr[5].value);
+				    ti->zattr_set.ext_zattr[6].value);
 	} else {
 		dev_dbg(&fa->fmc->dev, "Software acquisition over\n");
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
@@ -212,24 +212,28 @@ void zfat_irq_acq_end(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 
 	dev_dbg(&fa->fmc->dev, "Acquisition done\n");
-	/*FIXME: because the driver doesn't listen anymore trig-event
+	/*
+	 * because the driver doesn't listen anymore trig-event
 	 * we agreed that the HW will provide a dedicated register
 	 * to check the real number of shots in order to compare it
 	 * with the requested one.
 	 * This ultimate check is not crucial because the HW implements
 	 * a solid state machine and acq-end can happens only after
 	 * the execution of the n requested shots.
+	 *
+	 * FIXME (v4.0) this work only for multi-shot acquisition
 	 */
-	/*
-	fa->n_fires = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_NSHOTS...);
-	if (fa->n_fires != fa->n_shots) {
-		dev_err(&fa->fmc->dev,
-			"Expected %i trigger fires, but %i occurs\n",
-			fa->n_shots, fa->n_fires);
-	}
-	*/
-	/* for the time being let assume n_shots have been executed */
 	fa->n_fires = fa->n_shots;
+	if (fa->n_shots > 1) {
+		fa->n_fires -= fa_readl(fa, fa->fa_adc_csr_base,
+				&zfad_regs[ZFAT_SHOTS_REM]);
+
+		if (fa->n_fires != fa->n_shots) {
+			dev_err(&fa->fmc->dev,
+				"Expected %i trigger fires, but %i occurs\n",
+				fa->n_shots, fa->n_fires);
+		}
+	}
 }
 
 /*

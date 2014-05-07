@@ -64,6 +64,9 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	 */
 	[ZFAT_ATTR_DELAY] = ZIO_ATTR_EXT("delay", ZIO_RW_PERM, ZFAT_DLY, 0),
 
+	/* setup the maximum glith length to filter */
+	ZIO_ATTR_EXT("int-threshold-filter", ZIO_RW_PERM, ZFAT_CFG_THRES_FILT,
+			0),
 	/* Software Trigger */
 	/* Enable (1) or disable (0) software trigger */
 	[ZFAT_ATTR_SW_EN] = ZIO_PARAM_EXT("sw-trg-enable", ZIO_RW_PERM, ZFAT_CFG_SW_EN, 0),
