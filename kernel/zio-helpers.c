@@ -102,7 +102,8 @@ static void zio_dma_setup_scatter(struct zio_dma_sg *zdma)
  * The function allocates and initializes a scatterlist ready for DMA
  * transfer
  */
-struct zio_dma_sg *zio_dma_alloc_sg(struct device *hwdev,
+struct zio_dma_sg *zio_dma_alloc_sg(struct zio_channel *chan,
+				    struct device *hwdev,
 				    struct zio_block **blocks, /* FIXME to array */
 				    unsigned int n_blocks, gfp_t gfp)
 {
@@ -120,7 +121,7 @@ struct zio_dma_sg *zio_dma_alloc_sg(struct device *hwdev,
 	zdma = kzalloc(sizeof(struct zio_dma_sg), gfp);
 	if (!zdma)
 		return ERR_PTR(-ENOMEM);
-
+	zdma->chan = chan;
 	/* Allocate a new list of blocks with sg information */
 	zdma->sg_blocks = kzalloc(sizeof(struct zio_blocks_sg) * n_blocks, gfp);
 	if (!zdma->sg_blocks) {
@@ -175,3 +176,122 @@ void zio_dma_free_sg(struct zio_dma_sg *zdma)
 	kfree(zdma);
 }
 EXPORT_SYMBOL(zio_dma_free_sg);
+
+
+/*
+ * zio_dma_map_sg
+ * @zdma: zio DMA descriptor from zio_dma_alloc_sg()
+ * @page_desc_size: the size (in byte) of the dma transfer descriptor of the
+ *                  specific hw
+ * @fill_desc: callback for the driver in order to fill each transfer
+ *             descriptor
+ *
+ *It maps a sg table
+ *
+ * fill_desc
+ * @zdma: zio DMA descriptor from zio_dma_alloc_sg()
+ * @page_idx: index of the current page transfer
+ * @block_idx: index of the current zio_block
+ * @page_desc: current descriptor to fill
+ * @dev_mem_offset: offset within the device memory
+ * @sg: current sg descriptor
+ */
+int zio_dma_map_sg(struct zio_dma_sg *zdma, size_t page_desc_size,
+			int (*fill_desc)(struct zio_dma_sg *zdma, int page_idx,
+					 int block_idx, void *page_desc,
+					 uint32_t dev_mem_offset,
+					 struct scatterlist *sg))
+{
+	unsigned int i, err = 0, sglen, i_blk;
+	uint32_t dev_mem_off = 0;
+	struct scatterlist *sg;
+	void *item_ptr;
+	size_t size;
+
+	if (unlikely(!zdma || !fill_desc))
+		return -EINVAL;
+
+	/* Limited to 32-bit (kernel limit) */
+	zdma->page_desc_size = page_desc_size;
+	size = zdma->page_desc_size * zdma->sgt.nents;
+	zdma->page_desc_pool = kzalloc(size, GFP_ATOMIC);
+	if (!zdma->page_desc_pool) {
+		dev_err(zdma->hwdev, "cannot allocate coherent dma memory\n");
+		return -ENOMEM;
+	}
+	zdma->dma_page_desc_pool = dma_map_single(zdma->hwdev,
+						  zdma->page_desc_pool, size,
+						  DMA_TO_DEVICE);
+	if (!zdma->dma_page_desc_pool) {
+		err = -ENOMEM;
+		goto out_map_single;
+	}
+
+	/* Map DMA buffers */
+	sglen = dma_map_sg(zdma->hwdev, zdma->sgt.sgl, zdma->sgt.nents,
+			   DMA_FROM_DEVICE);
+	if (!sglen) {
+		dev_err(zdma->hwdev, "cannot map dma SG memory\n");
+		goto out_map_sg;
+	}
+
+	i_blk = 0;
+	for_each_sg(zdma->sgt.sgl, sg, zdma->sgt.nents, i) {
+		dev_info(zdma->hwdev, "%d 0x%x\n", i, dev_mem_off);
+		if (i_blk < zdma->n_blocks && i == zdma->sg_blocks[i_blk].first_nent) {
+			dev_info(zdma->hwdev, "%d is the first nent of block %d\n", i, i_blk);
+			dev_mem_off = zdma->sg_blocks[i_blk].dev_mem_off;
+
+			i_blk++; /* index the next block */
+			if (unlikely(i_blk > zdma->n_blocks)) {
+				dev_err(zdma->hwdev, "DMA map out of block\n");
+				BUG();
+			}
+		}
+
+		item_ptr = zdma->page_desc_pool + (zdma->page_desc_size * i);
+		err = fill_desc(zdma, i, i_blk, item_ptr, dev_mem_off, sg);
+		if (err) {
+			dev_err(zdma->hwdev, "Cannot fill descriptor %d\n", i);
+			goto out_fill_desc;
+		}
+
+		dev_mem_off += sg_dma_len(sg);
+	}
+
+	return 0;
+
+out_fill_desc:
+	dma_unmap_sg(zdma->hwdev, zdma->sgt.sgl, zdma->sgt.nents,
+		     DMA_FROM_DEVICE);
+out_map_sg:
+	dma_unmap_single(zdma->hwdev, zdma->dma_page_desc_pool, size,
+			 DMA_TO_DEVICE);
+out_map_single:
+	kfree(zdma->page_desc_pool);
+
+	return err;
+}
+EXPORT_SYMBOL(zio_dma_map_sg);
+
+
+/*
+ * zio_dma_unmap_sg
+ * @zdma: zio DMA descriptor from zio_dma_alloc_sg()
+ *
+ * It unmaps a sg table
+ */
+void zio_dma_unmap_sg(struct zio_dma_sg *zdma)
+{
+	size_t size;
+
+	size = zdma->page_desc_size * zdma->sgt.nents;
+	dma_unmap_sg(zdma->hwdev, zdma->sgt.sgl, zdma->sgt.nents,
+		     DMA_FROM_DEVICE);
+	dma_unmap_single(zdma->hwdev, zdma->dma_page_desc_pool, size,
+			 DMA_TO_DEVICE);
+	kfree(zdma->page_desc_pool);
+	zdma->dma_page_desc_pool = 0;
+	zdma->page_desc_pool = NULL;
+}
+EXPORT_SYMBOL(zio_dma_unmap_sg);

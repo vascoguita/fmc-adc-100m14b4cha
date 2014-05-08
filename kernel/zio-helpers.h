@@ -30,32 +30,33 @@ struct zio_blocks_sg {
  * @sg_blocks: one or more blocks to map
  * @n_blocks: number of blocks to map
  * @sgt: scatter gather table
+ * @page_desc_size: size of the transfer descriptor
+ * @page_desc_pool: vector of transfer descriptors
+ * @dma_page_desc_pool: dma address of the vector of transfer descriptors
  */
 struct zio_dma_sg {
+	struct zio_channel *chan;
 	struct device *hwdev;
 	struct zio_blocks_sg *sg_blocks;
 	unsigned int n_blocks;
 	struct sg_table sgt;
+	size_t page_desc_size;
+	void *page_desc_pool;
+	dma_addr_t dma_page_desc_pool;
 };
 
-/*
- * It describe the current sg item
- * @blk_index: current block index
- * @page_index: current page index
- * @is_first_nent_block: it tells if this description point to the first page
- *                       transfer for current block
- */
-struct zio_dma_sg_desc {
-	struct scatterlist *sg;
-	unsigned int blk_index;
-	unsigned int page_index;
-	int is_first_nent_block;
-};
-
-extern struct zio_dma_sg *zio_dma_alloc_sg(struct device *hwdev,
+extern struct zio_dma_sg *zio_dma_alloc_sg(struct zio_channel *chan,
+					   struct device *hwdev,
 					   struct zio_block **blocks,
 					   unsigned int n_blocks,
 					   gfp_t gfp);
 extern void zio_dma_free_sg(struct zio_dma_sg *zdma);
+extern int zio_dma_map_sg(struct zio_dma_sg *zdma, size_t page_desc_size,
+				int (*fill_desc)(struct zio_dma_sg *zdma,
+						int page_idx,
+						int block_idx, void *page_desc,
+						uint32_t dev_mem_offset,
+						struct scatterlist *sg));
+extern void zio_dma_unmap_sg(struct zio_dma_sg *zdma);
 
 #endif /* ZIO_HELPERS_H_ */
