@@ -7,13 +7,21 @@
 #include <string.h>
 #include <errno.h>
 
-int main()
+int main(int argc, char *argv[])
 {
 	int fd;
-	char *adcfifo = "/tmp/adcfifo";
+	char adcfifo[128];
 	char msg[512], *ptr;
+	unsigned int devid;
 
+	if (argc < 2) {
+		fprintf(stderr, "\nUsage:\nfald-trg-cfg <dev_id> [options]\n");
+		return -1;
+	}
+
+	sscanf(argv[1], "%x", &devid);
 	if (access(adcfifo, F_OK) == -1) {
+		sprintf(adcfifo, "/tmp/adcfifo-%04x", devid);
 		/* create the FIFO (named pipe) */
 		mkfifo(adcfifo, 0666);
 	}

@@ -105,6 +105,7 @@ static struct option options[] = {
 
 /* variables shared between threads */
 static struct fmcadc_dev *adc;
+unsigned int devid = 0;
 static pthread_mutex_t mtx;
 static pthread_cond_t readyToPollCondVar;
 static pthread_cond_t readyToReadOrCfgCondVar;
@@ -427,11 +428,12 @@ void *adc_wait_thread(void *arg)
 void *change_config_thread(void *arg)
 {
 	int fd, ret;
-	char *adcfifo = "/tmp/adcfifo";
+	char adcfifo[128];
 	char *s, *t;
 	char buf[MAX_BUF];
 
 	if (access(adcfifo, F_OK) == -1) {
+		sprintf(adcfifo, "/tmp/adcfifo-%04x", devid);
 		/* create the FIFO (named pipe) */
 		mkfifo(adcfifo, 0666);
 	}
@@ -509,7 +511,6 @@ int main(int argc, char *argv[])
 {
 	struct fmcadc_buffer *buf;
 	int i, err;
-	unsigned int devid = 0;
 	FILE *f = NULL;
 	char fname[PATH_MAX];
 	char cmd[256];
