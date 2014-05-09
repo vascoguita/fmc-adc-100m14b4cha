@@ -398,6 +398,11 @@ static void zfat_abort(struct zio_ti *ti)
 	unsigned int i;
 
 	dev_dbg(&fa->fmc->dev, "Aborting trigger\n");
+
+	/* Nothing to free */
+	if (!zfad_block)
+		return;
+
 	/* Free all blocks */
 	for (i = 0; i < fa->n_shots; ++i)
 		zio_buffer_free_block(bi, zfad_block[i].block);
