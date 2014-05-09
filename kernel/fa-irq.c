@@ -363,7 +363,7 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 		/* Check first if any concurrent trigger stop */
 		/* has deleted zio blocks. In such a case */
 		/* the flag is not raised and nothing is done */
-		if (zfad_block != NULL)
+		if (zfad_block != NULL && (cset->ti->flags & ZIO_TI_ARMED))
 			cset->flags |= ZIO_CSET_HW_BUSY;
 		spin_unlock_irqrestore(&cset->lock, flags);
 		if (cset->flags & ZIO_CSET_HW_BUSY) {
