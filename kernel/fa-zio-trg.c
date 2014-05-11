@@ -99,21 +99,10 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		}
 		break;
 	case ZFAT_POST:
-		/*
-		 * actually the HW adds systematically a sample
-		 * corresponding to the trigger itself.  therefore the
-		 * client ask pre-samp+post-samp and the HW returns
-		 * pre-samp+1+post-samp To make this behaviour
-		 * invisible from the user we consider that the sample
-		 * corresponding to the trigger is part of the post
-		 * samples.  Therefore the value written in the HW is
-		 * post-samples-1 and value 0 is excluded
-		 */
 		if (!tmp_val) {
 			dev_err(dev, "post samples cannot be 0 (minimum 1)\n");
 			return -EINVAL;
 		}
-		tmp_val -= 1;
 		break;
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
@@ -154,13 +143,6 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 
 	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
-
-	/*
-	 * See in zfat-conf-set explanations (just above)
-	 * Post sample value read from the HW is incrmented by 1
-	 */
-	if (zattr->id == ZFAT_POST)
-		*usr_val += 1;
 
 	return 0;
 }
@@ -333,8 +315,11 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	 * (4*32bits word) size should be 32bits word aligned
 	 * ti->nsamples is the sum of (pre-samp+ post-samp)*4chan
 	 * because it's the interleave channel.
+	 *
+	 * +FA_NCHAN because of the trigger samples (1 for each channel) which
+	 * will discard later on DMA done
 	 */
-	size = (interleave->current_ctrl->ssize * ti->nsamples)
+	size = (interleave->current_ctrl->ssize * (ti->nsamples + FA_NCHAN))
 		+ FA_TRIG_TIMETAG_BYTES;
 	/* check if size is 32 bits word aligned: should be always the case */
 	if (size % 4) {

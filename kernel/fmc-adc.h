@@ -417,6 +417,10 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 		nshot_t = addr == ZFAT_SHOTS_NB ? val :
 			  ti_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
 
+	/*
+	 * +1 because of the trigger samples, which is not counted as
+	 * post-sample by the ADC
+	 */
 	shot_size = ((pre_t + post_t + 1) * ti->cset->ssize) * FA_NCHAN;
 	if ( (shot_size * nshot_t) >= FA_MAX_ACQ_BYTE ) {
 		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
