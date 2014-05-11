@@ -366,7 +366,7 @@ static int __fa_init(struct fa_dev *fa)
 		/* Select external trigger (index 0) */
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_SEL],
 			  1);
-		zdev->cset->ti->zattr_set.ext_zattr[0].value = 1;
+		zdev->cset->ti->zattr_set.ext_zattr[ZFAT_ATTR_EXT].value = 1;
 	} else {
 		/* Enable Software trigger*/
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
