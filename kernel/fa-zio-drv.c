@@ -74,6 +74,11 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("tstamp-acq-str-b", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_START_FINE, 0),
 
+	/* Timing base */
+	ZIO_ATTR_EXT("tstamp-base-s", ZIO_RW_PERM, ZFA_UTC_SECONDS, 0),
+
+	ZIO_ATTR_EXT("tstamp-base-t", ZIO_RW_PERM, ZFA_UTC_COARSE, 0),
+
 	/* Parameters (not attributes) follow */
 
 	/*
@@ -161,11 +166,15 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
+	unsigned int baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
 	int i, range, err, reg_index;
 
 	reg_index = zattr->id;
 	i = FA_NCHAN;
+
+	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
+		baseoff = fa->fa_utc_base;
 
 	switch (reg_index) {
 		/*
@@ -242,11 +251,19 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(reg_index, to_zio_chan(dev));
 		break;
+	case ZFA_UTC_COARSE:
+		if (usr_val >= FA_UTC_CLOCK_FREQ) {
+			dev_err(dev,
+				"ticks time must be in the range [0, %d]\n",
+				FA_UTC_CLOCK_FREQ);
+			return -EINVAL;
+		}
+		break;
 	case ZFA_CTL_FMS_CMD:
 		return zfad_fsm_command(fa, usr_val);
 	}
 
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[reg_index], usr_val);
+	fa_writel(fa, baseoff, &zfad_regs[reg_index], usr_val);
 	return 0;
 }
 
@@ -259,9 +276,13 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
+	unsigned int baseoff = fa->fa_adc_csr_base;
 	int i, reg_index;
 
 	i = FA_NCHAN;
+
+	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
+		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
@@ -309,7 +330,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		reg_index = zattr->id;
 	}
 
-	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg_index]);
+	*usr_val = fa_readl(fa, baseoff, &zfad_regs[reg_index]);
 	return 0;
 }
 static const struct zio_sysfs_operations zfad_s_op = {
