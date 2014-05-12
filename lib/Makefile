@@ -9,9 +9,10 @@ LOBJ += config-zio.o
 LOBJ += buffer-zio.o
 LOBJ += lib.o
 LOBJ += fmc-adc-100m14b4cha.o
-
-CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include
+CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include $(EXTRACFLAGS)
 LDFLAGS = -L. -lfmcadc
+
+CC ?= $(CROSS_COMPILE)gcc
 
 modules all: $(LIB)
 

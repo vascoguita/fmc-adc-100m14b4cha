@@ -3,7 +3,7 @@ DESTDIR ?= /usr/local
 LIBADC = ../lib/
 ZIO ?= ../zio
 
-CFLAGS = -Wall -g -ggdb -I$(LIBADC) -I$(ZIO)/include
+CFLAGS = -Wall -g -ggdb -I$(LIBADC) -I$(ZIO)/include $(EXTRACFLAGS)
 LDFLAGS = -L$(LIBADC) -lfmcadc -lpthread
 
 DEMOS := fald-simple-acq fald-acq fald-trg-cfg 

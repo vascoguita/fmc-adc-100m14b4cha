@@ -2,27 +2,27 @@
 M = $(shell /bin/pwd)/../kernel
 DESTDIR ?= /usr/local
 
-HOST_EXTRACFLAGS += -I$(M) -I$(ZIO)/include -Wno-trigraphs -Wall -ggdb
+CFLAGS += -I$(M) -I$(ZIO)/include -Wno-trigraphs -Wall -ggdb -O2  $(EXTRACFLAGS)
 
-HOSTCC ?= gcc
+CC ?= $(CROSS_COMPILE)gcc
 
-hostprogs-y := fau-trg-config
-hostprogs-y += fau-acq-time
-hostprogs-y += parport-burst
+progs := fau-trg-config
+progs += fau-acq-time
+progs += parport-burst
 
 # we are not in the kernel, so we need to piggy-back on "make modules"
-all modules: $(hostprogs-y)
+all modules: $(progs)
 
 clean:
-	rm -f $(hostprogs-y) *.o *~
+	rm -f $(progs) *.o *~
 
 # make nothing for modules_install, but avoid errors
 modules_install:
 
 install:
 	install -d $(DESTDIR)/bin
-	install -D $(hostprogs-y) $(DESTDIR)/bin
+	install -D $(progs) $(DESTDIR)/bin
 
 # we need this as we are out of the kernel
 %: %.c
-	$(HOSTCC) $(HOST_EXTRACFLAGS) -O2 -Wall $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@
