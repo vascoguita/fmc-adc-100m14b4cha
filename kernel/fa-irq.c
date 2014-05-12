@@ -144,9 +144,8 @@ void zfad_dma_done(struct zio_cset *cset)
 		 * resize the datalen, by removing the trigger tstamp and the
 		 * extra samples (trigger samples, 1 for each channel)
 		 */
-		block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES -
+		block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES
 						- (ctrl->ssize * FA_NCHAN);
-		memset(block->data+block->datalen, 0, FA_TRIG_TIMETAG_BYTES);
 
 		/* update seq num */
 		ctrl->seq_num = i;
