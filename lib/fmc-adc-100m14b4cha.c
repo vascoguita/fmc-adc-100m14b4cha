@@ -23,6 +23,7 @@
 #include <sys/time.h>
 
 #include <linux/zio-user.h>
+#include <fmc-adc-100m14b4cha.h>
 
 #include "fmcadc-lib.h"
 #include "fmcadc-lib-int.h"
