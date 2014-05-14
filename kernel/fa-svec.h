@@ -10,7 +10,7 @@
 
 #include <linux/irqreturn.h>
 
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 #include "field-desc.h"
 
 /* default spec gateware */

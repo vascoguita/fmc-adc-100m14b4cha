@@ -17,7 +17,7 @@
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/delay.h>
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 
 #define R_CSR		0x0
 #define R_CDR		0x4

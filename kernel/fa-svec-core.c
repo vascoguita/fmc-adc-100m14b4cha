@@ -15,7 +15,7 @@
 #include <linux/fmc-sdb.h>
 
 #include <svec.h>
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 #include "fa-svec.h"
 
 static char *fa_svec_get_gwname(void)

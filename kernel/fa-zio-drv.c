@@ -21,7 +21,7 @@
 
 #include <asm/byteorder.h>
 
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 
 /*
  * zio device attributes

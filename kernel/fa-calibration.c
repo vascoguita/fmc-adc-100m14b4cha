@@ -7,7 +7,7 @@
  * option, any later version.
  */
 
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 
 /* This identity calibration is used as default */
 static struct fa_calib_stanza fa_identity_calib = {

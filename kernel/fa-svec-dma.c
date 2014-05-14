@@ -1,7 +1,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <asm/byteorder.h>
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 #include "fa-svec.h"
 #include "vmebus.h"
 

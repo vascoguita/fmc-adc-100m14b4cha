@@ -15,7 +15,7 @@
 #include <linux/fmc.h>
 #include <linux/fmc-sdb.h>
 
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 
 /* Module parameters */
 static struct fmc_driver fa_dev_drv;

@@ -12,7 +12,7 @@
 #include <linux/fmc.h>
 #include <linux/fmc-sdb.h>
 
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 #include "fa-spec.h"
 
 static char *fa_spec_get_gwname(void)

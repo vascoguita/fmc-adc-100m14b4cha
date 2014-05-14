@@ -5,8 +5,8 @@
  * Header for the mezzanine ADC for the SPEC
  */
 
-#ifndef FMC_ADC_H_ /* too generic, maybe */
-#define FMC_ADC_H_
+#ifndef FMC_ADC_100M14B4C_H_
+#define FMC_ADC_100M14B4C_H_
 
 #include <linux/workqueue.h>
 

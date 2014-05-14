@@ -20,7 +20,7 @@
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
 
-#include "fmc-adc.h"
+#include "fmc-adc-100m14b4cha.h"
 
 struct zfat_instance {
 	struct zio_ti ti;
