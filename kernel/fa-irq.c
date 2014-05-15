@@ -406,9 +406,6 @@ int fa_setup_irqs(struct fa_dev *fa)
 			&zfad_regs[ZFA_IRQ_VIC_ENABLE_MASK],
 			0x3);
 
-	fa_writel(fa, fa->fa_irq_vic_base,
-			&zfad_regs[ZFA_IRQ_VIC_MASK_STATUS],
-			0x3);
 	/* trick : vic needs the base address of teh core firing the irq
 	 * It cannot provided throught irq_request() call therefore the trick
 	 * is to set it by means of the field irq provided by the fmc device
