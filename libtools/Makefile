@@ -4,11 +4,12 @@ LIBADC = ../lib/
 ZIO ?= ../zio
 
 CFLAGS = -Wall -g -ggdb -I$(LIBADC) -I$(ZIO)/include $(EXTRACFLAGS)
-LDFLAGS = -L$(LIBADC) -lfmcadc -lpthread
+LDFLAGS = -L$(LIBADC) -lfmcadc -lpthread -lrt
 
 DEMOS := fald-simple-acq fald-acq fald-trg-cfg 
 DEMOS += fald-simple-get-conf
 DEMOS += fald-test
+DEMOS += fald-bad-clock
 
 
 all: demo
