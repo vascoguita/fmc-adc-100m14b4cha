@@ -13,6 +13,8 @@
 #ifndef FMCA_ADC_100MA4B4CHA_H_
 #define FMCA_ADC_100MA4B4CHA_H_
 
+#define FA_UTC_CLOCK_NS  8
+
 /*
  * Trigger Extended Attribute Enumeration
  */
