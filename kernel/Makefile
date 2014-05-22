@@ -1,9 +1,9 @@
 
 LINUX ?= /lib/modules/$(shell uname -r)/build
-ZIO ?= $(M)/../zio
-FMC_BUS ?= $(M)/../fmc-bus
-SPEC_SW ?= $(M)/../spec-sw
-SVEC_SW ?= $(M)/../svec-sw
+ZIO ?= $(src)/../zio
+FMC_BUS ?= $(src)/../fmc-bus
+SPEC_SW ?= $(src)/../spec-sw
+SVEC_SW ?= $(src)/../svec-sw
 CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
 KBUILD_EXTRA_SYMBOLS := \
@@ -17,7 +17,7 @@ ccflags-y = -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(FMC_BUS)/kernel/include \
 	-I$(SPEC_SW)/kernel \
 	-I$(SVEC_SW)/kernel \
-	-I$M
+	-I$(src)
 
 ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
 ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
