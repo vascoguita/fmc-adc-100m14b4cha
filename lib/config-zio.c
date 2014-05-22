@@ -319,6 +319,22 @@ static int fmcadc_zio_config_brd(struct __fmcadc_dev_zio *fa,
 		unsigned int index, uint32_t *value, unsigned int direction)
 {
 	switch (index) {
+	case FMCADC_CONF_UTC_TIMING_BASE_S:
+		if (direction)
+			return fa_zio_sysfs_set(fa, "cset0/tstamp-base-s",
+						value);
+		else
+			return fa_zio_sysfs_get(fa, "cset0/tstamp-base-s",
+						value);
+		break;
+	case FMCADC_CONF_UTC_TIMING_BASE_T:
+		if (direction)
+			return fa_zio_sysfs_set(fa, "cset0/tstamp-base-t",
+						value);
+		else
+			return fa_zio_sysfs_get(fa, "cset0/tstamp-base-t",
+						value);
+		break;
 	case FMCADC_CONF_BRD_STATE_MACHINE_STATUS:
 		if (!direction)
 			return fa_zio_sysfs_get(fa, "cset0/fsm-state",

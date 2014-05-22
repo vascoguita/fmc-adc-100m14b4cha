@@ -59,8 +59,12 @@ enum fa_dev_ext_attributes {
 	ZFAD_ATTR_ACQ_START_S,
 	ZFAD_ATTR_ACQ_START_C,
 	ZFAD_ATTR_ACQ_START_F,
+	ZFAD_ATTR_BASE_S,
+	ZFAD_ATTR_BASE_C,
 };
 
+#define FA_UTC_CLOCK_FREQ 125000000
+#define FA_UTC_CLOCK_NS  8
 #define FA_NCHAN 4 /* We have 4 of them,no way out of it */
 
 /* ADC DDR memory */
@@ -242,7 +246,6 @@ enum fa_sw_param_id {
 	ZFA_SW_R_NOADDERS_AUTO,
 	ZFA_SW_PARAM_COMMON_LAST,
 };
-
 
 /*
  * Bit pattern used in order to factorize code  between SVEC and SPEC

@@ -32,7 +32,9 @@
 			    (1LL << FMCADC_CONF_CHN_TERMINATION) | \
 			    (1LL << FMCADC_CONF_CHN_OFFSET)
 #define FMCADC_ZIO_BRD_MASK (1LL << FMCADC_CONF_BRD_STATE_MACHINE_STATUS) | \
-			    (1LL << FMCADC_CONF_BRD_N_CHAN)
+			    (1LL << FMCADC_CONF_BRD_N_CHAN) | \
+			    (1LL << FMCADC_CONF_UTC_TIMING_BASE_S) | \
+			    (1LL << FMCADC_CONF_UTC_TIMING_BASE_T)
 
 struct fmcadc_operations fa_100ms_4ch_14bit_op = {
 	.open =			fmcadc_zio_open,
