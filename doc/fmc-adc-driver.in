@@ -185,7 +185,7 @@ the same card. Before you get confused we'd better explain the reasoning.
 
 In the repository, the official releases are tagged with a date-based
 format @code{fmc-adc-sw-#yyyy-#mm} where @i{#yyyy} is the release year and
-@{#mm} is the release month (e.g @code{fmc-adc-sw-2014-04})
+@i{#mm} is the release month (e.g @code{fmc-adc-sw-2014-04})
 
 Within @t{ohwr.org}, we got the habit to include the package name in the
 tag name: before we started using git submodules, we used to tag several
@@ -513,17 +513,18 @@ This is the complete list of files in the respective @i{sysfs} directory.
 
 @smallexample
 # ls -F /sys/bus/zio/devices/adc-100m14b-0200/cset0/
-ch0-50ohm-term  ch3-vref         fsm-auto-start     tstamp-acq-end-t
-ch0-offset      chan0/           fsm-command        tstamp-acq-stp-b
-ch0-vref        chan1/           fsm-state          tstamp-acq-stp-s
-ch1-50ohm-term  chan2/           name               tstamp-acq-stp-t
-ch1-offset      chan3/           power/             tstamp-acq-str-b
-ch1-vref        chani/           resolution-bits    tstamp-acq-str-s
-ch2-50ohm-term  current_buffer   rst-ch-offset      tstamp-acq-str-t
-ch2-offset      current_trigger  sample-decimation  uevent
-ch2-vref        devname          trigger/
-ch3-50ohm-term  devtype          tstamp-acq-end-b
-ch3-offset      enable           tstamp-acq-end-s
+ch0-50ohm-term  ch3-50ohm-term   devtype            tstamp-acq-end-b
+ch0-offset      ch3-offset       enable             tstamp-acq-end-s
+ch0-saturation  ch3-saturation   fsm-auto-start     tstamp-acq-end-t
+ch0-vref        ch3-vref         fsm-command        tstamp-acq-stp-b
+ch1-50ohm-term  chan0/           fsm-state          tstamp-acq-stp-s
+ch1-offset      chan1/           name               tstamp-acq-stp-t
+ch1-saturation  chan2/           power/             tstamp-acq-str-b
+ch1-vref        chan3/           resolution-bits    tstamp-acq-str-s
+ch2-50ohm-term  chani/           rst-ch-offset      tstamp-acq-str-t
+ch2-offset      current_buffer   sample-decimation  tstamp-base-s
+ch2-saturation  current_trigger  sample-frequency   tstamp-base-t
+ch2-vref        devname          trigger/           uevent
 @end smallexample
 
 Some attributes are channel-specific, and one may thing they should
@@ -570,6 +571,13 @@ The @i{cset} includes three attributes for each channel, as follows:
         represents 10V range (-5V to +5V); 0 detaches the input connector
         from the ADC.   The numbers used here derive
         from hardware values, and the attributes refuses any other value.
+
+@item cnN-saturation
+
+      The user saturation level in the range [0, 32767]. Users can use
+      this value to configure their own saturation level. The hardware
+      applies this value symmetrically on the negative side. By default
+      is setted at the maximum value.
 
 @end table
 
@@ -633,6 +641,10 @@ not described.
         every that many.  Thus, but writing 100 you get a 1Ms data stream,
         nad by writing 2 you get a 50Ms data stream.
 
+@item sample-frequency
+
+      This read-only attributes returns the measured sampling frequency
+
 @end table
 
 
@@ -640,23 +652,55 @@ not described.
 @node Timestamp Cset Attributes
 @subsection Timestamp Cset Attributes
 
-To be verified and documented.
+The ADC mark with a timestamp all these events: state machine start, state
+machine stop and acquisition end. The device split each timestamp in 3
+attributes named: second (s), ticks (t) and bins (b).
 
-@c The ADC mark with a timestamp all these events: state machine start, state
-@c machine stop and acquisition end. The device split each timestamp in 3
-@c attributes named: second (s), ticks (t) and bins (b). For example, to read
-@c the entire timestamp of the state machin start event you should do:
-@c 
-@c @smallexample
-@c # cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-s
-@c # cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-t
-@c # cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-b
-@c @end smallexample
-@c 
-@c Seconds represents the number of second since the epoch; ticks is the
-@c number of clocks at 125Mhz, the value is between 0 and 125000000 and it
-@c increments seconds when it overflow. At the moment, the bins register is
-@c unused.
+Seconds represents (by default) the number of second since the epoch;
+ticks is the number of clocks at 125Mhz, the value is between 0 and
+125000000 and it increments seconds when it overflow. At the moment,
+the bins register is unused.
+
+
+For example, to read the entire timestamp of the state machine start event
+you should do:
+
+@smallexample
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-s
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-t
+# cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-b
+@end smallexample
+
+
+The driver export 4 time stamps:
+@table @code
+@item tstamp-acq-str-@{s|t|b@}
+
+      this is the time stamp of the last acquisition start command execution
+
+@item tstamp-acq-end-@{s|t|b@}
+
+      it is the time of last sample acquired
+
+@item tstamp-acq-stop-@{s|t|b@}
+
+      this is the time stamp of the last acquisition stop command execution
+
+@item tstamp-trg-lst-@{s|t|b@}
+
+      this is the time stamp of the last trigger fire. Please bear in mind
+      that in multi-shot acquisition you have several trigger fire, so this
+      time stamp refers only to the last one. If you need the time stamp
+      for each trigger fire you have to get it from the zio_control of the
+      associated acquisition block.
+
+@end table
+
+By default these time stamps represent (more or less) the time since the
+epoch. The user can change this and configure a different timing base. The
+attributes @t{tstamp-base-s} and @t{tstamp-base-t}  are ment for this
+purpose.
+
 
 @c ==========================================================================
 @node The Channels
@@ -861,21 +905,26 @@ that ZIO framework can handle only 32bit unsigned integer.
      @item Cset @tab @code{chN-50ohm-term} @tab rw @tab 0 @tab [0;1] @tab N = 0..3
      @item Cset @tab @code{chN-offset} @tab rw @tab 0 @tab [-5000; 5000] @tab mV, N = 0..3
      @item Cset @tab @code{chN-vref} @tab rw @tab 17 @tab [0, 17, 35, 69] @tab N = 0..3
+     @item Cset @tab @code{chN-saturation} @tab rw @tab 32767 @tab [0;32767]
      @item Cset @tab @code{fsm-auto-start} @tab rw @tab 0 @tab [0;1]
      @item Cset @tab @code{fsm-command} @tab wo @tab - @tab [1;2] @tab 2 = STOP
      @item Cset @tab @code{fsm-state} @tab ro @tab - @tab - @tab hw values
      @item Cset @tab @code{resolution-bits} @tab ro @tab 14 @tab -
      @item Cset @tab @code{rst-ch-offset} @tab wo @tab - @tab any
      @item Cset @tab @code{sample-decimation} @tab rw @tab 1 @tab [1;65535]
-@c     @item Cset @tab @code{tstamp-acq-str-s} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-str-t} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-str-b} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-stp-s} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-stp-t} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-stp-b} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-end-s} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-end-t} @tab ro @tab - @tab -
-@c     @item Cset @tab @code{tstamp-acq-end-b} @tab ro @tab - @tab -
+     @item Cset @tab @code{sample-frequency} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-base-s} @tab rw @tab - @tab -
+     @item Cset @tab @code{tstamp-base-t} @tab rw @tab - @tab -
+
+     @item Cset @tab @code{tstamp-acq-str-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-str-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-str-b} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-stp-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-stp-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-stp-b} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-end-s} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-end-t} @tab ro @tab - @tab -
+     @item Cset @tab @code{tstamp-acq-end-b} @tab ro @tab - @tab -
      @c Channel
      @item Chan @tab @code{current-value} @tab ro @tab - @tab - @tab 16 0..64k, use as signed 16b
      @c Trigger
@@ -891,9 +940,9 @@ that ZIO framework can handle only 32bit unsigned integer.
 
      @item Trig @tab @code{sw-trg-enable} @tab rw @tab 0 @tab [0;1]
      @item Trig @tab @code{sw-trg-fire} @tab wo @tab - @tab Any
-@c     @item Trig @tab @code{tstamp-trg-s} @tab ro @tab - @tab -
-@c     @item Trig @tab @code{tstamp-trg-t} @tab ro @tab - @tab -
-@c     @item Trig @tab @code{tstamp-trg-b} @tab ro @tab - @tab -
+     @item Trig @tab @code{tstamp-trg-s} @tab ro @tab - @tab -
+     @item Trig @tab @code{tstamp-trg-t} @tab ro @tab - @tab -
+     @item Trig @tab @code{tstamp-trg-b} @tab ro @tab - @tab -
      @end multitable
 
 @c ##########################################################################
