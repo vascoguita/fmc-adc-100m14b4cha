@@ -1,6 +1,6 @@
 
-.PHONY: all clean modules install modules_install
-.PHONY: gitmodules prereq prereq_install prereq_install_warn
+.PHONY: all clean modules install modules_install clean_all
+.PHONY: gitmodules prereq prereq_install prereq_install_warn prereq_clean
 
 DIRS = kernel tools lib libtools
 
@@ -9,6 +9,8 @@ all clean modules install modules_install: gitmodules
 	for d in $(DIRS); do $(MAKE) -C $$d $@ || exit 1; done
 
 all modules: prereq
+
+clean_all: clean prereq_clean
 
 #### The following targets are used to manage prerequisite repositories
 gitmodules:
@@ -34,3 +36,6 @@ prereq_install_warn:
 prereq_install:
 	for d in $(SUBMOD); do $(MAKE) -C $$d modules_install || exit 1; done
 	touch .prereq_installed
+
+prereq_clean:
+	for d in $(SUBMOD); do $(MAKE) -C $$d clean || exit 1; done
