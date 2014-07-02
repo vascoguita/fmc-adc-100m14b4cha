@@ -439,8 +439,12 @@ int fa_free_irqs(struct fa_dev *fa)
 {
 	struct fmc_device *fmc = fa->fmc;
 
+	/* Release carrier IRQs (if any) */
 	if (fa->carrier_op->free_irqs)
 		fa->carrier_op->free_irqs(fa);
+
+	/* Release ADC IRQs */
+	fmc->irq = fa->fa_irq_adc_base;
 	fmc->op->irq_free(fmc);
 
 	return 0;
