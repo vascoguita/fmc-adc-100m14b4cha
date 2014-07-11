@@ -289,6 +289,7 @@ static void fa_irq_work(struct work_struct *work)
 	cset->flags &= ~ZIO_CSET_HW_BUSY;
 	spin_unlock(&cset->lock);
 
+end:
 	if (res) {
 		/* Stop acquisition on error */
 		zfad_dma_error(cset);
@@ -298,7 +299,6 @@ static void fa_irq_work(struct work_struct *work)
 		zfad_fsm_command(fa, FA100M14B4C_CMD_START);
 	}
 
-end:
 	/* ack the irq */
 	fa->fmc->op->irq_ack(fa->fmc);
 }
