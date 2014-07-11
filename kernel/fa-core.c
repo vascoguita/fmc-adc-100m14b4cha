@@ -267,6 +267,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		fa_enable_irqs(fa);
 	} else {
 		dev_dbg(dev, "FSM STOP Command, Disable interrupts\n");
+		fa->enable_auto_start = 0;
 		fa_disable_irqs(fa);
 	}
 
