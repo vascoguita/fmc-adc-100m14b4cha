@@ -222,13 +222,8 @@ carrier card (currently only the SPEC carrier is supported).
 @node Gateware Dependencies
 @section Gateware Dependencies
 
-This driver has been developed from the FPGA binary included in the package,
-as a @t{.bin} file in the @file{binaries/} subdirectory.
-
-The driver repository always includes the last binary version used
-during development, to ease users.  However, it may happen that a
-gateware fix is released independently of software development, so the
-file in @file{binaries/} is not authoritative.
+Please, refer to the ohwr wiki page @footnote{@uref{http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/wiki/Releases}} of the project to get the list of supported
+gateware for a specific release of the driver (and download them).
 
 @c ==========================================================================
 @node Gateware Installation
@@ -248,8 +243,8 @@ and you can load it by specifying the module parameter @t{file=}.
 @node Software Dependencies
 @section Software Dependencies
 
-The kernel versions used during development is 3.4.  Everything used here is
-known to at least compile with version 2.6.32,
+The kernel versions used during development are 3.2 and 3.6.  Everything used
+here is known to at least compile with version 2.6.32,
 
 The driver is base on the ZIO framework available on the Open Hardware
 Repository@footnote{@uref{http://www.ohwr.org/projects/zio}}. The version
