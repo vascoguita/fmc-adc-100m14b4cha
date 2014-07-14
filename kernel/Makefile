@@ -12,7 +12,14 @@ KBUILD_EXTRA_SYMBOLS := \
 
 GIT_VERSION = $(shell cd $(src); git describe --always --dirty --long --tags)
 
-ccflags-y = -DGIT_VERSION=\"$(GIT_VERSION)\" \
+# For this CSM_VERSION, please see ohwr.org/csm documentation
+ifdef CONFIG_CSM_VERSION
+  ccflags-y += -D"CERN_SUPER_MODULE=MODULE_VERSION(\"$(CONFIG_CSM_VERSION)\")"
+else
+  ccflags-y += -DCERN_SUPER_MODULE=""
+endif
+
+ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(ZIO)/include \
 	-I$(FMC_BUS)/kernel/include \
 	-I$(SPEC_SW)/kernel \
