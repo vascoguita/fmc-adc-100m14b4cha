@@ -14,6 +14,7 @@
 *.a
 \#*\#
 *.sh
+Makefile.specific
 # eclipse files
 .pydevproject
 .cproject
