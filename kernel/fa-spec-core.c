@@ -145,9 +145,10 @@ static int fa_spec_setup_irqs(struct fa_dev *fa)
 static int fa_spec_free_irqs(struct fa_dev *fa)
 {
 	struct fmc_device *fmc = fa->fmc;
+	struct fa_spec_data *spec_data = fa->carrier_data;
 
 	/* Release DMA IRQs */
-	fmc->irq = fa->fa_irq_adc_base;
+	fmc->irq = spec_data->fa_irq_dma_base;
 	fmc->op->irq_free(fmc);
 
 	fmc->op->gpio_config(fmc, fa_gpio_off, ARRAY_SIZE(fa_gpio_off));
