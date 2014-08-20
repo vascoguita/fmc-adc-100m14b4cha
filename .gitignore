@@ -1,8 +1,3 @@
-hdl/ip_cores/ddr3-sp6-core/
-hdl/ip_cores/general-cores/
-hdl/ip_cores/gn4124-core/
-hdl/ip_cores/vme64x-core/
-hdl/ip_cores/wr-cores/
 hdl/ip_cores/.lso
 hdl/ip_cores/_xmsgs
 hdl/*/sim/modelsim.ini
