@@ -583,6 +583,8 @@ Then the data clock (DCO) output of the LTC2174 is connected to the FPGA.
 The data clock is four times the sampling clock.
 The sampling clock (@code{fs_clk}) and the ADC data de-serialiser clock (@code{serdes_clk}) are derived from the data clock using a PLL (internal to the FPGA).
 
+@b{Note:} The internal PLL expects a 400MHz input frequency (define in the hdl code), therefore the sampling frequency has to be 100MHz and can't be change dynamically.
+
 @c TODO : possibility to control the Si570 via I2C
 
 The ADC core implements a sampling clock frequency meter.
@@ -1222,6 +1224,7 @@ The @ref{fig:mem_multi_shot} shows the shots organisation in the DDR memory.
 @c DONE @item Add hysteresis on internal trigger slope detection (-> non-monotonic signals, noisy).
 @c DONE @item Add debug mode: ch1=analog input, ch2=int_trig_over_thres, ch3=int_trig, ch4=trig
 @c DONE @item Make data saturation programmable.
+@item Trigger hold-off in multi-shot mode?
 @end itemize
 
 

@@ -524,6 +524,8 @@ begin
   -- Clock PLL for SerDes
   -- LTC2174-14 must be configured in 16-bit serialization
   --    dco_clk = 4*fs_clk = 400MHz
+  -- WARNING : The PLL expects a 400MHz input frequency, therefore the sampling
+  --           frequency has to be 100MHz and can't be change dynamically.
   ------------------------------------------------------------------------------
   cmp_serdes_clk_pll : PLL_BASE
     generic map (
