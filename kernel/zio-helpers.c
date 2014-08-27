@@ -237,9 +237,9 @@ int zio_dma_map_sg(struct zio_dma_sg *zdma, size_t page_desc_size,
 
 	i_blk = 0;
 	for_each_sg(zdma->sgt.sgl, sg, zdma->sgt.nents, i) {
-		dev_info(zdma->hwdev, "%d 0x%x\n", i, dev_mem_off);
+		dev_dbg(zdma->hwdev, "%d 0x%x\n", i, dev_mem_off);
 		if (i_blk < zdma->n_blocks && i == zdma->sg_blocks[i_blk].first_nent) {
-			dev_info(zdma->hwdev, "%d is the first nent of block %d\n", i, i_blk);
+			dev_dbg(zdma->hwdev, "%d is the first nent of block %d\n", i, i_blk);
 			dev_mem_off = zdma->sg_blocks[i_blk].dev_mem_off;
 
 			i_blk++; /* index the next block */
