@@ -66,6 +66,25 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t status;
 
+	/* irq to handle */
+	fa_get_irq_status(fa, irq_core_base, &status);
+	if (!status)
+		return IRQ_NONE;
+
+	if (unlikely(!fa->n_shots || !cset->interleave->priv_d)) {
+		/*
+		 * Mainly this may happen when you are playing with DMA with
+		 * an user-space program or another driver. 99% of the time
+		 * is for debugging purpose. So, if you are seriusly working
+		 * with DMA with two different programs/drivers ... well *you*
+		 * have a problem and this driver may crash badly.
+		 */
+		dev_err(&fa->fmc->dev,
+			"No programmed shot, implies no DMA to perform\n");
+
+		goto out;
+	}
+
 	if (unlikely(fa->last_irq_core_src == irq_core_base)) {
 		WARN(1, "Cannot handle two consecutives %s interrupt."
 			"The ADC doesn't behave properly\n",
@@ -73,12 +92,9 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 		/* Stop Acquisition, ADC it is not working properly */
 		zfad_fsm_command(fa, FA100M14B4C_CMD_STOP);
 		fa->last_irq_core_src = FA_SPEC_IRQ_SRC_NONE;
-		return IRQ_HANDLED;
+		goto out;
 	}
-	/* irq to handle */
-	fa_get_irq_status(fa, irq_core_base, &status);
-	if (!status)
-		return IRQ_NONE;
+
 	dev_dbg(&fa->fmc->dev, "Handle ADC interrupts\n");
 
 	if (status & FA_SPEC_IRQ_DMA_DONE)
@@ -90,6 +106,7 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 	/* check proper sequence of IRQ in case of multi IRQ (ACQ + DMA)*/
 	fa->last_irq_core_src = irq_core_base;
 
+out:
 	/*
 	 * DMA transaction is finished
 	 * we can safely lower CSET_BUSY
