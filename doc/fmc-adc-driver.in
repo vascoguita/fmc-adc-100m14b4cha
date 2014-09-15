@@ -35,7 +35,7 @@
 
 @setchapternewpage off
 
-@set update-month July 2013
+@set update-month September 2014
 @set release __RELEASE_GIT_ID__
 
 @finalout
