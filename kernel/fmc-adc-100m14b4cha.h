@@ -325,7 +325,7 @@ struct fa_dev {
 	unsigned int fa_utc_base;
 
 	/* DMA description */
-	struct zio_dma_sg *zdma;
+	struct zio_dma_sgt *zdma;
 
 	/* carrier specific functions (init/exit/reset/readout/irq handling) */
 	struct fa_carrier_op *carrier_op;

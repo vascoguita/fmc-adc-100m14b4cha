@@ -17,35 +17,34 @@
 #include <linux/fmc.h>
 
 #include <linux/zio.h>
+#include <linux/zio-dma.h>
 #include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
 
 #include "fmc-adc-100m14b4cha.h"
 #include "fa-spec.h"
 
-#include "zio-helpers.h"
 
-static int fa_spec_dma_fill(struct zio_dma_sg *zdma, int page_idx,
-			    int block_idx, void *page_desc,
-			    uint32_t dev_mem_off,
-			    struct scatterlist *sg)
+
+static int gncore_dma_fill(struct zio_dma_sg *zsg)
 {
-	struct fa_dma_item *item = (struct fa_dma_item *)page_desc;
-	struct zio_channel *chan = zdma->chan;
+	struct gncore_dma_item *item = (struct gncore_dma_item *)zsg->page_desc;
+	struct scatterlist *sg = zsg->sg;
+	struct zio_channel *chan = zsg->zsgt->chan;
 	struct fa_dev *fa = chan->cset->zdev->priv_d;
 	struct fa_spec_data *spec_data = fa->carrier_data;
 	dma_addr_t tmp;
 
 	/* Prepare DMA item */
-	item->start_addr = dev_mem_off;
+	item->start_addr = zsg->dev_mem_off;
 	item->dma_addr_l = sg_dma_address(sg) & 0xFFFFFFFF;
 	item->dma_addr_h = (uint64_t)sg_dma_address(sg) >> 32;
 	item->dma_len = sg_dma_len(sg);
 
 	if (!sg_is_last(sg)) {/* more transfers */
 		/* uint64_t so it works on 32 and 64 bit */
-		tmp = zdma->dma_page_desc_pool;
-		tmp += (zdma->page_desc_size * (page_idx + 1));
+		tmp = zsg->zsgt->dma_page_desc_pool;
+		tmp += (zsg->zsgt->page_desc_size * (zsg->page_idx + 1));
 		item->next_addr_l = ((uint64_t)tmp) & 0xFFFFFFFF;
 		item->next_addr_h = ((uint64_t)tmp) >> 32;
 		item->attribute = 0x1;	/* more items */
@@ -53,14 +52,8 @@ static int fa_spec_dma_fill(struct zio_dma_sg *zdma, int page_idx,
 		item->attribute = 0x0;	/* last item */
 	}
 
-	dev_dbg(zdma->hwdev, "configure DMA item %d (block %d)"
-		"(addr: 0x%llx len: %d)(dev off: 0x%x)"
-		"(next item: 0x%x)\n",
-		page_idx, block_idx, (long long)sg_dma_address(sg),
-		sg_dma_len(sg), dev_mem_off, item->next_addr_l);
-
 	/* The first item is written on the device */
-	if (page_idx == 0) {
+	if (zsg->page_idx == 0) {
 		fa_writel(fa, spec_data->fa_dma_base,
 			  &fa_spec_regs[ZFA_DMA_ADDR], item->start_addr);
 		fa_writel(fa, spec_data->fa_dma_base,
@@ -77,6 +70,11 @@ static int fa_spec_dma_fill(struct zio_dma_sg *zdma, int page_idx,
 		fa_writel(fa, spec_data->fa_dma_base,
 			  &fa_spec_regs[ZFA_DMA_BR_LAST], item->attribute);
 	}
+
+	dev_dbg(zsg->zsgt->hwdev, "configure DMA item %d (block %d)"
+		"(addr: 0x%llx len: %d)(dev off: 0x%x) (next item: 0x%x)\n",
+		zsg->page_idx, zsg->block_idx, (long long)sg_dma_address(sg),
+		sg_dma_len(sg), zsg->dev_mem_off, item->next_addr_l);
 
 	return 0;
 }
@@ -109,8 +107,8 @@ int fa_spec_dma_start(struct zio_cset *cset)
 	for (i = 0; i < fa->zdma->n_blocks; ++i)
 		fa->zdma->sg_blocks[i].dev_mem_off = zfad_block->dev_mem_off;
 
-	err = zio_dma_map_sg(fa->zdma, sizeof(struct fa_dma_item),
-			     fa_spec_dma_fill);
+	err = zio_dma_map_sg(fa->zdma, sizeof(struct gncore_dma_item),
+			     gncore_dma_fill);
 	if (err)
 		goto out_map_sg;
 

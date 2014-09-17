@@ -32,7 +32,7 @@
  *             only to provide the "last item" bit, direction is fixed to
  *             device->host
  */
-struct fa_dma_item {
+struct gncore_dma_item {
 	uint32_t start_addr;	/* 0x00 */
 	uint32_t dma_addr_l;	/* 0x04 */
 	uint32_t dma_addr_h;	/* 0x08 */
