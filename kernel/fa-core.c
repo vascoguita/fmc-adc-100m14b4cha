@@ -285,6 +285,11 @@ static int __fa_sdb_get_device(struct fa_dev *fa)
 	int ret;
 
 	ret = fmc_scan_sdb_tree(fmc, 0);
+	if (ret == -EBUSY) {
+		/* Not a problem, it's already there. We assume that
+		   it's the correct one */
+		ret = 0;
+	}
 	if (ret < 0) {
 		dev_err(dev,
 			"%s: no SDB in the bitstream."
