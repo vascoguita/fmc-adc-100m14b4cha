@@ -38,8 +38,8 @@ void stop_adc(char *called_from);
 
 static void fald_help()
 {
-	printf("\nfald-simple-acq [OPTIONS] <LUN>\n\n");
-	printf("  <LUN>: LUN identifier  (e.g.: \"0\")\n");
+	printf("\nfald-simple-acq [OPTIONS] 0x<device-id>\n\n");
+	printf("  <device-id>: FMC identifier  (e.g.: \"0x0400\")\n");
 	printf("  --before|-b <num>        number of pre samples\n");
 	printf("  --after|-a <num>         n. of post samples (default: 16)\n");
 	printf("  --nshots|-n <num>        number of trigger shots\n");
