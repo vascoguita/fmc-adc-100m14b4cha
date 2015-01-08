@@ -33,7 +33,7 @@
 #define fald_print_debug(format, ...)
 #endif
 
-void fald_acq_stop(struct fmcadc_dev *adc, char *called_from);
+static void fald_acq_stop(struct fmcadc_dev *adc, char *called_from);
 
 static void fald_help()
 {
@@ -168,7 +168,7 @@ static int write_file(const char *filename, int ch, int16_t *pdata,
  * @param[in] argc number of arguments
  * @param[in] argv arguments
  */
-void fald_acq_parse_args_and_configure(int argc, char *argv[])
+static void fald_acq_parse_args_and_configure(int argc, char *argv[])
 {
 	int c, opt_index, val;
 
@@ -314,10 +314,10 @@ void fald_acq_parse_args_and_configure(int argc, char *argv[])
  * @param[in] ch_cfg channel configuration status
  * @return 0 on success, otherwise -1 and errno is appropriately set
  */
-void fald_acq_apply_config(struct fmcadc_dev *adc,
-			   struct fmcadc_conf *trg_cfg,
-			   struct fmcadc_conf *acq_cfg,
-			   struct fmcadc_conf *ch_cfg)
+static void fald_acq_apply_config(struct fmcadc_dev *adc,
+				  struct fmcadc_conf *trg_cfg,
+				  struct fmcadc_conf *acq_cfg,
+				  struct fmcadc_conf *ch_cfg)
 {
 	int err;
 
@@ -356,7 +356,7 @@ void fald_acq_apply_config(struct fmcadc_dev *adc,
  * @param[in] called_from identifier of the parent function
  * @param[in] flag flag for the fmcadc_acq_start() function
  */
-void fald_acq_start(struct fmcadc_dev *adc, char *called_from, int flag)
+static void fald_acq_start(struct fmcadc_dev *adc, char *called_from, int flag)
 {
 	int try = 5, err;
 	struct timeval tv = {0, 0};
@@ -403,7 +403,7 @@ void fald_acq_start(struct fmcadc_dev *adc, char *called_from, int flag)
  * @param[in] arg fmc-adc-100m device
  * @param[in] called_from identifier of the parent function
  */
-void fald_acq_stop(struct fmcadc_dev *adc, char *called_from)
+static void fald_acq_stop(struct fmcadc_dev *adc, char *called_from)
 {
 	int try = 5, err;
 
@@ -434,7 +434,7 @@ void fald_acq_stop(struct fmcadc_dev *adc, char *called_from)
  * next block of data
  * @param[in] arg pointer to fmc-adc-100m device
  */
-void *adc_wait_thread(void *arg)
+static void *adc_wait_thread(void *arg)
 {
 	struct fmcadc_dev *adc = arg;
 	int err;
@@ -476,7 +476,7 @@ void *adc_wait_thread(void *arg)
  * files. Other process may write configurations on this file.
  * @param[in] arg pointer to fmc-adc-100m device
  */
-void *change_config_thread(void *arg)
+static void *change_config_thread(void *arg)
 {
 	struct fmcadc_dev *adc = arg;
 	int fd, ret;
@@ -528,7 +528,7 @@ void *change_config_thread(void *arg)
  * scenario and stress the library/driver.
  * @param[in] adc fmc-adc-100m device
  */
-void create_thread(struct fmcadc_dev *adc)
+static void create_thread(struct fmcadc_dev *adc)
 {
 	/* Config thread */
 	pthread_attr_t thread_attr;
@@ -574,10 +574,10 @@ void create_thread(struct fmcadc_dev *adc)
  * @param[out] ch_cfg channel configuration status
  * @return 0 on success, otherwise -1 and errno is appropriately set
  */
-int fald_acq_get_configuration(struct fmcadc_dev *adc,
-			       struct fmcadc_conf *trg_cfg,
-			       struct fmcadc_conf *acq_cfg,
-			       struct fmcadc_conf *ch_cfg)
+static int fald_acq_get_configuration(struct fmcadc_dev *adc,
+				      struct fmcadc_conf *trg_cfg,
+				      struct fmcadc_conf *acq_cfg,
+				      struct fmcadc_conf *ch_cfg)
 {
 	int err;
 
@@ -634,9 +634,9 @@ int fald_acq_get_configuration(struct fmcadc_dev *adc,
  * @param[in] buf buffer to print
  * @param[in] acq_cfg acquisition configuration associated to the buffer
  */
-void fald_acq_print_data(struct fmcadc_buffer *buf,
-			 struct fmcadc_conf *acq_cfg,
-			 unsigned int n)
+static void fald_acq_print_data(struct fmcadc_buffer *buf,
+				struct fmcadc_conf *acq_cfg,
+				unsigned int n)
 {
 	struct zio_control *ctrl;
 	int j, ch;
@@ -672,7 +672,7 @@ void fald_acq_print_data(struct fmcadc_buffer *buf,
  * @param[in] buf buffer to store
  * @return 0 on success, otherwise -1 and errno is appropriately set
  */
-int fald_acq_write_single(struct fmcadc_buffer *buf)
+static int fald_acq_write_single(struct fmcadc_buffer *buf)
 {
 	struct zio_control *ctrl;
 	char fname[PATH_MAX];
@@ -713,7 +713,8 @@ int fald_acq_write_single(struct fmcadc_buffer *buf)
  * @param[in] shot_i i-th shot acquisition
  * @return 0 on success, otherwise -1 and errno is appropriately set
  */
-int fald_acq_write_multiple(struct fmcadc_buffer *buf, unsigned int shot_i)
+static int fald_acq_write_multiple(struct fmcadc_buffer *buf,
+				   unsigned int shot_i)
 {
 	char fname[PATH_MAX];
 	struct zio_control *ctrl;
@@ -758,7 +759,7 @@ int fald_acq_write_multiple(struct fmcadc_buffer *buf, unsigned int shot_i)
  * @param[in] ch channel to show
  * @return 0 on success, otherwise -1 and errno is appropriately set
  */
-void fald_acq_plot_data(struct fmcadc_buffer *buf, unsigned int ch)
+static void fald_acq_plot_data(struct fmcadc_buffer *buf, unsigned int ch)
 {
 	struct zio_control *ctrl = buf->metadata;
 	int16_t *data = buf->data;
@@ -782,10 +783,10 @@ void fald_acq_plot_data(struct fmcadc_buffer *buf, unsigned int ch)
 /**
  * It handles a a shot. Retreive data from the driver and show data
  */
-int fald_acq_handle_shot(struct fmcadc_dev *adc,
-			 struct fmcadc_conf *acq_cfg,
-			 struct fmcadc_buffer *buf,
-			 unsigned int shot_i)
+static int fald_acq_handle_shot(struct fmcadc_dev *adc,
+				struct fmcadc_conf *acq_cfg,
+				struct fmcadc_buffer *buf,
+				unsigned int shot_i)
 {
 	struct zio_control *ctrl;
 	int err;
