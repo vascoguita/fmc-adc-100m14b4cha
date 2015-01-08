@@ -1,10 +1,9 @@
 /* Copyright 2013 CERN
- * Author: Federico Vaga <federico.vaga@gmail.comZ
+ * Author: Federico Vaga <federico.vaga@gmail.com>
  * License: GPLv2
  *
  * This is a simple program to configure the FMC ADC trigger. It is not bug
- * aware because it is only a demo program to show you how you can handle the
- * trigger.
+ * aware because it is only a demo program
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -131,6 +130,15 @@ static int _argc;
 
 /* default is 1 V*/
 static double bit_scale = 0.5/(1<<15);
+
+/**
+ * It writes data on file
+ * @param[in] filename file where write data
+ * @param[in] ch the channel data to write
+ * @param[in] pdata data from ADC (is interleaved)
+ * @param[in] n_sample number of sample in pdata (is interleaved)
+ * @return 0 on success, otherwise -1 and errno is appropriately set
+ */
 static int write_file(const char *filename, int ch, int16_t *pdata,
 		      unsigned int n_sample)
 {
@@ -299,7 +307,12 @@ void fald_acq_parse_args_and_configure(int argc, char *argv[])
 
 
 /**
- * It applies the configuration
+ * It applies the configuration for trigger, acquisition and channel
+ * @param[in] adc fmc-adc-100m device
+ * @param[in] trg_cfg trigger configuration status
+ * @param[in] acq_cfg acquisition configuration status
+ * @param[in] ch_cfg channel configuration status
+ * @return 0 on success, otherwise -1 and errno is appropriately set
  */
 void fald_acq_apply_config(struct fmcadc_dev *adc,
 			   struct fmcadc_conf *trg_cfg,
@@ -336,6 +349,13 @@ void fald_acq_apply_config(struct fmcadc_dev *adc,
 	pthread_mutex_unlock(&mtx);
 }
 
+
+/**
+ * It starts an acquisition
+ * @param[in] arg fmc-adc-100m device
+ * @param[in] called_from identifier of the parent function
+ * @param[in] flag flag for the fmcadc_acq_start() function
+ */
 void fald_acq_start(struct fmcadc_dev *adc, char *called_from, int flag)
 {
 	int try = 5, err;
@@ -377,6 +397,12 @@ void fald_acq_start(struct fmcadc_dev *adc, char *called_from, int flag)
 	}
 }
 
+
+/**
+ * It stops an acquisition
+ * @param[in] arg fmc-adc-100m device
+ * @param[in] called_from identifier of the parent function
+ */
 void fald_acq_stop(struct fmcadc_dev *adc, char *called_from)
 {
 	int try = 5, err;
@@ -402,6 +428,12 @@ void fald_acq_stop(struct fmcadc_dev *adc, char *called_from)
 		pthread_mutex_unlock(&mtx);
 	}
 }
+
+/**
+ * It waits until data is ready, then it send a signal and wait again for the
+ * next block of data
+ * @param[in] arg pointer to fmc-adc-100m device
+ */
 void *adc_wait_thread(void *arg)
 {
 	struct fmcadc_dev *adc = arg;
@@ -438,6 +470,12 @@ void *adc_wait_thread(void *arg)
 	}
 }
 
+
+/**
+ * It configures the device. It applies configurations coming from a temporary
+ * files. Other process may write configurations on this file.
+ * @param[in] arg pointer to fmc-adc-100m device
+ */
 void *change_config_thread(void *arg)
 {
 	struct fmcadc_dev *adc = arg;
@@ -483,6 +521,13 @@ void *change_config_thread(void *arg)
 	}
 }
 
+
+/**
+ * It creates threads for configuration and to wait data. We do not really
+ * need these threads but we did it on purpose in order to emulate a complex
+ * scenario and stress the library/driver.
+ * @param[in] adc fmc-adc-100m device
+ */
 void create_thread(struct fmcadc_dev *adc)
 {
 	/* Config thread */
