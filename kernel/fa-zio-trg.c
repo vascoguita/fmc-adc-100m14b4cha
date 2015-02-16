@@ -99,7 +99,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
-	uint32_t tmp_val = usr_val;
+	uint32_t tmp_val = usr_val, delay;
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
@@ -133,7 +133,18 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFAT_DLY:
 		/* Add channel signal transmission delay */
-		tmp_val += FA_CH_TX_DELAY;
+		tmp_val += fa->trig_compensation;
+		break;
+	case ZFAT_CFG_HW_SEL:
+		/* Remove old compensation value  */
+		delay = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY]);
+		delay -= fa->trig_compensation;
+
+		/* Calculate and apply new compensation */
+		fa->trig_compensation = tmp_val ? FA_CH_TX_DELAY : 0;
+		delay += fa->trig_compensation;
+		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY], delay);
+		break;
 	}
 
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id], tmp_val);
@@ -151,6 +162,11 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 
 	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
+	switch (zattr->id) {
+	case ZFAT_DLY:
+		/* Add channel signal transmission delay */
+		*usr_val -= fa->trig_compensation;
+	}
 
 	return 0;
 }
