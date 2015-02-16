@@ -325,7 +325,8 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	 * because it's the interleave channel.
 	 *
 	 * +FA_NCHAN because of the trigger samples (1 for each channel) which
-	 * will discard later on DMA done
+	 * will discard later on DMA done (Actually, we will discard the last
+	 * post-sample because we count the trigger sample as post-sample)
 	 */
 	size = (interleave->current_ctrl->ssize * (ti->nsamples + FA100M14B4C_NCHAN))
 		+ FA_TRIG_TIMETAG_BYTES;
