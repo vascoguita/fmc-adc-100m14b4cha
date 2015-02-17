@@ -6,6 +6,7 @@ syn_grade = "-3"
 syn_package = "fgg484"
 syn_top = "spec_top_fmc_adc_100Ms"
 syn_project = "spec_fmc_adc_100Ms.xise"
+syn_tool = "ise"
 
 files = [
     "../spec_top_fmc_adc_100Ms.ucf",
