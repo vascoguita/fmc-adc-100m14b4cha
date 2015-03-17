@@ -11,6 +11,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/workqueue.h>
+#include <linux/version.h>
 
 #include <linux/fmc.h>
 #include <linux/fmc-sdb.h>
@@ -562,9 +563,14 @@ static int fa_init(void)
 {
 	int ret;
 
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0)
 	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
 					WQ_NON_REENTRANT | WQ_UNBOUND |
 					WQ_MEM_RECLAIM, 1);
+	#else
+	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
+				       WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
+	#endif
 	if (fa_workqueue == NULL)
 		return -ENOMEM;
 
