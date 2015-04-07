@@ -467,19 +467,30 @@ int fa_probe(struct fmc_device *fmc)
 		return -ENODEV;
 	}
 
-	if (fa_dev_drv.gw_n)
-		fwname = "";	/* reprogram will pick from module parameter */
-	else
-		fwname = fa->carrier_op->get_gwname();
-	dev_info(fmc->hwdev, "Gateware (%s)\n", fwname);
-	/* We first write a new binary (and lm32) within the carrier */
-	err = fmc->op->reprogram(fmc, &fa_dev_drv, fwname);
-	if (err) {
-		dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
+	/*
+	 * If the carrier is still using the golden bitstream or the user is
+	 * asking for a particular one, then program our bistream, otherwise
+	 * we already have our bitstream
+	 */
+	if (fmc->flags & FMC_DEVICE_HAS_GOLDEN || fa_dev_drv.gw_n) {
+		if (fa_dev_drv.gw_n)
+			fwname = ""; /* reprogram will pick from module parameter */
+		else
+			fwname = fa->carrier_op->get_gwname();
+		dev_info(fmc->hwdev, "Gateware (%s)\n", fwname);
+
+		/* We first write a new binary (and lm32) within the carrier */
+		err = fmc->op->reprogram(fmc, &fa_dev_drv, fwname);
+		if (err) {
+			dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
 				fwname, err);
-		goto out;
+			goto out;
+		}
+		dev_info(fmc->hwdev, "Gateware successfully loaded\n");
+	} else {
+		dev_info(fmc->hwdev,
+			 "Gateware already there. Set the \"gateware\" parameter to overwrite the current gateware\n");
 	}
-	dev_info(fmc->hwdev, "Gateware successfully loaded\n");
 
 	/* Extract whisbone core base address fron SDB */
 	err = __fa_sdb_get_device(fa);
