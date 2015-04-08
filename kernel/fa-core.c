@@ -480,7 +480,7 @@ int fa_probe(struct fmc_device *fmc)
 		dev_info(fmc->hwdev, "Gateware (%s)\n", fwname);
 
 		/* We first write a new binary (and lm32) within the carrier */
-		err = fmc->op->reprogram(fmc, &fa_dev_drv, fwname);
+		err = fmc_reprogram(fmc, &fa_dev_drv, fwname, 0x0);
 		if (err) {
 			dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
 				fwname, err);
