@@ -126,14 +126,14 @@ static int fa_spec_setup_irqs(struct fa_dev *fa)
 	 * is to set it by means of the field irq provided by the fmc device
 	 */
 	fmc->irq = spec_data->fa_irq_dma_base;
-	err = fmc->op->irq_request(fmc, fa_spec_irq_handler,
-					"fmc-adc-100m14b", 0);
+	err = fmc_irq_request(fmc, fa_spec_irq_handler,
+			      "fmc-adc-100m14b", 0);
 	if (err) {
 		dev_err(&fmc->dev, "can't request irq 0x%x (error %i)\n",
 			fmc->irq, err);
 		return err;
 	}
-	fmc->op->gpio_config(fmc, fa_gpio_on, ARRAY_SIZE(fa_gpio_on));
+	fmc_gpio_config(fmc, fa_gpio_on, ARRAY_SIZE(fa_gpio_on));
 	dev_info(&fmc->dev, "spec::%s successfully executed\n", __func__);
 
 	/* Add SPEC specific IRQ sources to listen */
@@ -149,9 +149,9 @@ static int fa_spec_free_irqs(struct fa_dev *fa)
 
 	/* Release DMA IRQs */
 	fmc->irq = spec_data->fa_irq_dma_base;
-	fmc->op->irq_free(fmc);
+	fmc_irq_free(fmc);
 
-	fmc->op->gpio_config(fmc, fa_gpio_off, ARRAY_SIZE(fa_gpio_off));
+	fmc_gpio_config(fmc, fa_gpio_off, ARRAY_SIZE(fa_gpio_off));
 
 	return 0;
 }

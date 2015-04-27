@@ -432,7 +432,7 @@ int fa_probe(struct fmc_device *fmc)
 	char *fwname;
 
 	/* Validate the new FMC device */
-	i = fmc->op->validate(fmc, &fa_dev_drv);
+	i = fmc_validate(fmc, &fa_dev_drv);
 	if (i < 0) {
 		dev_info(&fmc->dev, "not using \"%s\" according to "
 			 "modparam\n", KBUILD_MODNAME);

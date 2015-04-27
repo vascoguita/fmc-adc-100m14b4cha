@@ -116,7 +116,7 @@ out:
 	spin_unlock(&cset->lock);
 
 	/* ack the irq */
-	fa->fmc->op->irq_ack(fa->fmc);
+	fmc_irq_ack(fa->fmc);
 
 	return IRQ_HANDLED;
 }

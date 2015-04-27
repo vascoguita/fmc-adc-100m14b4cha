@@ -300,7 +300,7 @@ end:
 	}
 
 	/* ack the irq */
-	fa->fmc->op->irq_ack(fa->fmc);
+	fmc_irq_ack(fa->fmc);
 }
 
 /*
@@ -382,12 +382,12 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 			/* check right IRQ seq.: ACQ_END followed by DMA_END */
 			fa->last_irq_core_src = irq_core_base;
 		} else /* current Acquiistion has been stopped */
-			fmc->op->irq_ack(fmc);
+			fmc_irq_ack(fmc);
 	} else { /* unexpected interrupt we have to ack anyway */
 		dev_err(&fa->fmc->dev,
 			"%s unexpected interrupt 0x%x\n",
 			__func__, status);
-		fmc->op->irq_ack(fmc);
+		fmc_irq_ack(fmc);
 	}
 
 	return IRQ_HANDLED;
@@ -415,9 +415,9 @@ int fa_setup_irqs(struct fa_dev *fa)
 	 * is to set it by means of the field irq provided by the fmc device
 	 */
 	fmc->irq = fa->fa_irq_adc_base;
-	err = fmc->op->irq_request(fmc, fa_irq_handler,
-					"fmc-adc-100m14b",
-					0 /*VIC is used */);
+	err = fmc_irq_request(fmc, fa_irq_handler,
+			      "fmc-adc-100m14b",
+			      0 /*VIC is used */);
 	if (err) {
 		dev_err(&fa->fmc->dev, "can't request irq %i (error %i)\n",
 			fa->fmc->irq, err);
@@ -445,7 +445,7 @@ int fa_free_irqs(struct fa_dev *fa)
 
 	/* Release ADC IRQs */
 	fmc->irq = fa->fa_irq_adc_base;
-	fmc->op->irq_free(fmc);
+	fmc_irq_free(fmc);
 
 	return 0;
 }
