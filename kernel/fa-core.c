@@ -524,8 +524,14 @@ int fa_probe(struct fmc_device *fmc)
 	if (err < 0)
 		goto out;
 
+	/* Pin the carrier */
+	if (!try_module_get(fmc->owner))
+		goto out_mod;
+
 	return 0;
 
+out_mod:
+	fa_free_irqs(fa);
 out:
 	while (--m, --i >= 0)
 		if (m->exit)
@@ -549,6 +555,9 @@ int fa_remove(struct fmc_device *fmc)
 	}
 
 	fa->carrier_op->exit(fa);
+
+	/* Release the carrier */
+	module_put(fmc->owner);
 
 	return 0;
 }
