@@ -1,0 +1,42 @@
+# vsim -do {run;quit} -c work.main 
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# //  ModelSim SE 6.5e Feb 26 2010 Linux 2.6.38-ARCH
+# //
+# //  Copyright 1991-2010 Mentor Graphics Corporation
+# //              All Rights Reserved.
+# //
+# //  THIS WORK CONTAINS TRADE SECRET AND 
+# //  PROPRIETARY INFORMATION WHICH IS THE PROPERTY
+# //  OF MENTOR GRAPHICS CORPORATION OR ITS LICENSORS
+# //  AND IS SUBJECT TO LICENSE TERMS.
+# //
+# Loading sv_std.std
+# Loading work.test_epacket_sv_unit(fast)
+# Loading work.main(fast)
+# run 
+# 802.1q [VID   555/PCP 0]  DST [ff:ff:ff:ff:ff:ff] SRC: [01:02:03:04:05:06] Type = 0x1234 size =         118 F:(  )
+# +000:  00 01 02 03 04 05 06 07-08 09 0a 0b 0c 0d 0e 0f
+# +010:  10 11 12 13 14 15 16 17-18 19 1a 1b 1c 1d 1e 1f
+# +020:  20 21 22 23 24 25 26 27-28 29 2a 2b 2c 2d 2e 2f
+# +030:  30 31 32 33 34 35 36 37-38 39 3a 3b 3c 3d 3e 3f
+# +040:  40 41 42 43 44 45 46 47-48 49 4a 4b 4c 4d 4e 4f
+# +050:  50 51 52 53 54 55 56 57-58 59 5a 5b 5c 5d 5e 5f
+# +060:  60 61 62 63
+# eq: 1
+# RandomBVEC          72
+# 802.1q [VID   555/PCP 0]  DST [ff:ff:ff:ff:ff:ff] SRC: [01:02:03:04:05:06] Type = 0x9215 size =          90 F:(  )
+# +000:  04 32 87 c7 32 09 81 87-bb 9f f7 c6 fd 63 63 55
+# +010:  f3 3c 09 c8 fa 67 74 63-af 5e 16 32 32 85 40 90
+# +020:  d6 4f 4b 09 06 29 b6 6b-01 57 8f 68 92 85 65 1e
+# +030:  fa c5 a1 6c bc 44 f6 db-e4 d7 5e 95 05 38 c3 a8
+# +040:  1d 9d 3f 8b f9 ed b1 a6
+# RandomBVEC          89
+# 802.1q [VID   555/PCP 0]  DST [ff:ff:ff:ff:ff:ff] SRC: [01:02:03:04:05:06] Type = 0xcfa2 size =         107 F:(  )
+# +000:  fd 5c 50 2e 2d c5 24 68-6c 28 cb 86 61 e5 3b 9f
+# +010:  89 3f b7 9d 90 6a c3 3c-ae a5 20 95 ac 43 47 4e
+# +020:  fe 13 ba 51 17 5a 30 a2-fc 66 73 ad 95 76 6d 32
+# +030:  5a 70 bd a2 68 95 d6 87-ef 4d 7f 62 ab a8 34 05
+# +040:  dc 1c bd 5c cb ca 02 2c-ee 27 ed 36 3b e6 db cb
+# +050:  23 82 fc b5 5a c4 95 16-64
+# ** Note: $finish    : test_epacket.sv(53)
+#    Time: 0 ns  Iteration: 0  Instance: /main
