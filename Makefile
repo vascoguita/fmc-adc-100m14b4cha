@@ -28,6 +28,8 @@ CURDIR ?= $(shell pwd)
 FMC_BUS ?= $(CURDIR)/fmc-bus
 export FMC_BUS
 ZIO ?= $(CURDIR)/zio
+ZIO_VERSION = $(shell cd $(ZIO); git describe --always --dirty --long --tags)
+export ZIO_VERSION
 SPEC_SW ?= $(CURDIR)/spec-sw
 SUBMOD = $(FMC_BUS) $(ZIO) $(SPEC_SW)
 

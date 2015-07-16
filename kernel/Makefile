@@ -29,6 +29,9 @@ ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
 ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
 ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
 
+# Extract ZIO minimum compatible version
+ccflags-y += -D__ZIO_MIN_MAJOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 2 | cut -d '.' -f 1; )
+ccflags-y += -D__ZIO_MIN_MINOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 2 | cut -d '.' -f 2; )
 
 subdirs-ccflags-y = $(ccflags-y)
 

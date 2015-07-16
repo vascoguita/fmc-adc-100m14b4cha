@@ -518,6 +518,11 @@ static struct zio_driver fa_zdrv = {
 	.id_table = zfad_table,
 	.probe = zfad_zio_probe,
 	.remove = zfad_zio_remove,
+	/* Take the version from ZIO git sub-module */
+	.min_version = ZIO_VERSION(__ZIO_MIN_MAJOR_VERSION,
+				   __ZIO_MIN_MINOR_VERSION,
+				   0), /* Change it if you use new features from
+					  a specific patch */
 };
 
 
