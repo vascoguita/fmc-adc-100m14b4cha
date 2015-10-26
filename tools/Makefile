@@ -3,6 +3,10 @@
 # build a particular environment.
 -include Makefile.specific
 
+# include parent_common.mk for buildsystem's defines
+REPO_PARENT=../..
+-include $(REPO_PARENT)/parent_common.mk
+
 # user-space tools for spec-fine-delay
 M = $(shell /bin/pwd)/../kernel
 DESTDIR ?= /usr/local
