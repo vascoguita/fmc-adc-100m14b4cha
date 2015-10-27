@@ -14,7 +14,8 @@ ZIO ?= ../zio
 ZIO_ABS ?= $(abspath $(ZIO) )
 
 CFLAGS = -Wall -g -ggdb -I$(LIBADC) -I$(ZIO_ABS)/include -I../kernel $(EXTRACFLAGS)
-LDFLAGS = -L$(LIBADC) -lfmcadc -lpthread -lrt
+LDFLAGS = -L$(LIBADC)
+LDLIBS = -lfmcadc -lpthread -lrt
 
 DEMOS := fald-simple-acq fald-acq fald-trg-cfg 
 DEMOS += fald-simple-get-conf
@@ -31,7 +32,7 @@ install:
 	install -D $(DEMOS) $(DESTDIR)/bin
 
 %: %.c $(LIBADC)/libfmcadc.a
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 # make nothing for modules_install, but avoid errors
 modules_install:
