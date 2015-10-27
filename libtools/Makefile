@@ -11,8 +11,9 @@ DESTDIR ?= /usr/local
 
 LIBADC = ../lib/
 ZIO ?= ../zio
+ZIO_ABS ?= $(abspath $(ZIO) )
 
-CFLAGS = -Wall -g -ggdb -I$(LIBADC) -I$(ZIO)/include -I../kernel $(EXTRACFLAGS)
+CFLAGS = -Wall -g -ggdb -I$(LIBADC) -I$(ZIO_ABS)/include -I../kernel $(EXTRACFLAGS)
 LDFLAGS = -L$(LIBADC) -lfmcadc -lpthread -lrt
 
 DEMOS := fald-simple-acq fald-acq fald-trg-cfg 

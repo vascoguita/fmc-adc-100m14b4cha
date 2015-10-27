@@ -1,6 +1,7 @@
 # include parent_common.mk for buildsystem's defines
 # use absolute path for REPO_PARENT
-REPO_PARENT=$(shell /bin/pwd)/..
+CURDIR:=$(shell /bin/pwd)
+REPO_PARENT=$(CURDIR)/..
 -include $(REPO_PARENT)/parent_common.mk
 
 .PHONY: all clean modules install modules_install clean_all
@@ -27,14 +28,25 @@ gitmodules:
 # pathnames, and thus won't build elsewhere. We have it as a submodule to
 # find needed headers to build kernel code.
 #
+
+FMC_BUS ?= fmc-bus
+ZIO ?= zio
+SPEC_SW ?= spec-sw
+SVEC_SW ?= svec-sw
+
 # Use the absolute path so it can be used by submodule
-CURDIR ?= $(shell pwd)
-FMC_BUS ?= $(CURDIR)/fmc-bus
-export FMC_BUS
-ZIO ?= $(CURDIR)/zio
-ZIO_VERSION = $(shell cd $(ZIO); git describe --always --dirty --long --tags)
-export ZIO_VERSION
-SPEC_SW ?= $(CURDIR)/spec-sw
+# FMC_BUS_ABS, ZIO_ABS, SPEC_SW_ABS and SVEC_SW_ABS has to be absolut path,
+# due to beeing passed to the Kbuild
+FMC_BUS_ABS ?= $(abspath $(FMC_BUS) )
+ZIO_ABS ?= $(abspath $(ZIO) )
+SPEC_SW_ABS ?= $(abspath $(SPEC_SW) )
+SVEC_SW_ABS ?= $(abspath $(SVEC_SW) )
+
+export FMC_BUS_ABS
+export ZIO_ABS
+export SPEC_SW_ABS
+export SVEC_SW_ABS
+
 SUBMOD = $(FMC_BUS) $(ZIO) $(SPEC_SW)
 
 prereq:
