@@ -519,6 +519,8 @@ static void *change_config_thread(void *arg)
 			fd = open(adcfifo, O_RDONLY);
 		}
 	}
+	/* function never returns, but return NULL to avoid warning */
+	return NULL;
 }
 
 
