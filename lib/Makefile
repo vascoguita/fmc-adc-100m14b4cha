@@ -5,7 +5,12 @@
 # build a particular environment.
 -include Makefile.specific
 
+# include parent_common.mk for buildsystem's defines
+REPO_PARENT=../..
+-include $(REPO_PARENT)/parent_common.mk
+
 ZIO ?= ../zio
+ZIO_ABS ?= $(abspath $(ZIO) )
 
 LIB = libfmcadc.a
 LOBJ := route.o
@@ -15,7 +20,7 @@ LOBJ += config-zio.o
 LOBJ += buffer-zio.o
 LOBJ += lib.o
 LOBJ += fmc-adc-100m14b4cha.o
-CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO)/include $(EXTRACFLAGS)
+CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO_ABS)/include $(EXTRACFLAGS)
 LDFLAGS = -L. -lfmcadc
 
 CC ?= $(CROSS_COMPILE)gcc
@@ -27,7 +32,7 @@ modules all: $(LIB)
 	$(CC) $(CFLAGS) $*.c $(LDFLAGS) -o $@
 
 $(LIB): $(LOBJ)
-	ar r $@ $^
+	$(AR) r $@ $^
 
 clean:
 	rm -f $(LIB) .depend *.o *~

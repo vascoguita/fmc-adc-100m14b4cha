@@ -3,11 +3,17 @@
 # build a particular environment.
 -include Makefile.specific
 
+# include parent_common.mk for buildsystem's defines
+REPO_PARENT=../..
+-include $(REPO_PARENT)/parent_common.mk
+
+ZIO ?= ../zio
+ZIO_ABS ?= $(abspath $(ZIO) )
 # user-space tools for spec-fine-delay
-M = $(shell /bin/pwd)/../kernel
+M = ../kernel
 DESTDIR ?= /usr/local
 
-CFLAGS += -I$(M) -I$(ZIO)/include -Wno-trigraphs -Wall -ggdb -O2  $(EXTRACFLAGS)
+CFLAGS += -I$(M) -I$(ZIO_ABS)/include -Wno-trigraphs -Wall -ggdb -O2  $(EXTRACFLAGS)
 
 CC ?= $(CROSS_COMPILE)gcc
 

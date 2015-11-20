@@ -1,0 +1,59 @@
+CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
+
+SVEC_SW_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(SVEC_SW_ABS)/kernel/Module.symvers.vmebus
+KBUILD_EXTRA_SYMBOLS := \
+	$(ZIO_ABS)/Module.symvers \
+	$(FMC_BUS_ABS)/kernel/Module.symvers \
+	$(SVEC_SW_EXTRA_SYMBOLS-y)
+
+# add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
+# of a bigger project that we want to track
+ifdef CONFIG_SUPER_REPO
+ifdef CONFIG_SUPER_REPO_VERSION
+SUBMODULE_VERSIONS-y += MODULE_INFO(version_$(CONFIG_SUPER_REPO),\"$(CONFIG_SUPER_REPO_VERSION)\");
+endif
+endif
+# add versions of used submodules
+SUBMODULE_VERSIONS-y += MODULE_INFO(version_fmc_bus,\"$(FMC_BUS_VERSION)\");
+SUBMODULE_VERSIONS-y += MODULE_INFO(version_zio,\"$(ZIO_VERSION)\");
+SUBMODULE_VERSIONS-y += MODULE_INFO(version_spec_sw,\"$(SPEC_SW_VERSION)\");
+SUBMODULE_VERSIONS-$(CONFIG_FMC_ADC_SVEC) += MODULE_INFO(version_svec_sw,\"$(SVEC_SW_VERSION)\");
+
+ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS-y)"
+
+# The library includes <sdb.h>, so point -I directtly there
+# include our header before to avoid conflicts with the kernel
+LINUXINCLUDE :=  -I$(FMC_BUS_ABS)/kernel/include $(LINUXINCLUDE)
+
+ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
+	-I$(ZIO_ABS)/include \
+	-I$(SPEC_SW_ABS)/kernel \
+	-I$(src)
+
+ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(SVEC_SW_ABS)/kernel
+ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
+ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
+
+# Extract ZIO minimum compatible version
+ccflags-y += -D__ZIO_MIN_MAJOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 2 | cut -d '.' -f 1; )
+ccflags-y += -D__ZIO_MIN_MINOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 2 | cut -d '.' -f 2; )
+
+subdirs-ccflags-y = $(ccflags-y)
+
+obj-m := fmc-adc-100m14b.o
+fmc-adc-100m14b-y =  fa-core.o
+fmc-adc-100m14b-y += fa-zio-drv.o
+fmc-adc-100m14b-y += fa-calibration.o
+fmc-adc-100m14b-y += fa-regtable.o
+fmc-adc-100m14b-y += fa-zio-trg.o
+fmc-adc-100m14b-y += fa-irq.o
+fmc-adc-100m14b-y += onewire.o
+fmc-adc-100m14b-y += spi.o
+fmc-adc-100m14b-y += fmc-util.o
+fmc-adc-100m14b-y += fa-spec-core.o
+fmc-adc-100m14b-y += fa-spec-regtable.o
+fmc-adc-100m14b-y += fa-spec-dma.o
+fmc-adc-100m14b-y += fa-spec-irq.o
+fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-core.o
+fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-regtable.o
+fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-dma.o
