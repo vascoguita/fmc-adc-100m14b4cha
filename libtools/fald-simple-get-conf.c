@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 			  /* no buffers expexted */ 0, 0,
 			  /* no flush either */ 0);
 	if (!adc) {
-		fprintf(stderr, "%s: cannot open device: %s",
+		fprintf(stderr, "%s: cannot open device: %s\n",
 			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}

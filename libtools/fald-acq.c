@@ -864,7 +864,7 @@ int main(int argc, char *argv[])
 		/*acq.value[FMCADC_CONF_ACQ_N_SHOTS]*/ 0,
 		FMCADC_F_FLUSH /*0*/);
 	if (!adc) {
-		fprintf(stderr, "%s: cannot open device: %s",
+		fprintf(stderr, "%s: cannot open device: %s\n",
 			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}

@@ -85,7 +85,7 @@ int main (int argc, char *argv[])
 
 	adc = fmcadc_open("fmc-adc-100m14b4cha", devid, 0, 0, FMCADC_F_FLUSH);
 	if (!adc) {
-		fprintf(stderr, "%s: cannot open device: %s",
+		fprintf(stderr, "%s: cannot open device: %s\n",
 			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}

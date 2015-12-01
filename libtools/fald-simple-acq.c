@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 			  nshots,
 			  FMCADC_F_FLUSH);
 	if (!adc) {
-		fprintf(stderr, "%s: cannot open device: %s",
+		fprintf(stderr, "%s: cannot open device: %s\n",
 			argv[0], fmcadc_strerror(errno));
 		exit(1);
 	}
