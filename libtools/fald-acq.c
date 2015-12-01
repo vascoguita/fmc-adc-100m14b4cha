@@ -33,6 +33,9 @@
 #define fald_print_debug(format, ...)
 #endif
 
+static char git_version[] = "version: " GIT_VERSION;
+static char zio_git_version[] = "zio version: " ZIO_GIT_VERSION;
+
 static void fald_acq_stop(struct fmcadc_dev *adc, char *called_from);
 
 static void fald_help()
@@ -60,6 +63,7 @@ static void fald_help()
 						">0 from head, <0 from tail\n");
 	printf("  --graph|-g <chnum>       plot the desired channel\n");
 	printf("  --X11|-X                 Gnuplot will use X connection\n");
+	printf("  --version|-V             print version information\n");
 	printf("  --help|-h                show this help\n\n");
 }
 
@@ -96,11 +100,20 @@ static struct option options[] = {
 	/* loop for stess test */
 	{"loop",	required_argument, 0, 'l'},
 
-	{"help", no_argument, 0, 'h'},
+	{"version",	no_argument,       0, 'V'},
+	{"help", 	no_argument,       0, 'h'},
 	{0, 0, 0, 0}
 };
 
-#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:he"
+#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:Vhe"
+
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+	printf("%s %s\n", pname, zio_git_version);
+	printf("%s\n", libfmcadc_version_s);
+	printf("%s\n", libfmcadc_zio_version_s);
+}
 
 /* variables shared between threads */
 unsigned int devid = 0;
@@ -291,6 +304,9 @@ static void fald_acq_parse_args_and_configure(int argc, char *argv[])
 			x_display = 1;
 			fprintf(stdout, "Gnuplot will use X display\n");
 			break;
+		case 'V':
+			print_version(argv[0]);
+			exit(0);
 
 		case 'h': case '?':
 			fald_help();
@@ -849,6 +865,22 @@ int main(int argc, char *argv[])
 		fald_help();
 		exit(1);
 	}
+
+	/* parsing of arguments is done after fmcadc_open, so we have to check
+	 * here whether we should print help */
+	if ((argc >= 2) && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))) {
+		fald_help();
+		exit(1);
+	}
+
+	/* parsing of arguments is done after fmcadc_open, so we have to check
+	 * here whether we should print version */
+	if ((argc >= 2) &&
+	    (!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version"))) {
+		print_version(argv[0]);
+		exit(0);
+	}
+
 	/* set local _argv[0] with  pg name */
 	_argv[0] = argv[0];
 	/* devid is the last arg */

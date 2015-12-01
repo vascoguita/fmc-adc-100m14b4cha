@@ -9,6 +9,9 @@
 
 #define FALD_TRG_ARGC 2
 
+static char git_version[] = "version: " GIT_VERSION;
+static char zio_git_version[] = "zio version: " ZIO_GIT_VERSION;
+
 void send_config(int fd, char *msg)
 {
 	/* removing newline at the end */
@@ -24,6 +27,12 @@ void send_config(int fd, char *msg)
 	}
 }
 
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+	printf("%s %s\n", pname, zio_git_version);
+}
+
 int main(int argc, char *argv[])
 {
 	int i, fd;
@@ -31,8 +40,13 @@ int main(int argc, char *argv[])
 	char msg[512], *ptr;
 	unsigned int devid;
 
+	if ((argc >= 2) && (!strcmp(argv[1], "-V"))) {
+		print_version(argv[0]);
+		exit(0);
+	}
+
 	if (argc < FALD_TRG_ARGC) {
-		fprintf(stderr, "\nUsage:\nfald-trg-cfg <dev_id> [options]\n");
+		fprintf(stderr, "\nUsage:\nfald-trg-cfg [-V] <dev_id> [options]\n");
 		return -1;
 	}
 
