@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+static char git_version[] = "version: " GIT_VERSION;
+
 /* Returns the numer of microsecond timer ticks (Tomasz Wlostowski) */
 static int64_t get_tics()
 {
@@ -36,10 +38,21 @@ static void delay_to(int64_t until)
 		;
 }
 
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+}
+
 int main(int argc, char **argv)
 {
 	int fd, addr, count, usec;
 	int64_t tics;
+
+	if ((argc == 2) &&
+	    (!strcmp(argv[1], "-V") || !strcmp(argv[1], "--version"))) {
+		print_version(argv[0]);
+		exit(0);
+	}
 
 	if (argc != 4) {
 		fprintf(stderr,

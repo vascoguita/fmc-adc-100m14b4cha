@@ -10,7 +10,9 @@ REPO_PARENT=../..
 # user-space tools for spec-fine-delay
 DESTDIR ?= /usr/local
 
+GIT_VERSION := $(shell git describe --dirty --long --tags)
 CFLAGS += -I../kernel -Wno-trigraphs -Wall -ggdb -O2  $(EXTRACFLAGS)
+CFLAGS += -DGIT_VERSION="\"$(GIT_VERSION)\""
 
 CC ?= $(CROSS_COMPILE)gcc
 

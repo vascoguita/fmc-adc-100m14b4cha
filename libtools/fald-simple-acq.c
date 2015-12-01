@@ -18,6 +18,9 @@
 #include <linux/zio-user.h>
 #include <fmcadc-lib.h>
 
+static char git_version[] = "version: " GIT_VERSION;
+static char zio_git_version[] = "zio version: " ZIO_GIT_VERSION;
+
 static void fald_help()
 {
 	printf("\nfald-simple-acq [OPTIONS] <DEVID>\n\n");
@@ -35,6 +38,7 @@ static void fald_help()
 	printf("  --multi-binary|-M <file> save two files per shot: "
 						"<file>.0000.ctrl etc\n");
 	printf("  --dont-read|-N           config-only, use with zio-dump\n");
+	printf("  --version|-V             print version information\n");
 
 	printf("  --help|-h                show this help\n\n");
 }
@@ -61,12 +65,21 @@ static struct option options[] = {
 	{"pre",		required_argument, 0, 'p'},
 	{"post",	required_argument, 0, 'P'},
 	{"decimation",	required_argument, 0, 'D'},
+	{"version",	no_argument,       0, 'V'},
 
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
 };
 
-#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:Np:P:D:h"
+#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:Np:P:D:Vh"
+
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+	printf("%s %s\n", pname, zio_git_version);
+	printf("%s\n", libfmcadc_version_s);
+	printf("%s\n", libfmcadc_zio_version_s);
+}
 
 int main(int argc, char *argv[])
 {
@@ -147,6 +160,9 @@ int main(int argc, char *argv[])
 		case 'N':
 			binmode = -1;
 			break;
+		case 'V':
+			print_version(argv[0]);
+			exit(0);
 
 		case 'h': case '?':
 			fald_help();

@@ -17,12 +17,24 @@
 #include <linux/zio-user.h>
 #include <fmcadc-lib.h>
 
+static char git_version[] = "version: " GIT_VERSION;
+static char zio_git_version[] = "zio version: " ZIO_GIT_VERSION;
+
 static void fald_help()
 {
 	printf("\nfald-simple-get-conf [OPTIONS] 0x<DEVICE ID>\n\n");
 	printf("  <DEVICE>: hexadecimal string which represent the device "
 	       "identificator of an fmc-adc\n");
-	printf("  --help|-h: show this help\n\n");
+	printf("  --version|-V: show version information\n");
+	printf("  --help|-h:    show this help\n\n");
+}
+
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+	printf("%s %s\n", pname, zio_git_version);
+	printf("%s\n", libfmcadc_version_s);
+	printf("%s\n", libfmcadc_zio_version_s);
 }
 
 int main(int argc, char *argv[])
@@ -30,7 +42,8 @@ int main(int argc, char *argv[])
 	struct fmcadc_dev *adc;
 	struct fmcadc_conf trg, acq, brd, chn;
 	static struct option options[] = {
-		{"help", no_argument, 0, 'h'},
+		{"version", no_argument, 0, 'V'},
+		{"help",    no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 	int opt_index = 0, err = 0, i;
@@ -47,8 +60,11 @@ int main(int argc, char *argv[])
 	acq.mask = 0;
 
 	/* Parse options */
-	while((c = getopt_long(argc, argv, "h",	options, &opt_index)) >= 0) {
+	while((c = getopt_long(argc, argv, "hV", options, &opt_index)) >= 0) {
 		switch (c) {
+		case 'V':
+			print_version(argv[0]);
+			exit(0);
 		case 'h':
 			fald_help();
 			exit(1);

@@ -18,6 +18,9 @@
 #include <fmcadc-lib.h>
 #include <fmc-adc-100m14b4cha.h>
 
+static char git_version[] = "version: " GIT_VERSION;
+static char zio_git_version[] = "zio version: " ZIO_GIT_VERSION;
+
 /* Subtract the `struct timespec' values X and Y,
 storing the result in RESULT.
 Return 1 if the difference is negative, otherwise 0. */
@@ -51,7 +54,16 @@ static void fald_help()
 	printf("\nfald-bad-clock [OPTIONS] <devid>\n\n");
 	printf("  -i <seconds>      observation interval\n\n");
 	printf("  -h                show this help\n\n");
+	printf("  -V                show version information\n\n");
 	exit(1);
+}
+
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+	printf("%s %s\n", pname, zio_git_version);
+	printf("%s\n", libfmcadc_version_s);
+	printf("%s\n", libfmcadc_zio_version_s);
 }
 
 int main (int argc, char *argv[])
@@ -67,7 +79,7 @@ int main (int argc, char *argv[])
 	memset(&brd_cfg, 0, sizeof(brd_cfg));
 	brd_cfg.type = FMCADC_CONT_TYPE_BRD;
 
-	while ((c = getopt(argc, argv, "i:h")) >= 0) {
+	while ((c = getopt(argc, argv, "i:hV")) >= 0) {
 		switch (c) {
 		case 'i':
 			err = sscanf(optarg, "%d", &interval);
@@ -78,6 +90,9 @@ int main (int argc, char *argv[])
 		case 'h':
 			fald_help();
 			break;
+		case 'V':
+			print_version(argv[0]);
+			exit(0);
 		}
 	}
 

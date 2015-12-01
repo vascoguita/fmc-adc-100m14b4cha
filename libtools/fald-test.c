@@ -18,6 +18,9 @@
 #define N_CHAN		4
 #define CARD_NAME	"fmc-adc-100m14b4cha"
 
+static char git_version[] = "version: " GIT_VERSION;
+static char zio_git_version[] = "zio version: " ZIO_GIT_VERSION;
+
 unsigned nshots = 1;
 unsigned presamples = 10;
 unsigned postsamples = 10;
@@ -27,6 +30,14 @@ void print_buffer_content(struct fmcadc_buffer *buf);
 int read_with_one_buffer(struct fmcadc_dev *dev);
 int read_with_n_buffer(struct fmcadc_dev *dev);
 
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
+	printf("%s %s\n", pname, zio_git_version);
+	printf("%s\n", libfmcadc_version_s);
+	printf("%s\n", libfmcadc_zio_version_s);
+}
+
 int main(int argc, char *argv[])
 {
 	unsigned long totalsamples = nshots * (presamples + postsamples);
@@ -35,9 +46,14 @@ int main(int argc, char *argv[])
 	struct fmcadc_dev *dev;
 	int test = 0, err;
 
+	if ((argc >= 2) && (!strcmp(argv[1], "-V"))) {
+		print_version(argv[0]);
+		exit(0);
+	}
+
 	if (argc != 3) {
-		fprintf(stderr, "%s: Use \"%s <dev_id> <testnr>\n",
-			argv[0], argv[1]);
+		fprintf(stderr, "%s: Use \"%s [-V] <dev_id> <testnr>\n",
+			argv[0], argv[0]);
 		exit(1);
 	}
 	sscanf(argv[1], "%x", &dev_id);
