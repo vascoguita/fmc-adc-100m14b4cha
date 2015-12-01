@@ -15,6 +15,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+static char git_version[] = "version: " GIT_VERSION;
+
 #define buf_len 50
 /* user will edit by adding the device name */
 char basepath[40] = "/sys/bus/zio/devices/";
@@ -102,9 +104,15 @@ static void fau_help()
 {
 	printf("\nfau-acq-time [OPTIONS] <DEVICE>\n\n");
 	printf("  <DEVICE>: ZIO name of the device to use\n");
-	printf("  --last|-l : time between the last trigger and the acquisition end\n\n");
-	printf("  --full|-f : time between the acquisition start and the acquisition end\n\n");
-	printf("  --help|-h: show this help\n\n");
+	printf("  --last|-l    : time between the last trigger and the acquisition end\n");
+	printf("  --full|-f    : time between the acquisition start and the acquisition end\n");
+	printf("  --version|-V : print version information\n");
+	printf("  --help|-h    : show this help\n\n");
+}
+
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
 }
 
 int main(int argc, char *argv[])
@@ -114,6 +122,7 @@ int main(int argc, char *argv[])
 	static struct option options[] = {
 		{"last",no_argument, &last, 1},
 		{"full",no_argument, &full, 1},
+		{"version",no_argument, 0, 'V'},
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
@@ -126,11 +135,15 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while( (c = getopt_long(argc, argv, "lfh", options, &opt_index)) >=0 ){
+	while( (c = getopt_long(argc, argv, "lfVh", options, &opt_index)) >=0 ){
 		if (c == 'h') {
 			fau_help();
 			exit(1);
 			break;
+		}
+		if (c == 'V') {
+			print_version(argv[0]);
+			exit(1);
 		}
 	}
 

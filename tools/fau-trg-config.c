@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+static char git_version[] = "version: " GIT_VERSION;
+
 #define buf_len 50
 /* user will edit by adding the device name */
 char basepath[40] = "/sys/bus/zio/devices/";
@@ -89,9 +91,15 @@ static void fau_help()
 	printf("  --disable-hw-trg: disable the hardware trigger. By default "
 	       "is enabled\n");
 	printf("  --force: force all attribute to the program default\n");
+	printf("  --version|-V: print version information\n");
 	printf("  --help|-h: show this help\n\n");
 	printf("NOTE: The software trigger works only if also hardware trigger "
 	       "is enabled\n\n");
+}
+
+static void print_version(char *pname)
+{
+	printf("%s %s\n", pname, git_version);
 }
 
 int main(int argc, char *argv[])
@@ -113,6 +121,7 @@ int main(int argc, char *argv[])
 		{"enable-sw-trg", no_argument, &attrval[FAU_SW_TRG_EN], 1},
 		{"disable-hw-trg", no_argument, &attrval[FAU_TRG_EN], 0},
 		{"force", no_argument, &force, 1},
+		{"version",no_argument, 0, 'V'},
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
@@ -124,7 +133,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while( (c = getopt_long(argc, argv, "p:P:n:d:t:c:h",
+	while( (c = getopt_long(argc, argv, "p:P:n:d:t:c:Vh",
 						options, &opt_index)) >=0 ){
 		switch(c){
 		case 'p':
@@ -145,6 +154,9 @@ int main(int argc, char *argv[])
 		case 'c':
 			attrval[FAU_TRG_CHN] = atoi(optarg);
 			break;
+		case 'V':
+			print_version(argv[0]);
+			exit(1);
 		case 'h':
 			fau_help();
 			exit(1);
