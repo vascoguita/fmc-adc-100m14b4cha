@@ -190,6 +190,12 @@ extern int fmcadc_release_buffer(struct fmcadc_dev *dev,
 
 extern char *fmcadc_get_driver_type(struct fmcadc_dev *dev);
 
+/* libfmcadc version string */
+extern const char * const libfmcadc_version_s;
+
+/* zio version string used during compilation of libfmcadc */
+extern const char * const libfmcadc_zio_version_s;
+
 #ifdef __cplusplus
 }
 #endif

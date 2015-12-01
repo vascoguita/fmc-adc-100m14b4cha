@@ -12,6 +12,9 @@ REPO_PARENT=../..
 ZIO ?= ../zio
 ZIO_ABS ?= $(abspath $(ZIO) )
 
+GIT_VERSION := $(shell git describe --dirty --long --tags)
+ZIO_GIT_VERSION := $(shell cd $(ZIO_ABS); git describe --dirty --long --tags)
+
 LIB = libfmcadc.a
 LOBJ := route.o
 LOBJ += init.o
@@ -21,6 +24,8 @@ LOBJ += buffer-zio.o
 LOBJ += lib.o
 LOBJ += fmc-adc-100m14b4cha.o
 CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO_ABS)/include $(EXTRACFLAGS)
+CFLAGS += -DGIT_VERSION="\"$(GIT_VERSION)\""
+CFLAGS += -DZIO_GIT_VERSION="\"$(ZIO_GIT_VERSION)\""
 LDFLAGS = -L. -lfmcadc
 
 CC ?= $(CROSS_COMPILE)gcc
