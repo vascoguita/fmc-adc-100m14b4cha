@@ -21,9 +21,9 @@ files = [
 modules = { "local" : ["../rtl",
                        "../../adc/rtl",
                        "../../ip_cores/timetag_core/rtl"],
-            "git" : ["git://ohwr.org/hdl-core-lib/general-cores.git::proposed_master",
-                     "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git::master",
-                     "git://ohwr.org/hdl-core-lib/gn4124-core.git::master"]}
+            "git" : ["git://ohwr.org/hdl-core-lib/general-cores.git@@c26ee857158e4a65fd9d2add8b63fcb6fb4691ea",
+                     "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git@@7496ea0237449047f452be15567546b5dff364f5",
+                     "git://ohwr.org/hdl-core-lib/gn4124-core.git@@e0dcb3f9a3e6804f64c544743bdf46b5fcbbefab"]}
 
 fetchto="../../ip_cores"
 
