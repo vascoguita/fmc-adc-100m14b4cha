@@ -10,11 +10,18 @@ syn_tool = "ise"
 
 files = ["../svec_top_fmc_adc_100Ms.ucf"]
 
-modules = { "local" : ["../rtl",
-                       "../../adc/rtl"],
-            "git" : ["git://ohwr.org/hdl-core-lib/general-cores.git@@c26ee857158e4a65fd9d2add8b63fcb6fb4691ea",
-                     "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git@@503171933f184ae878836f28e67a78a7c81b4325",
-                     "git://ohwr.org/hdl-core-lib/vme64x-core.git@@b2fc3ce76485404f831d15f7ce31fdde08e234d5"]}
+modules = {
+    "local" : [
+        "../rtl",
+        "../../adc/rtl",
+    ],
+    "git" : [
+        "git://ohwr.org/hdl-core-lib/general-cores.git",
+        "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git",
+        "git://ohwr.org/hdl-core-lib/vme64x-core.git",
+        "git://ohwr.org/hdl-core-lib/wr-cores.git",
+    ],
+}
 
 fetchto="../../ip_cores"
 
