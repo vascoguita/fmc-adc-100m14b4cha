@@ -217,7 +217,7 @@ class CBusAccessor_Gennum extends CBusAccessor;
 endclass // CBusAccessor_Gennum
 
    function CBusAccessor get_accessor();
-      CBusAccessor_Gennum g = new;
+      automatic CBusAccessor_Gennum g = new;
       return g;
    endfunction
 
