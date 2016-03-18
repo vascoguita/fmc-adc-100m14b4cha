@@ -81,9 +81,9 @@ int main(int argc, char *argv[])
 		sscanf(argv[optind], "0x%x", &dev_id);
 	}
 
-	printf("Open ADC fmcadc_100MS_4ch_14bit dev_id 0x%04x ...\n", dev_id);
+	printf("Open ADC fmc-adc-100m14b4cha dev_id 0x%04x ...\n", dev_id);
 	/* Open the ADC */
-	adc = fmcadc_open("fmcadc_100MS_4ch_14bit", dev_id,
+	adc = fmcadc_open("fmc-adc-100m14b4cha", dev_id,
 			  /* no buffers expexted */ 0, 0,
 			  /* no flush either */ 0);
 	if (!adc) {
