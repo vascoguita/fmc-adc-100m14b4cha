@@ -87,7 +87,7 @@ static int fa_spec_reset(struct fa_dev *fa)
 {
 	/*struct spec_dev *spec = fa->fmc->carrier_data;*/
 
-	dev_info(&fa->fmc->dev, "%s: resetting TDC core through Gennum.\n",
+	dev_info(&fa->fmc->dev, "%s: resetting ADC core through Gennum.\n",
 		 __func__);
 	return 0;
 }
