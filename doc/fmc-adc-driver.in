@@ -1175,7 +1175,7 @@ All library-based tools filenames use @t{fald-} as a prefix, for
 
 @c ==========================================================================
 @node Simple Acquisition
-@subsection Simple Acquisition
+@section Simple Acquisition
 
 The most important tool is @file{fald-simple-acq}, which perform
 and ADC acquisition according to the specified parameters.  The source code
