@@ -211,8 +211,8 @@ architecture rtl of fmc_adc_100Ms_core is
       fmc_adc_core_ch4_sta_val_i                  : in  std_logic_vector(15 downto 0);
       fmc_adc_core_ch4_gain_val_o                 : out std_logic_vector(15 downto 0);
       fmc_adc_core_ch4_offset_val_o               : out std_logic_vector(15 downto 0);
-      fmc_adc_core_ch4_sat_val_o                  : out std_logic_vector(14 downto 0)
-      );
+      fmc_adc_core_ch4_sat_val_o                  : out std_logic_vector(14 downto 0);
+      fmc_adc_core_multi_depth_i                  : in  std_logic_vector(31 downto 0)); 
   end component fmc_adc_100Ms_csr;
 
   component ext_pulse_sync
@@ -267,6 +267,11 @@ architecture rtl of fmc_adc_100Ms_core is
   -- Constants declaration
   ------------------------------------------------------------------------------
   constant c_dpram_depth : integer := f_log2_size(g_multishot_ram_size);
+
+  -- Calculate the maximum number of available samples per multishot trigger
+  -- Note: we subtract 2 for the timetag
+  constant c_MULTISHOT_SAMPLE_DEPTH : std_logic_vector(31 downto 0) :=
+    std_logic_vector(to_unsigned(g_multishot_ram_size - 2, 32));
 
   ------------------------------------------------------------------------------
   -- Types declaration
@@ -782,7 +787,8 @@ begin
       fmc_adc_core_ch4_sta_val_i                  => serdes_out_data(63 downto 48),
       fmc_adc_core_ch4_gain_val_o                 => gain_calibr(63 downto 48),
       fmc_adc_core_ch4_offset_val_o               => offset_calibr(63 downto 48),
-      fmc_adc_core_ch4_sat_val_o                  => sat_val(59 downto 45)
+      fmc_adc_core_ch4_sat_val_o                  => sat_val(59 downto 45),
+      fmc_adc_core_multi_depth_i                  => c_MULTISHOT_SAMPLE_DEPTH
       );
 
   ------------------------------------------------------------------------------
