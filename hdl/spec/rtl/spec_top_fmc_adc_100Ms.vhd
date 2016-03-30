@@ -814,7 +814,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
-      g_multishot_ram_size => 2048,
+      g_multishot_ram_size => 8192,
       g_carrier_type       => "SPEC"
       )
     port map(
