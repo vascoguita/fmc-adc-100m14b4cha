@@ -1,47 +1,20 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_ack
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_adr
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_cyc
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_dat_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_dat_o
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_sel
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_stall
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_stb
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_we
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cnx_master_out
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cnx_master_in
 add wave -noupdate -divider {Wishbone CSR interface}
 add wave -noupdate /tb_spec/u1/sys_clk_125
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_adr
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_dat_o
-add wave -noupdate /tb_spec/u1/wb_dat_i
-add wave -noupdate /tb_spec/u1/wb_stb
-add wave -noupdate /tb_spec/u1/wb_we
-add wave -noupdate /tb_spec/u1/wb_sel
-add wave -noupdate /tb_spec/u1/wb_cyc(10)
-add wave -noupdate /tb_spec/u1/wb_stall(10)
-add wave -noupdate /tb_spec/u1/wb_ack(10)
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cnx_slave_out
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cnx_slave_in
 add wave -noupdate -divider onewire
-add wave -noupdate -radix unsigned -subitemconfig {{/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[7]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[6]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[5]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[4]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[3]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[2]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[1]} {-radix unsigned} {/tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst[0]} {-radix unsigned}} /tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/t_rst
-add wave -noupdate -radix unsigned /tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/cnt
-add wave -noupdate /tb_spec/u1/one_wire_b
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/owr_pwren_o(0)
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/owr_en_o(0)
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/owr_i(0)
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/clk_sys_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/rst_n_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_cyc_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_sel_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_stb_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_we_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_adr_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_dat_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_dat_o
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_ack_o
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/wb_int_o
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/bus_wen
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/bus_ren
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_onewire/rst
-add wave -noupdate /tb_spec/u1/cmp_fmc_onewire/wrapped_1wire/pls
+add wave -noupdate /tb_spec/u1/adc0_one_wire_b
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/owr_pwren_o(0)
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/owr_en_o(0)
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/owr_i(0)
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/clk_sys_i
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/rst_n_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/slave_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_onewire/slave_o
 add wave -noupdate -divider l2p
 add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_gn4124_core/cmp_l2p_dma_master/wb_ack_cnt
 add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_gn4124_core/cmp_l2p_dma_master/wb_read_cnt
