@@ -3,63 +3,62 @@ quietly WaveActivateNextPane {} 0
 add wave -noupdate -divider {Wishbone CSR interface}
 add wave -noupdate /tb_spec/U1/sys_clk_125
 add wave -noupdate -divider trigger
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sw_trig_en
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sw_trig
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/trig
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/trig_d
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/trig_align
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sw_trig_en
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sw_trig
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig_d
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig_align
 add wave -noupdate -divider {acq fsm}
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/post_trig_done
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/shots_cnt
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/shots_value
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/shots_decr
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/shots_done
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/acq_fsm_current_state
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/post_trig_done
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_cnt
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_value
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_decr
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_done
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_fsm_current_state
 add wave -noupdate -divider datapath
 add wave -noupdate -radix hexadecimal /tb_spec/ADC_DATA
-add wave -noupdate /tb_spec/U1/adc_dco_n_i
-add wave -noupdate /tb_spec/U1/adc_dco_p_i
-add wave -noupdate /tb_spec/U1/adc_fr_p_i
-add wave -noupdate /tb_spec/U1/adc_outa_p_i(0)
-add wave -noupdate /tb_spec/U1/adc_outb_p_i(0)
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/serdes_out_fr
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/serdes_out_data
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/locked_out
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/fs_clk
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/fs_rst_n
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/serdes_synced
-add wave -noupdate -radix unsigned /tb_spec/U1/cmp_fmc_adc_100Ms_core/decim_cnt
-add wave -noupdate -radix decimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/decim_factor
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/decim_en
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_wr
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_din
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_full
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_dreq
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_dout
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_dout(48)
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_empty
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_rd
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/sync_fifo_valid
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/serdes_out_data
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_wr
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_wr_en
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_din
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_full
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_dreq
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_rd
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_dout
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_empty
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_valid
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/ram_addr_cnt
+add wave -noupdate /tb_spec/U1/adc0_dco_n_i
+add wave -noupdate /tb_spec/U1/adc0_dco_p_i
+add wave -noupdate /tb_spec/U1/adc0_fr_p_i
+add wave -noupdate /tb_spec/U1/adc0_outa_p_i(0)
+add wave -noupdate /tb_spec/U1/adc0_outb_p_i(0)
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_out_fr
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_out_data
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/locked_out
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_clk
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_rst_n
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_synced
+add wave -noupdate -radix unsigned /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/decim_cnt
+add wave -noupdate -radix decimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/decim_factor
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/decim_en
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_wr
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_din
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_full
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_dout
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_dout(48)
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_empty
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_rd
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_valid
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_out_data
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_wr
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_wr_en
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_din
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_full
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_dreq
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_rd
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_dout
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_empty
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_fifo_valid
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ram_addr_cnt
 add wave -noupdate -divider {adc to ddr WB}
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_ack_i
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_clk_i
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_cyc_o
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_dat_o
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_stb_o
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_we_o
-add wave -noupdate -radix hexadecimal /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_adr_o
-add wave -noupdate /tb_spec/U1/cmp_fmc_adc_100Ms_core/wb_ddr_stall_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_ack_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_clk_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_cyc_o
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_dat_o
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_stb_o
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_we_o
+add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_adr_o
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_stall_i
 add wave -noupdate -divider {ddr controller}
 add wave -noupdate /tb_spec/U1/cmp_ddr_ctrl/status_o(0)
 add wave -noupdate /tb_spec/U1/cmp_ddr_ctrl/wb0_clk_i

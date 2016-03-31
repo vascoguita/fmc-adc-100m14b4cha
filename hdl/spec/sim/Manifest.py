@@ -1,5 +1,10 @@
+sim_tool="modelsim"
+top_module="main"
 target = "xilinx"
 action = "simulation"
+syn_device = "xc6slx45t"
+
+ctrls = ["bank3_64b_32b" ]
 
 files = ["testbench/gn412x_bfm.vhd",
          "testbench/cmd_router.vhd",
@@ -20,8 +25,8 @@ modules = { "local" : ["../rtl",
                        "../../ip_cores/timetag_core/rtl",
                        "testbench",
                        "sim_models/2048Mb_ddr3"],
-            "git" : ["git://ohwr.org/hdl-core-lib/general-cores.git::proposed_master",
-                     "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git::spec_bank3_64b_32b",
-                     "git://ohwr.org/hdl-core-lib/gn4124-core.git::master"]}
+            "git" : ["git://ohwr.org/hdl-core-lib/general-cores.git@@c26ee857158e4a65fd9d2add8b63fcb6fb4691ea",
+                     "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git@@e4d6755cc9c9c5cb005ce12eb82b12552922b882",
+                     "git://ohwr.org/hdl-core-lib/gn4124-core.git@@e0dcb3f9a3e6804f64c544743bdf46b5fcbbefab"]}
 
 fetchto="../../ip_cores"

@@ -4,7 +4,6 @@ add wave -noupdate /tb_spec/u1/sys_clk_in
 add wave -noupdate /tb_spec/u1/sys_clk_125
 add wave -noupdate /tb_spec/u1/sys_clk_250
 add wave -noupdate /tb_spec/u1/sys_clk_pll_locked
-add wave -noupdate /tb_spec/u1/sys_rst
 add wave -noupdate /tb_spec/u1/sys_rst_n
 add wave -noupdate /tb_spec/u1/l_rst_n
 TreeUpdate [SetDefaultTree]

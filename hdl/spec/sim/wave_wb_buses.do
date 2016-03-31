@@ -49,53 +49,12 @@ add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_ddr_we
 add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_ddr_ack
 add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_ddr_stall
 add wave -noupdate -divider {Wishbone CSR master}
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_ack
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_adr
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_cyc
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_dat_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_dat_o
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_sel
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_stall
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_stb
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wbm_we
+add wave -noupdate /tb_spec/u1/cnx_master_out
+add wave -noupdate /tb_spec/u1/cnx_master_in
 add wave -noupdate -divider {Wishbone CSR slaves}
 add wave -noupdate -radix hexadecimal /tb_spec/u1/sys_clk_125
-add wave -noupdate /tb_spec/u1/wb_cyc(9)
-add wave -noupdate /tb_spec/u1/wb_cyc(8)
-add wave -noupdate /tb_spec/u1/wb_cyc(7)
-add wave -noupdate /tb_spec/u1/wb_cyc(6)
-add wave -noupdate /tb_spec/u1/wb_cyc(5)
-add wave -noupdate /tb_spec/u1/wb_cyc(4)
-add wave -noupdate /tb_spec/u1/wb_cyc(3)
-add wave -noupdate /tb_spec/u1/wb_cyc(2)
-add wave -noupdate /tb_spec/u1/wb_cyc(1)
-add wave -noupdate /tb_spec/u1/wb_cyc(0)
-add wave -noupdate /tb_spec/u1/wb_ack(9)
-add wave -noupdate /tb_spec/u1/wb_ack(8)
-add wave -noupdate /tb_spec/u1/wb_ack(7)
-add wave -noupdate /tb_spec/u1/wb_ack(6)
-add wave -noupdate /tb_spec/u1/wb_ack(5)
-add wave -noupdate /tb_spec/u1/wb_ack(4)
-add wave -noupdate /tb_spec/u1/wb_ack(3)
-add wave -noupdate /tb_spec/u1/wb_ack(2)
-add wave -noupdate /tb_spec/u1/wb_ack(1)
-add wave -noupdate /tb_spec/u1/wb_ack(0)
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_adr
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_dat_i
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_dat_o
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_stb
-add wave -noupdate -radix hexadecimal /tb_spec/u1/wb_we
-add wave -noupdate -radix hexadecimal -subitemconfig {/tb_spec/u1/wb_sel(3) {-radix hexadecimal} /tb_spec/u1/wb_sel(2) {-radix hexadecimal} /tb_spec/u1/wb_sel(1) {-radix hexadecimal} /tb_spec/u1/wb_sel(0) {-radix hexadecimal}} /tb_spec/u1/wb_sel
-add wave -noupdate /tb_spec/u1/wb_stall(9)
-add wave -noupdate /tb_spec/u1/wb_stall(8)
-add wave -noupdate /tb_spec/u1/wb_stall(7)
-add wave -noupdate /tb_spec/u1/wb_stall(6)
-add wave -noupdate /tb_spec/u1/wb_stall(5)
-add wave -noupdate /tb_spec/u1/wb_stall(4)
-add wave -noupdate /tb_spec/u1/wb_stall(3)
-add wave -noupdate /tb_spec/u1/wb_stall(2)
-add wave -noupdate /tb_spec/u1/wb_stall(1)
-add wave -noupdate /tb_spec/u1/wb_stall(0)
+add wave -noupdate /tb_spec/u1/cnx_slave_out
+add wave -noupdate /tb_spec/u1/cnx_slave_in
 add wave -noupdate -divider IOs
 add wave -noupdate /tb_spec/led_red
 add wave -noupdate /tb_spec/led_green
@@ -109,8 +68,12 @@ add wave -noupdate /tb_spec/spi_cs_dac2_n_o
 add wave -noupdate /tb_spec/spi_cs_dac3_n_o
 add wave -noupdate /tb_spec/spi_cs_dac4_n_o
 add wave -noupdate -divider {FMC I2C}
-add wave -noupdate -radix hexadecimal /tb_spec/u1/cmp_fmc_i2c/wb_dat_i
-add wave -noupdate /tb_spec/u1/cmp_fmc_i2c/wb_adr_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_sys_i2c/scl_pad_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_sys_i2c/scl_pad_o
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_sys_i2c/scl_padoen_o
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_sys_i2c/sda_pad_i
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_sys_i2c/sda_pad_o
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_sys_i2c/sda_padoen_o
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {13971949 ps} 0}
 configure wave -namecolwidth 464

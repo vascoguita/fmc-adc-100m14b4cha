@@ -12,11 +12,11 @@ add wave -noupdate /tb_spec/adc_outa_p_i
 add wave -noupdate /tb_spec/adc_outb_n_i
 add wave -noupdate /tb_spec/adc_outb_p_i
 add wave -noupdate -divider serdes
-add wave -noupdate /tb_spec/u1/cmp_fmc_adc_100ms_core/bitslip_sreg
-add wave -noupdate /tb_spec/u1/cmp_fmc_adc_100ms_core/serdes_bitslip
-add wave -noupdate /tb_spec/u1/cmp_fmc_adc_100ms_core/serdes_synced
-add wave -noupdate /tb_spec/u1/cmp_fmc_adc_100ms_core/serdes_clk
-add wave -noupdate /tb_spec/u1/cmp_fmc_adc_100ms_core/fs_clk
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/bitslip_sreg
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_bitslip
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_synced
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_clk
+add wave -noupdate /tb_spec/u1/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_clk
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {510000 ps} 0}
 configure wave -namecolwidth 464
