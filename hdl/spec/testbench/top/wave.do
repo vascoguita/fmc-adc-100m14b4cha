@@ -32,8 +32,7 @@ add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_dma_ack_i
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_dma_stall_i
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/p2l_dma_cyc_i
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/fifo_rst
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/fifo_rst_t
+add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/fifo_rst_n
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/data_fifo_rd
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/data_fifo_wr
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/data_fifo_empty
@@ -57,22 +56,14 @@ add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_byte_swap
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_last_packet
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_lbe_header
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/ldm_arb_data_l
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/ldm_arb_valid
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/data_fifo_valid
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/addr_fifo_valid
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/target_addr_cnt
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/dma_length_cnt
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_timeout_cnt
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_timeout_cnt
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_dma_cyc_t
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_dma_stb_t
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_ack_cnt
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_read_cnt
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_cyc_start
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_cyc_start
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_cyc_cnt
-add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_cyc_cnt
 add wave -noupdate -group Top /main/DUT/clk20_vcxo_i
 add wave -noupdate -group Top /main/DUT/pll25dac_sync_n_o
 add wave -noupdate -group Top /main/DUT/pll20dac_sync_n_o
@@ -234,6 +225,122 @@ add wave -noupdate -group Top /main/DUT/led_pwm_val
 add wave -noupdate -group Top /main/DUT/led_pwm_val_down
 add wave -noupdate -group Top /main/DUT/led_pwm_cnt
 add wave -noupdate -group Top /main/DUT/led_pwm
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_clk_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_rst_n_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_adr_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_dat_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_dat_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_cyc_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_sel_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_stb_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_we_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_ack_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_clk_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_adr_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_dat_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_sel_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_stb_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_we_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_cyc_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_ack_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_ddr_stall_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ext_trigger_p_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ext_trigger_n_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_dco_p_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_dco_n_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_fr_p_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_fr_n_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_outa_p_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_outa_n_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_outb_p_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/adc_outb_n_i
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_dac_clr_n_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_led_acq_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_led_trig_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_ssr_ch1_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_ssr_ch2_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_ssr_ch3_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_ssr_ch4_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gpio_si570_oe_o
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_rst
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_rst
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_rst_n
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/dco_clk
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/clk_fb
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/locked_in
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/locked_out
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_clk
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_clk
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_clk_buf
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_in_p
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_in_n
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_out_raw
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_out_data
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/data_calibr_in
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/offset_calibr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gain_calibr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/data_calibr_out
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_out_fr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_auto_bitslip
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_man_bitslip
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_bitslip
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/serdes_synced
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/bitslip_sreg
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ext_trig_a
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ext_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_sel
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_thres
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_data
+add wave -noupdate -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_over_thres_d
+add wave -noupdate -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_over_thres
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/hw_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/hw_trig_t
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/hw_trig_sel
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/hw_trig_en
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sw_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sw_trig_t
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sw_trig_en
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig_delay
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig_delay_cnt
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig_d
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/trig_align
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/decim_factor
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/decim_cnt
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/decim_en
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_din
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_dout
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_empty
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_full
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_wr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_rd
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sync_fifo_valid
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/gain_calibr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/offset_calibr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_fsm_current_state
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_fsm_state
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fsm_cmd
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fsm_cmd_wr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_start
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_stop
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_end
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_in_pre_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/acq_in_post_trig
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/samples_wr_en
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/pre_trig_value
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/pre_trig_cnt
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/pre_trig_done
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/post_trig_value
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/post_trig_cnt
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/post_trig_done
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/samples_cnt
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_value
+add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_cnt
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_done
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_decr
+add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/single_shot
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/clk_i
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/rst_n_i
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/status_o
@@ -383,23 +490,12 @@ add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_data_
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_data_o
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_ack_o
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_stall_o
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_wr_ack
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_rd_ack
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_rd_en
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_cmd_en
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_cmd_full
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_stall
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_stall_d
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_stall_dd
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_we_d
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_addr_d
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_stall_restart
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/addr_shift
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/wb_stall_cnt
 add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_burst_cnt
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/ddr_burst_cnt_d
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/read_cnt
-add wave -noupdate -group WB1 /main/DUT/cmp_ddr_ctrl/cmp_ddr3_ctrl_wb_1/write_cnt
 add wave -noupdate -group DmaWB /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_controller_wb_slave_0/rst_n_i
 add wave -noupdate -group DmaWB /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_controller_wb_slave_0/wb_clk_i
 add wave -noupdate -group DmaWB /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_controller_wb_slave_0/wb_addr_i
@@ -758,7 +854,7 @@ add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_we
 add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_ack
 add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_stall
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {54925075 ps} 0}
+#WaveRestoreCursors {{Cursor 1} {54925075 ps} 0}
 configure wave -namecolwidth 282
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
@@ -773,4 +869,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {54724018 ps} {55134178 ps}
+#WaveRestoreZoom {54724018 ps} {55134178 ps}

@@ -80,6 +80,7 @@
 
 // model flags
 // `define MODEL_PASR
+`define sg15
 
 module ddr3 (
     rst_n,
