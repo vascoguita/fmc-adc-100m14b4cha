@@ -911,8 +911,8 @@ CMD <= f_cmd_to_string(CMD_INT);
 --
 --#########################################################################--
   process
-    --file      OUT_FILE : text is out "STD_OUTPUT";
-    file OUT_FILE           : text open write_mode is "NullFile";
+    file      OUT_FILE : text is out "STD_OUTPUT";
+    --file OUT_FILE           : text open write_mode is "NullFile";
     variable OUTPUT_LINE    : line;
     variable ERR_CNT        : integer;
     variable L_CMD          : string(1 to 80);
@@ -2231,8 +2231,8 @@ writeline(OUT_FILE, OUTPUT_LINE);
 --
 --#########################################################################--
   process
-    --file      OUT_FILE : text is out "STD_OUTPUT";
-    file OUT_FILE        : text open write_mode is "NullFile";
+    file      OUT_FILE : text is out "STD_OUTPUT";
+    --file OUT_FILE        : text open write_mode is "NullFile";
     variable OUTPUT_LINE : line;
 
     variable HEADER_TC        : std_ulogic_vector(2 downto 0);
@@ -2675,7 +2675,8 @@ writeline(OUT_FILE, OUTPUT_LINE);
   end process;
 
   process
-    file OUT_FILE        : text open write_mode is "NullFile";
+    file      OUT_FILE : text is out "STD_OUTPUT";
+    --file OUT_FILE        : text open write_mode is "NullFile";
     variable OUTPUT_LINE : line;
     variable vHEADER     : std_ulogic_vector(31 downto 0);
     variable vADDRESS    : std_ulogic_vector(63 downto 0);
@@ -2801,7 +2802,8 @@ writeline(OUT_FILE, OUTPUT_LINE);
 --
 --#########################################################################--
   process
-    file OUT_FILE        : text open write_mode is "NullFile";
+    file      OUT_FILE : text is out "STD_OUTPUT";
+    --file OUT_FILE        : text open write_mode is "NullFile";
     variable OUTPUT_LINE : line;
     variable vHEADER     : std_ulogic_vector(31 downto 0);
     variable vADDRESS    : std_ulogic_vector(63 downto 0);

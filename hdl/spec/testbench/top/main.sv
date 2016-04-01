@@ -7,21 +7,17 @@
 
 
 module main;
-   reg clk_125m_pllref = 0;
    reg clk_20m_vcxo = 0;
-   reg clk_ext = 0;
-   
+
    reg rst_n = 0;
    reg adc0_dco = 0;
    reg adc0_fr = 0;
-   
 
-   always #5ns adc0_dco <= ~adc0_dco;
-   always #50ns clk_ext <= ~clk_ext;
-   always #4ns clk_125m_pllref <= ~clk_125m_pllref;
-   always #20ns clk_20m_vcxo <= ~clk_20m_vcxo;
 
-   
+   always #1.25ns adc0_dco <= ~adc0_dco;
+   always #25ns clk_20m_vcxo <= ~clk_20m_vcxo;
+
+
    IGN4124PCIMaster I_Gennum ();
 
    wire ddr_cas_n, ddr_ck_p, ddr_ck_n, ddr_cke;
@@ -33,7 +29,7 @@ module main;
    wire        ddr_zio, ddr_rzq;
 
    pulldown(ddr_rzq);
-   
+
    spec_top_fmc_adc_100Ms
      #(
        .g_simulation("TRUE"),
@@ -44,7 +40,7 @@ module main;
 	      .adc0_dco_n_i(~adc0_dco),
 	      .adc0_fr_p_i(adc0_fr),
 	      .adc0_fr_n_i(~adc0_fr),
-	      
+
 	      .DDR3_CAS_N (ddr_cas_n),
 	      .DDR3_CK_N(ddr_ck_n),
 	      .DDR3_CK_P  (ddr_ck_p),
@@ -64,83 +60,118 @@ module main;
 	      .DDR3_BA      (ddr_ba),
 	      .DDR3_ZIO     (ddr_zio),
 	      .DDR3_RZQ     (ddr_rzq),
-	      
+
 
 	      `GENNUM_WIRE_SPEC_PINS(I_Gennum)
 	      );
 
- ddr3 #(
-.DEBUG(1)
-) mem (
-    .rst_n(ddr_reset_n),
-    .ck(ddr_ck_p),
-    .ck_n(ddr_ck_n),
-    .cke(ddr_cke),
-    .cs_n(1'b0),
-    .ras_n(ddr_ras_n),
-    .cas_n(ddr_cas_n),
-    .we_n(ddr_we_n),
-    .dm_tdqs({ddr_udm, ddr_ldm}),
-    .ba(ddr_ba),
-    .addr(ddr_a),
-    .dq(ddr_dq),
-    .dqs({ddr_udqs_p, ddr_ldqs_p}),
-    .dqs_n({ddr_udqs_n, ddr_ldqs_n}),
-    .tdqs_n(),
-    .odt(ddr_odt)
-);
+   ddr3 #(
+	  .DEBUG(1)
+	  ) mem (
+		 .rst_n(ddr_reset_n),
+		 .ck(ddr_ck_p),
+		 .ck_n(ddr_ck_n),
+		 .cke(ddr_cke),
+		 .cs_n(1'b0),
+		 .ras_n(ddr_ras_n),
+		 .cas_n(ddr_cas_n),
+		 .we_n(ddr_we_n),
+		 .dm_tdqs({ddr_udm, ddr_ldm}),
+		 .ba(ddr_ba),
+		 .addr(ddr_a),
+		 .dq(ddr_dq),
+		 .dqs({ddr_udqs_p, ddr_ldqs_p}),
+		 .dqs_n({ddr_udqs_n, ddr_ldqs_n}),
+		 .tdqs_n(),
+		 .odt(ddr_odt)
+		 );
 
-    
-   int adc_div = 0;
-   
+
+   int	       adc_div = 0;
+
    always@(posedge adc0_dco)
-     if(adc_div==3)
-       begin
-	  adc0_fr <= 1;
-	  adc_div <= 0;
-       end else begin
-	  adc0_fr <= 0;
-       adc_div <= adc_div + 1;
-       end
-   
-	  
-   
-   
+     if(adc_div==1) begin
+	adc0_fr <= ~adc0_fr;
+	adc_div <= 0;
+     end
+     else begin
+	adc_div <= adc_div + 1;
+     end
+
+
+
+
    initial begin
       CBusAccessor acc;
-      uint64_t rv;
+      uint64_t val;
 
       @(posedge I_Gennum.ready);
 
-      acc =      I_Gennum.get_accessor();
-      #40us;
+      acc = I_Gennum.get_accessor();
 
       acc.set_default_xfer_size(4);
-      
-      acc.read(0, rv);
 
-      $display("ID: %x", rv);
-      
-      acc.write('h100c,'h1000); // host addr
-      acc.write('h1010,0);
+      @(posedge DUT.sys_clk_pll_locked);
 
-      acc.write('h1014,'h1000); // len
-      acc.write('h1018, 0); // next
-      acc.write('h101c,0);
+      #5us;
 
-      acc.write('h1008,'h0);
-      acc.write('h1020,'h0); // attrib: pcie -> host
-      acc.write('h1000,'h1); // xfer start
-      
-      
+      acc.read(0, val);
+      $display("ID: %x", val);
 
-      
-      
-      
+      acc.read('h3304, val); // status
+      $display("STATUS: %x", val);
+
+      acc.write('h3308, 'h00000008); // trigger cfg: enable sw trigger
+      acc.write('h3328, 'h00000000); // #pre-samples
+      acc.write('h332C, 'h00000010); // #post-samples
+      acc.write('h3314, 'h00000001); // #nshots: single-shot acq
+
+      acc.read('h3304, val); // status
+      $display("STATUS: %x", val);
+
+      acc.write('h3300, 'h00000001); // FSM start
+
+      #1us;
+
+      acc.write('h3310, 'hFFFFFFFF); // soft trigger
+
+      #2us;
+
+      acc.write('h3314, 'h00000003); // #nshots: 3x multi-shot acq
+
+      acc.write('h3300, 'h00000001); // FSM start
+
+      #1us;
+
+      acc.write('h3310, 'hFFFFFFFE); // soft trigger
+
+      #1us;
+
+      acc.write('h3310, 'hFFFFFFFD); // soft trigger
+
+      #1us;
+
+      acc.write('h3310, 'hFFFFFFFC); // soft trigger
+
+      #2us;
+
+      // DMA transfer
+      acc.write('h100C, 'h00001000); // host addr
+      acc.write('h1010, 'h00000000);
+
+      acc.write('h1014, 'h00001000); // len
+
+      acc.write('h1018, 'h00000000); // next
+      acc.write('h101C, 'h00000000);
+
+      acc.write('h1008, 'h00000000);
+
+      acc.write('h1020, 'h00000000); // attrib: pcie -> host
+
+      acc.write('h1000, 'h00000001); // xfer start
+
+
    end
-   
-   
+
+
 endmodule // main
-
-
-
