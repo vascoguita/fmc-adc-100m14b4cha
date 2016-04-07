@@ -1239,11 +1239,7 @@ begin
           if acq_stop = '1' then
             acq_fsm_current_state <= IDLE;
           elsif trig_tag_done = '1' then
-            if single_shot = '1' then
-              acq_fsm_current_state <= IDLE;
-            else
-              acq_fsm_current_state <= DECR_SHOT;
-            end if;
+            acq_fsm_current_state <= DECR_SHOT;
           end if;
 
         when DECR_SHOT =>
