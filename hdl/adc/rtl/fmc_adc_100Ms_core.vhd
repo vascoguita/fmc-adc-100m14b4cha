@@ -1391,22 +1391,23 @@ begin
       g_size                     => g_multishot_ram_size,
       g_with_byte_enable         => false,
       g_addr_conflict_resolution => "read_first",
-      g_dual_clock               => true
+      g_dual_clock               => false
       -- default values for the rest of the generics are okay
       )
     port map
     (
       rst_n_i => sys_rst_n_i,
       clka_i  => sys_clk_i,
-      bwea_i  => open,
+      bwea_i  => (others => '0'),
       wea_i   => dpram0_wea,
       aa_i    => dpram0_addra,
       da_i    => dpram0_dina,
       qa_o    => open,
-      clkb_i  => sys_clk_i,
-      bweb_i  => open,
+      clkb_i  => '0',
+      bweb_i  => (others => '0'),
+      web_i   => '0',
       ab_i    => dpram0_addrb,
-      -- db_i    => (others => '0'),
+      db_i    => (others => '0'),
       qb_o    => dpram0_doutb
       );
 
@@ -1424,15 +1425,16 @@ begin
     (
       rst_n_i => sys_rst_n_i,
       clka_i  => sys_clk_i,
-      bwea_i  => open,
+      bwea_i  => (others => '0'),
       wea_i   => dpram1_wea,
       aa_i    => dpram1_addra,
       da_i    => dpram1_dina,
       qa_o    => open,
-      clkb_i  => sys_clk_i,
-      bweb_i  => open,
+      clkb_i  => '0',
+      bweb_i  => (others => '0'),
+      web_i   => '0',
       ab_i    => dpram1_addrb,
-      -- db_i    => (others => '0'),
+      db_i    => (others => '0'),
       qb_o    => dpram1_doutb
       );
 
