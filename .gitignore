@@ -1,10 +1,10 @@
 hdl/ip_cores/.lso
 hdl/ip_cores/_xmsgs
-hdl/*/sim/transcript
-hdl/*/sim/vsim.wlf
-hdl/*/sim/Makefile
-hdl/*/sim/modelsim.ini
-hdl/*/sim/work/
+hdl/*/sim/*/transcript
+hdl/*/sim/*/vsim.wlf
+hdl/*/sim/*/Makefile
+hdl/*/sim/*/modelsim.ini
+hdl/*/sim/*/work/
 hdl/*/testbench/top/transcript
 hdl/*/testbench/top/vsim.wlf
 hdl/*/testbench/top/Makefile
