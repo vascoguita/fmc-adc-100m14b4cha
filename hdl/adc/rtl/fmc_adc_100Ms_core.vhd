@@ -1177,7 +1177,8 @@ begin
   -- Check acquisition configuration
   --   Post-trigger sample must be > 0
   --   Shot number must be > 0
-  --   Number of sample (+time-tag) in multi-shot must be < multi-shot ram size
+  --   Number of samples (+time-tag) in multi-shot must be <= multi-shot ram size
+  --     Number of samples = pre+1+post+2  (1 for trigger sample, 2 for time-tag)
   p_acq_cfg_ok: process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
@@ -1187,18 +1188,14 @@ begin
          acq_config_ok <= '0';
       elsif unsigned(shots_value) = to_unsigned(0, shots_value'length) then
         acq_config_ok <= '0';
-      elsif unsigned(pre_trig_value)+unsigned(post_trig_value)+4 > to_unsigned(g_multishot_ram_size, pre_trig_value'length) and single_shot = '0' then
+      elsif single_shot = '0' and
+        unsigned(pre_trig_value) + unsigned(post_trig_value) + 3 > to_unsigned(g_multishot_ram_size, pre_trig_value'length) then
         acq_config_ok <= '0';
       else
         acq_config_ok <= '1';
       end if;
     end if;
   end process p_acq_cfg_ok;
-
-  --acq_config_ok <= '0' when (unsigned(post_trig_value) = to_unsigned(0, post_trig_value'length)) else
-  --                 '0' when (unsigned(shots_value) = to_unsigned(0, shots_value'length))                                                                            else
-  --                 '0' when (unsigned(pre_trig_value)+unsigned(post_trig_value)+4 > to_unsigned(g_multishot_ram_size, pre_trig_value'length) and single_shot = '0') else
-  --                 '1';
 
   -- FSM transitions
   p_acq_fsm_transitions : process(sys_clk_i, sys_rst_n_i)
