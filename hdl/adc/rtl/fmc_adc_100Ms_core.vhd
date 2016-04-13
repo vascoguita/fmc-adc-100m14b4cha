@@ -269,9 +269,10 @@ architecture rtl of fmc_adc_100Ms_core is
   constant c_dpram_depth : integer := f_log2_size(g_multishot_ram_size);
 
   -- Calculate the maximum number of available samples per multishot trigger
-  -- Note: we subtract 2 for the timetag
+  -- Note: we subtract 2 for the timetag, and 1 more because of bug when number
+  -- of samples equals the size of the dpram
   constant c_MULTISHOT_SAMPLE_DEPTH : std_logic_vector(31 downto 0) :=
-    std_logic_vector(to_unsigned(g_multishot_ram_size - 2, 32));
+    std_logic_vector(to_unsigned(g_multishot_ram_size - 3, 32));
 
   ------------------------------------------------------------------------------
   -- Types declaration
@@ -1179,6 +1180,9 @@ begin
   --   Shot number must be > 0
   --   Number of samples (+time-tag) in multi-shot must be <= multi-shot ram size
   --     Number of samples = pre+1+post+2  (1 for trigger sample, 2 for time-tag)
+  -- TODO: because of a -yet to be fully understood- bug, acquisition produces
+  -- corrupted samples when number_of_samples is exactly equal to multi_shot ram
+  -- size. So for now, number_of_samples should be less than multi_shot ram size.
   p_acq_cfg_ok: process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
@@ -1189,7 +1193,7 @@ begin
       elsif unsigned(shots_value) = to_unsigned(0, shots_value'length) then
         acq_config_ok <= '0';
       elsif single_shot = '0' and
-        unsigned(pre_trig_value) + unsigned(post_trig_value) + 3 > to_unsigned(g_multishot_ram_size, pre_trig_value'length) then
+        unsigned(pre_trig_value) + unsigned(post_trig_value) + 3 >= to_unsigned(g_multishot_ram_size, pre_trig_value'length) then
         acq_config_ok <= '0';
       else
         acq_config_ok <= '1';
