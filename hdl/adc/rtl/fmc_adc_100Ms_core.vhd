@@ -1212,7 +1212,11 @@ begin
 
         when IDLE =>
           if acq_start = '1' and acq_config_ok = '1' then
-            acq_fsm_current_state <= PRE_TRIG;
+            if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
+              acq_fsm_current_state <= WAIT_TRIG;
+            else
+              acq_fsm_current_state <= PRE_TRIG;
+            end if;
           end if;
 
         when PRE_TRIG =>
@@ -1250,7 +1254,11 @@ begin
             if shots_done = '1' then
               acq_fsm_current_state <= IDLE;
             else
-              acq_fsm_current_state <= PRE_TRIG;
+              if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
+                acq_fsm_current_state <= WAIT_TRIG;
+              else
+                acq_fsm_current_state <= PRE_TRIG;
+              end if;
             end if;
           end if;
 
