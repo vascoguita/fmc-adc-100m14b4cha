@@ -1478,7 +1478,7 @@ begin
   cmp_wb_ddr_fifo : generic_sync_fifo
     generic map (
       g_data_width             => 65,
-      g_size                   => 64,
+      g_size                   => 256,
       g_show_ahead             => false,
       g_with_empty             => true,
       g_with_full              => true,
