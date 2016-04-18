@@ -1,7 +1,7 @@
 # include parent_common.mk for buildsystem's defines
 # use absolute path for REPO_PARENT
 CURDIR:=$(shell /bin/pwd)
-REPO_PARENT=$(CURDIR)/../..
+REPO_PARENT ?= $(CURDIR)/../..
 -include $(REPO_PARENT)/parent_common.mk
 
 LINUX ?= /lib/modules/$(shell uname -r)/build
