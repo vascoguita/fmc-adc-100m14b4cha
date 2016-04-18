@@ -1479,7 +1479,7 @@ fmc_adc_core_fs_freq_i[31:0]
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_core_sr_deci_o[31:0]
+fmc_adc_core_sr_undersample_o[31:0]
 </td>
 <td  class="td_arrow_right">
 &rArr;
@@ -5166,7 +5166,7 @@ SR
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[31:24]
+UNDERSAMPLE[31:24]
 </td>
 <td >
 
@@ -5220,7 +5220,7 @@ DECI[31:24]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[23:16]
+UNDERSAMPLE[23:16]
 </td>
 <td >
 
@@ -5274,7 +5274,7 @@ DECI[23:16]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[15:8]
+UNDERSAMPLE[15:8]
 </td>
 <td >
 
@@ -5328,7 +5328,7 @@ DECI[15:8]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[7:0]
+UNDERSAMPLE[7:0]
 </td>
 <td >
 
@@ -5355,9 +5355,9 @@ DECI[7:0]
 </table>
 <ul>
 <li><b>
-DECI
-</b>[<i>read/write</i>]: Sample rate decimation
-<br>Decimation factor. Takes one sample every N samples and discards the others (N = decimation factor).
+UNDERSAMPLE
+</b>[<i>read/write</i>]: Undersampling ratio
+<br>Undersampling ratio. Takes one sample every N samples and discards the others (N = undersampling ratio).
 </ul>
 <a name="PRE_SAMPLES"></a>
 <h3><a name="sect_3_11">3.11. Pre-trigger samples</a></h3>
@@ -11549,7 +11549,7 @@ MULTI_DEPTH[7:0]
 <li><b>
 MULTI_DEPTH
 </b>[<i>read-only</i>]: Multi-shot sample depth
-<br>Maximum sample depth allowed in multi-shot acquisition mode
+<br>Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag
 </ul>
 
 

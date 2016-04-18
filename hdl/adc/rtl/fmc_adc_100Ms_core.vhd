@@ -188,7 +188,7 @@ architecture rtl of fmc_adc_100Ms_core is
       fmc_adc_core_shots_cnt_val_i                : in  std_logic_vector(15 downto 0);
       fmc_adc_core_trig_pos_i                     : in  std_logic_vector(31 downto 0);
       fmc_adc_core_fs_freq_i                      : in  std_logic_vector(31 downto 0);
-      fmc_adc_core_sr_deci_o                      : out std_logic_vector(31 downto 0);
+      fmc_adc_core_sr_undersample_o                      : out std_logic_vector(31 downto 0);
       fmc_adc_core_pre_samples_o                  : out std_logic_vector(31 downto 0);
       fmc_adc_core_post_samples_o                 : out std_logic_vector(31 downto 0);
       fmc_adc_core_samples_cnt_i                  : in  std_logic_vector(31 downto 0);
@@ -347,10 +347,10 @@ architecture rtl of fmc_adc_100Ms_core is
   signal int_trig_over_thres_filt_tst : std_logic_vector(15 downto 0);
   signal trig_tst                     : std_logic_vector(15 downto 0);
 
-  -- Decimation
-  signal decim_factor : std_logic_vector(31 downto 0);
-  signal decim_cnt    : unsigned(31 downto 0);
-  signal decim_en     : std_logic;
+  -- Under-sampling
+  signal undersample_factor : std_logic_vector(31 downto 0);
+  signal undersample_cnt    : unsigned(31 downto 0);
+  signal undersample_en     : std_logic;
 
   -- Sync FIFO (from fs_clk to sys_clk_i)
   signal sync_fifo_din   : std_logic_vector(64 downto 0);
@@ -765,7 +765,7 @@ begin
       fmc_adc_core_shots_cnt_val_i                => remaining_shots,
       fmc_adc_core_trig_pos_i                     => trig_addr,
       fmc_adc_core_fs_freq_i                      => fs_freq,
-      fmc_adc_core_sr_deci_o                      => decim_factor,
+      fmc_adc_core_sr_undersample_o                      => undersample_factor,
       fmc_adc_core_pre_samples_o                  => pre_trig_value,
       fmc_adc_core_post_samples_o                 => post_trig_value,
       fmc_adc_core_samples_cnt_i                  => std_logic_vector(samples_cnt),
@@ -936,27 +936,27 @@ begin
   end process p_trig_delay;
 
   ------------------------------------------------------------------------------
-  -- Samples decimation and trigger alignment
-  --    When the decimantion is enabled, if the trigger occurs between two
+  -- Under-sampling and trigger alignment
+  --    When under-sampling is enabled, if the trigger occurs between two
   --    samples it will be realigned to the next sample
   ------------------------------------------------------------------------------
-  p_deci_cnt : process (fs_clk, fs_rst_n)
+  p_undersample_cnt : process (fs_clk, fs_rst_n)
   begin
     if fs_rst_n = '0' then
-      decim_cnt <= to_unsigned(1, decim_cnt'length);
-      decim_en  <= '0';
+      undersample_cnt <= to_unsigned(1, undersample_cnt'length);
+      undersample_en  <= '0';
     elsif rising_edge(fs_clk) then
-      if decim_cnt = to_unsigned(0, decim_cnt'length) then
-        if decim_factor /= X"00000000" then
-          decim_cnt <= unsigned(decim_factor) - 1;
+      if undersample_cnt = to_unsigned(0, undersample_cnt'length) then
+        if undersample_factor /= X"00000000" then
+          undersample_cnt <= unsigned(undersample_factor) - 1;
         end if;
-        decim_en <= '1';
+        undersample_en <= '1';
       else
-        decim_cnt <= decim_cnt - 1;
-        decim_en  <= '0';
+        undersample_cnt <= undersample_cnt - 1;
+        undersample_en  <= '0';
       end if;
     end if;
-  end process p_deci_cnt;
+  end process p_undersample_cnt;
 
   p_trig_align : process (fs_clk, fs_rst_n)
   begin
@@ -965,7 +965,7 @@ begin
     elsif rising_edge(fs_clk) then
       if trig_d = '1' then
         trig_align <= '1';
-      elsif decim_en = '1' then
+      elsif undersample_en = '1' then
         trig_align <= '0';
       end if;
     end if;
@@ -1053,7 +1053,7 @@ begin
   --                 "000000000000000" & serdes_synced &
   --                 "00000000" & serdes_out_fr;
 
-  sync_fifo_wr <= decim_en and serdes_synced and not(sync_fifo_full);
+  sync_fifo_wr <= undersample_en and serdes_synced and not(sync_fifo_full);
   sync_fifo_rd <= not(sync_fifo_empty);  -- read sync fifo as soon as data are available
 
 
