@@ -109,10 +109,11 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		}
 		break;
 	case ZFAT_POST:
-		if (!tmp_val) {
-			dev_err(dev, "post samples cannot be 0 (minimum 1)\n");
+		if (tmp_val < 2) {
+			dev_err(dev, "minimum post samples 2 (HW limitation)\n");
 			return -EINVAL;
 		}
+		tmp_val--;  /* Remove one sample for the trigger */
 		break;
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
@@ -163,9 +164,13 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 
 	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
 	switch (zattr->id) {
+	case ZFAT_POST:
+		(*usr_val)++; /* add the trigger sample */
+		break;
 	case ZFAT_DLY:
 		/* Add channel signal transmission delay */
 		*usr_val -= fa->trig_compensation;
+		break;
 	}
 
 	return 0;
@@ -339,12 +344,8 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	 * (4*32bits word) size should be 32bits word aligned
 	 * ti->nsamples is the sum of (pre-samp+ post-samp)*4chan
 	 * because it's the interleave channel.
-	 *
-	 * +FA_NCHAN because of the trigger samples (1 for each channel) which
-	 * will discard later on DMA done (Actually, we will discard the last
-	 * post-sample because we count the trigger sample as post-sample)
 	 */
-	size = (interleave->current_ctrl->ssize * (ti->nsamples + FA100M14B4C_NCHAN))
+	size = (interleave->current_ctrl->ssize * ti->nsamples)
 		+ FA_TRIG_TIMETAG_BYTES;
 	/* check if size is 32 bits word aligned: should be always the case */
 	if (size % 4) {

@@ -143,12 +143,8 @@ void zfad_dma_done(struct zio_cset *cset)
 		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_F] =
 								ztstamp.bins;
 
-		/*
-		 * resize the datalen, by removing the trigger tstamp and the
-		 * extra samples (trigger samples, 1 for each channel)
-		 */
-		block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES
-					- (ctrl->ssize * FA100M14B4C_NCHAN);
+		/* resize the datalen, by removing the trigger tstamp */
+		block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES;
 
 		/* update seq num */
 		ctrl->seq_num = i;
