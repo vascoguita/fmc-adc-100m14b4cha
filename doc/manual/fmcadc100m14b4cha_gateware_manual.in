@@ -265,17 +265,18 @@ Below is a description of the fields and their content in the fmc-adc design on 
       vendor_id = 0x0000CE42 (CERN vendor ID)@*
       device_id = 0x47C786A2 (echo "spec_fmc-adc-100m14b4cha"|md5sum|cut -c1-8) @*
       version   = [31:16]=major, [15:0]=minor, bcd encoded@*
-      date      = release date, format yyyymmdd@*
+      date      = bcd encoded release date, format yyyymmdd@*
       name      = "spec_fmcadc100m14b"
 @item Top module repository url
-      repo_url = "git://ohwr.org/fmc-projects/fmc-adc-100m14b4cha.git"
+      repo_url = "fmc-projects/fmc-adc-100m14b4cha/fmc-adc-100m14b4cha-gw.git"@*
+      @i{(This is not the full URL, it lacks the "git://ohwr.org/" prefix due to the 63-byte limitation of the field.)}
 @item Synthesis tool information
       syn_module_name  = "spec_top_fmc_adc"@*
       syn_commit_id    = git log -1 --format="%H" | cut -c1-32 @*
       syn_tool_name    = "ISE"@*
       syn_tool_version = bcd encoded synthesis tool version@*
-      syn_date         = synthesis date, format yyyymmdd@*
-      syn_username     = "mcattin" (synthesised by)
+      syn_date         = bcd encoded synthesis date, format yyyymmdd@*
+      syn_username     = username of person who synthesised the design
 @end table
 
 
@@ -390,17 +391,18 @@ Below is a description of the fields and their content in the fmc-adc design on 
       vendor_id = 0x0000CE42 (CERN vendor ID)@*
       device_id = 0x47C786A2 (echo "svec_fmc-adc-100m14b4cha"|md5sum|cut -c1-8) @*
       version   = [31:16]=major, [15:0]=minor, bcd encoded@*
-      date      = release date, format yyyymmdd@*
+      date      = bcd encoded release date, format yyyymmdd@*
       name      = "svec_fmcadc100m14b"
 @item Top module repository url
-      repo_url = "git://ohwr.org/fmc-projects/fmc-adc-100m14b4cha.git"
+      repo_url = "fmc-projects/fmc-adc-100m14b4cha/fmc-adc-100m14b4cha-gw.git"@*
+      @i{(This is not the full URL, it lacks the "git://ohwr.org/" prefix due to the 63-byte limitation of the field.)}
 @item Synthesis tool information
       syn_module_name  = "svec_top_fmc_adc"@*
       syn_commit_id    = git log -1 --format="%H" | cut -c1-32 @*
       syn_tool_name    = "ISE"@*
       syn_tool_version = bcd encoded synthesis tool version@*
-      syn_date         = synthesis date, format yyyymmdd@*
-      syn_username     = "mcattin" (synthesised by)
+      syn_date         = bcd encoded synthesis date, format yyyymmdd@*
+      syn_username     = username of person who synthesised the design
 @end table
 
 @c --------------------------------------------------------------------------
