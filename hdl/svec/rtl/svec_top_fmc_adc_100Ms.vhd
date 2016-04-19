@@ -1,24 +1,23 @@
---------------------------------------------------------------------------------
--- CERN (BE-CO-HT)
--- Top level entity for Simple VME FMC Carrier
--- http://www.ohwr.org/projects/svec
---------------------------------------------------------------------------------
---
--- unit name: svec_top_fmc_adc_100Ms (svec_top_fmc_adc_100Ms.vhd)
---
--- author: Matthieu Cattin (matthieu.cattin@cern.ch)
---
--- date: 04-07-2013
---
--- version: see sdb_meta_pkg.vhd
---
--- description: Top entity of FMC ADC 100Ms/s design for SVEC board.
---
--- dependencies:
---
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Title      : FMC ADC 100Ms/s SVEC top-level
+-- Project    : FMC ADC 100M 14B 4CHA gateware
+-- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
+-------------------------------------------------------------------------------
+-- File       : svec_top_fmc_adc_100Ms.vhd
+-- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
+--            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
+-- Company    : CERN (BE-CO-HT)
+-- Created    : 2013-07-04
+-- Last update: 2016-04-19
+-- Standard   : VHDL'93/02
+-------------------------------------------------------------------------------
+-- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
+-- Carrier (SVEC). See also: http://www.ohwr.org/projects/svec
+-------------------------------------------------------------------------------
+-- Copyright (c) 2013-2016 CERN (BE-CO-HT)
+-------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- This source file is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by the
 -- Free Software Foundation; either version 2.1 of the License, or (at your
@@ -28,11 +27,14 @@
 -- See the GNU Lesser General Public License for more details. You should have
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
---------------------------------------------------------------------------------
--- last changes: see git log.
---------------------------------------------------------------------------------
--- TODO: - 
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author
+-- 2016-04-20  4.1      Dimitrios Lampridis
+-- 2014-04-25  4.0      Matthieu Cattin
+-- 2014-01-16  3.0      Matthieu Cattin
+-- 2013-07-29  1.0      Matthieu Cattin
+-------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
@@ -164,7 +166,7 @@ entity svec_top_fmc_adc_100Ms is
       ------------------------------------------
       -- FMC slot 0
       ------------------------------------------
-      adc0_ext_trigger_p_i : in std_logic;  -- External trigger
+      adc0_ext_trigger_p_i : in std_logic;        -- External trigger
       adc0_ext_trigger_n_i : in std_logic;
 
       adc0_dco_p_i  : in std_logic;                     -- ADC data clock
@@ -176,33 +178,33 @@ entity svec_top_fmc_adc_100Ms is
       adc0_outb_p_i : in std_logic_vector(3 downto 0);  -- ADC serial data (even bits)
       adc0_outb_n_i : in std_logic_vector(3 downto 0);
 
-      adc0_spi_din_i       : in  std_logic;  -- SPI data from FMC
-      adc0_spi_dout_o      : out std_logic;  -- SPI data to FMC
-      adc0_spi_sck_o       : out std_logic;  -- SPI clock
-      adc0_spi_cs_adc_n_o  : out std_logic;  -- SPI ADC chip select (active low)
+      adc0_spi_din_i       : in  std_logic;       -- SPI data from FMC
+      adc0_spi_dout_o      : out std_logic;       -- SPI data to FMC
+      adc0_spi_sck_o       : out std_logic;       -- SPI clock
+      adc0_spi_cs_adc_n_o  : out std_logic;       -- SPI ADC chip select (active low)
       adc0_spi_cs_dac1_n_o : out std_logic;  -- SPI channel 1 offset DAC chip select (active low)
       adc0_spi_cs_dac2_n_o : out std_logic;  -- SPI channel 2 offset DAC chip select (active low)
       adc0_spi_cs_dac3_n_o : out std_logic;  -- SPI channel 3 offset DAC chip select (active low)
       adc0_spi_cs_dac4_n_o : out std_logic;  -- SPI channel 4 offset DAC chip select (active low)
 
-      adc0_gpio_dac_clr_n_o : out std_logic;                     -- offset DACs clear (active low)
-      adc0_gpio_led_acq_o   : out std_logic;                     -- Mezzanine front panel power LED (PWR)
-      adc0_gpio_led_trig_o  : out std_logic;                     -- Mezzanine front panel trigger LED (TRIG)
+      adc0_gpio_dac_clr_n_o : out std_logic;      -- offset DACs clear (active low)
+      adc0_gpio_led_acq_o   : out std_logic;      -- Mezzanine front panel power LED (PWR)
+      adc0_gpio_led_trig_o  : out std_logic;      -- Mezzanine front panel trigger LED (TRIG)
       adc0_gpio_ssr_ch1_o   : out std_logic_vector(6 downto 0);  -- Channel 1 solid state relays control
       adc0_gpio_ssr_ch2_o   : out std_logic_vector(6 downto 0);  -- Channel 2 solid state relays control
       adc0_gpio_ssr_ch3_o   : out std_logic_vector(6 downto 0);  -- Channel 3 solid state relays control
       adc0_gpio_ssr_ch4_o   : out std_logic_vector(6 downto 0);  -- Channel 4 solid state relays control
-      adc0_gpio_si570_oe_o  : out std_logic;                     -- Si570 (programmable oscillator) output enable
+      adc0_gpio_si570_oe_o  : out std_logic;      -- Si570 (programmable oscillator) output enable
 
-      adc0_si570_scl_b : inout std_logic;  -- I2C bus clock (Si570)
-      adc0_si570_sda_b : inout std_logic;  -- I2C bus data (Si570)
+      adc0_si570_scl_b : inout std_logic;         -- I2C bus clock (Si570)
+      adc0_si570_sda_b : inout std_logic;         -- I2C bus data (Si570)
 
       adc0_one_wire_b : inout std_logic;  -- Mezzanine 1-wire interface (DS18B20 thermometer + unique ID)
 
       ------------------------------------------
       -- FMC slot 1
       ------------------------------------------
-      adc1_ext_trigger_p_i : in std_logic;  -- External trigger
+      adc1_ext_trigger_p_i : in std_logic;        -- External trigger
       adc1_ext_trigger_n_i : in std_logic;
 
       adc1_dco_p_i  : in std_logic;                     -- ADC data clock
@@ -214,39 +216,39 @@ entity svec_top_fmc_adc_100Ms is
       adc1_outb_p_i : in std_logic_vector(3 downto 0);  -- ADC serial data (even bits)
       adc1_outb_n_i : in std_logic_vector(3 downto 0);
 
-      adc1_spi_din_i       : in  std_logic;  -- SPI data from FMC
-      adc1_spi_dout_o      : out std_logic;  -- SPI data to FMC
-      adc1_spi_sck_o       : out std_logic;  -- SPI clock
-      adc1_spi_cs_adc_n_o  : out std_logic;  -- SPI ADC chip select (active low)
+      adc1_spi_din_i       : in  std_logic;       -- SPI data from FMC
+      adc1_spi_dout_o      : out std_logic;       -- SPI data to FMC
+      adc1_spi_sck_o       : out std_logic;       -- SPI clock
+      adc1_spi_cs_adc_n_o  : out std_logic;       -- SPI ADC chip select (active low)
       adc1_spi_cs_dac1_n_o : out std_logic;  -- SPI channel 1 offset DAC chip select (active low)
       adc1_spi_cs_dac2_n_o : out std_logic;  -- SPI channel 2 offset DAC chip select (active low)
       adc1_spi_cs_dac3_n_o : out std_logic;  -- SPI channel 3 offset DAC chip select (active low)
       adc1_spi_cs_dac4_n_o : out std_logic;  -- SPI channel 4 offset DAC chip select (active low)
 
-      adc1_gpio_dac_clr_n_o : out std_logic;                     -- offset DACs clear (active low)
-      adc1_gpio_led_acq_o   : out std_logic;                     -- Mezzanine front panel power LED (PWR)
-      adc1_gpio_led_trig_o  : out std_logic;                     -- Mezzanine front panel trigger LED (TRIG)
+      adc1_gpio_dac_clr_n_o : out std_logic;      -- offset DACs clear (active low)
+      adc1_gpio_led_acq_o   : out std_logic;      -- Mezzanine front panel power LED (PWR)
+      adc1_gpio_led_trig_o  : out std_logic;      -- Mezzanine front panel trigger LED (TRIG)
       adc1_gpio_ssr_ch1_o   : out std_logic_vector(6 downto 0);  -- Channel 1 solid state relays control
       adc1_gpio_ssr_ch2_o   : out std_logic_vector(6 downto 0);  -- Channel 2 solid state relays control
       adc1_gpio_ssr_ch3_o   : out std_logic_vector(6 downto 0);  -- Channel 3 solid state relays control
       adc1_gpio_ssr_ch4_o   : out std_logic_vector(6 downto 0);  -- Channel 4 solid state relays control
-      adc1_gpio_si570_oe_o  : out std_logic;                     -- Si570 (programmable oscillator) output enable
+      adc1_gpio_si570_oe_o  : out std_logic;      -- Si570 (programmable oscillator) output enable
 
-      adc1_si570_scl_b : inout std_logic;  -- I2C bus clock (Si570)
-      adc1_si570_sda_b : inout std_logic;  -- I2C bus data (Si570)
+      adc1_si570_scl_b : inout std_logic;         -- I2C bus clock (Si570)
+      adc1_si570_sda_b : inout std_logic;         -- I2C bus data (Si570)
 
       adc1_one_wire_b : inout std_logic;  -- Mezzanine 1-wire interface (DS18B20 thermometer + unique ID)
 
       ------------------------------------------
       -- FMC slot management
       ------------------------------------------
-      fmc0_prsnt_m2c_n_i : in    std_logic;  -- Mezzanine present (active low)
-      fmc0_scl_b         : inout std_logic;  -- Mezzanine system I2C clock (EEPROM)
-      fmc0_sda_b         : inout std_logic;  -- Mezzanine system I2C data (EEPROM)
+      fmc0_prsnt_m2c_n_i : in    std_logic;       -- Mezzanine present (active low)
+      fmc0_scl_b         : inout std_logic;       -- Mezzanine system I2C clock (EEPROM)
+      fmc0_sda_b         : inout std_logic;       -- Mezzanine system I2C data (EEPROM)
 
-      fmc1_prsnt_m2c_n_i : in    std_logic;  -- Mezzanine present (active low)
-      fmc1_scl_b         : inout std_logic;  -- Mezzanine system I2C clock (EEPROM)
-      fmc1_sda_b         : inout std_logic   -- Mezzanine system I2C data (EEPROM)
+      fmc1_prsnt_m2c_n_i : in    std_logic;       -- Mezzanine present (active low)
+      fmc1_scl_b         : inout std_logic;       -- Mezzanine system I2C clock (EEPROM)
+      fmc1_sda_b         : inout std_logic        -- Mezzanine system I2C data (EEPROM)
       );
 end svec_top_fmc_adc_100Ms;
 
@@ -337,48 +339,48 @@ architecture rtl of svec_top_fmc_adc_100Ms is
 
   -- Devices sdb description
   constant c_wb_svec_csr_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
+    abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
     wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                 -- 32-bit port granularity
+    wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
       addr_last   => x"000000000000001F",
       product     => (
-        vendor_id => x"000000000000CE42",  -- CERN
+        vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"00006603",
         version   => x"00000001",
         date      => x"20121116",
         name      => "WB-SVEC-CSR        ")));
 
   constant c_wb_ddr_dat_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
+    abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
     wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                 -- 32-bit port granularity
+    wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
       addr_last   => x"0000000000000FFF",
       product     => (
-        vendor_id => x"000000000000CE42",  -- CERN
+        vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"10006610",
         version   => x"00000001",
         date      => x"20130704",
         name      => "WB-DDR-Data-Access ")));
 
   constant c_wb_ddr_adr_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
+    abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
     wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                 -- 32-bit port granularity
+    wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
       addr_last   => x"0000000000000003",
       product     => (
-        vendor_id => x"000000000000CE42",  -- CERN
+        vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"10006611",
         version   => x"00000001",
         date      => x"20130704",
@@ -775,8 +777,8 @@ begin
     generic map (
       g_num_masters => c_NUM_WB_SLAVES,
       g_num_slaves  => c_NUM_WB_MASTERS,
-      g_registered  => true,
-      g_wraparound  => true,
+      g_registered  => TRUE,
+      g_wraparound  => TRUE,
       g_layout      => c_INTERCONNECT_LAYOUT,
       g_sdb_addr    => c_SDB_ADDRESS)
     port map (
@@ -1412,20 +1414,20 @@ begin
 
   ------------------------------------------------------------------------------
   -- Front panel LED control
-  --  
+  --
   ------------------------------------------------------------------------------
   cmp_led_controller : gc_bicolor_led_ctrl
     generic map(
       g_nb_column    => 4,
       g_nb_line      => 2,
-      g_clk_freq     => 125000000,      -- in Hz
-      g_refresh_rate => 250             -- in Hz
+      g_clk_freq     => 125000000,                -- in Hz
+      g_refresh_rate => 250                       -- in Hz
       )
     port map(
       rst_n_i => sys_rst_n,
       clk_i   => sys_clk_125,
 
-      led_intensity_i => "1100100",     -- in %
+      led_intensity_i => "1100100",               -- in %
 
       led_state_i => led_state,
 
@@ -1467,25 +1469,25 @@ begin
   -- LED 1 : VME access
   led_state(1 downto 0) <= c_led_green when vme_access = '1' else c_led_off;
 
-  -- LED 2 : 
+  -- LED 2 :
   led_state(3 downto 2) <= c_led_red;
 
-  -- LED 3 : 
+  -- LED 3 :
   led_state(5 downto 4) <= c_led_red_green;
 
-  -- LED 4 : 
+  -- LED 4 :
   led_state(7 downto 6) <= '0' & led_pwm;
 
-  -- LED 5 : 
+  -- LED 5 :
   led_state(9 downto 8) <= fmc0_trig_irq_led & '0';
 
-  -- LED 6 : 
+  -- LED 6 :
   led_state(11 downto 10) <= fmc0_acq_end_irq_led & '0';
 
-  -- LED 7 : 
+  -- LED 7 :
   led_state(13 downto 12) <= '0' & fmc_irq(0);
 
-  -- LED 8 : 
+  -- LED 8 :
   led_state(15 downto 14) <= '0' & irq_to_vme_sync;
 
   --led_state(15 downto 12) <= led_state_man(15 downto 12);

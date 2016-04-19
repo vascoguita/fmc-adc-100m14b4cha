@@ -1,26 +1,23 @@
---------------------------------------------------------------------------------
--- CERN (BE-CO-HT)
--- FMC ADC 100Ms/s core
--- http://www.ohwr.org/projects/fmc-adc-100m14b4cha
---------------------------------------------------------------------------------
---
--- unit name: fmc_adc_100Ms_core (fmc_adc_100Ms_core.vhd)
---
--- author: Matthieu Cattin (matthieu.cattin@cern.ch)
---         Theodor Stana (t.stana@cern.ch)
---
--- date: 28-02-2011
---
--- description: FMC ADC 100Ms/s core.
---
--- dependencies:
---
--- references:
---    [1] Xilinx UG175. FIFO Generator v6.2, July 23, 2010
---
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Title      : FMC ADC 100Ms/s core
+-- Project    : FMC ADC 100M 14B 4CHA gateware
+-- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
+-------------------------------------------------------------------------------
+-- File       : fmc_adc_100Ms_core.vhd
+-- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
+--              Theodor Stana <t.stana@cern.ch>
+--              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
+-- Company    : CERN (BE-CO-HT)
+-- Created    : 2011-02-24
+-- Last update: 2016-04-19
+-- Standard   : VHDL'93/02
+-------------------------------------------------------------------------------
+-- Description: FMC ADC 100Ms/s core.
+-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2016 CERN (BE-CO-HT)
+-------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- This source file is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by the
 -- Free Software Foundation; either version 2.1 of the License, or (at your
@@ -30,11 +27,16 @@
 -- See the GNU Lesser General Public License for more details. You should have
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
---------------------------------------------------------------------------------
--- last changes: see git log.
---------------------------------------------------------------------------------
--- TODO: - 
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author
+-- 2016-04-20  4.1      Dimitrios Lampridis
+-- 2014-04-25  4.0      Matthieu Cattin
+-- 2014-01-16  3.0      Matthieu Cattin
+-- 2013-07-29  2.0      Matthieu Cattin
+-- 2013-03-28  1.1      Matthieu Cattin
+-- 2013-03-11  1.0      Matthieu Cattin
+-------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
@@ -90,7 +92,7 @@ entity fmc_adc_100Ms_core is
     trigger_tag_i : t_timetag;
 
     -- FMC interface
-    ext_trigger_p_i : in std_logic;     -- External trigger
+    ext_trigger_p_i : in std_logic;               -- External trigger
     ext_trigger_n_i : in std_logic;
 
     adc_dco_p_i  : in std_logic;                     -- ADC data clock
@@ -102,14 +104,14 @@ entity fmc_adc_100Ms_core is
     adc_outb_p_i : in std_logic_vector(3 downto 0);  -- ADC serial data (even bits)
     adc_outb_n_i : in std_logic_vector(3 downto 0);
 
-    gpio_dac_clr_n_o : out std_logic;                     -- offset DACs clear (active low)
-    gpio_led_acq_o   : out std_logic;                     -- Mezzanine front panel power LED (PWR)
-    gpio_led_trig_o  : out std_logic;                     -- Mezzanine front panel trigger LED (TRIG)
+    gpio_dac_clr_n_o : out std_logic;             -- offset DACs clear (active low)
+    gpio_led_acq_o   : out std_logic;             -- Mezzanine front panel power LED (PWR)
+    gpio_led_trig_o  : out std_logic;             -- Mezzanine front panel trigger LED (TRIG)
     gpio_ssr_ch1_o   : out std_logic_vector(6 downto 0);  -- Channel 1 solid state relays control
     gpio_ssr_ch2_o   : out std_logic_vector(6 downto 0);  -- Channel 2 solid state relays control
     gpio_ssr_ch3_o   : out std_logic_vector(6 downto 0);  -- Channel 3 solid state relays control
     gpio_ssr_ch4_o   : out std_logic_vector(6 downto 0);  -- Channel 4 solid state relays control
-    gpio_si570_oe_o  : out std_logic                      -- Si570 (programmable oscillator) output enable
+    gpio_si570_oe_o  : out std_logic              -- Si570 (programmable oscillator) output enable
     );
 end fmc_adc_100Ms_core;
 
@@ -124,8 +126,8 @@ architecture rtl of fmc_adc_100Ms_core is
   component adc_serdes
     generic
       (
-        sys_w : integer := 9;                 -- width of the data for the system
-        dev_w : integer := 72                 -- width of the data for the device
+        sys_w : integer := 9;                     -- width of the data for the system
+        dev_w : integer := 72                     -- width of the data for the device
         );
     port
       (
@@ -136,13 +138,13 @@ architecture rtl of fmc_adc_100Ms_core is
         -- Data control
         BITSLIP             : in  std_logic;
         -- Clock and reset signals
-        CLK_IN              : in  std_logic;  -- Fast clock from PLL/MMCM
+        CLK_IN              : in  std_logic;      -- Fast clock from PLL/MMCM
         CLK_OUT             : out std_logic;
-        CLK_DIV_IN          : in  std_logic;  -- Slow clock from PLL/MMCM
+        CLK_DIV_IN          : in  std_logic;      -- Slow clock from PLL/MMCM
         LOCKED_IN           : in  std_logic;
         LOCKED_OUT          : out std_logic;
-        CLK_RESET           : in  std_logic;  -- Reset signal for Clock circuit
-        IO_RESET            : in  std_logic   -- Reset signal for IO circuit
+        CLK_RESET           : in  std_logic;      -- Reset signal for Clock circuit
+        IO_RESET            : in  std_logic       -- Reset signal for IO circuit
         );
   end component adc_serdes;
 
@@ -188,7 +190,7 @@ architecture rtl of fmc_adc_100Ms_core is
       fmc_adc_core_shots_cnt_val_i                : in  std_logic_vector(15 downto 0);
       fmc_adc_core_trig_pos_i                     : in  std_logic_vector(31 downto 0);
       fmc_adc_core_fs_freq_i                      : in  std_logic_vector(31 downto 0);
-      fmc_adc_core_sr_undersample_o                      : out std_logic_vector(31 downto 0);
+      fmc_adc_core_sr_undersample_o               : out std_logic_vector(31 downto 0);
       fmc_adc_core_pre_samples_o                  : out std_logic_vector(31 downto 0);
       fmc_adc_core_post_samples_o                 : out std_logic_vector(31 downto 0);
       fmc_adc_core_samples_cnt_i                  : in  std_logic_vector(31 downto 0);
@@ -212,25 +214,25 @@ architecture rtl of fmc_adc_100Ms_core is
       fmc_adc_core_ch4_gain_val_o                 : out std_logic_vector(15 downto 0);
       fmc_adc_core_ch4_offset_val_o               : out std_logic_vector(15 downto 0);
       fmc_adc_core_ch4_sat_val_o                  : out std_logic_vector(14 downto 0);
-      fmc_adc_core_multi_depth_i                  : in  std_logic_vector(31 downto 0)); 
+      fmc_adc_core_multi_depth_i                  : in  std_logic_vector(31 downto 0));
   end component fmc_adc_100Ms_csr;
 
   component ext_pulse_sync
     generic(
-      g_MIN_PULSE_WIDTH : natural   := 2;      --! Minimum input pulse width
-                                               --! (in ns), must be >1 clk_i tick
-      g_CLK_FREQUENCY   : natural   := 40;     --! clk_i frequency (in MHz)
-      g_OUTPUT_POLARITY : std_logic := '1';    --! pulse_o polarity
-                                               --! (1=negative, 0=positive)
-      g_OUTPUT_RETRIG   : boolean   := false;  --! Retriggerable output monostable
-      g_OUTPUT_LENGTH   : natural   := 1       --! pulse_o lenght (in clk_i ticks)
+      g_MIN_PULSE_WIDTH : natural   := 2;         --! Minimum input pulse width
+      --! (in ns), must be >1 clk_i tick
+      g_CLK_FREQUENCY   : natural   := 40;        --! clk_i frequency (in MHz)
+      g_OUTPUT_POLARITY : std_logic := '1';       --! pulse_o polarity
+      --! (1=negative, 0=positive)
+      g_OUTPUT_RETRIG   : boolean   := FALSE;     --! Retriggerable output monostable
+      g_OUTPUT_LENGTH   : natural   := 1          --! pulse_o lenght (in clk_i ticks)
       );
     port (
-      rst_n_i          : in  std_logic;        --! Reset (active low)
-      clk_i            : in  std_logic;        --! Clock to synchronize pulse
-      input_polarity_i : in  std_logic;        --! Input pulse polarity (1=negative, 0=positive)
-      pulse_i          : in  std_logic;        --! Asynchronous input pulse
-      pulse_o          : out std_logic         --! Synchronized output pulse
+      rst_n_i          : in  std_logic;           --! Reset (active low)
+      clk_i            : in  std_logic;           --! Clock to synchronize pulse
+      input_polarity_i : in  std_logic;           --! Input pulse polarity (1=negative, 0=positive)
+      pulse_i          : in  std_logic;           --! Asynchronous input pulse
+      pulse_o          : out std_logic            --! Synchronized output pulse
       );
   end component ext_pulse_sync;
 
@@ -248,18 +250,18 @@ architecture rtl of fmc_adc_100Ms_core is
 
   component monostable
     generic(
-      g_INPUT_POLARITY  : std_logic := '1';    --! trigger_i polarity
-                                               --! ('0'=negative, 1=positive)
-      g_OUTPUT_POLARITY : std_logic := '1';    --! pulse_o polarity
-                                               --! ('0'=negative, 1=positive)
-      g_OUTPUT_RETRIG   : boolean   := false;  --! Retriggerable output monostable
-      g_OUTPUT_LENGTH   : natural   := 1       --! pulse_o lenght (in clk_i ticks)
+      g_INPUT_POLARITY  : std_logic := '1';       --! trigger_i polarity
+      --! ('0'=negative, 1=positive)
+      g_OUTPUT_POLARITY : std_logic := '1';       --! pulse_o polarity
+      --! ('0'=negative, 1=positive)
+      g_OUTPUT_RETRIG   : boolean   := FALSE;     --! Retriggerable output monostable
+      g_OUTPUT_LENGTH   : natural   := 1          --! pulse_o lenght (in clk_i ticks)
       );
     port (
-      rst_n_i   : in  std_logic;               --! Reset (active low)
-      clk_i     : in  std_logic;               --! Clock
-      trigger_i : in  std_logic;               --! Trigger input pulse
-      pulse_o   : out std_logic                --! Monostable output pulse
+      rst_n_i   : in  std_logic;                  --! Reset (active low)
+      clk_i     : in  std_logic;                  --! Clock
+      trigger_i : in  std_logic;                  --! Trigger input pulse
+      pulse_o   : out std_logic                   --! Monostable output pulse
       );
   end component monostable;
 
@@ -465,7 +467,7 @@ begin
     generic map(
       g_INPUT_POLARITY  => '1',
       g_OUTPUT_POLARITY => '1',
-      g_OUTPUT_RETRIG   => true,
+      g_OUTPUT_RETRIG   => TRUE,
       g_OUTPUT_LENGTH   => 12500000
       )
     port map(
@@ -481,7 +483,7 @@ begin
     generic map(
       g_INPUT_POLARITY  => '1',
       g_OUTPUT_POLARITY => '1',
-      g_OUTPUT_RETRIG   => true,
+      g_OUTPUT_RETRIG   => TRUE,
       g_OUTPUT_LENGTH   => 12500000
       )
     port map(
@@ -505,7 +507,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_dco_buf : IBUFDS
     generic map (
-      DIFF_TERM  => true,               -- Differential termination
+      DIFF_TERM  => TRUE,                         -- Differential termination
       IOSTANDARD => "LVDS_25")
     port map (
       I  => adc_dco_p_i,
@@ -516,9 +518,9 @@ begin
   cmp_dco_bufio : BUFIO2
     generic map (
       DIVIDE        => 1,
-      DIVIDE_BYPASS => true,
-      I_INVERT      => false,
-      USE_DOUBLER   => false)
+      DIVIDE_BYPASS => TRUE,
+      I_INVERT      => FALSE,
+      USE_DOUBLER   => FALSE)
     port map (
       I            => dco_clk_buf,
       IOCLK        => open,
@@ -573,7 +575,7 @@ begin
 
   cmp_fb_clk_bufio : BUFIO2FB
     generic map (
-      DIVIDE_BYPASS => true)
+      DIVIDE_BYPASS => TRUE)
     port map (
       I => clk_fb_buf,
       O => clk_fb
@@ -582,7 +584,7 @@ begin
   -- Sampinling clock frequency meter
   cmp_fs_freq : gc_frequency_meter
     generic map(
-      g_with_internal_timebase => true,
+      g_with_internal_timebase => TRUE,
       g_clk_sys_freq           => 125000000,
       g_counter_bits           => 32
       )
@@ -637,7 +639,7 @@ begin
       CLK_DIV_IN          => fs_clk,
       LOCKED_IN           => locked_in,
       LOCKED_OUT          => locked_out,
-      CLK_RESET           => '0',       -- unused
+      CLK_RESET           => '0',                 -- unused
       IO_RESET            => sys_rst
       );
 
@@ -703,7 +705,7 @@ begin
       bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
 
       -- Generate bitslip and synced signal
-      if(bitslip_sreg(bitslip_sreg'left) = '1') then
+      if(bitslip_sreg(bitslip_sreg'LEFT) = '1') then
         if(serdes_out_fr /= "00001111") then  -- use fr_n pattern (fr_p and fr_n are swapped on the adc mezzanine)
           serdes_auto_bitslip <= '1';
           serdes_synced       <= '0';
@@ -765,7 +767,7 @@ begin
       fmc_adc_core_shots_cnt_val_i                => remaining_shots,
       fmc_adc_core_trig_pos_i                     => trig_addr,
       fmc_adc_core_fs_freq_i                      => fs_freq,
-      fmc_adc_core_sr_undersample_o                      => undersample_factor,
+      fmc_adc_core_sr_undersample_o               => undersample_factor,
       fmc_adc_core_pre_samples_o                  => pre_trig_value,
       fmc_adc_core_post_samples_o                 => post_trig_value,
       fmc_adc_core_samples_cnt_i                  => std_logic_vector(samples_cnt),
@@ -825,11 +827,11 @@ begin
   -- External hardware trigger synchronization
   cmp_trig_sync : ext_pulse_sync
     generic map(
-      g_MIN_PULSE_WIDTH => 1,           -- clk_i ticks
-      g_CLK_FREQUENCY   => 100,         -- MHz
-      g_OUTPUT_POLARITY => '0',         -- positive pulse
-      g_OUTPUT_RETRIG   => false,
-      g_OUTPUT_LENGTH   => 1            -- clk_i tick
+      g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
+      g_CLK_FREQUENCY   => 100,                   -- MHz
+      g_OUTPUT_POLARITY => '0',                   -- positive pulse
+      g_OUTPUT_RETRIG   => FALSE,
+      g_OUTPUT_LENGTH   => 1                      -- clk_i tick
       )
     port map(
       rst_n_i          => fs_rst_n,
@@ -884,7 +886,7 @@ begin
   end process;
 
   int_trig <= int_trig_over_thres_filt and not(int_trig_over_thres_filt_d) when hw_trig_pol = '0' else  -- positive slope
-              not(int_trig_over_thres_filt) and int_trig_over_thres_filt_d;                             -- negative slope
+              not(int_trig_over_thres_filt) and int_trig_over_thres_filt_d;  -- negative slope
 
   -- Hardware trigger selection
   --    internal = adc data threshold
@@ -978,17 +980,17 @@ begin
     generic map (
       g_data_width             => 65,
       g_size                   => 16,
-      g_show_ahead             => false,
-      g_with_rd_empty          => true,
-      g_with_rd_full           => false,
-      g_with_rd_almost_empty   => false,
-      g_with_rd_almost_full    => false,
-      g_with_rd_count          => false,
-      g_with_wr_empty          => false,
-      g_with_wr_full           => true,
-      g_with_wr_almost_empty   => false,
-      g_with_wr_almost_full    => false,
-      g_with_wr_count          => false,
+      g_show_ahead             => FALSE,
+      g_with_rd_empty          => TRUE,
+      g_with_rd_full           => FALSE,
+      g_with_rd_almost_empty   => FALSE,
+      g_with_rd_almost_full    => FALSE,
+      g_with_rd_count          => FALSE,
+      g_with_wr_empty          => FALSE,
+      g_with_wr_full           => TRUE,
+      g_with_wr_almost_empty   => FALSE,
+      g_with_wr_almost_full    => FALSE,
+      g_with_wr_count          => FALSE,
       g_almost_empty_threshold => 0,
       g_almost_full_threshold  => 0
       )
@@ -997,7 +999,7 @@ begin
       clk_wr_i          => fs_clk,
       d_i               => sync_fifo_din,
       we_i              => sync_fifo_wr,
-      wr_empty_o        => open,        -- sync_fifo_empty,
+      wr_empty_o        => open,                  -- sync_fifo_empty,
       wr_full_o         => sync_fifo_full,
       wr_almost_empty_o => open,
       wr_almost_full_o  => open,
@@ -1014,7 +1016,7 @@ begin
 
   -- One clock cycle delay for the FIFO's VALID signal. Since the General Cores
   -- package does not offer the possibility to use the FWFT feature of the FIFOs,
-  -- we simulate the valid flag here according to Figure 4-7 in ref. [1].
+  -- we simulate the valid flag here according to Figure 4-7 in Xilinx UG175.
   p_sync_fifo_valid : process (sys_clk_i) is
   begin
     if rising_edge(sys_clk_i) then
@@ -1036,7 +1038,7 @@ begin
     if fs_rst_n = '0' then
       data_calibr_out_d <= (others => (others => '0'));
     elsif rising_edge(fs_clk) then
-      data_calibr_out_d <= data_calibr_out_d(data_calibr_out_d'left-1 downto 0) & data_calibr_out;
+      data_calibr_out_d <= data_calibr_out_d(data_calibr_out_d'LEFT-1 downto 0) & data_calibr_out;
     end if;
   end process p_data_delay;
 
@@ -1054,7 +1056,7 @@ begin
   --                 "00000000" & serdes_out_fr;
 
   sync_fifo_wr <= undersample_en and serdes_synced and not(sync_fifo_full);
-  sync_fifo_rd <= not(sync_fifo_empty);  -- read sync fifo as soon as data are available
+  sync_fifo_rd <= not(sync_fifo_empty);           -- read sync fifo as soon as data are available
 
 
   --============================================================================
@@ -1183,13 +1185,13 @@ begin
   -- TODO: because of a -yet to be fully understood- bug, acquisition produces
   -- corrupted samples when number_of_samples is exactly equal to multi_shot ram
   -- size. So for now, number_of_samples should be less than multi_shot ram size.
-  p_acq_cfg_ok: process (sys_clk_i)
+  p_acq_cfg_ok : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
       if sys_rst_n_i = '0' then
         acq_config_ok <= '0';
       elsif unsigned(post_trig_value) = to_unsigned(0, post_trig_value'length) then
-         acq_config_ok <= '0';
+        acq_config_ok <= '0';
       elsif unsigned(shots_value) = to_unsigned(0, shots_value'length) then
         acq_config_ok <= '0';
       elsif single_shot = '0' and
@@ -1398,9 +1400,9 @@ begin
     (
       g_data_width               => 64,
       g_size                     => g_multishot_ram_size,
-      g_with_byte_enable         => false,
+      g_with_byte_enable         => FALSE,
       g_addr_conflict_resolution => "read_first",
-      g_dual_clock               => false
+      g_dual_clock               => FALSE
       -- default values for the rest of the generics are okay
       )
     port map
@@ -1425,9 +1427,9 @@ begin
     (
       g_data_width               => 64,
       g_size                     => g_multishot_ram_size,
-      g_with_byte_enable         => false,
+      g_with_byte_enable         => FALSE,
       g_addr_conflict_resolution => "read_first",
-      g_dual_clock               => false
+      g_dual_clock               => FALSE
       -- default values for the rest of the generics are okay
       )
     port map
@@ -1479,12 +1481,12 @@ begin
     generic map (
       g_data_width             => 65,
       g_size                   => 256,
-      g_show_ahead             => false,
-      g_with_empty             => true,
-      g_with_full              => true,
-      g_with_almost_empty      => false,
-      g_with_almost_full       => false,
-      g_with_count             => false,
+      g_show_ahead             => FALSE,
+      g_with_empty             => TRUE,
+      g_with_full              => TRUE,
+      g_with_almost_empty      => FALSE,
+      g_with_almost_full       => FALSE,
+      g_with_count             => FALSE,
       g_almost_empty_threshold => 0,
       g_almost_full_threshold  => 0
       )
@@ -1585,7 +1587,7 @@ begin
       wb_ddr_stall_t <= '0';
     elsif rising_edge(wb_ddr_clk_i) then
 
-      if wb_ddr_fifo_valid = '1' then   --if (wb_ddr_fifo_valid = '1') and (wb_ddr_stall_i = '0') then
+      if wb_ddr_fifo_valid = '1' then  --if (wb_ddr_fifo_valid = '1') and (wb_ddr_stall_i = '0') then
         wb_ddr_stb_o <= '1';
         wb_ddr_adr_o <= "0000000" & std_logic_vector(ram_addr_cnt);
         if test_data_en = '1' then
@@ -1600,7 +1602,7 @@ begin
       if wb_ddr_fifo_valid = '1' then
         wb_ddr_cyc_o <= '1';
         wb_ddr_we_o  <= '1';
-        --elsif (wb_ddr_fifo_empty = '1') and (acq_end = '1') then
+      --elsif (wb_ddr_fifo_empty = '1') and (acq_end = '1') then
       elsif (wb_ddr_fifo_empty = '1') and (acq_fsm_state = "001") then
         wb_ddr_cyc_o <= '0';
         wb_ddr_we_o  <= '0';
