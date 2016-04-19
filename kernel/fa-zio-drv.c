@@ -122,6 +122,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 
 	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 	ZIO_PARAM_EXT("max-sample-mshot", ZIO_RO_PERM, ZFA_MULT_MAX_SAMP, 0),
+	ZIO_PARAM_EXT("sample-counter", ZIO_RO_PERM, ZFAT_CNT, 0),
 };
 
 #if 0 /* FIXME Unused until TLV control will be available */

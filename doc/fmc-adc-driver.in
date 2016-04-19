@@ -640,6 +640,13 @@ not described.
 
       This read-only attributes returns the measured sampling frequency
 
+@item sample-counter
+
+      Number of samples acquired on each channel during the last acquisition.
+      If queried while the acquisition is running you will get the number of
+      samples acquired till that moment. It can be used to evaluate the progress
+      of a slow acquisition.
+
 @end table
 
 
@@ -908,6 +915,7 @@ that ZIO framework can handle only 32bit unsigned integer.
      @item Cset @tab @code{rst-ch-offset} @tab wo @tab - @tab any
      @item Cset @tab @code{sample-decimation} @tab rw @tab 1 @tab [1;65535]
      @item Cset @tab @code{sample-frequency} @tab ro @tab - @tab -
+     @item Cset @tab @code{sample-counter} @tab ro @tab - @tab -
      @item Cset @tab @code{tstamp-base-s} @tab rw @tab - @tab -
      @item Cset @tab @code{tstamp-base-t} @tab rw @tab - @tab -
 
