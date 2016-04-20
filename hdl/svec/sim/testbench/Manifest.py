@@ -1,7 +1,9 @@
+sim_tool="modelsim"
+top_module="main"
 action = "simulation"
 target = "xilinx"
-
-vlog_opt="+incdir+../vme64x_bfm +incdir+../2048Mb_ddr3"
+syn_device = "xc6slx150t"
+include_dirs=["../vme64x_bfm", "../2048Mb_ddr3", "../../../ip_cores/general-cores/sim"]
 
 files = [ "main.sv",
           "../../../ip_cores/adc_sync_fifo.vhd",
@@ -21,3 +23,5 @@ modules = { "local" :  [ "../../rtl",
                       "git://ohwr.org/hdl-core-lib/vme64x-core.git::master"]}
 
 fetchto="../../../ip_cores"
+
+ctrls = ["bank4_64b_32b", "bank5_64b_32b"]

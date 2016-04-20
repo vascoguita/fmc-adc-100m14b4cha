@@ -67,6 +67,7 @@
 <span style="margin-left: 20px; ">3.31. <A href="#sect_3_31">Channel 4 gain calibration register</a></span><br/>
 <span style="margin-left: 20px; ">3.32. <A href="#sect_3_32">Channel 4 offset calibration register</a></span><br/>
 <span style="margin-left: 20px; ">3.33. <A href="#sect_3_33">Channel 4 saturation register</a></span><br/>
+<span style="margin-left: 20px; ">3.34. <A href="#sect_3_34">Multi-shot sample depth register</a></span><br/>
 <h3><a name="sect_1_0">1. Memory map summary</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
@@ -645,6 +646,23 @@ fmc_adc_core_ch4_sat
 </td>
 <td  class="td_code">
 CH4_SAT
+</td>
+</tr>
+<tr class="tr_even">
+<td  class="td_code">
+0x21
+</td>
+<td >
+REG
+</td>
+<td >
+<A href="#MULTI_DEPTH">Multi-shot sample depth register</a>
+</td>
+<td  class="td_code">
+fmc_adc_core_multi_depth
+</td>
+<td  class="td_code">
+MULTI_DEPTH
 </td>
 </tr>
 </table>
@@ -1461,7 +1479,7 @@ fmc_adc_core_fs_freq_i[31:0]
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_core_sr_deci_o[31:0]
+fmc_adc_core_sr_undersample_o[31:0]
 </td>
 <td  class="td_arrow_right">
 &rArr;
@@ -2638,6 +2656,57 @@ fmc_adc_core_ch4_sat_val_o[14:0]
 </td>
 <td  class="td_arrow_right">
 &rArr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+&nbsp;
+</td>
+<td  class="td_pblock_right">
+
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+<b>Multi-shot sample depth register:</b>
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_core_multi_depth_i[31:0]
+</td>
+<td  class="td_arrow_right">
+&lArr;
 </td>
 </tr>
 </table>
@@ -5097,7 +5166,7 @@ SR
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[31:24]
+UNDERSAMPLE[31:24]
 </td>
 <td >
 
@@ -5151,7 +5220,7 @@ DECI[31:24]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[23:16]
+UNDERSAMPLE[23:16]
 </td>
 <td >
 
@@ -5205,7 +5274,7 @@ DECI[23:16]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[15:8]
+UNDERSAMPLE[15:8]
 </td>
 <td >
 
@@ -5259,7 +5328,7 @@ DECI[15:8]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-DECI[7:0]
+UNDERSAMPLE[7:0]
 </td>
 <td >
 
@@ -5286,9 +5355,9 @@ DECI[7:0]
 </table>
 <ul>
 <li><b>
-DECI
-</b>[<i>read/write</i>]: Sample rate decimation
-<br>Decimation factor. Takes one sample every N samples and discards the others (N = decimation factor).
+UNDERSAMPLE
+</b>[<i>read/write</i>]: Undersampling ratio
+<br>Undersampling ratio. Takes one sample every N samples and discards the others (N = undersampling ratio).
 </ul>
 <a name="PRE_SAMPLES"></a>
 <h3><a name="sect_3_11">3.11. Pre-trigger samples</a></h3>
@@ -11223,6 +11292,264 @@ VAL[7:0]
 VAL
 </b>[<i>read/write</i>]: Saturation value for channel 4
 <br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+</ul>
+<a name="MULTI_DEPTH"></a>
+<h3><a name="sect_3_34">3.34. Multi-shot sample depth register</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td >
+<b>HW prefix: </b>
+</td>
+<td  class="td_code">
+fmc_adc_core_multi_depth
+</td>
+</tr>
+<tr>
+<td >
+<b>HW address: </b>
+</td>
+<td  class="td_code">
+0x21
+</td>
+</tr>
+<tr>
+<td >
+<b>C prefix: </b>
+</td>
+<td  class="td_code">
+MULTI_DEPTH
+</td>
+</tr>
+<tr>
+<td >
+<b>C offset: </b>
+</td>
+<td  class="td_code">
+0x84
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+31
+</td>
+<td  class="td_bit">
+30
+</td>
+<td  class="td_bit">
+29
+</td>
+<td  class="td_bit">
+28
+</td>
+<td  class="td_bit">
+27
+</td>
+<td  class="td_bit">
+26
+</td>
+<td  class="td_bit">
+25
+</td>
+<td  class="td_bit">
+24
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+MULTI_DEPTH[31:24]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+23
+</td>
+<td  class="td_bit">
+22
+</td>
+<td  class="td_bit">
+21
+</td>
+<td  class="td_bit">
+20
+</td>
+<td  class="td_bit">
+19
+</td>
+<td  class="td_bit">
+18
+</td>
+<td  class="td_bit">
+17
+</td>
+<td  class="td_bit">
+16
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+MULTI_DEPTH[23:16]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+15
+</td>
+<td  class="td_bit">
+14
+</td>
+<td  class="td_bit">
+13
+</td>
+<td  class="td_bit">
+12
+</td>
+<td  class="td_bit">
+11
+</td>
+<td  class="td_bit">
+10
+</td>
+<td  class="td_bit">
+9
+</td>
+<td  class="td_bit">
+8
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+MULTI_DEPTH[15:8]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+7
+</td>
+<td  class="td_bit">
+6
+</td>
+<td  class="td_bit">
+5
+</td>
+<td  class="td_bit">
+4
+</td>
+<td  class="td_bit">
+3
+</td>
+<td  class="td_bit">
+2
+</td>
+<td  class="td_bit">
+1
+</td>
+<td  class="td_bit">
+0
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+MULTI_DEPTH[7:0]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<ul>
+<li><b>
+MULTI_DEPTH
+</b>[<i>read-only</i>]: Multi-shot sample depth
+<br>Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag
 </ul>
 
 

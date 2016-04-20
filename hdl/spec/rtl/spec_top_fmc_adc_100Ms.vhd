@@ -1,24 +1,23 @@
---------------------------------------------------------------------------------
--- CERN (BE-CO-HT)
--- Top level entity for Simple PCIe FMC Carrier
--- http://www.ohwr.org/projects/spec
---------------------------------------------------------------------------------
---
--- unit name: spec_top_fmc_adc_100Ms (spec_top_fmc_adc_100Ms.vhd)
---
--- author: Matthieu Cattin (matthieu.cattin@cern.ch)
---
--- date: 24-02-2011
---
--- version: see sdb_meta_pkg.vhd
---
--- description: Top entity of FMC ADC 100Ms/s design for SPEC board.
---
--- dependencies:
---
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Title      : FMC ADC 100Ms/s SPEC top-level
+-- Project    : FMC ADC 100M 14B 4CHA gateware
+-- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
+-------------------------------------------------------------------------------
+-- File       : spec_top_fmc_adc_100Ms.vhd
+-- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
+--            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
+-- Company    : CERN (BE-CO-HT)
+-- Created    : 2011-02-24
+-- Last update: 2016-04-19
+-- Standard   : VHDL'93/02
+-------------------------------------------------------------------------------
+-- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
+-- Carrier (SPEC). See also: http://www.ohwr.org/projects/spec
+-------------------------------------------------------------------------------
+-- Copyright (c) 2011-2016 CERN (BE-CO-HT)
+-------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- This source file is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by the
 -- Free Software Foundation; either version 2.1 of the License, or (at your
@@ -28,11 +27,16 @@
 -- See the GNU Lesser General Public License for more details. You should have
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
---------------------------------------------------------------------------------
--- last changes: see git log.
---------------------------------------------------------------------------------
--- TODO: - 
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author
+-- 2016-04-20  4.1      Dimitrios Lampridis
+-- 2014-04-25  4.0      Matthieu Cattin
+-- 2014-01-16  3.0      Matthieu Cattin
+-- 2013-07-29  2.0      Matthieu Cattin
+-- 2013-03-28  1.1      Matthieu Cattin
+-- 2013-03-11  1.0      Matthieu Cattin
+-------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
@@ -58,11 +62,11 @@ entity spec_top_fmc_adc_100Ms is
   port
     (
       -- Local oscillator
-      clk20_vcxo_i : in std_logic;      -- 20MHz VCXO clock
+      clk20_vcxo_i : in std_logic;                -- 20MHz VCXO clock
 
       -- DAC interface (20MHz and 25MHz VCXO)
-      pll25dac_sync_n_o : out std_logic;  -- 25MHz VCXO
-      pll20dac_sync_n_o : out std_logic;  -- 20MHz VCXO
+      pll25dac_sync_n_o : out std_logic;          -- 25MHz VCXO
+      pll20dac_sync_n_o : out std_logic;          -- 20MHz VCXO
       plldac_din_o      : out std_logic;
       plldac_sclk_o     : out std_logic;
 
@@ -81,28 +85,28 @@ entity spec_top_fmc_adc_100Ms is
       carrier_one_wire_b : inout std_logic;
 
       -- GN4124 interface
-      L_CLKp       : in    std_logic;                      -- Local bus clock (frequency set in GN4124 config registers)
-      L_CLKn       : in    std_logic;                      -- Local bus clock (frequency set in GN4124 config registers)
-      L_RST_N      : in    std_logic;                      -- Reset from GN4124 (RSTOUT18_N)
-      P2L_RDY      : out   std_logic;                      -- Rx Buffer Full Flag
-      P2L_CLKn     : in    std_logic;                      -- Receiver Source Synchronous Clock-
-      P2L_CLKp     : in    std_logic;                      -- Receiver Source Synchronous Clock+
+      L_CLKp       : in    std_logic;  -- Local bus clock (frequency set in GN4124 config registers)
+      L_CLKn       : in    std_logic;  -- Local bus clock (frequency set in GN4124 config registers)
+      L_RST_N      : in    std_logic;             -- Reset from GN4124 (RSTOUT18_N)
+      P2L_RDY      : out   std_logic;             -- Rx Buffer Full Flag
+      P2L_CLKn     : in    std_logic;             -- Receiver Source Synchronous Clock-
+      P2L_CLKp     : in    std_logic;             -- Receiver Source Synchronous Clock+
       P2L_DATA     : in    std_logic_vector(15 downto 0);  -- Parallel receive data
-      P2L_DFRAME   : in    std_logic;                      -- Receive Frame
-      P2L_VALID    : in    std_logic;                      -- Receive Data Valid
+      P2L_DFRAME   : in    std_logic;             -- Receive Frame
+      P2L_VALID    : in    std_logic;             -- Receive Data Valid
       P_WR_REQ     : in    std_logic_vector(1 downto 0);   -- PCIe Write Request
       P_WR_RDY     : out   std_logic_vector(1 downto 0);   -- PCIe Write Ready
-      RX_ERROR     : out   std_logic;                      -- Receive Error
+      RX_ERROR     : out   std_logic;             -- Receive Error
       L2P_DATA     : out   std_logic_vector(15 downto 0);  -- Parallel transmit data
-      L2P_DFRAME   : out   std_logic;                      -- Transmit Data Frame
-      L2P_VALID    : out   std_logic;                      -- Transmit Data Valid
-      L2P_CLKn     : out   std_logic;                      -- Transmitter Source Synchronous Clock-
-      L2P_CLKp     : out   std_logic;                      -- Transmitter Source Synchronous Clock+
-      L2P_EDB      : out   std_logic;                      -- Packet termination and discard
-      L2P_RDY      : in    std_logic;                      -- Tx Buffer Full Flag
+      L2P_DFRAME   : out   std_logic;             -- Transmit Data Frame
+      L2P_VALID    : out   std_logic;             -- Transmit Data Valid
+      L2P_CLKn     : out   std_logic;             -- Transmitter Source Synchronous Clock-
+      L2P_CLKp     : out   std_logic;             -- Transmitter Source Synchronous Clock+
+      L2P_EDB      : out   std_logic;             -- Packet termination and discard
+      L2P_RDY      : in    std_logic;             -- Tx Buffer Full Flag
       L_WR_RDY     : in    std_logic_vector(1 downto 0);   -- Local-to-PCIe Write
       P_RD_D_RDY   : in    std_logic_vector(1 downto 0);   -- PCIe-to-Local Read Response Data Ready
-      TX_ERROR     : in    std_logic;                      -- Transmit Error
+      TX_ERROR     : in    std_logic;             -- Transmit Error
       VC_RDY       : in    std_logic_vector(1 downto 0);   -- Channel ready
       GPIO         : inout std_logic_vector(1 downto 0);   -- GPIO[0] -> GN4124 GPIO8
                                                            -- GPIO[1] -> GN4124 GPIO9
@@ -128,7 +132,7 @@ entity spec_top_fmc_adc_100Ms is
       DDR3_RZQ     : inout std_logic;
 
       -- FMC slot
-      adc0_ext_trigger_p_i : in std_logic;  -- External trigger
+      adc0_ext_trigger_p_i : in std_logic;        -- External trigger
       adc0_ext_trigger_n_i : in std_logic;
 
       adc0_dco_p_i  : in std_logic;                     -- ADC data clock
@@ -140,34 +144,34 @@ entity spec_top_fmc_adc_100Ms is
       adc0_outb_p_i : in std_logic_vector(3 downto 0);  -- ADC serial data (even bits)
       adc0_outb_n_i : in std_logic_vector(3 downto 0);
 
-      adc0_spi_din_i       : in  std_logic;  -- SPI data from FMC
-      adc0_spi_dout_o      : out std_logic;  -- SPI data to FMC
-      adc0_spi_sck_o       : out std_logic;  -- SPI clock
-      adc0_spi_cs_adc_n_o  : out std_logic;  -- SPI ADC chip select (active low)
+      adc0_spi_din_i       : in  std_logic;       -- SPI data from FMC
+      adc0_spi_dout_o      : out std_logic;       -- SPI data to FMC
+      adc0_spi_sck_o       : out std_logic;       -- SPI clock
+      adc0_spi_cs_adc_n_o  : out std_logic;       -- SPI ADC chip select (active low)
       adc0_spi_cs_dac1_n_o : out std_logic;  -- SPI channel 1 offset DAC chip select (active low)
       adc0_spi_cs_dac2_n_o : out std_logic;  -- SPI channel 2 offset DAC chip select (active low)
       adc0_spi_cs_dac3_n_o : out std_logic;  -- SPI channel 3 offset DAC chip select (active low)
       adc0_spi_cs_dac4_n_o : out std_logic;  -- SPI channel 4 offset DAC chip select (active low)
 
-      adc0_gpio_dac_clr_n_o : out std_logic;                     -- offset DACs clear (active low)
-      adc0_gpio_led_acq_o   : out std_logic;                     -- Mezzanine front panel power LED (PWR)
-      adc0_gpio_led_trig_o  : out std_logic;                     -- Mezzanine front panel trigger LED (TRIG)
+      adc0_gpio_dac_clr_n_o : out std_logic;      -- offset DACs clear (active low)
+      adc0_gpio_led_acq_o   : out std_logic;      -- Mezzanine front panel power LED (PWR)
+      adc0_gpio_led_trig_o  : out std_logic;      -- Mezzanine front panel trigger LED (TRIG)
       adc0_gpio_ssr_ch1_o   : out std_logic_vector(6 downto 0);  -- Channel 1 solid state relays control
       adc0_gpio_ssr_ch2_o   : out std_logic_vector(6 downto 0);  -- Channel 2 solid state relays control
       adc0_gpio_ssr_ch3_o   : out std_logic_vector(6 downto 0);  -- Channel 3 solid state relays control
       adc0_gpio_ssr_ch4_o   : out std_logic_vector(6 downto 0);  -- Channel 4 solid state relays control
-      adc0_gpio_si570_oe_o  : out std_logic;                     -- Si570 (programmable oscillator) output enable
+      adc0_gpio_si570_oe_o  : out std_logic;      -- Si570 (programmable oscillator) output enable
 
-      adc0_si570_scl_b : inout std_logic;  -- I2C bus clock (Si570)
-      adc0_si570_sda_b : inout std_logic;  -- I2C bus data (Si570)
+      adc0_si570_scl_b : inout std_logic;         -- I2C bus clock (Si570)
+      adc0_si570_sda_b : inout std_logic;         -- I2C bus data (Si570)
 
       adc0_one_wire_b : inout std_logic;  -- Mezzanine 1-wire interface (DS18B20 thermometer + unique ID)
 
       -- FMC slot management
-      fmc0_prsnt_m2c_n_i : in std_logic;  -- Mezzanine present (active low)
+      fmc0_prsnt_m2c_n_i : in std_logic;          -- Mezzanine present (active low)
 
-      fmc0_sys_scl_b : inout std_logic;  -- Mezzanine system I2C clock (EEPROM)
-      fmc0_sys_sda_b : inout std_logic   -- Mezzanine system I2C data (EEPROM)
+      fmc0_sys_scl_b : inout std_logic;           -- Mezzanine system I2C clock (EEPROM)
+      fmc0_sys_sda_b : inout std_logic            -- Mezzanine system I2C data (EEPROM)
       );
 end spec_top_fmc_adc_100Ms;
 
@@ -242,58 +246,58 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   constant c_MASTER_GENNUM : integer := 0;
 
   -- Wishbone slave(s)
-  constant c_WB_SLAVE_DMA      : integer := 0;  -- DMA controller in the Gennum core
-  constant c_WB_SLAVE_ONEWIRE  : integer := 1;  -- Carrier onewire interface
-  constant c_WB_SLAVE_SPEC_CSR : integer := 2;  -- SPEC control and status registers
-  constant c_WB_SLAVE_VIC      : integer := 3;  -- Vectored interrupt controller
-  constant c_WB_SLAVE_DMA_EIC  : integer := 4;  -- DMA interrupt controller
-  constant c_WB_SLAVE_FMC_ADC  : integer := 5;  -- FMC ADC mezzanine
+  constant c_WB_SLAVE_DMA      : integer := 0;    -- DMA controller in the Gennum core
+  constant c_WB_SLAVE_ONEWIRE  : integer := 1;    -- Carrier onewire interface
+  constant c_WB_SLAVE_SPEC_CSR : integer := 2;    -- SPEC control and status registers
+  constant c_WB_SLAVE_VIC      : integer := 3;    -- Vectored interrupt controller
+  constant c_WB_SLAVE_DMA_EIC  : integer := 4;    -- DMA interrupt controller
+  constant c_WB_SLAVE_FMC_ADC  : integer := 5;    -- FMC ADC mezzanine
 
   -- Devices sdb description
   constant c_wb_dma_ctrl_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
+    abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
     wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                 -- 32-bit port granularity
+    wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
       addr_last   => x"000000000000003F",
       product     => (
-        vendor_id => x"000000000000CE42",  -- CERN
+        vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"00000601",
         version   => x"00000001",
         date      => x"20121116",
         name      => "WB-DMA.Control     ")));
 
   constant c_wb_spec_csr_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
+    abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
     wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                 -- 32-bit port granularity
+    wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
       addr_last   => x"000000000000001F",
       product     => (
-        vendor_id => x"000000000000CE42",  -- CERN
+        vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"00000603",
         version   => x"00000001",
         date      => x"20121116",
         name      => "WB-SPEC-CSR        ")));
 
   constant c_wb_dma_eic_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
+    abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
     wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                 -- 32-bit port granularity
+    wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
       addr_last   => x"000000000000000F",
       product     => (
-        vendor_id => x"000000000000CE42",  -- CERN
-        device_id => x"d5735ab4",          -- echo "WB-DMA.EIC         " | md5sum | cut -c1-8
+        vendor_id => x"000000000000CE42",         -- CERN
+        device_id => x"d5735ab4",                 -- echo "WB-DMA.EIC         " | md5sum | cut -c1-8
         version   => x"00000001",
         date      => x"20131204",
         name      => "WB-DMA.EIC         ")));
@@ -522,13 +526,13 @@ begin
   ------------------------------------------------------------------------------
   cmp_l_clk_buf : IBUFDS
     generic map (
-      DIFF_TERM    => false,            -- Differential Termination
-      IBUF_LOW_PWR => true,             -- Low power (TRUE) vs. performance (FALSE) setting for referenced I/O standards
+      DIFF_TERM    => FALSE,                      -- Differential Termination
+      IBUF_LOW_PWR => TRUE,  -- Low power (TRUE) vs. performance (FALSE) setting for referenced I/O standards
       IOSTANDARD   => "DEFAULT")
     port map (
-      O  => l_clk,                      -- Buffer output
-      I  => L_CLKp,                     -- Diff_p buffer input (connect directly to top-level port)
-      IB => L_CLKn                      -- Diff_n buffer input (connect directly to top-level port)
+      O  => l_clk,                                -- Buffer output
+      I  => L_CLKp,          -- Diff_p buffer input (connect directly to top-level port)
+      IB => L_CLKn           -- Diff_n buffer input (connect directly to top-level port)
       );
 
   ------------------------------------------------------------------------------
@@ -653,8 +657,8 @@ begin
     generic map (
       g_num_masters => c_NUM_WB_SLAVES,
       g_num_slaves  => c_NUM_WB_MASTERS,
-      g_registered  => true,
-      g_wraparound  => true,
+      g_registered  => TRUE,
+      g_wraparound  => TRUE,
       g_layout      => c_INTERCONNECT_LAYOUT,
       g_sdb_addr    => c_SDB_ADDRESS)
     port map (
@@ -814,7 +818,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
-      g_multishot_ram_size => 2048,
+      g_multishot_ram_size => 8192,
       g_carrier_type       => "SPEC"
       )
     port map(
@@ -992,7 +996,7 @@ begin
   ------------------------------------------------------------------------------
   -- Assign unused outputs
   ------------------------------------------------------------------------------
-  GPIO(1) <= '0';                       -- connection to GN4124
+  GPIO(1) <= '0';                                 -- connection to GN4124
 
   ------------------------------------------------------------------------------
   -- FPGA loaded led (heart beat)

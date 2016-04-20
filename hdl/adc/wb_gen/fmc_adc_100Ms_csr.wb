@@ -345,9 +345,9 @@ peripheral {
     prefix = "sr";
 
     field {
-      name = "Sample rate decimation";
-      description = "Decimation factor. Takes one sample every N samples and discards the others (N = decimation factor).";
-      prefix = "deci";
+      name = "Undersampling ratio";
+      description = "Undersampling ratio. Takes one sample every N samples and discards the others (N = undersampling ratio).";
+      prefix = "undersample";
       type = SLV;
       size = 32;
       access_bus = READ_WRITE;
@@ -920,6 +920,20 @@ peripheral {
       access_dev = READ_ONLY;
     };
 ]]
+  };
+
+  reg {
+    name = "Multi-shot sample depth register";
+    prefix = "multi_depth";
+
+    field {
+      name = "Multi-shot sample depth";
+      description = "Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag";
+      type = SLV;
+      size = 32;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
   };
 
 };

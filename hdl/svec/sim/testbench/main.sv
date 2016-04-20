@@ -117,7 +117,9 @@ module main;
 
       int i, result;
 
-      CBusAccessor_VME64x acc = new(VME.master);
+      CBusAccessor_VME64x acc;
+      
+      acc = new(VME.master);
 
 
       #20us;

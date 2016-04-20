@@ -133,6 +133,10 @@ Channel 4 offset calibration register
 REG @tab
 @code{ch4_sat} @tab
 Channel 4 saturation register
+@item @code{0x84} @tab
+REG @tab
+@code{multi_depth} @tab
+Multi-shot sample depth register
 @end multitable 
 @regsection @code{ctl} - Control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -352,13 +356,13 @@ Sampling clock frequency
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
 @item @code{31...0}
 @tab R/W @tab
-@code{DECI}
+@code{UNDERSAMPLE}
 @tab @code{0} @tab 
-Sample rate decimation
+Undersampling ratio
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{deci} @tab Decimation factor. Takes one sample every N samples and discards the others (N = decimation factor).
+@item @code{undersample} @tab Undersampling ratio. Takes one sample every N samples and discards the others (N = undersampling ratio).
 @end multitable
 @regsection @code{pre_samples} - Pre-trigger samples
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -658,4 +662,17 @@ Saturation value for channel 4
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+@end multitable
+@regsection @code{multi_depth} - Multi-shot sample depth register
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{31...0}
+@tab R/O @tab
+@code{MULTI_DEPTH}
+@tab @code{X} @tab 
+Multi-shot sample depth
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{multi_depth} @tab Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag
 @end multitable
