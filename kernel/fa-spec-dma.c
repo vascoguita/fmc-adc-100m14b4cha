@@ -113,7 +113,7 @@ int fa_spec_dma_start(struct zio_cset *cset)
 	 * FIXME when official ZIO has multishot and DMA
 	 */
 	for (i = 0; i < fa->zdma->n_blocks; ++i)
-		fa->zdma->sg_blocks[i].dev_mem_off = zfad_block->dev_mem_off;
+		fa->zdma->sg_blocks[i].dev_mem_off = zfad_block[i].dev_mem_off;
 
 	err = zio_dma_map_sg(fa->zdma, sizeof(struct gncore_dma_item),
 			     gncore_dma_fill);
