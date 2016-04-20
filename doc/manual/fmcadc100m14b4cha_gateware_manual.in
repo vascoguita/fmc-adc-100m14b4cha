@@ -577,7 +577,7 @@ The system clock ticks counter is also called coarse counter.
 These two counters are accessible in read/write via a Wishbone interface.
 
 For example, the host computer can use the OS time to set the seconds counter and simply reset the coarse counter.
-It is planned, in a later release, to set the time-tagging core counters using the White Rabbit core, for more details @pxref{Missing Features and Improvements}.
+It is planned, in a later release, to set the time-tagging core counters using the White Rabbit core.
 
 A time-tag is made of four 32-bit words; meta-data, seconds, coarse, fine.
 The fine field is always set to zero and the meta-data register does not contain useful information, only random data for debugging purposes.
