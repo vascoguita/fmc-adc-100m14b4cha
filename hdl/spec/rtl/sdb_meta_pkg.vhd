@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-03-11
--- Last update: 2016-04-19
+-- Last update: 2016-04-20
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: SDB meta-information for the FMC ADC 100Ms/s design for SPEC.
@@ -61,7 +61,7 @@ package sdb_meta_pkg is
     syn_module_name  => "spec_top_fmc_adc",
     -- Commit ID (hex string, 128-bit = 32 char)
     -- git log -1 --format="%H" | cut -c1-32
-    syn_commit_id    => "26749f0a1873c215abb33942a8a335db",
+    syn_commit_id    => "a37d85ff17a01a013e48e028abfb18c0",
     -- Synthesis tool name (string, 8 char)
     syn_tool_name    => "ISE     ",
     -- Synthesis tool version (bcd encoded, 32-bit)
