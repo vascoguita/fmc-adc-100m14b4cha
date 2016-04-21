@@ -401,40 +401,6 @@ struct zfad_block {
 /* Global variable exported by fa-zio-trg.c */
 extern struct zio_trigger_type zfat_type;
 
-static inline int zfat_overflow_detection(struct zio_ti *ti)
-{
-	struct fa_dev *fa = ti->cset->zdev->priv_d;
-	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
-	uint32_t nshot_t, nsamples;
-	size_t shot_size;
-
-	if (ti->cset->trig != &zfat_type)
-		nshot_t = 1; /* with any other trigger work in one-shot mode */
-	else
-		nshot_t = ti_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
-
-	/*
-	 * +2 because of the timetag at the end
-	 */
-	nsamples = ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value +
-		   ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
-	shot_size = ((nsamples + 2) * ti->cset->ssize) * FA100M14B4C_NCHAN;
-	if ( (shot_size * nshot_t) > FA100M14B4C_MAX_ACQ_BYTE ) {
-		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
-		return -ENOMEM;
-	}
-
-	/* in case of multi shot, each shot cannot exceed the dpram size */
-	if ( (nshot_t > 1) &&
-	     (nsamples > fa->mshot_max_samples) ) {
-		dev_err(&ti->head.dev, "Cannot acquire such amount of samples "
-				"(req: %d , max: %d) in multi shot mode."
-				"dev memory overflow\n",
-			        nsamples, fa->mshot_max_samples);
-		return -ENOMEM;
-	}
-	return 0;
-}
 
 static inline struct fa_dev *get_zfadc(struct device *dev)
 {
