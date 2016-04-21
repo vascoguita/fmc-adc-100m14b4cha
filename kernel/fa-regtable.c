@@ -78,6 +78,8 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CH4_GAIN] =		{0x78, 0x0000FFFF, 0},
 	[ZFA_CH4_OFFSET] =		{0x7C, 0x0000FFFF, 0},
 	[ZFA_CH4_SAT] =			{0x80, 0x00007FFF, 0},
+	/* Other options */
+	[ZFA_MULT_MAX_SAMP] =		{0x84, 0xFFFFFFFF, 0},
 	/* IRQ */
 	[ZFA_IRQ_ADC_DISABLE_MASK] =	{0x00, 0x00000003, 0},
 	[ZFA_IRQ_ADC_ENABLE_MASK] =	{0x04, 0x00000003, 0},

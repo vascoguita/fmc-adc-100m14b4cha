@@ -343,6 +343,8 @@ static int __fa_init(struct fa_dev *fa)
 
 	/* Retrieve calibration from the eeprom and validate*/
 	fa_read_eeprom_calib(fa);
+	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
+					 &zfad_regs[ZFA_MULT_MAX_SAMP]);
 
 	/* Force stop FSM to prevent early trigger fire */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],

@@ -227,19 +227,14 @@ void zfat_irq_acq_end(struct zio_cset *cset)
 	 * This ultimate check is not crucial because the HW implements
 	 * a solid state machine and acq-end can happens only after
 	 * the execution of the n requested shots.
-	 *
-	 * FIXME (v4.0) this work only for multi-shot acquisition
 	 */
-	fa->n_fires = fa->n_shots;
-	if (fa->n_shots > 1) {
-		fa->n_fires -= fa_readl(fa, fa->fa_adc_csr_base,
-				&zfad_regs[ZFAT_SHOTS_REM]);
+	fa->n_fires = fa->n_shots - fa_readl(fa, fa->fa_adc_csr_base,
+					     &zfad_regs[ZFAT_SHOTS_REM]);
 
-		if (fa->n_fires != fa->n_shots) {
-			dev_err(&fa->fmc->dev,
-				"Expected %i trigger fires, but %i occurs\n",
-				fa->n_shots, fa->n_fires);
-		}
+	if (fa->n_fires != fa->n_shots) {
+		dev_err(&fa->fmc->dev,
+			"Expected %i trigger fires, but %i occurs\n",
+			fa->n_shots, fa->n_fires);
 	}
 }
 

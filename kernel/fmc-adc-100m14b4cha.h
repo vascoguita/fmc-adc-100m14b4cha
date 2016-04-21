@@ -67,8 +67,6 @@ enum fa100m14b4c_dev_ext_attr {
 
 /* ADC DDR memory */
 #define FA100M14B4C_MAX_ACQ_BYTE 0x10000000 /* 256MB */
-/* In Multi shot mode samples go through a dpram which has a limited size */
-#define FA100M14B4C_MAX_MSHOT_ACQ_BYTE 0x3FE8 /* 2045 samples (2045*8 bytes) */
 
 enum fa100m14b4c_input_range {
 	FA100M14B4C_RANGE_10V = 0x0,
@@ -195,6 +193,9 @@ enum zfadc_dregs_enum {
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
 	ZFA_CHx_SAT,
+
+	/* Other options */
+	ZFA_MULT_MAX_SAMP,
 	/* end:declaration block requiring some order */
 	/* two wishbone core for IRQ: VIC, ADC */
 	ZFA_IRQ_ADC_DISABLE_MASK,
@@ -342,6 +343,7 @@ struct fa_dev {
 	/* Acquisition */
 	unsigned int		n_shots;
 	unsigned int		n_fires;
+	unsigned int		mshot_max_samples;
 
 	/* Statistic informations */
 	unsigned int		n_dma_err;
@@ -402,8 +404,9 @@ extern struct zio_trigger_type zfat_type;
 static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 					  uint32_t val)
 {
+	struct fa_dev *fa = ti->cset->zdev->priv_d;
 	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
-	uint32_t pre_t, post_t, nshot_t;
+	uint32_t pre_t, post_t, nshot_t, nsamples;
 	size_t shot_size;
 
 	if (!addr)
@@ -424,18 +427,20 @@ static inline int zfat_overflow_detection(struct zio_ti *ti, unsigned int addr,
 	 * post-sample by the ADC
 	 * +2 because of the timetag at the end
 	 */
-	shot_size = ((pre_t + post_t + 1 + 2) * ti->cset->ssize) * FA100M14B4C_NCHAN;
+	nsamples = pre_t + post_t + 1;
+	shot_size = ((nsamples + 2) * ti->cset->ssize) * FA100M14B4C_NCHAN;
 	if ( (shot_size * nshot_t) > FA100M14B4C_MAX_ACQ_BYTE ) {
 		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
 		return -ENOMEM;
 	}
+
 	/* in case of multi shot, each shot cannot exceed the dpram size */
 	if ( (nshot_t > 1) &&
-	     (shot_size > FA100M14B4C_MAX_MSHOT_ACQ_BYTE) ) {
+	     (nsamples > fa->mshot_max_samples) ) {
 		dev_err(&ti->head.dev, "Cannot acquire such amount of samples "
-				"(shot_size: %d pre-samp:%d post-samp:%d) in multi shot mode."
+				"(req: %d , max: %d) in multi shot mode."
 				"dev memory overflow\n",
-				(int)shot_size, pre_t, post_t);
+			        nsamples, fa->mshot_max_samples);
 		return -ENOMEM;
 	}
 	return 0;
