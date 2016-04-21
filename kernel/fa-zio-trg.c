@@ -308,8 +308,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_dbg(msgdev, "Arming trigger\n");
 
 	/* Check if device memory allows this trigger configuration */
-	err = zfat_overflow_detection(ti, ZFAT_POST,
-			ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value);
+	err = zfat_overflow_detection(ti);
 	if (err)
 		return err;
 

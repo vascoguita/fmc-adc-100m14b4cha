@@ -358,7 +358,7 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 	int err;
 
 	/* Check if device memory allows this acquisition */
-	err = zfat_overflow_detection(cset->ti, ZFAT_POST, cset->ti->nsamples);
+	err = zfat_overflow_detection(cset->ti);
 	if (err)
 		return err;
 	tmp = kzalloc(sizeof(struct zfad_block), GFP_ATOMIC);
