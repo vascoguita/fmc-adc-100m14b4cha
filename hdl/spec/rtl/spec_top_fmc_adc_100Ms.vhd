@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-04-19
+-- Last update: 2016-05-13
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -61,8 +61,11 @@ entity spec_top_fmc_adc_100Ms is
     g_CALIB_SOFT_IP : string := "TRUE");
   port
     (
-      -- Local oscillator
-      clk20_vcxo_i : in std_logic;                -- 20MHz VCXO clock
+      -- Local oscillators
+      -- clk20_vcxo_i : in std_logic;                -- 20MHz VCXO clock
+
+      clk_125m_pllref_p_i : in std_logic;         -- 125 MHz PLL reference
+      clk_125m_pllref_n_i : in std_logic;
 
       -- DAC interface (20MHz and 25MHz VCXO)
       pll25dac_sync_n_o : out std_logic;          -- 25MHz VCXO
@@ -70,13 +73,13 @@ entity spec_top_fmc_adc_100Ms is
       plldac_din_o      : out std_logic;
       plldac_sclk_o     : out std_logic;
 
-      -- Carrier font panel LEDs
+      -- Carrier front panel LEDs
       led_red_o   : out std_logic;
       led_green_o : out std_logic;
 
       -- Auxiliary pins
-      aux_leds_o    : out std_logic_vector(3 downto 0);
-      aux_buttons_i : in  std_logic_vector(1 downto 0);
+      aux_leds_o : out std_logic_vector(3 downto 0);
+      --aux_buttons_i : in  std_logic_vector(1 downto 0);
 
       -- PCB version
       pcb_ver_i : in std_logic_vector(3 downto 0);
@@ -85,29 +88,27 @@ entity spec_top_fmc_adc_100Ms is
       carrier_one_wire_b : inout std_logic;
 
       -- GN4124 interface
-      L_CLKp       : in    std_logic;  -- Local bus clock (frequency set in GN4124 config registers)
-      L_CLKn       : in    std_logic;  -- Local bus clock (frequency set in GN4124 config registers)
-      L_RST_N      : in    std_logic;             -- Reset from GN4124 (RSTOUT18_N)
-      P2L_RDY      : out   std_logic;             -- Rx Buffer Full Flag
-      P2L_CLKn     : in    std_logic;             -- Receiver Source Synchronous Clock-
-      P2L_CLKp     : in    std_logic;             -- Receiver Source Synchronous Clock+
+      L_RST_N      : in    std_logic;                      -- Reset from GN4124 (RSTOUT18_N)
+      P2L_RDY      : out   std_logic;                      -- Rx Buffer Full Flag
+      P2L_CLKn     : in    std_logic;                      -- Receiver Source Synchronous Clock-
+      P2L_CLKp     : in    std_logic;                      -- Receiver Source Synchronous Clock+
       P2L_DATA     : in    std_logic_vector(15 downto 0);  -- Parallel receive data
-      P2L_DFRAME   : in    std_logic;             -- Receive Frame
-      P2L_VALID    : in    std_logic;             -- Receive Data Valid
-      P_WR_REQ     : in    std_logic_vector(1 downto 0);   -- PCIe Write Request
+      P2L_DFRAME   : in    std_logic;                      -- Receive Frame
+      P2L_VALID    : in    std_logic;                      -- Receive Data Valid
+      --P_WR_REQ     : in    std_logic_vector(1 downto 0);   -- PCIe Write Request
       P_WR_RDY     : out   std_logic_vector(1 downto 0);   -- PCIe Write Ready
-      RX_ERROR     : out   std_logic;             -- Receive Error
+      RX_ERROR     : out   std_logic;                      -- Receive Error
       L2P_DATA     : out   std_logic_vector(15 downto 0);  -- Parallel transmit data
-      L2P_DFRAME   : out   std_logic;             -- Transmit Data Frame
-      L2P_VALID    : out   std_logic;             -- Transmit Data Valid
-      L2P_CLKn     : out   std_logic;             -- Transmitter Source Synchronous Clock-
-      L2P_CLKp     : out   std_logic;             -- Transmitter Source Synchronous Clock+
-      L2P_EDB      : out   std_logic;             -- Packet termination and discard
-      L2P_RDY      : in    std_logic;             -- Tx Buffer Full Flag
+      L2P_DFRAME   : out   std_logic;                      -- Transmit Data Frame
+      L2P_VALID    : out   std_logic;                      -- Transmit Data Valid
+      L2P_CLKn     : out   std_logic;                      -- Transmitter Source Synchronous Clock-
+      L2P_CLKp     : out   std_logic;                      -- Transmitter Source Synchronous Clock+
+      L2P_EDB      : out   std_logic;                      -- Packet termination and discard
+      L2P_RDY      : in    std_logic;                      -- Tx Buffer Full Flag
       L_WR_RDY     : in    std_logic_vector(1 downto 0);   -- Local-to-PCIe Write
       P_RD_D_RDY   : in    std_logic_vector(1 downto 0);   -- PCIe-to-Local Read Response Data Ready
-      TX_ERROR     : in    std_logic;             -- Transmit Error
-      VC_RDY       : in    std_logic_vector(1 downto 0);   -- Channel ready
+      TX_ERROR     : in    std_logic;                      -- Transmit Error
+      --VC_RDY       : in    std_logic_vector(1 downto 0);   -- Channel ready
       GPIO         : inout std_logic_vector(1 downto 0);   -- GPIO[0] -> GN4124 GPIO8
                                                            -- GPIO[1] -> GN4124 GPIO9
       -- DDR3 interface
@@ -342,18 +343,14 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   -- System clock
   signal sys_clk_in         : std_logic;
   signal sys_clk_125_buf    : std_logic;
-  signal sys_clk_250_buf    : std_logic;
   signal sys_clk_125        : std_logic;
-  signal sys_clk_250        : std_logic;
   signal sys_clk_fb         : std_logic;
   signal sys_clk_pll_locked : std_logic;
-
+  signal clk_125m_pllref    : std_logic;
+  
   -- DDR3 clock
-  signal ddr_clk     : std_logic;
-  signal ddr_clk_buf : std_logic;
-
-  -- LCLK from GN4124
-  signal l_clk : std_logic;
+  signal ddr_clk            : std_logic;
+  signal ddr_clk_buf        : std_logic;
 
   -- Reset
   signal powerup_reset_cnt  : unsigned(7 downto 0) := "00000000";
@@ -454,13 +451,6 @@ architecture rtl of spec_top_fmc_adc_100Ms is
 begin
 
 
-  ------------------------------------------------------------------------------
-  -- Clocks distribution from 20MHz TCXO
-  -- 125.000 MHz system clock
-  -- 250.000 MHz fast system clock
-  -- 333.333 MHz DDR3 clock
-  ------------------------------------------------------------------------------
-
   -- AD5662BRMZ-1 DAC output powers up to 0V. The output remains valid until a
   -- write sequence arrives to the DAC.
   -- To avoid spurious writes, the DAC interface outputs are fixed to safe values.
@@ -469,10 +459,23 @@ begin
   plldac_din_o      <= '0';
   plldac_sclk_o     <= '0';
 
-  cmp_sys_clk_buf : IBUFG
+  -- diff clock buffer from 125MHz clock reference
+  cmp_pll_clk_buf : IBUFGDS
+    generic map (
+      DIFF_TERM    => TRUE,
+      IBUF_LOW_PWR => TRUE)
     port map (
-      I => clk20_vcxo_i,
-      O => sys_clk_in);
+      O  => clk_125m_pllref,
+      I  => clk_125m_pllref_p_i,
+      IB => clk_125m_pllref_n_i);
+
+  -- just an alias to keep it backwards compatible
+  sys_clk_in <= clk_125m_pllref;
+
+  --cmp_sys_clk_buf : IBUFG
+  --  port map (
+  --    I => clk20_vcxo_i,
+  --    O => sys_clk_in);
 
   cmp_sys_clk_pll : PLL_BASE
     generic map (
@@ -480,23 +483,23 @@ begin
       CLK_FEEDBACK       => "CLKFBOUT",
       COMPENSATION       => "INTERNAL",
       DIVCLK_DIVIDE      => 1,
-      CLKFBOUT_MULT      => 50,
+      CLKFBOUT_MULT      => 8,                    -- 1GHz
       CLKFBOUT_PHASE     => 0.000,
-      CLKOUT0_DIVIDE     => 8,
+      CLKOUT0_DIVIDE     => 8,                    -- 125MHz
       CLKOUT0_PHASE      => 0.000,
       CLKOUT0_DUTY_CYCLE => 0.500,
-      CLKOUT1_DIVIDE     => 4,
+      CLKOUT1_DIVIDE     => 16,                   -- 62.5MHz
       CLKOUT1_PHASE      => 0.000,
       CLKOUT1_DUTY_CYCLE => 0.500,
-      CLKOUT2_DIVIDE     => 3,
+      CLKOUT2_DIVIDE     => 3,                    -- 333MHz
       CLKOUT2_PHASE      => 0.000,
       CLKOUT2_DUTY_CYCLE => 0.500,
-      CLKIN_PERIOD       => 50.0,
+      CLKIN_PERIOD       => 8.0,
       REF_JITTER         => 0.016)
     port map (
       CLKFBOUT => sys_clk_fb,
       CLKOUT0  => sys_clk_125_buf,
-      CLKOUT1  => sys_clk_250_buf,
+      CLKOUT1  => open,
       CLKOUT2  => ddr_clk_buf,
       CLKOUT3  => open,
       CLKOUT4  => open,
@@ -511,29 +514,10 @@ begin
       O => sys_clk_125,
       I => sys_clk_125_buf);
 
-  cmp_clk_250_buf : BUFG
-    port map (
-      O => sys_clk_250,
-      I => sys_clk_250_buf);
-
   cmp_ddr_clk_buf : BUFG
     port map (
       O => ddr_clk,
       I => ddr_clk_buf);
-
-  ------------------------------------------------------------------------------
-  -- Local clock from gennum LCLK
-  ------------------------------------------------------------------------------
-  cmp_l_clk_buf : IBUFDS
-    generic map (
-      DIFF_TERM    => FALSE,                      -- Differential Termination
-      IBUF_LOW_PWR => TRUE,  -- Low power (TRUE) vs. performance (FALSE) setting for referenced I/O standards
-      IOSTANDARD   => "DEFAULT")
-    port map (
-      O  => l_clk,                                -- Buffer output
-      I  => L_CLKp,          -- Diff_p buffer input (connect directly to top-level port)
-      IB => L_CLKn           -- Diff_n buffer input (connect directly to top-level port)
-      );
 
   ------------------------------------------------------------------------------
   -- System reset
@@ -575,7 +559,7 @@ begin
       p2l_valid_i     => P2L_VALID,
       -- P2L Control
       p2l_rdy_o       => P2L_RDY,
-      p_wr_req_i      => P_WR_REQ,
+      p_wr_req_i      => "00",
       p_wr_rdy_o      => P_WR_RDY,
       rx_error_o      => RX_ERROR,
       -- L2P Direction Source Sync DDR related signals
@@ -590,7 +574,7 @@ begin
       l_wr_rdy_i      => L_WR_RDY,
       p_rd_d_rdy_i    => P_RD_D_RDY,
       tx_error_i      => TX_ERROR,
-      vc_rdy_i        => VC_RDY,
+      vc_rdy_i        => "00",
       -- Interrupt interface
       dma_irq_o       => dma_irq,
       irq_p_i         => irq_to_gn4124,

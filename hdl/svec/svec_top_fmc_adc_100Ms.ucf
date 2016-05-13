@@ -422,12 +422,12 @@ NET "ddr1_a_o[0]" IOSTANDARD = "SSTL15_II";
 NET "rst_n_i" LOC = AD28;
 NET "rst_n_i" IOSTANDARD = "LVCMOS33";
 
-NET "clk_20m_vcxo_i" LOC = V26;
-#NET "clk_125m_pllref_n_i" LOC = AB30;
-#NET "clk_125m_pllref_p_i" LOC = AB28;
-NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS33";
-#NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
-#NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
+#NET "clk_20m_vcxo_i" LOC = V26;
+NET "clk_125m_pllref_n_i" LOC = AB30;
+NET "clk_125m_pllref_p_i" LOC = AB28;
+#NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS33";
+NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
+NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
 
 #----------------------------------------
 # SFP slot
@@ -899,19 +899,20 @@ NET "adc1_one_wire_b" IOSTANDARD = "LVCMOS25";
 #===============================================================================
 
 # System clock
+NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_pllref_n_i;
+TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
 
-NET "clk_20m_vcxo_i" TNM_NET = clk_20m_vcxo_i;
-TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
+# 20MHz clock for DMTD
+#NET "clk_20m_vcxo_i" TNM_NET = clk_20m_vcxo_i;
+#TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
 
 # DDR3
-
 #NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_infrastructure_inst/sys_clk_ibufg" TNM_NET = "SYS_CLK5";
 #TIMESPEC "TS_SYS_CLK5" = PERIOD "SYS_CLK5"  3.0  ns HIGH 50 %;
 
 # ADC
 NET "adc0_dco_n_i" TNM_NET = adc0_dco_n_i;
 TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2 ns HIGH 50%;
-
 NET "adc1_dco_n_i" TNM_NET = adc1_dco_n_i;
 TIMESPEC TS_adc1_dco_n_i = PERIOD "adc1_dco_n_i" 2 ns HIGH 50%;
 

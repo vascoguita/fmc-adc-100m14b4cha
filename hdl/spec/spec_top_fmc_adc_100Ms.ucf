@@ -5,13 +5,13 @@
 #----------------------------------------
 # Clock inputs
 #----------------------------------------
-NET "clk20_vcxo_i" LOC = H12; # CLK25_VCXO
-NET "clk20_vcxo_i" IOSTANDARD = "LVCMOS25";
+#NET "clk20_vcxo_i" LOC = H12; # CLK25_VCXO
+#NET "clk20_vcxo_i" IOSTANDARD = "LVCMOS25";
 
-#NET "clk_125m_pllref_n_i" LOC = F10;
-#NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
-#NET "clk_125m_pllref_p_i" LOC = G9;
-#NET "clk_125m_pllref_p_i" IOSTANDARD = "LVDS_25";
+NET "clk_125m_pllref_n_i" LOC = F10;
+NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
+NET "clk_125m_pllref_p_i" LOC = G9;
+NET "clk_125m_pllref_p_i" IOSTANDARD = "LVDS_25";
 
 #----------------------------------------
 # SFP slot
@@ -79,10 +79,6 @@ NET "L_WR_RDY[0]" LOC = R20;
 NET "L_WR_RDY[0]" IOSTANDARD = "SSTL18_I";
 NET "L_WR_RDY[1]" LOC = T22;
 NET "L_WR_RDY[1]" IOSTANDARD = "SSTL18_I";
-NET "L_CLKN" LOC = N19;
-NET "L_CLKN" IOSTANDARD = "DIFF_SSTL18_I";
-NET "L_CLKP" LOC = P20;
-NET "L_CLKP" IOSTANDARD = "DIFF_SSTL18_I";
 NET "P2L_CLKN" LOC = M19;
 NET "P2L_CLKN" IOSTANDARD = "DIFF_SSTL18_I";
 NET "P2L_CLKP" LOC = M20;
@@ -101,18 +97,18 @@ NET "P_WR_RDY[0]" LOC = L15;
 NET "P_WR_RDY[0]" IOSTANDARD = "SSTL18_I";
 NET "P_WR_RDY[1]" LOC = K16;
 NET "P_WR_RDY[1]" IOSTANDARD = "SSTL18_I";
-NET "P_WR_REQ[0]" LOC = M22;
-NET "P_WR_REQ[0]" IOSTANDARD = "SSTL18_I";
-NET "P_WR_REQ[1]" LOC = M21;
-NET "P_WR_REQ[1]" IOSTANDARD = "SSTL18_I";
+#NET "P_WR_REQ[0]" LOC = M22;
+#NET "P_WR_REQ[0]" IOSTANDARD = "SSTL18_I";
+#NET "P_WR_REQ[1]" LOC = M21;
+#NET "P_WR_REQ[1]" IOSTANDARD = "SSTL18_I";
 NET "RX_ERROR" LOC = J17;
 NET "RX_ERROR" IOSTANDARD = "SSTL18_I";
 NET "TX_ERROR" LOC = M17;
 NET "TX_ERROR" IOSTANDARD = "SSTL18_I";
-NET "VC_RDY[0]" LOC = B21;
-NET "VC_RDY[0]" IOSTANDARD = "SSTL18_I";
-NET "VC_RDY[1]" LOC = B22;
-NET "VC_RDY[1]" IOSTANDARD = "SSTL18_I";
+#NET "VC_RDY[0]" LOC = B21;
+#NET "VC_RDY[0]" IOSTANDARD = "SSTL18_I";
+#NET "VC_RDY[1]" LOC = B22;
+#NET "VC_RDY[1]" IOSTANDARD = "SSTL18_I";
 NET "L2P_DATA[0]" LOC = P16;
 NET "L2P_DATA[0]" IOSTANDARD = "SSTL18_I";
 NET "L2P_DATA[1]" LOC = P21;
@@ -526,10 +522,10 @@ NET "DDR3_DQ[15]" IOSTANDARD = "SSTL15_II";
 #----------------------------------------
 # Buttons and LEDs
 #----------------------------------------
-NET "AUX_BUTTONS_I[0]" LOC = C22;
-NET "AUX_BUTTONS_I[0]" IOSTANDARD = "LVCMOS18";
-NET "AUX_BUTTONS_I[1]" LOC = D21;
-NET "AUX_BUTTONS_I[1]" IOSTANDARD = "LVCMOS18";
+#NET "AUX_BUTTONS_I[0]" LOC = C22;
+#NET "AUX_BUTTONS_I[0]" IOSTANDARD = "LVCMOS18";
+#NET "AUX_BUTTONS_I[1]" LOC = D21;
+#NET "AUX_BUTTONS_I[1]" IOSTANDARD = "LVCMOS18";
 NET "AUX_LEDS_O[0]" LOC = G19;
 NET "AUX_LEDS_O[0]" IOSTANDARD = "LVCMOS18";
 NET "AUX_LEDS_O[1]" LOC = F20;
@@ -567,72 +563,18 @@ NET "DDR3_UDQS_N"  IN_TERM = NONE;
 # Timing constraints
 #===============================================================================
 
-# GN4124
-
-#NET "L_CLKp" TNM_NET = "l_clkp_grp";
-#TIMESPEC TS_l_clkp = PERIOD "l_clkp_grp" 5 ns HIGH 50%;
-NET "P2L_CLKp" TNM_NET = "p2l_clkp_grp";
-TIMESPEC TS_p2l_clkp = PERIOD "p2l_clkp_grp" 5 ns HIGH 50%;
-NET "P2L_CLKn" TNM_NET = "p2l_clkn_grp";
-TIMESPEC TS_p2l_clkn = PERIOD "p2l_clkn_grp" 5 ns HIGH 50%;
-
-NET "L2P_CLKN" TNM = "gn4124_data_bus_out";
-NET "L2P_CLKP" TNM = "gn4124_data_bus_out";
-NET "L2P_VALID" TNM = "gn4124_data_bus_out";
-NET "L2P_DFRAME" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[0]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[1]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[2]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[3]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[4]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[5]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[6]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[7]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[8]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[9]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[10]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[11]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[12]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[13]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[14]" TNM = "gn4124_data_bus_out";
-NET "L2P_DATA[15]" TNM = "gn4124_data_bus_out";
-
-#TIMEGRP "gn4124_data_bus_out" OFFSET = OUT AFTER "cmp_gn4124_core/io_clk" REFERENCE_PIN "L2P_CLKP";
-
-NET "P2L_CLKN" TNM = "gn4124_data_bus_in";
-NET "P2L_CLKP" TNM = "gn4124_data_bus_in";
-NET "P2L_DFRAME" TNM = "gn4124_data_bus_in";
-NET "P2L_VALID" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[0]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[1]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[2]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[3]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[4]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[5]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[6]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[7]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[8]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[9]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[10]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[11]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[12]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[13]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[14]" TNM = "gn4124_data_bus_in";
-NET "P2L_DATA[15]" TNM = "gn4124_data_bus_in";
-
-#TIMEGRP "gn4124_data_bus_in" OFFSET = IN 1.2 ns VALID 1.6 ns BEFORE "cmp_gn4124_core/io_clk" RISING;
-#TIMEGRP "gn4124_data_bus_in" OFFSET = IN 1.2 ns VALID 1.6 ns BEFORE "cmp_gn4124_core/io_clk" FALLING;
-
-
 # System clock
 
-NET "clk20_vcxo_i" TNM_NET = "clk20_vcxo_i_grp";
-TIMESPEC TS_clk20_vcxo_i = PERIOD "clk20_vcxo_i_grp" 50 ns HIGH 50%;
+NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_pllref_n_i;
+TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
+
+# 20MHz clock for DMTD
+#NET "clk20_vcxo_i" TNM_NET = "clk20_vcxo_i_grp";
+#TIMESPEC TS_clk20_vcxo_i = PERIOD "clk20_vcxo_i_grp" 50 ns HIGH 50%;
 
 # DDR3
-
-NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_infrastructure_inst/sys_clk_ibufg" TNM_NET = "SYS_CLK5";
-TIMESPEC "TS_SYS_CLK5" = PERIOD "SYS_CLK5"  3.0  ns HIGH 50 %;
+#NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_infrastructure_inst/sys_clk_ibufg" TNM_NET = "SYS_CLK5";
+#TIMESPEC "TS_SYS_CLK5" = PERIOD "SYS_CLK5"  3.0  ns HIGH 50 %;
 
 # ADC
 NET "adc0_dco_n_i" TNM_NET = adc_dco_n_i;

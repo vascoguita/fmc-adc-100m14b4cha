@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-04
--- Last update: 2016-04-19
+-- Last update: 2016-05-13
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
@@ -60,8 +60,11 @@ entity svec_top_fmc_adc_100Ms is
     g_CALIB_SOFT_IP : string := "TRUE");
   port
     (
-      -- Local 20MHz VCXO oscillator
-      clk_20m_vcxo_i : in std_logic;
+      -- Local oscillators
+      -- clk20_vcxo_i : in std_logic;                -- 20MHz VCXO clock
+
+      clk_125m_pllref_p_i : in std_logic;         -- 125 MHz PLL reference
+      clk_125m_pllref_n_i : in std_logic;
 
       -- DAC interface (20MHz and 25MHz VCXO)
       pll20dac_din_o    : out std_logic;
@@ -74,7 +77,7 @@ entity svec_top_fmc_adc_100Ms is
       -- Reset from system fpga
       rst_n_i : in std_logic;
 
-      -- Carrier font panel LEDs
+      -- Carrier front panel LEDs
       fp_led_line_oen_o : out std_logic_vector(1 downto 0);
       fp_led_line_o     : out std_logic_vector(1 downto 0);
       fp_led_column_o   : out std_logic_vector(3 downto 0);
@@ -439,6 +442,7 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   signal sys_clk_125        : std_logic;
   signal sys_clk_fb         : std_logic;
   signal sys_clk_pll_locked : std_logic;
+  signal clk_125m_pllref    : std_logic;
 
   -- DDR3 clock
   signal ddr_clk     : std_logic;
@@ -561,13 +565,6 @@ architecture rtl of svec_top_fmc_adc_100Ms is
 begin
 
 
-  ------------------------------------------------------------------------------
-  -- Clocks distribution from 20MHz TCXO
-  --  62.500 MHz system clock
-  -- 125.000 MHz system clock
-  -- 333.333 MHz DDR3 clock
-  ------------------------------------------------------------------------------
-
   -- AD5662BRMZ-1 DAC output powers up to 0V. The output remains valid until a
   -- write sequence arrives to the DAC.
   -- To avoid spurious writes, the DAC interface outputs are fixed to safe values.
@@ -578,10 +575,23 @@ begin
   pll25dac_sclk_o   <= '0';
   pll25dac_sync_n_o <= '1';
 
-  cmp_sys_clk_buf : IBUFG
+  -- diff clock buffer from 125MHz clock reference
+  cmp_pll_clk_buf : IBUFGDS
+    generic map (
+      DIFF_TERM    => TRUE,
+      IBUF_LOW_PWR => TRUE)
     port map (
-      I => clk_20m_vcxo_i,
-      O => sys_clk_in);
+      O  => clk_125m_pllref,
+      I  => clk_125m_pllref_p_i,
+      IB => clk_125m_pllref_n_i);
+
+  -- just an alias to keep it backwards compatible
+  sys_clk_in <= clk_125m_pllref;
+
+  --cmp_sys_clk_buf : IBUFG
+  --  port map (
+  --    I => clk_20m_vcxo_i,
+  --    O => sys_clk_in);
 
   cmp_sys_clk_pll : PLL_BASE
     generic map (
@@ -589,18 +599,18 @@ begin
       CLK_FEEDBACK       => "CLKFBOUT",
       COMPENSATION       => "INTERNAL",
       DIVCLK_DIVIDE      => 1,
-      CLKFBOUT_MULT      => 50,
+      CLKFBOUT_MULT      => 8, -- 1GHz
       CLKFBOUT_PHASE     => 0.000,
-      CLKOUT0_DIVIDE     => 8,
+      CLKOUT0_DIVIDE     => 8, -- 125MHz
       CLKOUT0_PHASE      => 0.000,
       CLKOUT0_DUTY_CYCLE => 0.500,
-      CLKOUT1_DIVIDE     => 16,
+      CLKOUT1_DIVIDE     => 16,-- 62.5MHz
       CLKOUT1_PHASE      => 0.000,
       CLKOUT1_DUTY_CYCLE => 0.500,
-      CLKOUT2_DIVIDE     => 3,
+      CLKOUT2_DIVIDE     => 3, -- 333MHz
       CLKOUT2_PHASE      => 0.000,
       CLKOUT2_DUTY_CYCLE => 0.500,
-      CLKIN_PERIOD       => 50.0,
+      CLKIN_PERIOD       => 8.0,
       REF_JITTER         => 0.016)
     port map (
       CLKFBOUT => sys_clk_fb,
