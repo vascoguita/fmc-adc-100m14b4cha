@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-04
--- Last update: 2016-05-13
+-- Last update: 2016-05-17
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
@@ -283,12 +283,8 @@ architecture rtl of svec_top_fmc_adc_100Ms is
       carrier_csr_stat_ddr0_cal_done_i : in  std_logic;
       carrier_csr_stat_ddr1_cal_done_i : in  std_logic;
       carrier_csr_ctrl_fp_leds_man_o   : out std_logic_vector(15 downto 0);
-      carrier_csr_rst_fmc0_n_o         : out std_logic;
-      carrier_csr_rst_fmc0_n_i         : in  std_logic;
-      carrier_csr_rst_fmc0_n_load_o    : out std_logic;
-      carrier_csr_rst_fmc1_n_o         : out std_logic;
-      carrier_csr_rst_fmc1_n_i         : in  std_logic;
-      carrier_csr_rst_fmc1_n_load_o    : out std_logic
+      carrier_csr_rst_fmc0_o           : out std_logic;
+      carrier_csr_rst_fmc1_o           : out std_logic
       );
   end component carrier_csr;
 
@@ -449,24 +445,22 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   signal ddr_clk_buf : std_logic;
 
   -- Reset
-  signal powerup_reset_cnt  : unsigned(7 downto 0) := "00000000";
-  signal powerup_rst_n      : std_logic            := '0';
-  signal sys_rst_n          : std_logic;
-  signal ddr_rst_n          : std_logic;
-  signal sw_rst_fmc0_n      : std_logic            := '1';
-  signal sw_rst_fmc0_n_o    : std_logic;
-  signal sw_rst_fmc0_n_i    : std_logic;
-  signal sw_rst_fmc0_n_load : std_logic;
-  signal sw_rst_fmc1_n      : std_logic            := '1';
-  signal sw_rst_fmc1_n_o    : std_logic;
-  signal sw_rst_fmc1_n_i    : std_logic;
-  signal sw_rst_fmc1_n_load : std_logic;
-  signal ddr_sw_rst_fmc0_n  : std_logic;
-  signal ddr_sw_rst_fmc1_n  : std_logic;
-  signal fmc0_rst_n         : std_logic;
-  signal fmc1_rst_n         : std_logic;
-  signal fmc0_ddr_rst_n     : std_logic;
-  signal fmc1_ddr_rst_n     : std_logic;
+  signal powerup_reset_cnt : unsigned(7 downto 0) := "00000000";
+  signal powerup_rst_n     : std_logic            := '0';
+  signal sys_rst_n         : std_logic;
+  signal ddr_rst_n         : std_logic;
+  signal sw_rst_fmc0       : std_logic            := '0';
+  signal sw_rst_fmc1       : std_logic            := '0';
+  signal ddr_sw_rst_fmc0   : std_logic;
+  signal ddr_sw_rst_fmc1   : std_logic;
+  signal fmc0_rst_n        : std_logic;
+  signal fmc1_rst_n        : std_logic;
+  signal fmc0_ddr_rst_n    : std_logic;
+  signal fmc1_ddr_rst_n    : std_logic;
+  -- prevent XST from changing the name of the signal, we want to use it in the UCF
+  attribute keep : string;
+  attribute keep of sw_rst_fmc0 : signal is "SOFT";
+  attribute keep of sw_rst_fmc1 : signal is "SOFT";
 
   -- VME
   signal vme_data_b_out    : std_logic_vector(31 downto 0);
@@ -599,15 +593,15 @@ begin
       CLK_FEEDBACK       => "CLKFBOUT",
       COMPENSATION       => "INTERNAL",
       DIVCLK_DIVIDE      => 1,
-      CLKFBOUT_MULT      => 8, -- 1GHz
+      CLKFBOUT_MULT      => 8,                    -- 1GHz
       CLKFBOUT_PHASE     => 0.000,
-      CLKOUT0_DIVIDE     => 8, -- 125MHz
+      CLKOUT0_DIVIDE     => 8,                    -- 125MHz
       CLKOUT0_PHASE      => 0.000,
       CLKOUT0_DUTY_CYCLE => 0.500,
-      CLKOUT1_DIVIDE     => 16,-- 62.5MHz
+      CLKOUT1_DIVIDE     => 16,                   -- 62.5MHz
       CLKOUT1_PHASE      => 0.000,
       CLKOUT1_DUTY_CYCLE => 0.500,
-      CLKOUT2_DIVIDE     => 3, -- 333MHz
+      CLKOUT2_DIVIDE     => 3,                    -- 333MHz
       CLKOUT2_PHASE      => 0.000,
       CLKOUT2_DUTY_CYCLE => 0.500,
       CLKIN_PERIOD       => 8.0,
@@ -685,8 +679,8 @@ begin
     port map (
       clk_i    => ddr_clk,
       rst_n_i  => '1',
-      data_i   => sw_rst_fmc0_n,
-      synced_o => ddr_sw_rst_fmc0_n
+      data_i   => sw_rst_fmc0,
+      synced_o => ddr_sw_rst_fmc0
       );
 
   -- FMC 1 reset synchronisation to DDR clock domain
@@ -694,14 +688,14 @@ begin
     port map (
       clk_i    => ddr_clk,
       rst_n_i  => '1',
-      data_i   => sw_rst_fmc1_n,
-      synced_o => ddr_sw_rst_fmc1_n
+      data_i   => sw_rst_fmc1,
+      synced_o => ddr_sw_rst_fmc1
       );
 
-  fmc0_rst_n     <= sys_rst_n and sw_rst_fmc0_n;
-  fmc1_rst_n     <= sys_rst_n and sw_rst_fmc1_n;
-  fmc0_ddr_rst_n <= ddr_rst_n and ddr_sw_rst_fmc0_n;
-  fmc1_ddr_rst_n <= ddr_rst_n and ddr_sw_rst_fmc1_n;
+  fmc0_rst_n     <= sys_rst_n and (not sw_rst_fmc0);
+  fmc1_rst_n     <= sys_rst_n and (not sw_rst_fmc1);
+  fmc0_ddr_rst_n <= ddr_rst_n and (not ddr_sw_rst_fmc0);
+  fmc1_ddr_rst_n <= ddr_rst_n and (not ddr_sw_rst_fmc1);
 
   ------------------------------------------------------------------------------
   -- VME interface
@@ -887,12 +881,8 @@ begin
       carrier_csr_stat_ddr0_cal_done_i => ddr0_calib_done,
       carrier_csr_stat_ddr1_cal_done_i => ddr1_calib_done,
       carrier_csr_ctrl_fp_leds_man_o   => led_state_man,
-      carrier_csr_rst_fmc0_n_o         => sw_rst_fmc0_n_o,
-      carrier_csr_rst_fmc0_n_i         => sw_rst_fmc0_n_i,
-      carrier_csr_rst_fmc0_n_load_o    => sw_rst_fmc0_n_load,
-      carrier_csr_rst_fmc1_n_o         => sw_rst_fmc1_n_o,
-      carrier_csr_rst_fmc1_n_i         => sw_rst_fmc1_n_i,
-      carrier_csr_rst_fmc1_n_load_o    => sw_rst_fmc1_n_load
+      carrier_csr_rst_fmc0_o           => sw_rst_fmc0,
+      carrier_csr_rst_fmc1_o           => sw_rst_fmc1
       );
 
   -- Unused wishbone signals
@@ -900,33 +890,6 @@ begin
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).stall <= '0';
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).int   <= '0';
-
-  -- external software reset registers (to assign a non-zero default value)
-  p_sw_rst_fmc0 : process (sys_clk_125)
-  begin
-    if rising_edge(sys_clk_125) then
-      if sys_rst_n = '0' then
-        sw_rst_fmc0_n <= '1';
-      elsif sw_rst_fmc0_n_load = '1' then
-        sw_rst_fmc0_n <= sw_rst_fmc0_n_o;
-      end if;
-    end if;
-  end process p_sw_rst_fmc0;
-
-  sw_rst_fmc0_n_i <= sw_rst_fmc0_n;
-
-  p_sw_rst_fmc1 : process (sys_clk_125)
-  begin
-    if rising_edge(sys_clk_125) then
-      if sys_rst_n = '0' then
-        sw_rst_fmc1_n <= '1';
-      elsif sw_rst_fmc1_n_load = '1' then
-        sw_rst_fmc1_n <= sw_rst_fmc1_n_o;
-      end if;
-    end if;
-  end process p_sw_rst_fmc1;
-
-  sw_rst_fmc1_n_i <= sw_rst_fmc1_n;
 
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)

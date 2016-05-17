@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-05-13
+-- Last update: 2016-05-17
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -205,10 +205,7 @@ architecture rtl of spec_top_fmc_adc_100Ms is
       carrier_csr_ctrl_led_green_o     : out std_logic;
       carrier_csr_ctrl_led_red_o       : out std_logic;
       carrier_csr_ctrl_dac_clr_n_o     : out std_logic;
-      carrier_csr_rst_fmc0_n_o         : out std_logic;
-      carrier_csr_rst_fmc0_n_i         : in  std_logic;
-      carrier_csr_rst_fmc0_n_load_o    : out std_logic
-      );
+      carrier_csr_rst_fmc0_o           : out std_logic);
   end component carrier_csr;
 
   component dma_eic
@@ -347,21 +344,21 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   signal sys_clk_fb         : std_logic;
   signal sys_clk_pll_locked : std_logic;
   signal clk_125m_pllref    : std_logic;
-  
+
   -- DDR3 clock
-  signal ddr_clk            : std_logic;
-  signal ddr_clk_buf        : std_logic;
+  signal ddr_clk     : std_logic;
+  signal ddr_clk_buf : std_logic;
 
   -- Reset
-  signal powerup_reset_cnt  : unsigned(7 downto 0) := "00000000";
-  signal powerup_rst_n      : std_logic            := '0';
-  signal sw_rst_fmc0_n      : std_logic            := '1';
-  signal sw_rst_fmc0_n_o    : std_logic;
-  signal sw_rst_fmc0_n_i    : std_logic;
-  signal sw_rst_fmc0_n_load : std_logic;
-  signal sys_rst_n          : std_logic;
-  signal fmc0_rst_n         : std_logic;
-
+  signal powerup_reset_cnt : unsigned(7 downto 0) := "00000000";
+  signal powerup_rst_n     : std_logic            := '0';
+  signal sys_rst_n         : std_logic;
+  signal sw_rst_fmc0       : std_logic            := '1';
+  signal fmc0_rst_n        : std_logic;
+  -- prevent XST from changing the name of the signal, we want to use it in the UCF
+  attribute keep : string;
+  attribute keep of sw_rst_fmc0 : signal is "SOFT";
+  
   -- Wishbone buse(s) from crossbar master port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
   signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
@@ -542,7 +539,7 @@ begin
   end process;
 
   sys_rst_n  <= powerup_rst_n;
-  fmc0_rst_n <= powerup_rst_n and sw_rst_fmc0_n;
+  fmc0_rst_n <= powerup_rst_n and (not sw_rst_fmc0);
 
   ------------------------------------------------------------------------------
   -- GN4124 interface
@@ -717,9 +714,7 @@ begin
       carrier_csr_ctrl_led_green_o     => led_green,
       carrier_csr_ctrl_led_red_o       => led_red,
       carrier_csr_ctrl_dac_clr_n_o     => open,
-      carrier_csr_rst_fmc0_n_o         => sw_rst_fmc0_n_o,
-      carrier_csr_rst_fmc0_n_i         => sw_rst_fmc0_n_i,
-      carrier_csr_rst_fmc0_n_load_o    => sw_rst_fmc0_n_load
+      carrier_csr_rst_fmc0_o           => sw_rst_fmc0
       );
 
   -- Unused wishbone signals
@@ -731,20 +726,6 @@ begin
   -- SPEC front panel leds
   led_red_o   <= led_red;
   led_green_o <= led_green;
-
-  -- external software reset register (to assign a non-zero default value)
-  p_sw_rst_fmc0 : process (sys_clk_125)
-  begin
-    if rising_edge(sys_clk_125) then
-      if sys_rst_n = '0' then
-        sw_rst_fmc0_n <= '1';
-      elsif sw_rst_fmc0_n_load = '1' then
-        sw_rst_fmc0_n <= sw_rst_fmc0_n_o;
-      end if;
-    end if;
-  end process p_sw_rst_fmc0;
-
-  sw_rst_fmc0_n_i <= sw_rst_fmc0_n;
 
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)

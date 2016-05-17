@@ -1,4 +1,4 @@
-WBGEN2=~/projects/wbgen2/wbgen2
+WBGEN2=$(shell which wbgen2)
 RTL=../rtl/
 TEX=../../../doc/manual//svec/
 

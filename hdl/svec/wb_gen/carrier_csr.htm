@@ -412,7 +412,7 @@ carrier_csr_ctrl_fp_leds_man_o[15:0]
 
 </td>
 <td  class="td_pblock_right">
-carrier_csr_rst_fmc0_n_o
+carrier_csr_rst_fmc0_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -429,75 +429,7 @@ carrier_csr_rst_fmc0_n_o
 
 </td>
 <td  class="td_pblock_right">
-carrier_csr_rst_fmc0_n_i
-</td>
-<td  class="td_arrow_right">
-&larr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
-
-</td>
-<td  class="td_pblock_left">
-
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-carrier_csr_rst_fmc0_n_load_o
-</td>
-<td  class="td_arrow_right">
-&rarr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
-
-</td>
-<td  class="td_pblock_left">
-
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-carrier_csr_rst_fmc1_n_o
-</td>
-<td  class="td_arrow_right">
-&rarr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
-
-</td>
-<td  class="td_pblock_left">
-
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-carrier_csr_rst_fmc1_n_i
-</td>
-<td  class="td_arrow_right">
-&larr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
-
-</td>
-<td  class="td_pblock_left">
-
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-carrier_csr_rst_fmc1_n_load_o
+carrier_csr_rst_fmc1_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -1552,22 +1484,22 @@ Controls software reset of the mezzanines including the ddr interface and the ti
 -
 </td>
 <td style="border: solid 1px black;" colspan=1  class="td_field">
-FMC1_N
+FMC1
 </td>
 <td style="border: solid 1px black;" colspan=1  class="td_field">
-FMC0_N
+FMC0
 </td>
 </tr>
 </table>
 <ul>
 <li><b>
-FMC0_N
+FMC0
 </b>[<i>read/write</i>]: State of the FMC 1 reset line
-<br>write 0: FMC is held in reset<br>                     write 1: Normal FMC operation (default)
+<br>write 0: Normal FMC operation<br>      		     write 1: FMC is held in reset
 <li><b>
-FMC1_N
+FMC1
 </b>[<i>read/write</i>]: State of the FMC 2 reset line
-<br>write 0: FMC is held in reset<br>                     write 1: Normal FMC operation (default)
+<br>write 0: Normal FMC operation<br>      		     write 1: FMC is held in reset
 </ul>
 
 
