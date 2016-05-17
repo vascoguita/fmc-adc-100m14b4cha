@@ -23,3 +23,4 @@ Makefile.specific
 .project
 .settings
 TAGS*
+*.unsigned
