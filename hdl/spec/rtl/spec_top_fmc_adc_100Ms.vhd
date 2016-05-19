@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-05-17
+-- Last update: 2016-05-18
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -339,6 +339,8 @@ architecture rtl of spec_top_fmc_adc_100Ms is
 
   -- System clock
   signal sys_clk_in         : std_logic;
+  signal sys_clk_62_5_buf   : std_logic;
+  signal sys_clk_62_5       : std_logic;
   signal sys_clk_125_buf    : std_logic;
   signal sys_clk_125        : std_logic;
   signal sys_clk_fb         : std_logic;
@@ -350,15 +352,15 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   signal ddr_clk_buf : std_logic;
 
   -- Reset
-  signal powerup_reset_cnt : unsigned(7 downto 0) := "00000000";
-  signal powerup_rst_n     : std_logic            := '0';
-  signal sys_rst_n         : std_logic;
-  signal sw_rst_fmc0       : std_logic            := '1';
-  signal fmc0_rst_n        : std_logic;
-  -- prevent XST from changing the name of the signal, we want to use it in the UCF
-  attribute keep : string;
-  attribute keep of sw_rst_fmc0 : signal is "SOFT";
-  
+  signal powerup_arst_n       : std_logic := '0';
+  signal powerup_clk_in       : std_logic_vector(2 downto 0);
+  signal powerup_rst_out      : std_logic_vector(2 downto 0);
+  signal sys_rst_62_5_n       : std_logic;
+  signal sys_rst_125_n        : std_logic;
+  signal sw_rst_fmc0          : std_logic := '1';
+  signal fmc0_rst_n           : std_logic;
+  signal ddr_rst_n            : std_logic;
+
   -- Wishbone buse(s) from crossbar master port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
   signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
@@ -496,7 +498,7 @@ begin
     port map (
       CLKFBOUT => sys_clk_fb,
       CLKOUT0  => sys_clk_125_buf,
-      CLKOUT1  => open,
+      CLKOUT1  => sys_clk_62_5_buf,
       CLKOUT2  => ddr_clk_buf,
       CLKOUT3  => open,
       CLKOUT4  => open,
@@ -505,6 +507,11 @@ begin
       RST      => '0',
       CLKFBIN  => sys_clk_fb,
       CLKIN    => sys_clk_in);
+
+  cmp_clk_62_5_buf : BUFG
+    port map (
+      O => sys_clk_62_5,
+      I => sys_clk_62_5_buf);
 
   cmp_clk_125_buf : BUFG
     port map (
@@ -519,34 +526,41 @@ begin
   ------------------------------------------------------------------------------
   -- System reset
   ------------------------------------------------------------------------------
-  p_powerup_reset : process(sys_clk_125)
-  begin
-    if rising_edge(sys_clk_125) then
-      if(L_RST_N = '0') then
-        powerup_rst_n <= '0';
-      elsif sys_clk_pll_locked = '1' then
-        if(powerup_reset_cnt = "11111111") then
-          powerup_rst_n <= '1';
-        else
-          powerup_rst_n     <= '0';
-          powerup_reset_cnt <= powerup_reset_cnt + 1;
-        end if;
-      else
-        powerup_rst_n     <= '0';
-        powerup_reset_cnt <= "00000000";
-      end if;
-    end if;
-  end process;
 
-  sys_rst_n  <= powerup_rst_n;
-  fmc0_rst_n <= powerup_rst_n and (not sw_rst_fmc0);
+  -- logic AND of all async reset sources (active low)
+  powerup_arst_n <= sys_clk_pll_locked and L_RST_N;
+
+  -- concatenation of all clocks required to have synced resets
+  powerup_clk_in(0) <= sys_clk_62_5;
+  powerup_clk_in(1) <= sys_clk_125;
+  powerup_clk_in(2) <= ddr_clk;
+
+  cmp_powerup_reset : gc_reset
+    generic map (
+      g_clocks    => 3,                           -- 62.5MHz, 125MHz, 333MHz
+      g_logdelay  => 4,                           -- 16 clock cycles
+      g_syncdepth => 3)                           -- length of sync chains
+    port map (
+      free_clk_i => sys_clk_62_5,
+      locked_i   => powerup_arst_n,
+      clks_i     => powerup_clk_in,
+      rstn_o     => powerup_rst_out);
+
+  -- distribution of resets (already synchronized to their clock domains)
+  sys_rst_62_5_n <= powerup_rst_out(0);
+  sys_rst_125_n  <= powerup_rst_out(1);
+  ddr_rst_n      <= powerup_rst_out(2);
+
+  -- reset for mezzanine (including soft reset)
+  fmc0_rst_n <= sys_rst_125_n and (not sw_rst_fmc0);
+
 
   ------------------------------------------------------------------------------
   -- GN4124 interface
   ------------------------------------------------------------------------------
   cmp_gn4124_core : gn4124_core
     port map(
-      rst_n_a_i       => sys_rst_n,
+      rst_n_a_i       => L_RST_N,
       status_o        => gn4124_status,
       -- P2L Direction Source Sync DDR related signals
       p2l_clk_p_i     => P2L_CLKp,
@@ -644,7 +658,7 @@ begin
       g_sdb_addr    => c_SDB_ADDRESS)
     port map (
       clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_n,
+      rst_n_i   => sys_rst_125_n,
       slave_i   => cnx_slave_in,
       slave_o   => cnx_slave_out,
       master_i  => cnx_master_in,
@@ -670,7 +684,7 @@ begin
       )
     port map(
       clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_n,
+      rst_n_i   => sys_rst_125_n,
 
       slave_i => cnx_master_out(c_WB_SLAVE_ONEWIRE),
       slave_o => cnx_master_in(c_WB_SLAVE_ONEWIRE),
@@ -693,7 +707,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_carrier_csr : carrier_csr
     port map(
-      rst_n_i                          => sys_rst_n,
+      rst_n_i                          => sys_rst_125_n,
       clk_sys_i                        => sys_clk_125,
       wb_adr_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).dat,
@@ -738,7 +752,7 @@ begin
       g_init_vectors        => c_VIC_VECTOR_TABLE)
     port map (
       clk_sys_i    => sys_clk_125,
-      rst_n_i      => sys_rst_n,
+      rst_n_i      => sys_rst_125_n,
       slave_i      => cnx_master_out(c_WB_SLAVE_VIC),
       slave_o      => cnx_master_in(c_WB_SLAVE_VIC),
       irqs_i(0)    => fmc0_eic_irq,
@@ -750,7 +764,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_dma_eic : dma_eic
     port map(
-      rst_n_i         => sys_rst_n,
+      rst_n_i         => sys_rst_125_n,
       clk_sys_i       => sys_clk_125,
       wb_adr_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).adr(3 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).dat,
@@ -877,7 +891,7 @@ begin
       g_P1_BYTE_ADDR_WIDTH => 30)
     port map (
       clk_i   => ddr_clk,
-      rst_n_i => fmc0_rst_n,
+      rst_n_i => ddr_rst_n,
 
       status_o => ddr3_status,
 
@@ -901,6 +915,7 @@ begin
       ddr3_rzq_b    => DDR3_RZQ,
       ddr3_zio_b    => DDR3_ZIO,
 
+      wb0_rst_n_i => sys_rst_125_n,
       wb0_clk_i   => sys_clk_125,
       wb0_sel_i   => wb_ddr_sel,
       wb0_cyc_i   => wb_ddr_cyc,
@@ -925,6 +940,7 @@ begin
       p0_wr_underrun_o => open,
       p0_wr_error_o    => open,
 
+      wb1_rst_n_i => sys_rst_125_n,
       wb1_clk_i   => sys_clk_125,
       wb1_sel_i   => wb_dma_sel,
       wb1_cyc_i   => wb_dma_cyc,
@@ -969,7 +985,7 @@ begin
   p_led_pwn_update_cnt : process (sys_clk_125)
   begin
     if rising_edge(sys_clk_125) then
-      if (sys_rst_n = '0') then
+      if (sys_rst_125_n = '0') then
         led_pwm_update_cnt <= (others => '0');
         led_pwm_update     <= '0';
       elsif (led_pwm_update_cnt = to_unsigned(954, 10)) then
@@ -985,7 +1001,7 @@ begin
   p_led_pwn_val : process (sys_clk_125)
   begin
     if rising_edge(sys_clk_125) then
-      if (sys_rst_n = '0') then
+      if (sys_rst_125_n = '0') then
         led_pwm_val      <= (others => '0');
         led_pwm_val_down <= '0';
       elsif (led_pwm_update = '1') then
@@ -1007,7 +1023,7 @@ begin
   p_led_pwn_cnt : process (sys_clk_125)
   begin
     if rising_edge(sys_clk_125) then
-      if (sys_rst_n = '0') then
+      if (sys_rst_125_n = '0') then
         led_pwm_cnt <= (others => '0');
       else
         led_pwm_cnt <= led_pwm_cnt + 1;
@@ -1018,7 +1034,7 @@ begin
   p_led_pwn : process (sys_clk_125)
   begin
     if rising_edge(sys_clk_125) then
-      if (sys_rst_n = '0') then
+      if (sys_rst_125_n = '0') then
         led_pwm <= '0';
       elsif (led_pwm_cnt = 0) then
         led_pwm <= '1';
@@ -1045,7 +1061,7 @@ begin
         g_width => 5000000)
       port map (
         clk_i      => sys_clk_125,
-        rst_n_i    => sys_rst_n,
+        rst_n_i    => sys_rst_125_n,
         pulse_i    => irq_sources(I),
         extended_o => irq_sources_2_led(I));
   end generate gen_irq_led;

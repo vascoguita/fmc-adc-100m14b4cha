@@ -947,25 +947,24 @@ NET "ddr1_udqs_n_b"  IN_TERM = NONE;
 # False Path
 #===============================================================================
 
-# Reset
-
-NET "cmp_sync_ddr_rst/sync2" TIG;
-NET "cmp_sync_fmc0_rst/sync2" TIG;
-NET "cmp_sync_fmc1_rst/sync2" TIG;
-NET "powerup_rst_n" TIG;
-NET "sw_rst_fmc0" TIG;
-NET "sw_rst_fmc1" TIG;
-
-
-
 # DDR3
 
 NET "cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wrapper/gen_svec_bank4_64b_32b.cmp_ddr3_ctrl/memc4_wrapper_inst/memc4_mcb_raw_wrapper_inst/selfrefresh_mcb_mode" TIG;
 NET "cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wrapper/gen_svec_bank4_64b_32b.cmp_ddr3_ctrl/c4_pll_lock" TIG;
 NET "cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wrapper/gen_svec_bank4_64b_32b.cmp_ddr3_ctrl/memc4_wrapper_inst/memc4_mcb_raw_wrapper_inst/hard_done_cal" TIG;
 NET "cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wrapper/gen_svec_bank4_64b_32b.cmp_ddr3_ctrl/memc4_wrapper_inst/memc4_mcb_raw_wrapper_inst/gen_term_calib.mcb_soft_calibration_top_inst/mcb_soft_calibration_inst/DONE_SOFTANDHARD_CAL" TIG;
+NET "cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wrapper/gen_svec_bank4_64b_32b.cmp_ddr3_ctrl/memc4_infrastructure_inst/locked" TIG;
 
 NET "cmp_ddr_ctrl_bank5/cmp_ddr3_ctrl_wrapper/gen_svec_bank5_64b_32b.cmp_ddr3_ctrl/memc5_wrapper_inst/memc5_mcb_raw_wrapper_inst/selfrefresh_mcb_mode" TIG;
 NET "cmp_ddr_ctrl_bank5/cmp_ddr3_ctrl_wrapper/gen_svec_bank5_64b_32b.cmp_ddr3_ctrl/c5_pll_lock" TIG;
 NET "cmp_ddr_ctrl_bank5/cmp_ddr3_ctrl_wrapper/gen_svec_bank5_64b_32b.cmp_ddr3_ctrl/memc5_wrapper_inst/memc5_mcb_raw_wrapper_inst/hard_done_cal" TIG;
 NET "cmp_ddr_ctrl_bank5/cmp_ddr3_ctrl_wrapper/gen_svec_bank5_64b_32b.cmp_ddr3_ctrl/memc5_wrapper_inst/memc5_mcb_raw_wrapper_inst/gen_term_calib.mcb_soft_calibration_top_inst/mcb_soft_calibration_inst/DONE_SOFTANDHARD_CAL" TIG;
+NET "cmp_ddr_ctrl_bank5/cmp_ddr3_ctrl_wrapper/gen_svec_bank5_64b_32b.cmp_ddr3_ctrl/memc5_infrastructure_inst/locked" TIG;
+
+# Master reset for reset synchroniser
+NET "cmp_powerup_reset/master_rstn" TIG;
+
+# Async reset inputs to reset synchroniser
+NET "rst_n_i" TIG;
+NET "sys_clk_pll_locked" TIG;
+NET "vme_sysreset_n_i" TIG;
