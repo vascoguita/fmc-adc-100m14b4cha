@@ -393,6 +393,17 @@ As mnemonic, you can keep in mind that the functions with the longer
 @t{config} name do more (talk with hardware), while those with the
 shorter name @t{conf} do less.
 
+@node fmc_adc_100m_specific_configuration
+@section FMC ADC 100M Specific configuration
+
+@smallexample
+int fmcadc_mshot_buf_max_size_get(struct adc_dev *dev, int *value);
+@end smallexample
+
+@findex fmcadc_mshot_buf_max_size_get
+The @i{multi-shot maximum buffer} getter returns the maximum buffer size
+used by the gateware.
+
 @c ##########################################################################
 @node Acquisition
 @chapter Acquisition

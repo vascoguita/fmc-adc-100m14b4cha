@@ -508,18 +508,19 @@ This is the complete list of files in the respective @i{sysfs} directory.
 
 @smallexample
 # ls -F /sys/bus/zio/devices/adc-100m14b-0200/cset0/
-ch0-50ohm-term  ch3-50ohm-term   devtype            tstamp-acq-end-b
-ch0-offset      ch3-offset       enable             tstamp-acq-end-s
-ch0-saturation  ch3-saturation   fsm-auto-start     tstamp-acq-end-t
-ch0-vref        ch3-vref         fsm-command        tstamp-acq-stp-b
-ch1-50ohm-term  chan0/           fsm-state          tstamp-acq-stp-s
-ch1-offset      chan1/           name               tstamp-acq-stp-t
-ch1-saturation  chan2/           power/             tstamp-acq-str-b
-ch1-vref        chan3/           resolution-bits    tstamp-acq-str-s
-ch2-50ohm-term  chani/           rst-ch-offset      tstamp-acq-str-t
-ch2-offset      current_buffer   sample-decimation  tstamp-base-s
-ch2-saturation  current_trigger  sample-frequency   tstamp-base-t
-ch2-vref        devname          trigger/           uevent
+ch0-50ohm-term  ch3-offset       enable             tstamp-acq-end-b
+ch0-offset      ch3-saturation   fsm-auto-start     tstamp-acq-end-s
+ch0-saturation  ch3-vref         fsm-command        tstamp-acq-end-t
+ch0-vref        chan0/           fsm-state          tstamp-acq-stp-b
+ch1-50ohm-term  chan1/           max-sample-mshot   tstamp-acq-stp-s
+ch1-offset      chan2/           name               tstamp-acq-stp-t
+ch1-saturation  chan3/           power/             tstamp-acq-str-b
+ch1-vref        chani/           resolution-bits    tstamp-acq-str-s
+ch2-50ohm-term  current_buffer   rst-ch-offset      tstamp-acq-str-t
+ch2-offset      current_trigger  sample-counter     tstamp-base-s
+ch2-saturation  devname          sample-decimation  tstamp-base-t
+ch2-vref        devtype          sample-frequency   uevent
+ch3-50ohm-term  direction        trigger/
 @end smallexample
 
 Some attributes are channel-specific, and one may thing they should
@@ -646,6 +647,11 @@ not described.
       If queried while the acquisition is running you will get the number of
       samples acquired till that moment. It can be used to evaluate the progress
       of a slow acquisition.
+
+@item max-sample-mshot
+
+      Maximum number of samples that can be stored in the FPGA memory in
+      multi-shot mode
 
 @end table
 
@@ -911,6 +917,7 @@ that ZIO framework can handle only 32bit unsigned integer.
      @item Cset @tab @code{fsm-auto-start} @tab rw @tab 0 @tab [0;1]
      @item Cset @tab @code{fsm-command} @tab wo @tab - @tab [1;2] @tab 2 = STOP
      @item Cset @tab @code{fsm-state} @tab ro @tab - @tab - @tab hw values
+     @item Cset @tab @code{max-sample-mshot} @tab ro @tab - @tab - @tab hw value
      @item Cset @tab @code{resolution-bits} @tab ro @tab 14 @tab -
      @item Cset @tab @code{rst-ch-offset} @tab wo @tab - @tab any
      @item Cset @tab @code{sample-decimation} @tab rw @tab 1 @tab [1;65535]
