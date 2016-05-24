@@ -202,6 +202,53 @@ static inline int fmcadc_mshot_buf_max_size_get(struct fmcadc_dev *dev,
         return fmcadc_get_param(dev, "cset0/max-sample-mshot", NULL, value);
 }
 
+
+static inline int fmcadc_buffer_type_get(struct fmcadc_dev *dev, char *buf_type)
+{
+        return fmcadc_get_param(dev, "cset0/current_buffer", buf_type, NULL);
+}
+
+static inline int fmcadc_buffer_maximum_size_get(struct fmcadc_dev *dev,
+						 int *size)
+{
+	char s[16];
+	int err;
+
+	err = fmcadc_buffer_type_get(dev, s);
+	if (err)
+		return -1;
+	if (!strcmp(s, "vmalloc")) {
+		return fmcadc_get_param(dev,
+					"cset0/chani/buffer/max-buffer-kb",
+					NULL, size);
+	} else if (!strcmp(s, "kmalloc")) {
+	        return 4 * 1024;  /* MiB => KiB */
+	}
+
+	return -1;
+}
+
+static inline int fmcadc_buffer_maximum_size_set(struct fmcadc_dev *dev,
+						 int size)
+{
+		char s[16];
+	int err;
+
+	err = fmcadc_buffer_type_get(dev, s);
+	if (err)
+		return -1;
+	if (!strcmp(s, "vmalloc")) {
+		return fmcadc_set_param(dev,
+					"cset0/chani/buffer/max-buffer-kb",
+					NULL, &size);
+	} else if (!strcmp(s, "kmalloc")) {
+	        return -1;  /* cannot be changed */
+	}
+
+	return -1;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
