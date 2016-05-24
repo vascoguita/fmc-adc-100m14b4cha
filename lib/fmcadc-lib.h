@@ -196,7 +196,8 @@ extern const char * const libfmcadc_version_s;
 /* zio version string used during compilation of libfmcadc */
 extern const char * const libfmcadc_zio_version_s;
 
-static inline int fmcadc_mshot_buf_max_size_get(struct adc_dev *dev, int *value)
+static inline int fmcadc_mshot_buf_max_size_get(struct fmcadc_dev *dev,
+						int *value)
 {
         return fmcadc_get_param(dev, "cset0/max-sample-mshot", NULL, value);
 }
