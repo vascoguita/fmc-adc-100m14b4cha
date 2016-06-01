@@ -23,6 +23,9 @@
 
 #include "fmc-adc-100m14b4cha.h"
 
+ZIO_PARAM_BUFFER(adc_buffer);
+
+
 /*
  * zio device attributes
  */
@@ -598,6 +601,8 @@ int fa_zio_init(struct fa_dev *fa)
 	struct device *msgdev = &fa->fmc->dev;
 	int err;
 
+	if (adc_buffer)
+		zfad_tmpl.preferred_buffer = adc_buffer;
 
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
