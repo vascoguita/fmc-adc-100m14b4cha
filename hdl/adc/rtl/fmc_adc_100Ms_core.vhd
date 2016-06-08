@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-04-19
+-- Last update: 2016-06-08
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -1357,8 +1357,9 @@ begin
 
   trig_tag_done <= acq_in_trig_tag and acq_in_trig_tag_d;
 
-  trig_tag_data <= trigger_tag_i.fine & trigger_tag_i.coarse when trig_tag_done = '1' else
-                   trigger_tag_i.seconds & trigger_tag_i.meta;
+  -- keep compatibility with trig_tag_data order prior to 5.0 release
+  trig_tag_data <= X"000000000" & trigger_tag_i.coarse when trig_tag_done = '1' else
+                   trigger_tag_i.seconds(31 downto 0) & X"000000" & trigger_tag_i.seconds(39 downto 32);
 
   ------------------------------------------------------------------------------
   -- Dual DPRAM buffers for multi-shots acquisition

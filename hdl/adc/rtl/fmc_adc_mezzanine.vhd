@@ -1,25 +1,23 @@
---------------------------------------------------------------------------------
--- CERN (BE-CO-HT)
--- FMC ADC mezzanine
--- http://www.ohwr.org/projects/fmc-adc-100m14b4cha
---------------------------------------------------------------------------------
---
--- unit name: fmc_adc_mezzanine (fmc_adc_mezzanine.vhd)
---
--- author: Matthieu Cattin (matthieu.cattin@cern.ch)
---
--- date: 07-05-2013
---
--- description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core and
---              the other wishbone slaves connected to a FMC ADC mezzanine.
---
--- dependencies:
---
--- references:
---
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Title      : FMC ADC mezzanine
+-- Project    : FMC ADC 100M 14B 4CHA gateware
+-- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
+-------------------------------------------------------------------------------
+-- File       : fmc_adc_mezzanine.vhd
+-- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
+--              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
+-- Company    : CERN (BE-CO-HT)
+-- Created    : 2013-05-07
+-- Last update: 2016-06-08
+-- Standard   : VHDL'93/02
+-------------------------------------------------------------------------------
+-- Description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core
+-- and the other wishbone slaves connected to a FMC ADC mezzanine.
+-------------------------------------------------------------------------------
+-- Copyright (c) 2013-2016 CERN (BE-CO-HT)
+-------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- This source file is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by the
 -- Free Software Foundation; either version 2.1 of the License, or (at your
@@ -29,11 +27,11 @@
 -- See the GNU Lesser General Public License for more details. You should have
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
---------------------------------------------------------------------------------
--- last changes: see git log.
---------------------------------------------------------------------------------
--- TODO: - 
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author
+-- 2013-05-07  1.0      Matthieu Cattin
+-------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
@@ -612,9 +610,11 @@ begin
       acq_stop_p_i  => acq_stop_p,
       acq_end_p_i   => acq_end_p,
 
+      wr_enabled_i => '0',
+
       trig_tag_o => trigger_tag,
 
-      wb_adr_i => cnx_master_out(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_master_out.adr is byte address
+      wb_adr_i => cnx_master_out(c_WB_SLAVE_TIMETAG).adr(5 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i => cnx_master_out(c_WB_SLAVE_TIMETAG).dat,
       wb_dat_o => cnx_master_in(c_WB_SLAVE_TIMETAG).dat,
       wb_cyc_i => cnx_master_out(c_WB_SLAVE_TIMETAG).cyc,

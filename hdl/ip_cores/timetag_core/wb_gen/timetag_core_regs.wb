@@ -6,9 +6,24 @@ peripheral {
   prefix = "timetag_core";
 
   reg {
-    name = "Timetag seconds register";
-    description = "Seconds counter. Incremented everytime the coarse counter overflows.";
-    prefix = "seconds";
+    name = "Timetag seconds register (upper)";
+    description = "8 upper bits of seconds counter. Incremented everytime the coarse counter overflows.";
+    prefix = "seconds_upper";
+
+    field {
+      name = "Timetag seconds";
+      type = SLV;
+      load = LOAD_EXT;
+      size = 8;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+    };
+  };
+
+reg {
+    name = "Timetag seconds register (lower)";
+    description = "32 lower bits of seconds counter. Incremented everytime the coarse counter overflows.";
+    prefix = "seconds_lower";
 
     field {
       name = "Timetag seconds";
@@ -29,29 +44,29 @@ peripheral {
       name = "Timetag coarse time";
       type = SLV;
       load = LOAD_EXT;
-      size = 32;
+      size = 28;
       access_bus = READ_WRITE;
       access_dev = READ_WRITE;
     };
   };
 
   reg {
-    name = "Trigger time-tag metadata register";
-    prefix = "trig_tag_meta";
+    name = "Trigger time-tag seconds register (upper)";
+    prefix = "trig_tag_seconds_upper";
 
     field {
-      name = "Trigger time-tag metadata";
-      description = "Holds time-tag metadata of the last trigger event";
+      name = "Trigger time-tag seconds";
+      description = "Holds time-tag seconds of the last trigger event";
       type = SLV;
-      size = 32;
+      size = 8;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
-  reg {
-    name = "Trigger time-tag seconds register";
-    prefix = "trig_tag_seconds";
+reg {
+    name = "Trigger time-tag seconds register (lower)";
+    prefix = "trig_tag_seconds_lower";
 
     field {
       name = "Trigger time-tag seconds";
@@ -71,43 +86,29 @@ peripheral {
       name = "Trigger time-tag coarse time";
       description = "Holds time-tag coarse time of the last trigger event";
       type = SLV;
-      size = 32;
+      size = 28;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
   reg {
-    name = "Trigger time-tag fine time register, always 0 (used for time-tag format compatibility)";
-    prefix = "trig_tag_fine";
+    name = "Acquisition start time-tag seconds register (upper)";
+    prefix = "acq_start_tag_seconds_upper";
 
     field {
-      name = "Trigger time-tag fine time";
-      description = "Holds time-tag fine time of the last trigger event";
+      name = "Acquisition start time-tag seconds";
+      description = "Holds time-tag seconds of the last acquisition start event";
       type = SLV;
-      size = 32;
+      size = 8;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
-  reg {
-    name = "Acquisition start time-tag metadata register";
-    prefix = "acq_start_tag_meta";
-
-    field {
-      name = "Acquisition start time-tag metadata";
-      description = "Holds time-tag metadata of the last acquisition start event";
-      type = SLV;
-      size = 32;
-      access_bus = READ_ONLY;
-      access_dev = WRITE_ONLY;
-    };
-  };
-
-  reg {
-    name = "Acquisition start time-tag seconds register";
-    prefix = "acq_start_tag_seconds";
+reg {
+    name = "Acquisition start time-tag seconds register (lower)";
+    prefix = "acq_start_tag_seconds_lower";
 
     field {
       name = "Acquisition start time-tag seconds";
@@ -127,43 +128,29 @@ peripheral {
       name = "Acquisition start time-tag coarse time";
       description = "Holds time-tag coarse time of the last acquisition start event";
       type = SLV;
-      size = 32;
+      size = 28;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
   reg {
-    name = "Acquisition start time-tag fine time register, always 0 (used for time-tag format compatibility)";
-    prefix = "acq_start_tag_fine";
+    name = "Acquisition stop time-tag seconds register (upper)";
+    prefix = "acq_stop_tag_seconds_upper";
 
     field {
-      name = "Acquisition start time-tag fine time";
-      description = "Holds time-tag fine time of the last acquisition start event";
+      name = "Acquisition stop time-tag seconds";
+      description = "Holds time-tag seconds of the last acquisition stop event";
       type = SLV;
-      size = 32;
+      size = 8;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
   reg {
-    name = "Acquisition stop time-tag metadata register";
-    prefix = "acq_stop_tag_meta";
-
-    field {
-      name = "Acquisition stop time-tag metadata";
-      description = "Holds time-tag metadata of the last acquisition stop event";
-      type = SLV;
-      size = 32;
-      access_bus = READ_ONLY;
-      access_dev = WRITE_ONLY;
-    };
-  };
-
-  reg {
-    name = "Acquisition stop time-tag seconds register";
-    prefix = "acq_stop_tag_seconds";
+    name = "Acquisition stop time-tag seconds register (lower)";
+    prefix = "acq_stop_tag_seconds_lower";
 
     field {
       name = "Acquisition stop time-tag seconds";
@@ -183,43 +170,29 @@ peripheral {
       name = "Acquisition stop time-tag coarse time";
       description = "Holds time-tag coarse time of the last acquisition stop event";
       type = SLV;
-      size = 32;
+      size = 28;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
   reg {
-    name = "Acquisition stop time-tag fine time register, always 0 (used for time-tag format compatibility)";
-    prefix = "acq_stop_tag_fine";
+    name = "Acquisition end time-tag seconds register (upper)";
+    prefix = "acq_end_tag_seconds_upper";
 
     field {
-      name = "Acquisition stop time-tag fine time";
-      description = "Holds time-tag fine time of the last acquisition stop event";
+      name = "Acquisition end time-tag seconds";
+      description = "Holds time-tag seconds of the last acquisition end event";
       type = SLV;
-      size = 32;
+      size = 8;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
   };
 
   reg {
-    name = "Acquisition end time-tag metadata register";
-    prefix = "acq_end_tag_meta";
-
-    field {
-      name = "Acquisition end time-tag metadata";
-      description = "Holds time-tag metadata of the last acquisition end event";
-      type = SLV;
-      size = 32;
-      access_bus = READ_ONLY;
-      access_dev = WRITE_ONLY;
-    };
-  };
-
-  reg {
-    name = "Acquisition end time-tag seconds register";
-    prefix = "acq_end_tag_seconds";
+    name = "Acquisition end time-tag seconds register (lower)";
+    prefix = "acq_end_tag_seconds_lower";
 
     field {
       name = "Acquisition end time-tag seconds";
@@ -239,21 +212,7 @@ peripheral {
       name = "Acquisition end time-tag coarse time";
       description = "Holds time-tag coarse time of the last acquisition end event";
       type = SLV;
-      size = 32;
-      access_bus = READ_ONLY;
-      access_dev = WRITE_ONLY;
-    };
-  };
-
-  reg {
-    name = "Acquisition end time-tag fine time register, always 0 (used for time-tag format compatibility)";
-    prefix = "acq_end_tag_fine";
-
-    field {
-      name = "Acquisition end time-tag fine time";
-      description = "Holds time-tag fine time of the last acquisition end event";
-      type = SLV;
-      size = 32;
+      size = 28;
       access_bus = READ_ONLY;
       access_dev = WRITE_ONLY;
     };
