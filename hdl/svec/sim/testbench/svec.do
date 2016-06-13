@@ -5,9 +5,9 @@ set NumericStdNoWarnings 1
 
 #view wave
 #view transcript
-do wave_interrupt.do
+#do wave_interrupt.do
 #do wave_ddr.do
-#do wave.do
+do wave.do
 radix -hexadecimal
 
 run 50 us

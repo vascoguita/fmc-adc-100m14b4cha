@@ -64,7 +64,9 @@ add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_dma_stb_t
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_ack_cnt
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_read_cnt
-add wave -noupdate -group Top /main/DUT/clk20_vcxo_i
+#add wave -noupdate -group Top /main/DUT/clk20_vcxo_i
+add wave -noupdate -group Top /main/DUT/clk_125m_pllref*
+add wave -noupdate -group Top /main/DUT/powerup*
 add wave -noupdate -group Top /main/DUT/pll25dac_sync_n_o
 add wave -noupdate -group Top /main/DUT/pll20dac_sync_n_o
 add wave -noupdate -group Top /main/DUT/plldac_din_o
@@ -72,7 +74,7 @@ add wave -noupdate -group Top /main/DUT/plldac_sclk_o
 add wave -noupdate -group Top /main/DUT/led_red_o
 add wave -noupdate -group Top /main/DUT/led_green_o
 add wave -noupdate -group Top /main/DUT/aux_leds_o
-add wave -noupdate -group Top /main/DUT/aux_buttons_i
+#add wave -noupdate -group Top /main/DUT/aux_buttons_i
 add wave -noupdate -group Top /main/DUT/pcb_ver_i
 add wave -noupdate -group Top /main/DUT/carrier_one_wire_b
 add wave -noupdate -group Top /main/DUT/L_CLKp
@@ -152,21 +154,12 @@ add wave -noupdate -group Top /main/DUT/fmc0_sys_scl_b
 add wave -noupdate -group Top /main/DUT/fmc0_sys_sda_b
 add wave -noupdate -group Top /main/DUT/sys_clk_in
 add wave -noupdate -group Top /main/DUT/sys_clk_125_buf
-add wave -noupdate -group Top /main/DUT/sys_clk_250_buf
 add wave -noupdate -group Top /main/DUT/sys_clk_125
-add wave -noupdate -group Top /main/DUT/sys_clk_250
 add wave -noupdate -group Top /main/DUT/sys_clk_fb
 add wave -noupdate -group Top /main/DUT/sys_clk_pll_locked
 add wave -noupdate -group Top /main/DUT/ddr_clk
 add wave -noupdate -group Top /main/DUT/ddr_clk_buf
-add wave -noupdate -group Top /main/DUT/l_clk
-add wave -noupdate -group Top /main/DUT/powerup_reset_cnt
-add wave -noupdate -group Top /main/DUT/powerup_rst_n
-add wave -noupdate -group Top /main/DUT/sw_rst_fmc0_n
-add wave -noupdate -group Top /main/DUT/sw_rst_fmc0_n_o
-add wave -noupdate -group Top /main/DUT/sw_rst_fmc0_n_i
-add wave -noupdate -group Top /main/DUT/sw_rst_fmc0_n_load
-add wave -noupdate -group Top /main/DUT/sys_rst_n
+add wave -noupdate -group Top /main/DUT/sw_rst_fmc0
 add wave -noupdate -group Top /main/DUT/fmc0_rst_n
 add wave -noupdate -group Top /main/DUT/cnx_master_out
 add wave -noupdate -group Top /main/DUT/cnx_master_in
@@ -225,6 +218,7 @@ add wave -noupdate -group Top /main/DUT/led_pwm_val
 add wave -noupdate -group Top /main/DUT/led_pwm_val_down
 add wave -noupdate -group Top /main/DUT/led_pwm_cnt
 add wave -noupdate -group Top /main/DUT/led_pwm
+add wave -noupdate -radix hexadecimal -group MEZ /main/DUT/cmp_fmc_adc_mezzanine_0/cnx_*
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_clk_i
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_rst_n_i
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_adr_i
@@ -341,6 +335,7 @@ add wave -noupdate -radix unsigned -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_done
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/shots_decr
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/single_shot
+add wave -noupdate -radix hexadecimal -group TIMETAG /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_timetag_core/*
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/clk_i
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/rst_n_i
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/status_o

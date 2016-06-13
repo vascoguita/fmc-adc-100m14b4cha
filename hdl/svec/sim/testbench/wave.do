@@ -2,7 +2,7 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /main/DUT/sys_clk_62_5
 add wave -noupdate /main/DUT/sys_clk_125
-add wave -noupdate /main/DUT/sys_rst_n
+add wave -noupdate /main/DUT/powerup*
 add wave -noupdate -divider {wb vme}
 add wave -noupdate /main/DUT/cnx_slave_in(0).cyc
 add wave -noupdate /main/DUT/cnx_slave_in(0).stb
@@ -66,6 +66,8 @@ add wave -noupdate -radix hexadecimal /main/DUT/cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl
 add wave -noupdate -radix hexadecimal /main/DUT/cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wb_1/ddr_burst_cnt
 add wave -noupdate -radix hexadecimal /main/DUT/cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wb_1/addr_shift
 add wave -noupdate /main/DUT/cmp_ddr_ctrl_bank4/cmp_ddr3_ctrl_wrapper/gen_svec_bank4_64b_32b/cmp_ddr3_ctrl/memc4_wrapper_inst/memc4_mcb_raw_wrapper_inst/MCB_SYSRST
+add wave -noupdate -divider {timetag core}
+add wave -noupdate -radix hexadecimal /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_timetag_core/*
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {29753000 ps} 0}
 configure wave -namecolwidth 454

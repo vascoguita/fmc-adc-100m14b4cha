@@ -230,15 +230,15 @@ endinterface
 
 `define GENNUM_WIRE_SPEC_PINS(IF_NAME) \
   .L_RST_N   (IF_NAME.rst_n),\
-  .L_CLKp (IF_NAME.lclk_p),\
-  .L_CLKn (IF_NAME.lclk_n),\
+//  .L_CLKp (IF_NAME.lclk_p),\
+//  .L_CLKn (IF_NAME.lclk_n),\
   .p2l_clkp  (IF_NAME.p2l_clk_p),\
   .p2l_clkn  (IF_NAME.p2l_clk_n),\
   .p2l_data   (IF_NAME.p2l_data),\
   .p2l_dframe (IF_NAME.p2l_dframe),\
   .p2l_valid  (IF_NAME.p2l_valid),\
   .p2l_rdy    (IF_NAME.p2l_rdy),\
-  .p_wr_req  (IF_NAME.p_wr_req),\
+//  .p_wr_req  (IF_NAME.p_wr_req),\
   .p_wr_rdy  (IF_NAME.p_wr_rdy),\
   .rx_error  (IF_NAME.rx_error),\
   .l2p_clkp  (IF_NAME.l2p_clk_p),\
@@ -250,8 +250,8 @@ endinterface
   .l2p_rdy    (IF_NAME.l2p_rdy),\
   .l_wr_rdy   (IF_NAME.l_wr_rdy),\
   .p_rd_d_rdy (IF_NAME.p_rd_d_rdy),\
-  .tx_error   (IF_NAME.tx_error),\
-  .vc_rdy     (IF_NAME.vc_rdy)
+  .tx_error   (IF_NAME.tx_error)
+//  .vc_rdy     (IF_NAME.vc_rdy)
 
 `endif //  `ifndef __GN4124_BFM_SVH
     

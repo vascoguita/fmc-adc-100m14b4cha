@@ -7,7 +7,8 @@
 
 
 module main;
-   reg clk_20m_vcxo = 0;
+   reg clk_125m_pllref_p = 0;
+   reg clk_125m_pllref_n = 1;
 
    reg rst_n = 0;
    reg adc0_dco = 0;
@@ -15,7 +16,8 @@ module main;
 
 
    always #1.25ns adc0_dco <= ~adc0_dco;
-   always #25ns clk_20m_vcxo <= ~clk_20m_vcxo;
+   always #4ns clk_125m_pllref_p <= ~clk_125m_pllref_p;
+   always #4ns clk_125m_pllref_n <= ~clk_125m_pllref_n;
 
 
    IGN4124PCIMaster I_Gennum ();
@@ -35,7 +37,8 @@ module main;
        .g_simulation("TRUE"),
        .g_calib_soft_ip("FALSE")
        ) DUT (
-	      .clk20_vcxo_i(clk_20m_vcxo),
+	      .clk_125m_pllref_p_i(clk_125m_pllref_p),
+	      .clk_125m_pllref_n_i(clk_125m_pllref_n),
 	      .adc0_dco_p_i(adc0_dco),
 	      .adc0_dco_n_i(~adc0_dco),
 	      .adc0_fr_p_i(adc0_fr),
@@ -113,7 +116,7 @@ module main;
 
       @(posedge DUT.sys_clk_pll_locked);
 
-      #5us;
+      #15us;
 
       acc.read(0, val);
       $display("ID: %x", val);
@@ -129,6 +132,12 @@ module main;
       acc.read('h3304, val); // status
       $display("STATUS: %x", val);
 
+      #5us;
+      acc.write('h3600, 'h00000032); // timetag core seconds high
+      acc.write('h3604, 'h00005a34); // timetag core seconds low
+      acc.write('h3608, 'h00000000); // timetag core ticks
+      
+      
       acc.write('h3300, 'h00000001); // FSM start
 
       #1us;
@@ -170,6 +179,8 @@ module main;
 
       acc.write('h1000, 'h00000001); // xfer start
 
+      acc.read('h3304, val); // status
+      $display("STATUS: %x", val);
 
    end
 

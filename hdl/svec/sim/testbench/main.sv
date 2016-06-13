@@ -6,12 +6,11 @@
 module main;
 
    reg rst_n = 0;
-   reg clk_20m = 0;
-
-   always #25ns clk_20m <= ~clk_20m;
+   reg clk_125m_pllref_p = 0;
+   reg clk_125m_pllref_n = 1;
 
    initial begin
-      repeat(20) @(posedge clk_20m);
+      repeat(20) @(posedge clk_125m_pllref_p);
       rst_n = 1;
    end
 
@@ -35,6 +34,8 @@ module main;
    logic [7:0] adc_frame = 'h0F;
 
    always #1250ps adc0_dco_p <= ~adc0_dco_p;
+   always #4ns clk_125m_pllref_p <= ~clk_125m_pllref_p;
+   always #4ns clk_125m_pllref_n <= ~clk_125m_pllref_n;
 
    typedef struct {
                    rand bit [15:0] data;
@@ -72,7 +73,8 @@ module main;
        )
    DUT
      (
-      .clk_20m_vcxo_i(clk_20m),
+      .clk_125m_pllref_p_i(clk_125m_pllref_p),
+      .clk_125m_pllref_n_i(clk_125m_pllref_n),
       .rst_n_i(rst_n),
 
       .fp_led_line_oen_o(fp_led_line_oen),
@@ -126,41 +128,39 @@ module main;
       init_vme64x_core(acc);
 
       $display("Release FMC0/1 reset\n");
-      acc.write('h120C, 'h3, A32|SINGLE|D32);
-
-
-      // Enable all interrupts
-      $display("Enable FMC0 and FMC1 interrupt vectors\n");
-      acc.write('h1308, 'h3, A32|SINGLE|D32);
-      acc.read('h1310, d, A32|SINGLE|D32);
-      $display("VIC interrupt mask = 0x%x\n",d);
-      acc.write('h1300, 'h3, A32|SINGLE|D32);
-
-      $display("Enable TRIGGER and END_ACQ in FMC0/1 EIC\n");
-      acc.write('h2000, 'h3, A32|SINGLE|D32);
-      acc.write('h6000, 'h3, A32|SINGLE|D32);
+      acc.write('h120C, 'h0, A32|SINGLE|D32);
 
       // Trigger setup (sw trigger)
       $display("Trigger setup\n");
-      acc.write('h5308, 'h8, A32|SINGLE|D32);
+      acc.write('h3308, 'h8, A32|SINGLE|D32);
 
       // Acquisition setup
       $display("Acquisition setup\n");
-      acc.write('h5320, 'h1, A32|SINGLE|D32); // 1 pre-trigger samples
-      acc.write('h5324, 'hA, A32|SINGLE|D32); // 10 post-trigger samples
-      acc.write('h5314, 'h1, A32|SINGLE|D32); // 1 shot
+      acc.write('h3328, 'h1, A32|SINGLE|D32); // 1 pre-trigger samples
+      acc.write('h332c, 'hA, A32|SINGLE|D32); // 10 post-trigger samples
+      acc.write('h3314, 'h1, A32|SINGLE|D32); // 1 shot
 
       // Make sure no acquisition is running
-      acc.write('h5300, 'h2, A32|SINGLE|D32); // Send STOP command
+      acc.write('h3300, 'h2, A32|SINGLE|D32); // Send STOP command
+
+      #2.5us;
+      acc.write('h1208, 'h10000);
+      #0.5us;
+      acc.write('h1208, 'h00000);
+      #2.0us;      
+      
+      acc.write('h3600, 'h00000032); // timetag core seconds high
+      acc.write('h3604, 'h00005a34); // timetag core seconds low
+      acc.write('h3608, 'h00000000); // timetag core ticks
 
       // Start acquisition
       $display("Start acquisition\n");
-      acc.write('h5300, 'h1, A32|SINGLE|D32); // Send START command
+      acc.write('h3300, 'h1, A32|SINGLE|D32); // Send START command
 
       // Sw trigger
       #1us
       $display("Software trigger\n");
-      acc.write('h5310, 'hFF, A32|SINGLE|D32);
+      acc.write('h3310, 'hFF, A32|SINGLE|D32);
 
       /*
       // Data "FIFO" test
@@ -187,6 +187,7 @@ module main;
         end
       */
 
+/* -----\/----- EXCLUDED -----\/-----
       acc.write('h2200, 'h0, A32|SINGLE|D32);
       for(i=0; i<5; i++)
         begin
@@ -209,6 +210,7 @@ module main;
            $display("Read %d: 0x%x\n", i, d);
         end
 
+ -----/\----- EXCLUDED -----/\----- */
 
    end
 
