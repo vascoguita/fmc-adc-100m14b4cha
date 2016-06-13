@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-05-18
+-- Last update: 2016-06-09
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -182,7 +182,7 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
   -- Components declaration
   ------------------------------------------------------------------------------
-  component carrier_csr
+  component carrier_csr is
     port (
       rst_n_i                          : in  std_logic;
       clk_sys_i                        : in  std_logic;
@@ -205,6 +205,7 @@ architecture rtl of spec_top_fmc_adc_100Ms is
       carrier_csr_ctrl_led_green_o     : out std_logic;
       carrier_csr_ctrl_led_red_o       : out std_logic;
       carrier_csr_ctrl_dac_clr_n_o     : out std_logic;
+      carrier_csr_ctrl_wrabbit_en_o    : out std_logic;
       carrier_csr_rst_fmc0_o           : out std_logic);
   end component carrier_csr;
 
@@ -352,14 +353,14 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   signal ddr_clk_buf : std_logic;
 
   -- Reset
-  signal powerup_arst_n       : std_logic := '0';
-  signal powerup_clk_in       : std_logic_vector(2 downto 0);
-  signal powerup_rst_out      : std_logic_vector(2 downto 0);
-  signal sys_rst_62_5_n       : std_logic;
-  signal sys_rst_125_n        : std_logic;
-  signal sw_rst_fmc0          : std_logic := '1';
-  signal fmc0_rst_n           : std_logic;
-  signal ddr_rst_n            : std_logic;
+  signal powerup_arst_n  : std_logic := '0';
+  signal powerup_clk_in  : std_logic_vector(2 downto 0);
+  signal powerup_rst_out : std_logic_vector(2 downto 0);
+  signal sys_rst_62_5_n  : std_logic;
+  signal sys_rst_125_n   : std_logic;
+  signal sw_rst_fmc0     : std_logic := '1';
+  signal fmc0_rst_n      : std_logic;
+  signal ddr_rst_n       : std_logic;
 
   -- Wishbone buse(s) from crossbar master port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
@@ -446,6 +447,8 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   signal led_pwm_cnt        : unsigned(16 downto 0);
   signal led_pwm            : std_logic;
 
+  -- White Rabbit
+  signal wrabbit_en : std_logic;
 
 begin
 
@@ -728,6 +731,7 @@ begin
       carrier_csr_ctrl_led_green_o     => led_green,
       carrier_csr_ctrl_led_red_o       => led_red,
       carrier_csr_ctrl_dac_clr_n_o     => open,
+      carrier_csr_ctrl_wrabbit_en_o    => wrabbit_en,
       carrier_csr_rst_fmc0_o           => sw_rst_fmc0
       );
 
@@ -865,7 +869,9 @@ begin
       mezz_one_wire_b => adc0_one_wire_b,
 
       sys_scl_b => fmc0_sys_scl_b,
-      sys_sda_b => fmc0_sys_sda_b
+      sys_sda_b => fmc0_sys_sda_b,
+
+      wr_enable_i => wrabbit_en
       );
 
   -- Unused wishbone signals

@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
--- Last update: 2016-06-08
+-- Last update: 2016-06-09
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Implements a UTC seconds counter and a 125MHz system clock
@@ -52,6 +52,11 @@ entity timetag_core is
 
     -- White Rabbit enabled flag
     wr_enabled_i : in std_logic;
+
+    -- White Rabbit timecode interface input
+    wr_tm_time_valid_i : in std_logic;
+    wr_tm_tai_i        : in std_logic_vector(39 downto 0);
+    wr_tm_cycles_i     : in std_logic_vector(27 downto 0);
 
     -- Trigger time-tag output
     trig_tag_o : out t_timetag;
@@ -129,9 +134,12 @@ architecture rtl of timetag_core is
 
   signal local_pps : std_logic;
 
-
+  signal wr_enabled : std_logic := '0';
 
 begin
+
+  -- logic to detect if WR is enabled and timecode is valid
+  wr_enabled <= wr_enabled_i and wr_tm_time_valid_i;
 
   ------------------------------------------------------------------------------
   -- Wishbone interface to UTC core registers
@@ -184,12 +192,14 @@ begin
       elsif timetag_seconds_load_en(0) = '1' then
         timetag_seconds_cnt(31 downto 0) <= unsigned(timetag_seconds_load_value(31 downto 0));
       elsif local_pps = '1' then
-        timetag_seconds_cnt <= timetag_seconds_cnt + 1;
+        timetag_seconds_cnt <= unsigned(timetag_seconds) + 1;
+      else
+        timetag_seconds_cnt <= unsigned(timetag_seconds);
       end if;
     end if;
   end process p_timetag_seconds_cnt;
 
-  timetag_seconds <= std_logic_vector(timetag_seconds_cnt);
+  timetag_seconds <= wr_tm_tai_i when wr_enabled_i = '1' else std_logic_vector(timetag_seconds_cnt);
 
   ------------------------------------------------------------------------------
   -- UTC 125MHz clock ticks counter
@@ -207,13 +217,13 @@ begin
         timetag_coarse_cnt <= (others => '0');
         local_pps          <= '1';
       else
-        timetag_coarse_cnt <= timetag_coarse_cnt + 1;
+        timetag_coarse_cnt <= unsigned(timetag_coarse) + 1;
         local_pps          <= '0';
       end if;
     end if;
   end process p_timetag_coarse_cnt;
 
-  timetag_coarse <= std_logic_vector(timetag_coarse_cnt);
+  timetag_coarse <= wr_tm_cycles_i when wr_enabled_i = '1' else std_logic_vector(timetag_coarse_cnt);
 
   ------------------------------------------------------------------------------
   -- Last trigger event time-tag

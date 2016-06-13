@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-04
--- Last update: 2016-05-18
+-- Last update: 2016-06-09
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
@@ -261,7 +261,7 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
   -- Components declaration
   ------------------------------------------------------------------------------
-  component carrier_csr
+  component carrier_csr is
     port (
       rst_n_i                          : in  std_logic;
       clk_sys_i                        : in  std_logic;
@@ -283,9 +283,9 @@ architecture rtl of svec_top_fmc_adc_100Ms is
       carrier_csr_stat_ddr0_cal_done_i : in  std_logic;
       carrier_csr_stat_ddr1_cal_done_i : in  std_logic;
       carrier_csr_ctrl_fp_leds_man_o   : out std_logic_vector(15 downto 0);
+      carrier_csr_ctrl_wrabbit_en_o    : out std_logic;
       carrier_csr_rst_fmc0_o           : out std_logic;
-      carrier_csr_rst_fmc1_o           : out std_logic
-      );
+      carrier_csr_rst_fmc1_o           : out std_logic); 
   end component carrier_csr;
 
   component fmc_adc_eic
@@ -548,6 +548,8 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   signal led_pwm_cnt        : unsigned(16 downto 0);
   signal led_pwm            : std_logic;
 
+  -- White Rabbit
+  signal wrabbit_en : std_logic;
 
 begin
 
@@ -839,6 +841,7 @@ begin
       carrier_csr_stat_ddr0_cal_done_i => ddr0_calib_done,
       carrier_csr_stat_ddr1_cal_done_i => ddr1_calib_done,
       carrier_csr_ctrl_fp_leds_man_o   => led_state_man,
+      carrier_csr_ctrl_wrabbit_en_o    => wrabbit_en,
       carrier_csr_rst_fmc0_o           => sw_rst_fmc0,
       carrier_csr_rst_fmc1_o           => sw_rst_fmc1
       );
@@ -945,7 +948,10 @@ begin
       mezz_one_wire_b => adc0_one_wire_b,
 
       sys_scl_b => fmc0_scl_b,
-      sys_sda_b => fmc0_sda_b
+      sys_sda_b => fmc0_sda_b,
+
+      wr_enable_i => wrabbit_en
+
       );
 
   -- Unused wishbone signals
@@ -1031,7 +1037,10 @@ begin
       mezz_one_wire_b => adc1_one_wire_b,
 
       sys_scl_b => fmc1_scl_b,
-      sys_sda_b => fmc1_sda_b
+      sys_sda_b => fmc1_sda_b,
+
+      wr_enable_i => wrabbit_en
+
       );
 
   -- Unused wishbone signals
