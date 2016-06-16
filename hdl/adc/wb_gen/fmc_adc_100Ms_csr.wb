@@ -1,9 +1,9 @@
 peripheral {
   name = "FMC ADC 100MS/s core registers";
   description = "Wishbone slave for FMC ADC 100MS/s core";
-  hdl_entity = "fmc_adc_100Ms_csr";
+  hdl_entity = "fmc_adc_100ms_csr";
 
-  prefix = "fmc_adc_core";
+  prefix = "fmc_adc_100ms_csr";
 
   reg {
     name = "Control register";

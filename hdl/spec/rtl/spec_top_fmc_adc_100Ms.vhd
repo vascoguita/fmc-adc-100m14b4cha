@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-06-09
+-- Last update: 2016-06-16
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -53,6 +53,7 @@ use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
 use work.sdb_meta_pkg.all;
 use work.timetag_core_pkg.all;
+use work.carrier_csr_wbgen2_pkg.all;
 
 
 entity spec_top_fmc_adc_100Ms is
@@ -184,29 +185,19 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
   component carrier_csr is
     port (
-      rst_n_i                          : in  std_logic;
-      clk_sys_i                        : in  std_logic;
-      wb_adr_i                         : in  std_logic_vector(1 downto 0);
-      wb_dat_i                         : in  std_logic_vector(31 downto 0);
-      wb_dat_o                         : out std_logic_vector(31 downto 0);
-      wb_cyc_i                         : in  std_logic;
-      wb_sel_i                         : in  std_logic_vector(3 downto 0);
-      wb_stb_i                         : in  std_logic;
-      wb_we_i                          : in  std_logic;
-      wb_ack_o                         : out std_logic;
-      wb_stall_o                       : out std_logic;
-      carrier_csr_carrier_pcb_rev_i    : in  std_logic_vector(3 downto 0);
-      carrier_csr_carrier_reserved_i   : in  std_logic_vector(11 downto 0);
-      carrier_csr_carrier_type_i       : in  std_logic_vector(15 downto 0);
-      carrier_csr_stat_fmc_pres_i      : in  std_logic;
-      carrier_csr_stat_p2l_pll_lck_i   : in  std_logic;
-      carrier_csr_stat_sys_pll_lck_i   : in  std_logic;
-      carrier_csr_stat_ddr3_cal_done_i : in  std_logic;
-      carrier_csr_ctrl_led_green_o     : out std_logic;
-      carrier_csr_ctrl_led_red_o       : out std_logic;
-      carrier_csr_ctrl_dac_clr_n_o     : out std_logic;
-      carrier_csr_ctrl_wrabbit_en_o    : out std_logic;
-      carrier_csr_rst_fmc0_o           : out std_logic);
+      rst_n_i    : in  std_logic;
+      clk_sys_i  : in  std_logic;
+      wb_adr_i   : in  std_logic_vector(1 downto 0);
+      wb_dat_i   : in  std_logic_vector(31 downto 0);
+      wb_dat_o   : out std_logic_vector(31 downto 0);
+      wb_cyc_i   : in  std_logic;
+      wb_sel_i   : in  std_logic_vector(3 downto 0);
+      wb_stb_i   : in  std_logic;
+      wb_we_i    : in  std_logic;
+      wb_ack_o   : out std_logic;
+      wb_stall_o : out std_logic;
+      regs_i     : in  t_carrier_csr_in_registers;
+      regs_o     : out t_carrier_csr_out_registers);
   end component carrier_csr;
 
   component dma_eic
@@ -449,6 +440,10 @@ architecture rtl of spec_top_fmc_adc_100Ms is
 
   -- White Rabbit
   signal wrabbit_en : std_logic;
+
+  -- IO for CSR registers
+  signal csr_regin  : t_carrier_csr_in_registers;
+  signal csr_regout : t_carrier_csr_out_registers;
 
 begin
 
@@ -710,30 +705,32 @@ begin
   ------------------------------------------------------------------------------
   cmp_carrier_csr : carrier_csr
     port map(
-      rst_n_i                          => sys_rst_125_n,
-      clk_sys_i                        => sys_clk_125,
-      wb_adr_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
-      wb_dat_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).dat,
-      wb_dat_o                         => cnx_master_in(c_WB_SLAVE_SPEC_CSR).dat,
-      wb_cyc_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).cyc,
-      wb_sel_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).sel,
-      wb_stb_i                         => cnx_master_out(c_WB_SLAVE_SPEC_CSR).stb,
-      wb_we_i                          => cnx_master_out(c_WB_SLAVE_SPEC_CSR).we,
-      wb_ack_o                         => cnx_master_in(c_WB_SLAVE_SPEC_CSR).ack,
-      wb_stall_o                       => open,
-      carrier_csr_carrier_pcb_rev_i    => pcb_ver_i,
-      carrier_csr_carrier_reserved_i   => X"000",
-      carrier_csr_carrier_type_i       => c_CARRIER_TYPE,
-      carrier_csr_stat_fmc_pres_i      => fmc0_prsnt_m2c_n_i,
-      carrier_csr_stat_p2l_pll_lck_i   => p2l_pll_locked,
-      carrier_csr_stat_sys_pll_lck_i   => sys_clk_pll_locked,
-      carrier_csr_stat_ddr3_cal_done_i => ddr3_calib_done,
-      carrier_csr_ctrl_led_green_o     => led_green,
-      carrier_csr_ctrl_led_red_o       => led_red,
-      carrier_csr_ctrl_dac_clr_n_o     => open,
-      carrier_csr_ctrl_wrabbit_en_o    => wrabbit_en,
-      carrier_csr_rst_fmc0_o           => sw_rst_fmc0
-      );
+      rst_n_i    => sys_rst_125_n,
+      clk_sys_i  => sys_clk_125,
+      wb_adr_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
+      wb_dat_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).dat,
+      wb_dat_o   => cnx_master_in(c_WB_SLAVE_SPEC_CSR).dat,
+      wb_cyc_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).cyc,
+      wb_sel_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).sel,
+      wb_stb_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).stb,
+      wb_we_i    => cnx_master_out(c_WB_SLAVE_SPEC_CSR).we,
+      wb_ack_o   => cnx_master_in(c_WB_SLAVE_SPEC_CSR).ack,
+      wb_stall_o => open,
+      regs_i     => csr_regin,
+      regs_o     => csr_regout);
+
+  csr_regin.carrier_pcb_rev_i    <= pcb_ver_i;
+  csr_regin.carrier_reserved_i   <= X"000";
+  csr_regin.carrier_type_i       <= c_CARRIER_TYPE;
+  csr_regin.stat_fmc_pres_i      <= fmc0_prsnt_m2c_n_i;
+  csr_regin.stat_p2l_pll_lck_i   <= p2l_pll_locked;
+  csr_regin.stat_sys_pll_lck_i   <= sys_clk_pll_locked;
+  csr_regin.stat_ddr3_cal_done_i <= ddr3_calib_done;
+
+  led_green   <= csr_regout.ctrl_led_green_o;
+  led_red     <= csr_regout.ctrl_led_red_o;
+  wrabbit_en  <= csr_regout.ctrl_wrabbit_en_o;
+  sw_rst_fmc0 <= csr_regout.rst_fmc0_o;
 
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_SPEC_CSR).err   <= '0';

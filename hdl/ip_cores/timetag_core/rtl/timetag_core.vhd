@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
--- Last update: 2016-06-15
+-- Last update: 2016-06-16
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Implements a UTC seconds counter and a 125MHz system clock
@@ -37,6 +37,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 use work.timetag_core_pkg.all;
+use work.timetag_core_wbgen2_pkg.all;
 
 entity timetag_core is
   port (
@@ -83,41 +84,19 @@ architecture rtl of timetag_core is
   ------------------------------------------------------------------------------
   component timetag_core_regs is
     port (
-      rst_n_i                                    : in  std_logic;
-      clk_sys_i                                  : in  std_logic;
-      wb_adr_i                                   : in  std_logic_vector(4 downto 0);
-      wb_dat_i                                   : in  std_logic_vector(31 downto 0);
-      wb_dat_o                                   : out std_logic_vector(31 downto 0);
-      wb_cyc_i                                   : in  std_logic;
-      wb_sel_i                                   : in  std_logic_vector(3 downto 0);
-      wb_stb_i                                   : in  std_logic;
-      wb_we_i                                    : in  std_logic;
-      wb_ack_o                                   : out std_logic;
-      wb_stall_o                                 : out std_logic;
-      timetag_core_seconds_upper_o               : out std_logic_vector(7 downto 0);
-      timetag_core_seconds_upper_i               : in  std_logic_vector(7 downto 0);
-      timetag_core_seconds_upper_load_o          : out std_logic;
-      timetag_core_seconds_lower_o               : out std_logic_vector(31 downto 0);
-      timetag_core_seconds_lower_i               : in  std_logic_vector(31 downto 0);
-      timetag_core_seconds_lower_load_o          : out std_logic;
-      timetag_core_coarse_o                      : out std_logic_vector(27 downto 0);
-      timetag_core_coarse_i                      : in  std_logic_vector(27 downto 0);
-      timetag_core_coarse_load_o                 : out std_logic;
-      timetag_core_time_trig_seconds_upper_o     : out std_logic_vector(7 downto 0);
-      timetag_core_time_trig_seconds_lower_o     : out std_logic_vector(31 downto 0);
-      timetag_core_time_trig_coarse_o            : out std_logic_vector(27 downto 0);
-      timetag_core_trig_tag_seconds_upper_i      : in  std_logic_vector(7 downto 0);
-      timetag_core_trig_tag_seconds_lower_i      : in  std_logic_vector(31 downto 0);
-      timetag_core_trig_tag_coarse_i             : in  std_logic_vector(27 downto 0);
-      timetag_core_acq_start_tag_seconds_upper_i : in  std_logic_vector(7 downto 0);
-      timetag_core_acq_start_tag_seconds_lower_i : in  std_logic_vector(31 downto 0);
-      timetag_core_acq_start_tag_coarse_i        : in  std_logic_vector(27 downto 0);
-      timetag_core_acq_stop_tag_seconds_upper_i  : in  std_logic_vector(7 downto 0);
-      timetag_core_acq_stop_tag_seconds_lower_i  : in  std_logic_vector(31 downto 0);
-      timetag_core_acq_stop_tag_coarse_i         : in  std_logic_vector(27 downto 0);
-      timetag_core_acq_end_tag_seconds_upper_i   : in  std_logic_vector(7 downto 0);
-      timetag_core_acq_end_tag_seconds_lower_i   : in  std_logic_vector(31 downto 0);
-      timetag_core_acq_end_tag_coarse_i          : in  std_logic_vector(27 downto 0));
+      rst_n_i    : in  std_logic;
+      clk_sys_i  : in  std_logic;
+      wb_adr_i   : in  std_logic_vector(4 downto 0);
+      wb_dat_i   : in  std_logic_vector(31 downto 0);
+      wb_dat_o   : out std_logic_vector(31 downto 0);
+      wb_cyc_i   : in  std_logic;
+      wb_sel_i   : in  std_logic_vector(3 downto 0);
+      wb_stb_i   : in  std_logic;
+      wb_we_i    : in  std_logic;
+      wb_ack_o   : out std_logic;
+      wb_stall_o : out std_logic;
+      regs_i     : in  t_timetag_core_in_registers;
+      regs_o     : out t_timetag_core_out_registers);
   end component timetag_core_regs;
 
   ------------------------------------------------------------------------------
@@ -141,6 +120,9 @@ architecture rtl of timetag_core is
 
   signal wr_enabled : std_logic := '0';
 
+  signal regin  : t_timetag_core_in_registers;
+  signal regout : t_timetag_core_out_registers;
+
 begin
 
   -- logic to detect if WR is enabled and timecode is valid
@@ -151,41 +133,42 @@ begin
   ------------------------------------------------------------------------------
   cmp_timetag_core_regs : timetag_core_regs
     port map (
-      rst_n_i                                    => rst_n_i,
-      clk_sys_i                                  => clk_i,
-      wb_adr_i                                   => wb_adr_i,
-      wb_dat_i                                   => wb_dat_i,
-      wb_dat_o                                   => wb_dat_o,
-      wb_cyc_i                                   => wb_cyc_i,
-      wb_sel_i                                   => wb_sel_i,
-      wb_stb_i                                   => wb_stb_i,
-      wb_we_i                                    => wb_we_i,
-      wb_ack_o                                   => wb_ack_o,
-      wb_stall_o                                 => open,
-      timetag_core_seconds_upper_o               => timetag_seconds_load_value(39 downto 32),
-      timetag_core_seconds_upper_i               => timetag_seconds(39 downto 32),
-      timetag_core_seconds_upper_load_o          => timetag_seconds_load_en(1),
-      timetag_core_seconds_lower_o               => timetag_seconds_load_value(31 downto 0),
-      timetag_core_seconds_lower_i               => timetag_seconds(31 downto 0),
-      timetag_core_seconds_lower_load_o          => timetag_seconds_load_en(0),
-      timetag_core_coarse_o                      => timetag_coarse_load_value,
-      timetag_core_coarse_i                      => timetag_coarse,
-      timetag_core_coarse_load_o                 => timetag_coarse_load_en,
-      timetag_core_time_trig_seconds_upper_o     => time_trigger.seconds(39 downto 32),
-      timetag_core_time_trig_seconds_lower_o     => time_trigger.seconds(31 downto 0),
-      timetag_core_time_trig_coarse_o            => time_trigger.coarse,
-      timetag_core_trig_tag_seconds_upper_i      => trig_tag.seconds(39 downto 32),
-      timetag_core_trig_tag_seconds_lower_i      => trig_tag.seconds(31 downto 0),
-      timetag_core_trig_tag_coarse_i             => trig_tag.coarse,
-      timetag_core_acq_start_tag_seconds_upper_i => acq_start_tag.seconds(39 downto 32),
-      timetag_core_acq_start_tag_seconds_lower_i => acq_start_tag.seconds(31 downto 0),
-      timetag_core_acq_start_tag_coarse_i        => acq_start_tag.coarse,
-      timetag_core_acq_stop_tag_seconds_upper_i  => acq_stop_tag.seconds(39 downto 32),
-      timetag_core_acq_stop_tag_seconds_lower_i  => acq_stop_tag.seconds(31 downto 0),
-      timetag_core_acq_stop_tag_coarse_i         => acq_stop_tag.coarse,
-      timetag_core_acq_end_tag_seconds_upper_i   => acq_end_tag.seconds(39 downto 32),
-      timetag_core_acq_end_tag_seconds_lower_i   => acq_end_tag.seconds(31 downto 0),
-      timetag_core_acq_end_tag_coarse_i          => acq_end_tag.coarse);
+      rst_n_i    => rst_n_i,
+      clk_sys_i  => clk_i,
+      wb_adr_i   => wb_adr_i,
+      wb_dat_i   => wb_dat_i,
+      wb_dat_o   => wb_dat_o,
+      wb_cyc_i   => wb_cyc_i,
+      wb_sel_i   => wb_sel_i,
+      wb_stb_i   => wb_stb_i,
+      wb_we_i    => wb_we_i,
+      wb_ack_o   => wb_ack_o,
+      wb_stall_o => open,
+      regs_i     => regin,
+      regs_o     => regout);
+
+  regin.seconds_upper_i               <= timetag_seconds(39 downto 32);
+  regin.seconds_lower_i               <= timetag_seconds(31 downto 0);
+  regin.coarse_i                      <= timetag_coarse;
+  regin.trig_tag_seconds_upper_i      <= trig_tag.seconds(39 downto 32);
+  regin.trig_tag_seconds_lower_i      <= trig_tag.seconds(31 downto 0);
+  regin.trig_tag_coarse_i             <= trig_tag.coarse;
+  regin.acq_start_tag_seconds_upper_i <= acq_start_tag.seconds(39 downto 32);
+  regin.acq_start_tag_seconds_lower_i <= acq_start_tag.seconds(31 downto 0);
+  regin.acq_start_tag_coarse_i        <= acq_start_tag.coarse;
+  regin.acq_stop_tag_seconds_upper_i  <= acq_stop_tag.seconds(39 downto 32);
+  regin.acq_stop_tag_seconds_lower_i  <= acq_stop_tag.seconds(31 downto 0);
+  regin.acq_stop_tag_coarse_i         <= acq_stop_tag.coarse;
+  regin.acq_end_tag_seconds_upper_i   <= acq_end_tag.seconds(39 downto 32);
+  regin.acq_end_tag_seconds_lower_i   <= acq_end_tag.seconds(31 downto 0);
+  regin.acq_end_tag_coarse_i          <= acq_end_tag.coarse;
+
+  timetag_seconds_load_en    <= regout.seconds_upper_load_o & regout.seconds_lower_load_o;
+  timetag_seconds_load_value <= regout.seconds_upper_o & regout.seconds_lower_o;
+  timetag_coarse_load_value  <= regout.coarse_o;
+  timetag_coarse_load_en     <= regout.coarse_load_o;
+  time_trigger.seconds       <= regout.time_trig_seconds_upper_o & regout.time_trig_seconds_lower_o;
+  time_trigger.coarse        <= regout.time_trig_coarse_o;
 
   ------------------------------------------------------------------------------
   -- UTC seconds counter
@@ -232,7 +215,7 @@ begin
   end process p_timetag_coarse_cnt;
 
   timetag_coarse <= wr_tm_cycles_i when wr_enabled = '1' else std_logic_vector(timetag_coarse_cnt);
-  
+
   ------------------------------------------------------------------------------
   -- Time trigger signal generation
   ------------------------------------------------------------------------------
