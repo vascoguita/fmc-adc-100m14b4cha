@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
--- Last update: 2016-06-09
+-- Last update: 2016-06-15
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Implements a UTC seconds counter and a 125MHz system clock
@@ -59,10 +59,11 @@ entity timetag_core is
     wr_tm_cycles_i     : in std_logic_vector(27 downto 0);
 
     -- Trigger time-tag output
-    trig_tag_o : out t_timetag;
+    trig_tag_o  : out t_timetag;
+    time_trig_o : out std_logic;
 
     -- Wishbone interface
-    wb_adr_i : in  std_logic_vector(3 downto 0);
+    wb_adr_i : in  std_logic_vector(4 downto 0);
     wb_dat_i : in  std_logic_vector(31 downto 0);
     wb_dat_o : out std_logic_vector(31 downto 0);
     wb_cyc_i : in  std_logic;
@@ -84,7 +85,7 @@ architecture rtl of timetag_core is
     port (
       rst_n_i                                    : in  std_logic;
       clk_sys_i                                  : in  std_logic;
-      wb_adr_i                                   : in  std_logic_vector(3 downto 0);
+      wb_adr_i                                   : in  std_logic_vector(4 downto 0);
       wb_dat_i                                   : in  std_logic_vector(31 downto 0);
       wb_dat_o                                   : out std_logic_vector(31 downto 0);
       wb_cyc_i                                   : in  std_logic;
@@ -102,6 +103,9 @@ architecture rtl of timetag_core is
       timetag_core_coarse_o                      : out std_logic_vector(27 downto 0);
       timetag_core_coarse_i                      : in  std_logic_vector(27 downto 0);
       timetag_core_coarse_load_o                 : out std_logic;
+      timetag_core_time_trig_seconds_upper_o     : out std_logic_vector(7 downto 0);
+      timetag_core_time_trig_seconds_lower_o     : out std_logic_vector(31 downto 0);
+      timetag_core_time_trig_coarse_o            : out std_logic_vector(27 downto 0);
       timetag_core_trig_tag_seconds_upper_i      : in  std_logic_vector(7 downto 0);
       timetag_core_trig_tag_seconds_lower_i      : in  std_logic_vector(31 downto 0);
       timetag_core_trig_tag_coarse_i             : in  std_logic_vector(27 downto 0);
@@ -127,6 +131,7 @@ architecture rtl of timetag_core is
   signal timetag_coarse_cnt         : unsigned(27 downto 0);
   signal timetag_coarse_load_value  : std_logic_vector(27 downto 0);
   signal timetag_coarse_load_en     : std_logic;
+  signal time_trigger               : t_timetag;
   signal trig_tag                   : t_timetag;
   signal acq_start_tag              : t_timetag;
   signal acq_stop_tag               : t_timetag;
@@ -166,6 +171,9 @@ begin
       timetag_core_coarse_o                      => timetag_coarse_load_value,
       timetag_core_coarse_i                      => timetag_coarse,
       timetag_core_coarse_load_o                 => timetag_coarse_load_en,
+      timetag_core_time_trig_seconds_upper_o     => time_trigger.seconds(39 downto 32),
+      timetag_core_time_trig_seconds_lower_o     => time_trigger.seconds(31 downto 0),
+      timetag_core_time_trig_coarse_o            => time_trigger.coarse,
       timetag_core_trig_tag_seconds_upper_i      => trig_tag.seconds(39 downto 32),
       timetag_core_trig_tag_seconds_lower_i      => trig_tag.seconds(31 downto 0),
       timetag_core_trig_tag_coarse_i             => trig_tag.coarse,
@@ -199,7 +207,7 @@ begin
     end if;
   end process p_timetag_seconds_cnt;
 
-  timetag_seconds <= wr_tm_tai_i when wr_enabled_i = '1' else std_logic_vector(timetag_seconds_cnt);
+  timetag_seconds <= wr_tm_tai_i when wr_enabled = '1' else std_logic_vector(timetag_seconds_cnt);
 
   ------------------------------------------------------------------------------
   -- UTC 125MHz clock ticks counter
@@ -223,7 +231,14 @@ begin
     end if;
   end process p_timetag_coarse_cnt;
 
-  timetag_coarse <= wr_tm_cycles_i when wr_enabled_i = '1' else std_logic_vector(timetag_coarse_cnt);
+  timetag_coarse <= wr_tm_cycles_i when wr_enabled = '1' else std_logic_vector(timetag_coarse_cnt);
+  
+  ------------------------------------------------------------------------------
+  -- Time trigger signal generation
+  ------------------------------------------------------------------------------
+  time_trig_o <= '1' when ((time_trigger.seconds = timetag_seconds) and
+                           (time_trigger.coarse = timetag_coarse))
+                 else '0';
 
   ------------------------------------------------------------------------------
   -- Last trigger event time-tag

@@ -969,10 +969,10 @@ fmc_adc_core_sta_acq_cfg_i
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_core_trig_cfg_hw_trig_sel_o
+fmc_adc_core_trig_cfg_hw_trig_sel_o[1:0]
 </td>
 <td  class="td_arrow_right">
-&rarr;
+&rArr;
 </td>
 </tr>
 <tr>
@@ -1055,23 +1055,6 @@ fmc_adc_core_trig_cfg_int_trig_sel_o[1:0]
 </td>
 <td  class="td_pblock_right">
 fmc_adc_core_trig_cfg_int_trig_test_en_o
-</td>
-<td  class="td_arrow_right">
-&rarr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
-
-</td>
-<td  class="td_pblock_left">
-
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-fmc_adc_core_trig_cfg_reserved_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -3488,9 +3471,6 @@ INT_TRIG_THRES_FILT[7:0]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=1  class="td_field">
-RESERVED
-</td>
-<td style="border: solid 1px black;" colspan=1  class="td_field">
 INT_TRIG_TEST_EN
 </td>
 <td style="border: solid 1px black;" colspan=2  class="td_field">
@@ -3505,8 +3485,11 @@ HW_TRIG_EN
 <td style="border: solid 1px black;" colspan=1  class="td_field">
 HW_TRIG_POL
 </td>
-<td style="border: solid 1px black;" colspan=1  class="td_field">
-HW_TRIG_SEL
+<td style="border: solid 1px black;" colspan=2  class="td_field">
+HW_TRIG_SEL[1:0]
+</td>
+<td >
+
 </td>
 <td >
 
@@ -3517,7 +3500,7 @@ HW_TRIG_SEL
 <li><b>
 HW_TRIG_SEL
 </b>[<i>read/write</i>]: Hardware trigger selection
-<br>0: internal (data threshold)<br>1: external (front panel trigger input)
+<br>00: internal (data threshold)<br>01: external (front panel trigger input)<br>10: trigger from timetag core<br>11: reserved (for WR message-based trigger)
 <li><b>
 HW_TRIG_POL
 </b>[<i>read/write</i>]: Hardware trigger polarity
@@ -3538,10 +3521,6 @@ INT_TRIG_SEL
 INT_TRIG_TEST_EN
 </b>[<i>read/write</i>]: Enable internal trigger test mode
 <br>Test mode:<br>  ch1 = Channel 1 input(analogue)<br> ch2 = Channel input over threshold (digital)<br>  ch3 = Channel input over threshold filtered (digital)<br>  ch4 = Trigger (digital)
-<li><b>
-RESERVED
-</b>[<i>read/write</i>]: Reserved
-<br>Ignore on read, write with 0's
 <li><b>
 INT_TRIG_THRES_FILT
 </b>[<i>read/write</i>]: Internal trigger threshold glitch filter

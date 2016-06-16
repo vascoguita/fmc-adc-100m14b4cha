@@ -8,7 +8,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-05-07
--- Last update: 2016-06-09
+-- Last update: 2016-06-15
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core
@@ -121,7 +121,7 @@ entity fmc_adc_mezzanine is
     sys_scl_b : inout std_logic;                  -- Mezzanine system I2C clock (EEPROM)
     sys_sda_b : inout std_logic;                  -- Mezzanine system I2C data (EEPROM)
 
-    wr_enable_i : in std_logic                   -- enable white rabbit features on mezzanine
+    wr_enable_i : in std_logic                    -- enable white rabbit features on mezzanine
     );
 end fmc_adc_mezzanine;
 
@@ -286,12 +286,12 @@ architecture rtl of fmc_adc_mezzanine is
   signal acq_end_extend      : std_logic;
 
   -- Time-tagging core
-  signal trigger_p   : std_logic;
-  signal acq_start_p : std_logic;
-  signal acq_stop_p  : std_logic;
-  signal acq_end_p   : std_logic;
-  signal trigger_tag : t_timetag;
-
+  signal trigger_p    : std_logic;
+  signal acq_start_p  : std_logic;
+  signal acq_stop_p   : std_logic;
+  signal acq_end_p    : std_logic;
+  signal trigger_tag  : t_timetag;
+  signal time_trigger : std_logic;
 
 begin
 
@@ -487,6 +487,7 @@ begin
       acq_end_p_o   => acq_end_p,
 
       trigger_tag_i => trigger_tag,
+      time_trig_i   => time_trigger,
 
       ext_trigger_p_i => ext_trigger_p_i,
       ext_trigger_n_i => ext_trigger_n_i,
@@ -618,9 +619,10 @@ begin
       wr_tm_tai_i        => X"123456789a",
       wr_tm_cycles_i     => X"edcba98",
 
-      trig_tag_o => trigger_tag,
+      trig_tag_o  => trigger_tag,
+      time_trig_o => time_trigger,
 
-      wb_adr_i => cnx_master_out(c_WB_SLAVE_TIMETAG).adr(5 downto 2),  -- cnx_master_out.adr is byte address
+      wb_adr_i => cnx_master_out(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i => cnx_master_out(c_WB_SLAVE_TIMETAG).dat,
       wb_dat_o => cnx_master_in(c_WB_SLAVE_TIMETAG).dat,
       wb_cyc_i => cnx_master_out(c_WB_SLAVE_TIMETAG).cyc,

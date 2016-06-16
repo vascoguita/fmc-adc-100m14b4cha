@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-05
--- Last update: 2016-06-09
+-- Last update: 2016-06-15
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Package for timetag core
@@ -66,7 +66,8 @@ package timetag_core_pkg is
       wr_tm_tai_i        : in  std_logic_vector(39 downto 0);
       wr_tm_cycles_i     : in  std_logic_vector(27 downto 0);
       trig_tag_o         : out t_timetag;
-      wb_adr_i           : in  std_logic_vector(3 downto 0);
+      time_trig_o        : out std_logic;
+      wb_adr_i           : in  std_logic_vector(4 downto 0);
       wb_dat_i           : in  std_logic_vector(31 downto 0);
       wb_dat_o           : out std_logic_vector(31 downto 0);
       wb_cyc_i           : in  std_logic;

@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-06-08
+-- Last update: 2016-06-15
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -88,8 +88,9 @@ entity fmc_adc_100Ms_core is
     acq_stop_p_o  : out std_logic;
     acq_end_p_o   : out std_logic;
 
-    -- Trigger time-tag input
-    trigger_tag_i : t_timetag;
+    -- Trigger time-tag inputs
+    trigger_tag_i : in t_timetag;
+    time_trig_i   : in std_logic;
 
     -- FMC interface
     ext_trigger_p_i : in std_logic;               -- External trigger
@@ -174,13 +175,12 @@ architecture rtl of fmc_adc_100Ms_core is
       fmc_adc_core_sta_serdes_pll_i               : in  std_logic;
       fmc_adc_core_sta_serdes_synced_i            : in  std_logic;
       fmc_adc_core_sta_acq_cfg_i                  : in  std_logic;
-      fmc_adc_core_trig_cfg_hw_trig_sel_o         : out std_logic;
+      fmc_adc_core_trig_cfg_hw_trig_sel_o         : out std_logic_vector(1 downto 0);
       fmc_adc_core_trig_cfg_hw_trig_pol_o         : out std_logic;
       fmc_adc_core_trig_cfg_hw_trig_en_o          : out std_logic;
       fmc_adc_core_trig_cfg_sw_trig_en_o          : out std_logic;
       fmc_adc_core_trig_cfg_int_trig_sel_o        : out std_logic_vector(1 downto 0);
       fmc_adc_core_trig_cfg_int_trig_test_en_o    : out std_logic;
-      fmc_adc_core_trig_cfg_reserved_o            : out std_logic;
       fmc_adc_core_trig_cfg_int_trig_thres_filt_o : out std_logic_vector(7 downto 0);
       fmc_adc_core_trig_cfg_int_trig_thres_o      : out std_logic_vector(15 downto 0);
       fmc_adc_core_trig_dly_o                     : out std_logic_vector(31 downto 0);
@@ -320,6 +320,7 @@ architecture rtl of fmc_adc_100Ms_core is
   -- Trigger
   signal ext_trig_a                 : std_logic;
   signal ext_trig                   : std_logic;
+  signal time_trig                  : std_logic;
   signal int_trig                   : std_logic;
   signal int_trig_over_thres        : std_logic;
   signal int_trig_over_thres_d      : std_logic;
@@ -333,7 +334,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal hw_trig_pol                : std_logic;
   signal hw_trig                    : std_logic;
   signal hw_trig_t                  : std_logic;
-  signal hw_trig_sel                : std_logic;
+  signal hw_trig_sel                : std_logic_vector(1 downto 0);
   signal hw_trig_en                 : std_logic;
   signal sw_trig                    : std_logic;
   signal sw_trig_t                  : std_logic;
@@ -757,7 +758,6 @@ begin
       fmc_adc_core_trig_cfg_sw_trig_en_o          => sw_trig_en,
       fmc_adc_core_trig_cfg_int_trig_sel_o        => int_trig_sel,
       fmc_adc_core_trig_cfg_int_trig_test_en_o    => int_trig_test_en,
-      fmc_adc_core_trig_cfg_reserved_o            => open,
       fmc_adc_core_trig_cfg_int_trig_thres_filt_o => int_trig_thres_filt,
       fmc_adc_core_trig_cfg_int_trig_thres_o      => int_trig_thres,
       fmc_adc_core_trig_dly_o                     => trig_delay,
@@ -825,7 +825,7 @@ begin
       );
 
   -- External hardware trigger synchronization
-  cmp_trig_sync : ext_pulse_sync
+  cmp_ext_trig_sync : ext_pulse_sync
     generic map(
       g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
       g_CLK_FREQUENCY   => 100,                   -- MHz
@@ -839,6 +839,23 @@ begin
       input_polarity_i => hw_trig_pol,
       pulse_i          => ext_trig_a,
       pulse_o          => ext_trig
+      );
+
+  -- Time trigger synchronization (from 125MHz timetag core)
+  cmp_time_trig_sync : ext_pulse_sync
+    generic map(
+      g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
+      g_CLK_FREQUENCY   => 100,                   -- MHz
+      g_OUTPUT_POLARITY => '0',                   -- positive pulse
+      g_OUTPUT_RETRIG   => FALSE,
+      g_OUTPUT_LENGTH   => 1                      -- clk_i tick
+      )
+    port map(
+      rst_n_i          => fs_rst_n,
+      clk_i            => fs_clk,
+      input_polarity_i => hw_trig_pol,
+      pulse_i          => time_trig_i,
+      pulse_o          => time_trig
       );
 
   -- Internal hardware trigger
@@ -889,9 +906,16 @@ begin
               not(int_trig_over_thres_filt) and int_trig_over_thres_filt_d;  -- negative slope
 
   -- Hardware trigger selection
-  --    internal = adc data threshold
-  --    external = pulse from front panel
-  hw_trig_t <= ext_trig when hw_trig_sel = '1' else int_trig;
+  --    00: internal = adc data threshold
+  --    01: external = pulse from front panel
+  --    10: time     = time trigger
+  --    11: reserved = (for WR message-based interrupts)
+  with hw_trig_sel select
+    hw_trig_t <=
+    int_trig  when "00",
+    ext_trig  when "01",
+    time_trig when "10",
+    '0'       when others;
 
   -- Hardware trigger enable
   hw_trig <= hw_trig_t and hw_trig_en;
@@ -1047,7 +1071,7 @@ begin
                     trig_tst & int_trig_over_thres_filt_tst &
                     int_trig_over_thres_tst &
                     data_calibr_out_d(3)(15 downto 0)) when int_trig_test_en = '1' else
-                   (trig_align & data_calibr_out_d(3)) when hw_trig_sel = '0' else
+                   (trig_align & data_calibr_out_d(3)) when hw_trig_sel = "00" else
                    (trig_align & data_calibr_out);
 
   -- FOR DEBUG: FR instead of CH1 and SerDes Synced instead of CH2
