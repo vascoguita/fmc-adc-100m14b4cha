@@ -430,6 +430,13 @@ int fa_free_irqs(struct fa_dev *fa)
 {
 	struct fmc_device *fmc = fa->fmc;
 
+	/*
+	 * When we unload the driver the FPGA is still running so it may
+	 * rises interrupts. Disable IRQs in order to prevent spurious
+	 * interrupt when the driver is not there to handle them.
+	 */
+	fa_disable_irqs(fa);
+
 	/* Release carrier IRQs (if any) */
 	if (fa->carrier_op->free_irqs)
 		fa->carrier_op->free_irqs(fa);
