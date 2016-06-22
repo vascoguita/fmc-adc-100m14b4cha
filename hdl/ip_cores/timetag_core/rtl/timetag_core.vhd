@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
--- Last update: 2016-06-16
+-- Last update: 2016-06-22
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Implements a UTC seconds counter and a 125MHz system clock
@@ -102,19 +102,13 @@ architecture rtl of timetag_core is
   ------------------------------------------------------------------------------
   -- Signals declaration
   ------------------------------------------------------------------------------
-  signal timetag_seconds            : std_logic_vector(39 downto 0);
-  signal timetag_seconds_cnt        : unsigned(39 downto 0);
-  signal timetag_seconds_load_value : std_logic_vector(39 downto 0);
-  signal timetag_seconds_load_en    : std_logic_vector(1 downto 0);
-  signal timetag_coarse             : std_logic_vector(27 downto 0);
-  signal timetag_coarse_cnt         : unsigned(27 downto 0);
-  signal timetag_coarse_load_value  : std_logic_vector(27 downto 0);
-  signal timetag_coarse_load_en     : std_logic;
-  signal time_trigger               : t_timetag;
-  signal trig_tag                   : t_timetag;
-  signal acq_start_tag              : t_timetag;
-  signal acq_stop_tag               : t_timetag;
-  signal acq_end_tag                : t_timetag;
+  signal current_time  : t_timetag;
+  signal time_counter  : t_timetag;
+  signal time_trigger  : t_timetag;
+  signal trig_tag      : t_timetag;
+  signal acq_start_tag : t_timetag;
+  signal acq_stop_tag  : t_timetag;
+  signal acq_end_tag   : t_timetag;
 
   signal local_pps : std_logic;
 
@@ -147,9 +141,9 @@ begin
       regs_i     => regin,
       regs_o     => regout);
 
-  regin.seconds_upper_i               <= timetag_seconds(39 downto 32);
-  regin.seconds_lower_i               <= timetag_seconds(31 downto 0);
-  regin.coarse_i                      <= timetag_coarse;
+  regin.seconds_upper_i               <= current_time.seconds(39 downto 32);
+  regin.seconds_lower_i               <= current_time.seconds(31 downto 0);
+  regin.coarse_i                      <= current_time.coarse;
   regin.trig_tag_seconds_upper_i      <= trig_tag.seconds(39 downto 32);
   regin.trig_tag_seconds_lower_i      <= trig_tag.seconds(31 downto 0);
   regin.trig_tag_coarse_i             <= trig_tag.coarse;
@@ -163,12 +157,8 @@ begin
   regin.acq_end_tag_seconds_lower_i   <= acq_end_tag.seconds(31 downto 0);
   regin.acq_end_tag_coarse_i          <= acq_end_tag.coarse;
 
-  timetag_seconds_load_en    <= regout.seconds_upper_load_o & regout.seconds_lower_load_o;
-  timetag_seconds_load_value <= regout.seconds_upper_o & regout.seconds_lower_o;
-  timetag_coarse_load_value  <= regout.coarse_o;
-  timetag_coarse_load_en     <= regout.coarse_load_o;
-  time_trigger.seconds       <= regout.time_trig_seconds_upper_o & regout.time_trig_seconds_lower_o;
-  time_trigger.coarse        <= regout.time_trig_coarse_o;
+  time_trigger.seconds <= regout.time_trig_seconds_upper_o & regout.time_trig_seconds_lower_o;
+  time_trigger.coarse  <= regout.time_trig_coarse_o;
 
   ------------------------------------------------------------------------------
   -- UTC seconds counter
@@ -177,20 +167,20 @@ begin
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        timetag_seconds_cnt <= (others => '0');
-      elsif timetag_seconds_load_en(1) = '1' then
-        timetag_seconds_cnt(39 downto 32) <= unsigned(timetag_seconds_load_value(39 downto 32));
-      elsif timetag_seconds_load_en(0) = '1' then
-        timetag_seconds_cnt(31 downto 0) <= unsigned(timetag_seconds_load_value(31 downto 0));
+        time_counter.seconds <= (others => '0');
+      elsif regout.seconds_upper_load_o = '1' then
+        time_counter.seconds(39 downto 32) <= regout.seconds_upper_o;
+      elsif regout.seconds_lower_load_o = '1' then
+        time_counter.seconds(31 downto 0) <= regout.seconds_lower_o;
       elsif local_pps = '1' then
-        timetag_seconds_cnt <= unsigned(timetag_seconds) + 1;
+        time_counter.seconds <= std_logic_vector(unsigned(current_time.seconds) + 1);
       else
-        timetag_seconds_cnt <= unsigned(timetag_seconds);
+        time_counter.seconds <= current_time.seconds;
       end if;
     end if;
   end process p_timetag_seconds_cnt;
 
-  timetag_seconds <= wr_tm_tai_i when wr_enabled = '1' else std_logic_vector(timetag_seconds_cnt);
+  current_time.seconds <= wr_tm_tai_i when wr_enabled = '1' else time_counter.seconds;
 
   ------------------------------------------------------------------------------
   -- UTC 125MHz clock ticks counter
@@ -199,28 +189,29 @@ begin
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        timetag_coarse_cnt <= (others => '0');
-        local_pps          <= '0';
-      elsif timetag_coarse_load_en = '1' then
-        timetag_coarse_cnt <= unsigned(timetag_coarse_load_value);
-        local_pps          <= '0';
-      elsif timetag_coarse_cnt = to_unsigned(124999999, timetag_coarse_cnt'length) then
-        timetag_coarse_cnt <= (others => '0');
-        local_pps          <= '1';
+        time_counter.coarse <= (others => '0');
+        local_pps           <= '0';
+      elsif regout.coarse_load_o = '1' then
+        time_counter.coarse <= regout.coarse_o;
+        local_pps           <= '0';
+      elsif time_counter.coarse = std_logic_vector(to_unsigned(124999999, 28)) then
+        time_counter.coarse <= (others => '0');
+        local_pps           <= '1';
       else
-        timetag_coarse_cnt <= unsigned(timetag_coarse) + 1;
-        local_pps          <= '0';
+        time_counter.coarse <= std_logic_vector(unsigned(current_time.coarse) + 1);
+        local_pps           <= '0';
       end if;
     end if;
   end process p_timetag_coarse_cnt;
 
-  timetag_coarse <= wr_tm_cycles_i when wr_enabled = '1' else std_logic_vector(timetag_coarse_cnt);
+  current_time.coarse <= wr_tm_cycles_i when wr_enabled = '1' else time_counter.coarse;
 
   ------------------------------------------------------------------------------
-  -- Time trigger signal generation
+  -- Time trigger signal generation (stretched to two 125MHz cycles)
   ------------------------------------------------------------------------------
-  time_trig_o <= '1' when ((time_trigger.seconds = timetag_seconds) and
-                           (time_trigger.coarse = timetag_coarse))
+  time_trig_o <= '1' when ((time_trigger = current_time) or
+                           ((time_trigger.seconds = current_time.seconds) and
+                            (unsigned(time_trigger.coarse) + 1 = unsigned(current_time.coarse))))
                  else '0';
 
   ------------------------------------------------------------------------------
@@ -233,8 +224,7 @@ begin
         trig_tag.seconds <= (others => '0');
         trig_tag.coarse  <= (others => '0');
       elsif trigger_p_i = '1' then
-        trig_tag.seconds <= timetag_seconds;
-        trig_tag.coarse  <= timetag_coarse;
+        trig_tag <= current_time;
       end if;
     end if;
   end process p_trig_tag;
@@ -251,8 +241,7 @@ begin
         acq_start_tag.seconds <= (others => '0');
         acq_start_tag.coarse  <= (others => '0');
       elsif acq_start_p_i = '1' then
-        acq_start_tag.seconds <= timetag_seconds;
-        acq_start_tag.coarse  <= timetag_coarse;
+        acq_start_tag <= current_time;
       end if;
     end if;
   end process p_acq_start_tag;
@@ -267,8 +256,7 @@ begin
         acq_stop_tag.seconds <= (others => '0');
         acq_stop_tag.coarse  <= (others => '0');
       elsif acq_stop_p_i = '1' then
-        acq_stop_tag.seconds <= timetag_seconds;
-        acq_stop_tag.coarse  <= timetag_coarse;
+        acq_stop_tag <= current_time;
       end if;
     end if;
   end process p_acq_stop_tag;
@@ -283,8 +271,7 @@ begin
         acq_end_tag.seconds <= (others => '0');
         acq_end_tag.coarse  <= (others => '0');
       elsif acq_end_p_i = '1' then
-        acq_end_tag.seconds <= timetag_seconds;
-        acq_end_tag.coarse  <= timetag_coarse;
+        acq_end_tag <= current_time;
       end if;
     end if;
   end process p_acq_end_tag;

@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-06-16
+-- Last update: 2016-06-22
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -795,21 +795,32 @@ begin
       );
 
   -- Time trigger synchronization (from 125MHz timetag core)
-  cmp_time_trig_sync : ext_pulse_sync
-    generic map(
-      g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
-      g_CLK_FREQUENCY   => 100,                   -- MHz
-      g_OUTPUT_POLARITY => '0',                   -- positive pulse
-      g_OUTPUT_RETRIG   => FALSE,
-      g_OUTPUT_LENGTH   => 1                      -- clk_i tick
-      )
-    port map(
-      rst_n_i          => fs_rst_n,
-      clk_i            => fs_clk,
-      input_polarity_i => hw_trig_pol,
-      pulse_i          => time_trig_i,
-      pulse_o          => time_trig
-      );
+  cmp_time_trig_sync : gc_sync_ffs
+    generic map (
+      g_sync_edge => "positive")
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => fs_rst_n,
+      data_i   => time_trig_i,
+      synced_o => open,
+      npulse_o => open,
+      ppulse_o => time_trig);
+
+  --cmp_time_trig_sync : ext_pulse_sync
+  --  generic map(
+  --    g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
+  --    g_CLK_FREQUENCY   => 100,                   -- MHz
+  --    g_OUTPUT_POLARITY => '0',                   -- positive pulse
+  --    g_OUTPUT_RETRIG   => FALSE,
+  --    g_OUTPUT_LENGTH   => 1                      -- clk_i tick
+  --    )
+  --  port map(
+  --    rst_n_i          => fs_rst_n,
+  --    clk_i            => fs_clk,
+  --    input_polarity_i => hw_trig_pol,
+  --    pulse_i          => time_trig_i,
+  --    pulse_o          => time_trig
+  --    );
 
   -- Internal hardware trigger
   int_trig_data <= data_calibr_out(15 downto 0) when int_trig_sel = "00" else   -- CH1 selected
