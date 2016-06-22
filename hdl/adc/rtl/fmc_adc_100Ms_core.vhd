@@ -179,23 +179,6 @@ architecture rtl of fmc_adc_100Ms_core is
       );
   end component offset_gain_s;
 
-  component monostable
-    generic(
-      g_INPUT_POLARITY  : std_logic := '1';       --! trigger_i polarity
-      --! ('0'=negative, 1=positive)
-      g_OUTPUT_POLARITY : std_logic := '1';       --! pulse_o polarity
-      --! ('0'=negative, 1=positive)
-      g_OUTPUT_RETRIG   : boolean   := FALSE;     --! Retriggerable output monostable
-      g_OUTPUT_LENGTH   : natural   := 1          --! pulse_o lenght (in clk_i ticks)
-      );
-    port (
-      rst_n_i   : in  std_logic;                  --! Reset (active low)
-      clk_i     : in  std_logic;                  --! Clock
-      trigger_i : in  std_logic;                  --! Trigger input pulse
-      pulse_o   : out std_logic                   --! Monostable output pulse
-      );
-  end component monostable;
-
   ------------------------------------------------------------------------------
   -- Constants declaration
   ------------------------------------------------------------------------------
@@ -399,35 +382,25 @@ begin
   ------------------------------------------------------------------------------
   -- LEDs
   ------------------------------------------------------------------------------
-  cmp_acq_led_monostable : monostable
-    generic map(
-      g_INPUT_POLARITY  => '1',
-      g_OUTPUT_POLARITY => '1',
-      g_OUTPUT_RETRIG   => TRUE,
-      g_OUTPUT_LENGTH   => 12500000
-      )
-    port map(
-      rst_n_i   => sys_rst_n_i,
-      clk_i     => sys_clk_i,
-      trigger_i => samples_wr_en,
-      pulse_o   => acq_led
-      );
+  cmp_acq_led: gc_extend_pulse
+    generic map (
+      g_width => 12500000)
+    port map (
+      clk_i      => sys_clk_i,
+      rst_n_i    => sys_rst_n_i,
+      pulse_i    => samples_wr_en,
+      extended_o => acq_led);
 
   gpio_led_acq_o <= acq_led or acq_led_man;
 
-  cmp_trig_led_monostable : monostable
-    generic map(
-      g_INPUT_POLARITY  => '1',
-      g_OUTPUT_POLARITY => '1',
-      g_OUTPUT_RETRIG   => TRUE,
-      g_OUTPUT_LENGTH   => 12500000
-      )
-    port map(
-      rst_n_i   => sys_rst_n_i,
-      clk_i     => sys_clk_i,
-      trigger_i => acq_trig,
-      pulse_o   => trig_led
-      );
+  cmp_trig_led: gc_extend_pulse
+    generic map (
+      g_width => 12500000)
+    port map (
+      clk_i      => sys_clk_i,
+      rst_n_i    => sys_rst_n_i,
+      pulse_i    => acq_trig,
+      extended_o => trig_led);
 
   gpio_led_trig_o <= trig_led or trig_led_man;
 

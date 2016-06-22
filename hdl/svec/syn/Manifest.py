@@ -13,8 +13,7 @@ files = [
     "../../ip_cores/adc_sync_fifo.ngc",
     "../../ip_cores/multishot_dpram.ngc",
     "../../ip_cores/wb_ddr_fifo.ngc",
-    "../../ip_cores/adc_serdes.vhd",
-    "../../ip_cores/monostable/monostable_rtl.vhd"]
+    "../../ip_cores/adc_serdes.vhd"]
 
 modules = { "local" : ["../rtl",
                        "../../adc/rtl",

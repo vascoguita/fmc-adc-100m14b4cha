@@ -9,8 +9,7 @@ files = [ "main.sv",
           "../../../ip_cores/adc_sync_fifo.vhd",
           "../../../ip_cores/multishot_dpram.vhd",
           "../../../ip_cores/wb_ddr_fifo.vhd",
-          "../../../ip_cores/adc_serdes.vhd",
-          "../../../ip_cores/monostable/monostable_rtl.vhd"]
+          "../../../ip_cores/adc_serdes.vhd"]
 
 modules = { "local" :  [ "../../rtl",
                          "../2048Mb_ddr3",
