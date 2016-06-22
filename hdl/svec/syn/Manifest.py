@@ -14,9 +14,7 @@ files = [
     "../../ip_cores/multishot_dpram.ngc",
     "../../ip_cores/wb_ddr_fifo.ngc",
     "../../ip_cores/adc_serdes.vhd",
-    "../../ip_cores/monostable/monostable_rtl.vhd",
-    "../../ip_cores/ext_pulse_sync/ext_pulse_sync_rtl.vhd",
-    "../../ip_cores/utils/utils_pkg.vhd"]
+    "../../ip_cores/monostable/monostable_rtl.vhd"]
 
 modules = { "local" : ["../rtl",
                        "../../adc/rtl",

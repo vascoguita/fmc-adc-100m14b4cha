@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-06-22
+-- Last update: 2016-06-23
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -167,25 +167,6 @@ architecture rtl of fmc_adc_100Ms_core is
       regs_o     : out t_fmc_adc_100Ms_csr_out_registers);
   end component fmc_adc_100Ms_csr;
 
-  component ext_pulse_sync
-    generic(
-      g_MIN_PULSE_WIDTH : natural   := 2;         --! Minimum input pulse width
-      --! (in ns), must be >1 clk_i tick
-      g_CLK_FREQUENCY   : natural   := 40;        --! clk_i frequency (in MHz)
-      g_OUTPUT_POLARITY : std_logic := '1';       --! pulse_o polarity
-      --! (1=negative, 0=positive)
-      g_OUTPUT_RETRIG   : boolean   := FALSE;     --! Retriggerable output monostable
-      g_OUTPUT_LENGTH   : natural   := 1          --! pulse_o lenght (in clk_i ticks)
-      );
-    port (
-      rst_n_i          : in  std_logic;           --! Reset (active low)
-      clk_i            : in  std_logic;           --! Clock to synchronize pulse
-      input_polarity_i : in  std_logic;           --! Input pulse polarity (1=negative, 0=positive)
-      pulse_i          : in  std_logic;           --! Asynchronous input pulse
-      pulse_o          : out std_logic            --! Synchronized output pulse
-      );
-  end component ext_pulse_sync;
-
   component offset_gain_s
     port (
       rst_n_i  : in  std_logic;                      --! Reset (active low)
@@ -268,8 +249,8 @@ architecture rtl of fmc_adc_100Ms_core is
   signal bitslip_sreg        : std_logic_vector(7 downto 0);
 
   -- Trigger
-  signal ext_trig_a                 : std_logic;
-  signal ext_trig                   : std_logic;
+  signal ext_trig_a, ext_trig       : std_logic;
+  signal ext_trig_p, ext_trig_n     : std_logic;
   signal time_trig                  : std_logic;
   signal int_trig                   : std_logic;
   signal int_trig_over_thres        : std_logic;
@@ -778,26 +759,24 @@ begin
       );
 
   -- External hardware trigger synchronization
-  cmp_ext_trig_sync : ext_pulse_sync
-    generic map(
-      g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
-      g_CLK_FREQUENCY   => 100,                   -- MHz
-      g_OUTPUT_POLARITY => '0',                   -- positive pulse
-      g_OUTPUT_RETRIG   => FALSE,
-      g_OUTPUT_LENGTH   => 1                      -- clk_i tick
-      )
-    port map(
-      rst_n_i          => fs_rst_n,
-      clk_i            => fs_clk,
-      input_polarity_i => hw_trig_pol,
-      pulse_i          => ext_trig_a,
-      pulse_o          => ext_trig
-      );
+  cmp_ext_trig_sync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => fs_rst_n,
+      data_i   => ext_trig_a,
+      synced_o => open,
+      npulse_o => ext_trig_n,
+      ppulse_o => ext_trig_p);
+
+  -- select external trigger pulse polarity
+  with hw_trig_pol select
+    ext_trig <=
+    ext_trig_p when '0',
+    ext_trig_n when '1',
+    '0'        when others;
 
   -- Time trigger synchronization (from 125MHz timetag core)
   cmp_time_trig_sync : gc_sync_ffs
-    generic map (
-      g_sync_edge => "positive")
     port map (
       clk_i    => fs_clk,
       rst_n_i  => fs_rst_n,
@@ -805,22 +784,6 @@ begin
       synced_o => open,
       npulse_o => open,
       ppulse_o => time_trig);
-
-  --cmp_time_trig_sync : ext_pulse_sync
-  --  generic map(
-  --    g_MIN_PULSE_WIDTH => 1,                     -- clk_i ticks
-  --    g_CLK_FREQUENCY   => 100,                   -- MHz
-  --    g_OUTPUT_POLARITY => '0',                   -- positive pulse
-  --    g_OUTPUT_RETRIG   => FALSE,
-  --    g_OUTPUT_LENGTH   => 1                      -- clk_i tick
-  --    )
-  --  port map(
-  --    rst_n_i          => fs_rst_n,
-  --    clk_i            => fs_clk,
-  --    input_polarity_i => hw_trig_pol,
-  --    pulse_i          => time_trig_i,
-  --    pulse_o          => time_trig
-  --    );
 
   -- Internal hardware trigger
   int_trig_data <= data_calibr_out(15 downto 0) when int_trig_sel = "00" else   -- CH1 selected
