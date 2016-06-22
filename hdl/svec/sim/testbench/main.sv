@@ -130,9 +130,9 @@ module main;
       $display("Release FMC0/1 reset\n");
       acc.write('h120C, 'h0, A32|SINGLE|D32);
 
-      // Trigger setup (sw trigger)
+      // Trigger setup (time trigger)
       $display("Trigger setup\n");
-      acc.write('h3308, 'h8, A32|SINGLE|D32);
+      acc.write('h3308, 'hA, A32|SINGLE|D32);
 
       // Acquisition setup
       $display("Acquisition setup\n");
@@ -151,17 +151,28 @@ module main;
       
       acc.write('h3600, 'h00000032); // timetag core seconds high
       acc.write('h3604, 'h00005a34); // timetag core seconds low
-      acc.write('h3608, 'h00000000); // timetag core ticks
+      acc.write('h3608, 'h07735930); // timetag core ticks
 
       // Start acquisition
       $display("Start acquisition\n");
       acc.write('h3300, 'h1, A32|SINGLE|D32); // Send START command
 
-      // Sw trigger
-      #1us
-      $display("Software trigger\n");
-      acc.write('h3310, 'hFF, A32|SINGLE|D32);
+      
+      // Start acquisition
+      $display("Schedule time trigger\n");
+      acc.write('h360C, 'h00000032); // time trigger seconds high
+      acc.write('h3610, 'h00005a35); // time trigger seconds low
+      acc.write('h3614, 'h00000300); // time trigger core ticks
 
+      // Sw trigger
+/* -----\/----- EXCLUDED -----\/-----
+      #1us
+      $display("Set trigger time\n");
+      acc.write('h3310, 'hFF, A32|SINGLE|D32);
+ -----/\----- EXCLUDED -----/\----- */
+
+      #20us;
+      
       /*
       // Data "FIFO" test
       acc.write('h2200, 'h0, A32|SINGLE|D32);
