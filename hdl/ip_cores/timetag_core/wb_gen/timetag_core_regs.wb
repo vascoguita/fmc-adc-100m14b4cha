@@ -65,7 +65,7 @@ peripheral {
    };
 
    reg {
-      name = "Timetag seconds register (lower)";
+      name = "Time trigger seconds register (lower)";
       description = "32 lower bits of seconds used for time trigger.";
       prefix = "time_trig_seconds_lower";
 
@@ -79,7 +79,7 @@ peripheral {
    };
 
    reg {
-      name = "Timetag coarse time register, system clock ticks (125MHz)";
+      name = "Time trigger coarse time register, system clock ticks (125MHz)";
       description = "Coarse time counter clocked by 125MHz system clock.\nCounts from 0 to 125000000.";
       prefix = "time_trig_coarse";
 
