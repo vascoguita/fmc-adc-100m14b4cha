@@ -6,9 +6,6 @@ syn_device = "xc6slx150t"
 include_dirs=["../vme64x_bfm", "../2048Mb_ddr3", "../../../ip_cores/general-cores/sim"]
 
 files = [ "main.sv",
-          "../../../ip_cores/adc_sync_fifo.vhd",
-          "../../../ip_cores/multishot_dpram.vhd",
-          "../../../ip_cores/wb_ddr_fifo.vhd",
           "../../../ip_cores/adc_serdes.vhd"]
 
 modules = { "local" :  [ "../../rtl",

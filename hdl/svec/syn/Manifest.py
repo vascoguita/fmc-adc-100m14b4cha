@@ -10,9 +10,6 @@ syn_tool = "ise"
 
 files = [
     "../svec_top_fmc_adc_100Ms.ucf",
-    "../../ip_cores/adc_sync_fifo.ngc",
-    "../../ip_cores/multishot_dpram.ngc",
-    "../../ip_cores/wb_ddr_fifo.ngc",
     "../../ip_cores/adc_serdes.vhd"]
 
 modules = { "local" : ["../rtl",
