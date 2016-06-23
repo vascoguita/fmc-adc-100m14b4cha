@@ -8,8 +8,7 @@ include_dirs=["../include","gn4124_bfm", "ddr3"]
 
 files = [
     "main.sv",
-    "ddr3/ddr3.v",
-    "../../../ip_cores/adc_serdes.vhd"]
+    "ddr3/ddr3.v"]
 
 modules = { "local" :  [ "gn4124_bfm",
                          "../../rtl",

@@ -5,8 +5,7 @@ target = "xilinx"
 syn_device = "xc6slx150t"
 include_dirs=["../vme64x_bfm", "../2048Mb_ddr3", "../../../ip_cores/general-cores/sim"]
 
-files = [ "main.sv",
-          "../../../ip_cores/adc_serdes.vhd"]
+files = [ "main.sv"]
 
 modules = { "local" :  [ "../2048Mb_ddr3",
                          "../../rtl",
