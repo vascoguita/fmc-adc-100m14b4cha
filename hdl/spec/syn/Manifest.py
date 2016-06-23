@@ -13,8 +13,7 @@ files = [
     "../../ip_cores/adc_serdes.vhd"]
 
 modules = { "local" : ["../rtl",
-                       "../../adc/rtl",
-                       "../../ip_cores/timetag_core/rtl"],
+                       "../../adc/rtl"],
             "git" : ["git://ohwr.org/hdl-core-lib/general-cores.git@@c26ee857158e4a65fd9d2add8b63fcb6fb4691ea",
                      "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git@@503171933f184ae878836f28e67a78a7c81b4325",
                      "git://ohwr.org/hdl-core-lib/gn4124-core.git@@e0dcb3f9a3e6804f64c544743bdf46b5fcbbefab"]}

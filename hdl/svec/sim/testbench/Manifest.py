@@ -8,10 +8,9 @@ include_dirs=["../vme64x_bfm", "../2048Mb_ddr3", "../../../ip_cores/general-core
 files = [ "main.sv",
           "../../../ip_cores/adc_serdes.vhd"]
 
-modules = { "local" :  [ "../../rtl",
-                         "../2048Mb_ddr3",
-                         "../../../adc/rtl",
-                         "../../../ip_cores/timetag_core/rtl"],
+modules = { "local" :  [ "../2048Mb_ddr3",
+                         "../../rtl",
+                         "../../../adc/rtl"],
             "git" : [ "git://ohwr.org/hdl-core-lib/general-cores.git::sdb_extension",
                       "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git::svec_bank4_64b_32b_bank5_64b_32b",
                       "git://ohwr.org/hdl-core-lib/vme64x-core.git::master"]}

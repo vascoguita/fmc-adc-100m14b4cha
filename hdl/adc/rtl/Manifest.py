@@ -8,3 +8,5 @@ files = [
     "fmc_adc_eic.vhd",
     "offset_gain_s.vhd",
     "var_sat_s.vhd"]
+
+modules = { "local" : ["timetag_core/rtl"] }

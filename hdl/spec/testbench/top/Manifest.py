@@ -11,10 +11,9 @@ files = [
     "ddr3/ddr3.v",
     "../../../ip_cores/adc_serdes.vhd"]
 
-modules = { "local" :  [ "../../rtl",
-                         "gn4124_bfm",
+modules = { "local" :  [ "gn4124_bfm",
+                         "../../rtl",
                          "../../../adc/rtl",
-                         "../../../ip_cores/timetag_core/rtl",
 			 "../../../ip_cores/general-cores",
 			 "../../../ip_cores/ddr3-sp6-core",
                          "../../../ip_cores/gn4124-core" ]};
