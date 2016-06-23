@@ -70,6 +70,9 @@ hdl/svec/sim/testbench/top/vsim.wlf
 hdl/svec/sim/testbench/top/vsim_stacktrace.vstf
 hdl/svec/sim/testbench/top/work/
 doc/manual/*.html
+doc/manual/fmcadc100m14b4cha_gateware_manual.info
+doc/manual/fmcadc100m14b4cha_gateware_manual.pdf
+doc/manual/fmcadc100m14b4cha_gateware_manual.txt
 *.texi
 *.aux
 *.log
