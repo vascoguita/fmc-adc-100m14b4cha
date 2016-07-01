@@ -8,7 +8,8 @@ syn_top = "spec_top_fmc_adc_100Ms"
 syn_project = "spec_fmc_adc_100Ms.xise"
 syn_tool = "ise"
 
-files = ["../spec_top_fmc_adc_100Ms.ucf"]
+files = ["wrc.ram",
+         "../spec_top_fmc_adc_100Ms.ucf"]
 
 modules = {
     "local" : [

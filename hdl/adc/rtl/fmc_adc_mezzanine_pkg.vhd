@@ -8,7 +8,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-03
--- Last update: 2016-06-09
+-- Last update: 2016-06-28
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Package for FMC ADC mezzanine
@@ -125,7 +125,11 @@ package fmc_adc_mezzanine_pkg is
       sys_scl_b : inout std_logic;                -- Mezzanine system I2C clock (EEPROM)
       sys_sda_b : inout std_logic;                -- Mezzanine system I2C data (EEPROM)
 
-      wr_enable_i : in std_logic                  -- enable white rabbit features on mezzanine
+      wr_tm_link_up_i    : in std_logic;          -- WR link status bit
+      wr_tm_time_valid_i : in std_logic;          -- WR timecode valid status bit
+      wr_tm_tai_i        : in std_logic_vector(39 downto 0);  -- WR timecode seconds
+      wr_tm_cycles_i     : in std_logic_vector(27 downto 0);  -- WR timecode 8ns ticks
+      wr_enable_i        : in std_logic           -- enable white rabbit features on mezzanine
       );
   end component fmc_adc_mezzanine;
 

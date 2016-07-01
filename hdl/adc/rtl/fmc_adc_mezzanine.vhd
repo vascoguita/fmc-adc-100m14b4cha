@@ -8,7 +8,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-05-07
--- Last update: 2018-01-30
+-- Last update: 2018-10-24
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core
@@ -121,7 +121,11 @@ entity fmc_adc_mezzanine is
     sys_scl_b : inout std_logic;                  -- Mezzanine system I2C clock (EEPROM)
     sys_sda_b : inout std_logic;                  -- Mezzanine system I2C data (EEPROM)
 
-    wr_enable_i : in std_logic                    -- enable white rabbit features on mezzanine
+    wr_tm_link_up_i    : in std_logic;            -- WR link status bit
+    wr_tm_time_valid_i : in std_logic;            -- WR timecode valid status bit
+    wr_tm_tai_i        : in std_logic_vector(39 downto 0);  -- WR timecode seconds
+    wr_tm_cycles_i     : in std_logic_vector(27 downto 0);  -- WR timecode 8ns ticks
+    wr_enable_i        : in std_logic             -- enable white rabbit features on mezzanine
     );
 end fmc_adc_mezzanine;
 
@@ -256,24 +260,24 @@ architecture rtl of fmc_adc_mezzanine is
   signal xreg_slave_in  : t_wishbone_slave_in;
 
   -- Mezzanine system I2C for EEPROM
-  signal sys_scl_in   : std_logic;
-  signal sys_scl_out  : std_logic;
-  signal sys_scl_oe_n : std_logic;
-  signal sys_sda_in   : std_logic;
-  signal sys_sda_out  : std_logic;
-  signal sys_sda_oe_n : std_logic;
+  signal sys_scl_in   : std_logic_vector(0 downto 0);
+  signal sys_scl_out  : std_logic_vector(0 downto 0);
+  signal sys_scl_oe_n : std_logic_vector(0 downto 0);
+  signal sys_sda_in   : std_logic_vector(0 downto 0);
+  signal sys_sda_out  : std_logic_vector(0 downto 0);
+  signal sys_sda_oe_n : std_logic_vector(0 downto 0);
 
   -- Mezzanine SPI
   signal spi_din_t : std_logic_vector(3 downto 0);
   signal spi_ss_t  : std_logic_vector(7 downto 0);
 
   -- Mezzanine I2C for Si570
-  signal si570_scl_in   : std_logic;
-  signal si570_scl_out  : std_logic;
-  signal si570_scl_oe_n : std_logic;
-  signal si570_sda_in   : std_logic;
-  signal si570_sda_out  : std_logic;
-  signal si570_sda_oe_n : std_logic;
+  signal si570_scl_in   : std_logic_vector(0 downto 0);
+  signal si570_scl_out  : std_logic_vector(0 downto 0);
+  signal si570_scl_oe_n : std_logic_vector(0 downto 0);
+  signal si570_sda_in   : std_logic_vector(0 downto 0);
+  signal si570_sda_out  : std_logic_vector(0 downto 0);
+  signal si570_sda_oe_n : std_logic_vector(0 downto 0);
 
   -- Mezzanine 1-wire
   signal mezz_owr_en : std_logic_vector(0 downto 0);
@@ -363,11 +367,11 @@ begin
       );
 
   -- Tri-state buffer for SDA and SCL
-  sys_scl_b  <= sys_scl_out when sys_scl_oe_n = '0' else 'Z';
-  sys_scl_in <= sys_scl_b;
+  sys_scl_b     <= sys_scl_out(0) when sys_scl_oe_n(0) = '0' else 'Z';
+  sys_scl_in(0) <= sys_scl_b;
 
-  sys_sda_b  <= sys_sda_out when sys_sda_oe_n = '0' else 'Z';
-  sys_sda_in <= sys_sda_b;
+  sys_sda_b     <= sys_sda_out(0) when sys_sda_oe_n(0) = '0' else 'Z';
+  sys_sda_in(0) <= sys_sda_b;
 
   ------------------------------------------------------------------------------
   -- Mezzanine SPI master
@@ -440,11 +444,11 @@ begin
       );
 
   -- Tri-state buffer for SDA and SCL
-  si570_scl_b  <= si570_scl_out when si570_scl_oe_n = '0' else 'Z';
-  si570_scl_in <= si570_scl_b;
+  si570_scl_b     <= si570_scl_out(0) when si570_scl_oe_n(0) = '0' else 'Z';
+  si570_scl_in(0) <= si570_scl_b;
 
-  si570_sda_b  <= si570_sda_out when si570_sda_oe_n = '0' else 'Z';
-  si570_sda_in <= si570_sda_b;
+  si570_sda_b     <= si570_sda_out(0) when si570_sda_oe_n(0) = '0' else 'Z';
+  si570_sda_in(0) <= si570_sda_b;
 
   ------------------------------------------------------------------------------
   -- ADC core
@@ -615,9 +619,9 @@ begin
 
       wr_enabled_i => wr_enable_i,
 
-      wr_tm_time_valid_i => '1',
-      wr_tm_tai_i        => X"123456789a",
-      wr_tm_cycles_i     => X"edcba98",
+      wr_tm_time_valid_i => wr_tm_time_valid_i,
+      wr_tm_tai_i        => wr_tm_tai_i,
+      wr_tm_cycles_i     => wr_tm_cycles_i,
 
       trig_tag_o  => trigger_tag,
       time_trig_o => time_trigger,

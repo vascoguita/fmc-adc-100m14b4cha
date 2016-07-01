@@ -5,40 +5,45 @@
 #----------------------------------------
 # Clock inputs
 #----------------------------------------
-#NET "clk20_vcxo_i" LOC = H12; # CLK25_VCXO
-#NET "clk20_vcxo_i" IOSTANDARD = "LVCMOS25";
+NET "clk_20m_vcxo_i" LOC = H12;
+NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS25";
 
 NET "clk_125m_pllref_n_i" LOC = F10;
 NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
 NET "clk_125m_pllref_p_i" LOC = G9;
 NET "clk_125m_pllref_p_i" IOSTANDARD = "LVDS_25";
 
+NET "clk_125m_gtp_n_i" LOC = D11;
+NET "clk_125m_gtp_n_i" IOSTANDARD = "LVDS_25";
+NET "clk_125m_gtp_p_i" LOC = C11;
+NET "clk_125m_gtp_p_i" IOSTANDARD = "LVDS_25";
+
 #----------------------------------------
 # SFP slot
 # !! SFP_TX_DISABLE and SFP_MOD_DEF1 are swapped in V1.1 schematics for control signals
 #----------------------------------------
-#NET "SFPRX_123_N" LOC = C15;
-#NET "SFPRX_123_N" IOSTANDARD = "LVCMOS25";
-#NET "SFPRX_123_P" LOC = D15;
-#NET "SFPRX_123_P" IOSTANDARD = "LVCMOS25";
-#NET "SFPTX_123_N" LOC = A16;
-#NET "SFPTX_123_N" IOSTANDARD = "LVCMOS25";
-#NET "SFPTX_123_P" LOC = B16;
-#NET "SFPTX_123_P" IOSTANDARD = "LVCMOS25";
-#NET "SFP_TX_FAULT" LOC = B18;
-#NET "SFP_TX_FAULT" IOSTANDARD = "LVCMOS25";
-#NET "SFP_TX_DISABLE" LOC = F17;
-#NET "SFP_TX_DISABLE" IOSTANDARD = "LVCMOS25";
-#NET "SFP_LOS" LOC = D18;
-#NET "SFP_LOS" IOSTANDARD = "LVCMOS25";
-#NET "SFP_MOD_DEF1" LOC = C17;
-#NET "SFP_MOD_DEF1" IOSTANDARD = "LVCMOS25";
-#NET "SFP_MOD_DEF0" LOC = G15;
-#NET "SFP_MOD_DEF0" IOSTANDARD = "LVCMOS25";
-#NET "SFP_MOD_DEF2" LOC = G16;
-#NET "SFP_MOD_DEF2" IOSTANDARD = "LVCMOS25";
-#NET "SFP_RATE_SELECT" LOC = H14;
-#NET "SFP_RATE_SELECT" IOSTANDARD = "LVCMOS25";
+NET "SFP_RXN_I" LOC = C15;
+NET "SFP_RXN_I" IOSTANDARD = "LVCMOS25";
+NET "SFP_RXP_I" LOC = D15;
+NET "SFP_RXP_I" IOSTANDARD = "LVCMOS25";
+NET "SFP_TXN_O" LOC = A16;
+NET "SFP_TXN_O" IOSTANDARD = "LVCMOS25";
+NET "SFP_TXP_O" LOC = B16;
+NET "SFP_TXP_O" IOSTANDARD = "LVCMOS25";
+NET "SFP_MOD_DEF1_B" LOC = C17;
+NET "SFP_MOD_DEF1_B" IOSTANDARD = "LVCMOS25";
+NET "SFP_MOD_DEF0_B" LOC = G15;
+NET "SFP_MOD_DEF0_B" IOSTANDARD = "LVCMOS25";
+NET "SFP_MOD_DEF2_B" LOC = G16;
+NET "SFP_MOD_DEF2_B" IOSTANDARD = "LVCMOS25";
+NET "SFP_RATE_SELECT_B" LOC = H14;
+NET "SFP_RATE_SELECT_B" IOSTANDARD = "LVCMOS25";
+NET "SFP_TX_FAULT_I" LOC = B18;
+NET "SFP_TX_FAULT_I" IOSTANDARD = "LVCMOS25";
+NET "SFP_TX_DISABLE_O" LOC = F17;
+NET "SFP_TX_DISABLE_O" IOSTANDARD = "LVCMOS25";
+NET "SFP_LOS_I" LOC = D18;
+NET "SFP_LOS_I" IOSTANDARD = "LVCMOS25";
 
 #----------------------------------------
 # DAC interface (for VCXO)
@@ -55,8 +60,8 @@ NET "plldac_sclk_o" IOSTANDARD = "LVCMOS25";
 #----------------------------------------
 # 1-wire thermometer w/ ID
 #----------------------------------------
-NET "CARRIER_ONE_WIRE_B" LOC = D4;
-NET "CARRIER_ONE_WIRE_B" IOSTANDARD = "LVCMOS25";
+NET "CARRIER_ONEWIRE_B" LOC = D4;
+NET "CARRIER_ONEWIRE_B" IOSTANDARD = "LVCMOS25";
 
 #----------------------------------------
 # GN4124 interface
@@ -514,10 +519,10 @@ NET "DDR3_DQ[15]" IOSTANDARD = "SSTL15_II";
 #----------------------------------------
 # UART
 #----------------------------------------
-#NET "UART_TXD" LOC = A2; # FPGA input
-#NET "UART_TXD" IOSTANDARD = "LVCMOS25";
-#NET "UART_RXD" LOC = B2; # FPGA output
-#NET "UART_RXD" IOSTANDARD = "LVCMOS25";
+NET "UART_TXD_O" LOC = B2;
+NET "UART_TXD_O" IOSTANDARD = "LVCMOS25";
+NET "UART_RXD_I" LOC = A2;
+NET "UART_RXD_I" IOSTANDARD = "LVCMOS25";
 
 #----------------------------------------
 # Buttons and LEDs
@@ -563,34 +568,39 @@ NET "DDR3_UDQS_N"  IN_TERM = NONE;
 # Timing constraints
 #===============================================================================
 
-# System clock
-
 NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_pllref_n_i;
 TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
 
-# 20MHz clock for DMTD
-#NET "clk20_vcxo_i" TNM_NET = "clk20_vcxo_i_grp";
-#TIMESPEC TS_clk20_vcxo_i = PERIOD "clk20_vcxo_i_grp" 50 ns HIGH 50%;
+NET "clk_125m_gtp_n_i" TNM_NET = clk_125m_gtp_n_i;
+TIMESPEC TS_clk_125m_gtp_n_i = PERIOD "clk_125m_gtp_n_i" 8 ns HIGH 50%;
 
-# DDR3
-#NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_infrastructure_inst/sys_clk_ibufg" TNM_NET = "SYS_CLK5";
-#TIMESPEC "TS_SYS_CLK5" = PERIOD "SYS_CLK5"  3.0  ns HIGH 50 %;
+NET "clk_20m_vcxo_i" TNM_NET = "clk_20m_vcxo_i";
+TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
 
-# ADC
+#NET "U_GTP/ch1_gtp_clkout_int<1>" TNM_NET = U_GTP/ch1_gtp_clkout_int<1>;
+#TIMESPEC TS_U_GTP_ch1_gtp_clkout_int_1_ = PERIOD "U_GTP/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
+
 NET "adc0_dco_n_i" TNM_NET = adc_dco_n_i;
 TIMESPEC TS_adc_dco_n_i = PERIOD "adc_dco_n_i" 2.5 ns HIGH 50%;
+
+#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
+#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
+#TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
+
+NET "clk_125m_pllref" TNM_NET = clk_125m_pllref;
+NET "sys_clk_62_5"    TNM_NET = sys_clk_62_5;
+TIMESPEC TS_crossdomain_01 = FROM "clk_125m_pllref" TO "sys_clk_62_5"    4ns DATAPATHONLY;
+TIMESPEC TS_crossdomain_02 = FROM "sys_clk_62_5"    TO "clk_125m_pllref" 4ns DATAPATHONLY;
 
 #===============================================================================
 # False Path
 #===============================================================================
 
 # GN4124
-
 NET "l_rst_n" TIG;
 NET "cmp_gn4124_core/rst_*" TIG;
 
 # DDR3
-
 NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_wrapper_inst/memc3_mcb_raw_wrapper_inst/selfrefresh_mcb_mode" TIG;
 NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/c3_pll_lock" TIG;
 NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_wrapper_inst/memc3_mcb_raw_wrapper_inst/hard_done_cal" TIG;
