@@ -516,6 +516,19 @@ NET "DDR3_DQ[14]" IOSTANDARD = "SSTL15_II";
 NET "DDR3_DQ[15]" LOC = Y1;
 NET "DDR3_DQ[15]" IOSTANDARD = "SSTL15_II";
 
+
+#----------------------------------------
+# SPI FLASH
+#----------------------------------------
+NET "SPI_NCS_O"  LOC = AA3;
+NET "SPI_NCS_O"  IOSTANDARD = "LVCMOS25";
+NET "SPI_SCLK_O" LOC = Y20;
+NET "SPI_SCLK_O"  IOSTANDARD = "LVCMOS25";
+NET "SPI_MOSI_O" LOC = AB20;
+NET "SPI_MOSI_O"  IOSTANDARD = "LVCMOS25";
+NET "SPI_MISO_I" LOC = AA20;
+NET "SPI_MISO_I"  IOSTANDARD = "LVCMOS25";
+
 #----------------------------------------
 # UART
 #----------------------------------------

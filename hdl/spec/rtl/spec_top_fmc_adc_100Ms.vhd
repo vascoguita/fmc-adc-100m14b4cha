@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-07-01
+-- Last update: 2016-07-05
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -152,6 +152,12 @@ entity spec_top_fmc_adc_100Ms is
       sfp_tx_disable_o  : out   std_logic;
       sfp_los_i         : in    std_logic;
 
+      -- SPI
+      spi_sclk_o : out std_logic;
+      spi_ncs_o  : out std_logic;
+      spi_mosi_o : out std_logic;
+      spi_miso_i : in  std_logic := 'L';
+
       -- UART
       uart_rxd_i : in  std_logic;
       uart_txd_o : out std_logic;
@@ -250,7 +256,7 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
 
   -- Number of master port(s) on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 7;
+  constant c_NUM_WB_MASTERS : integer := 6;
 
   -- Number of slave port(s) on the wishbone crossbar
   constant c_NUM_WB_SLAVES : integer := 1;
@@ -260,12 +266,11 @@ architecture rtl of spec_top_fmc_adc_100Ms is
 
   -- Wishbone slave(s)
   constant c_WB_SLAVE_DMA      : integer := 0;    -- DMA controller in the Gennum core
-  constant c_WB_SLAVE_ONEWIRE  : integer := 1;    -- Carrier onewire interface
-  constant c_WB_SLAVE_SPEC_CSR : integer := 2;    -- SPEC control and status registers
-  constant c_WB_SLAVE_VIC      : integer := 3;    -- Vectored interrupt controller
-  constant c_WB_SLAVE_DMA_EIC  : integer := 4;    -- DMA interrupt controller
-  constant c_WB_SLAVE_FMC_ADC  : integer := 5;    -- FMC ADC mezzanine
-  constant c_WB_SLAVE_WR_CORE  : integer := 6;    -- WR PTP core
+  constant c_WB_SLAVE_SPEC_CSR : integer := 1;    -- SPEC control and status registers
+  constant c_WB_SLAVE_VIC      : integer := 2;    -- Vectored interrupt controller
+  constant c_WB_SLAVE_DMA_EIC  : integer := 3;    -- DMA interrupt controller
+  constant c_WB_SLAVE_FMC_ADC  : integer := 4;    -- FMC ADC mezzanine
+  constant c_WB_SLAVE_WR_CORE  : integer := 5;    -- WR PTP core
 
   -- SDB meta info
   constant c_SDB_REPO_URL  : integer := c_NUM_WB_MASTERS;
@@ -333,7 +338,6 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_MASTERS + 2 downto 0) :=
     (
       c_WB_SLAVE_DMA      => f_sdb_embed_device(c_wb_dma_ctrl_sdb, x"00001000"),
-      c_WB_SLAVE_ONEWIRE  => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001100"),
       c_WB_SLAVE_SPEC_CSR => f_sdb_embed_device(c_wb_spec_csr_sdb, x"00001200"),
       c_WB_SLAVE_VIC      => f_sdb_embed_device(c_xwb_vic_sdb, x"00001300"),
       c_WB_SLAVE_DMA_EIC  => f_sdb_embed_device(c_wb_dma_eic_sdb, x"00001400"),
@@ -396,9 +400,9 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
-  -- Wishbone bus from cross-clocking module to WR PTP core
-  signal cnx_wr_sync_master_out : t_wishbone_master_out;
-  signal cnx_wr_sync_master_in  : t_wishbone_master_in;
+  -- Wishbone bus from cross-clocking module to FMC0 mezzanine
+  signal cnx_fmc0_sync_master_out : t_wishbone_master_out;
+  signal cnx_fmc0_sync_master_in  : t_wishbone_master_in;
 
   -- Wishbone address from GN4124 core (32-bit word address)
   signal gn_wb_adr : std_logic_vector(31 downto 0);
@@ -719,7 +723,7 @@ begin
       irq_p_i         => irq_to_gn4124,
       irq_p_o         => GPIO(0),
       -- DMA registers wishbone interface (slave classic)
-      dma_reg_clk_i   => sys_clk_125,
+      dma_reg_clk_i   => sys_clk_62_5,
       dma_reg_adr_i   => dma_ctrl_wb_adr,
       dma_reg_dat_i   => cnx_master_out(c_WB_SLAVE_DMA).dat,
       dma_reg_sel_i   => cnx_master_out(c_WB_SLAVE_DMA).sel,
@@ -730,7 +734,7 @@ begin
       dma_reg_ack_o   => cnx_master_in(c_WB_SLAVE_DMA).ack,
       dma_reg_stall_o => cnx_master_in(c_WB_SLAVE_DMA).stall,
       -- CSR wishbone interface (master pipelined)
-      csr_clk_i       => sys_clk_125,
+      csr_clk_i       => sys_clk_62_5,
       csr_adr_o       => gn_wb_adr,
       csr_dat_o       => cnx_slave_in(c_MASTER_GENNUM).dat,
       csr_sel_o       => cnx_slave_in(c_MASTER_GENNUM).sel,
@@ -773,7 +777,7 @@ begin
   cnx_master_in(c_WB_SLAVE_DMA).int <= '0';
 
   ------------------------------------------------------------------------------
-  -- CSR wishbone crossbar (and clock crossing for WR PTP core)
+  -- CSR wishbone crossbar
   ------------------------------------------------------------------------------
 
   cmp_sdb_crossbar : xwb_sdb_crossbar
@@ -785,37 +789,24 @@ begin
       g_layout      => c_INTERCONNECT_LAYOUT,
       g_sdb_addr    => c_SDB_ADDRESS)
     port map (
-      clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_125_n,
+      clk_sys_i => sys_clk_62_5,
+      rst_n_i   => sys_rst_62_5_n,
       slave_i   => cnx_slave_in,
       slave_o   => cnx_slave_out,
       master_i  => cnx_master_in,
       master_o  => cnx_master_out);
-
-  cmp_xwb_clock_crossing : xwb_clock_crossing
-    generic map(
-      g_size => 16
-      )
-    port map(
-      slave_clk_i    => sys_clk_125,
-      slave_rst_n_i  => sys_rst_125_n,
-      slave_i        => cnx_master_out(c_WB_SLAVE_WR_CORE),
-      slave_o        => cnx_master_in(c_WB_SLAVE_WR_CORE),
-      master_clk_i   => sys_clk_62_5,
-      master_rst_n_i => sys_rst_62_5_n,
-      master_i       => cnx_wr_sync_master_in,
-      master_o       => cnx_wr_sync_master_out
-      );
 
   -------------------------------------------------------------------------------
   -- White Rabbit Core + PHY
   -------------------------------------------------------------------------------
 
   -- Tristates for FMC EEPROM
-  fmc0_sys_scl_b <= '0' when (wrc_scl_out = '0') else 'Z';
-  fmc0_sys_sda_b <= '0' when (wrc_sda_out = '0') else 'Z';
-  wrc_scl_in     <= fmc0_sys_scl_b;
-  wrc_sda_in     <= fmc0_sys_sda_b;
+  --fmc0_sys_scl_b <= '0' when (wrc_scl_out = '0') else 'Z';
+  --fmc0_sys_sda_b <= '0' when (wrc_sda_out = '0') else 'Z';
+  --wrc_scl_in     <= fmc0_sys_scl_b;
+  --wrc_sda_in     <= fmc0_sys_sda_b;
+  wrc_scl_in <= '0';
+  wrc_sda_in <= '0';
 
   -- Tristates for SFP EEPROM
   sfp_mod_def1_b <= '0' when sfp_scl_out = '0' else 'Z';
@@ -897,7 +888,8 @@ begin
   U_WR_CORE : xwr_core
     generic map (
       g_simulation  => g_simulation_int,
-      g_dpram_initf => "wrc.ram")
+--      g_dpram_initf => "wrc.ram")
+      g_dpram_initf => "")
     port map (
       clk_sys_i  => sys_clk_62_5,
       clk_dmtd_i => clk_dmtd,
@@ -935,15 +927,21 @@ begin
       led_act_o  => LED_RED,
       led_link_o => LED_GREEN,
 
-      scl_o     => wrc_scl_out,
-      scl_i     => wrc_scl_in,
-      sda_o     => wrc_sda_out,
-      sda_i     => wrc_sda_in,
+      scl_o => wrc_scl_out,
+      scl_i => wrc_scl_in,
+      sda_o => wrc_sda_out,
+      sda_i => wrc_sda_in,
+
       sfp_scl_o => sfp_scl_out,
       sfp_scl_i => sfp_scl_in,
       sfp_sda_o => sfp_sda_out,
       sfp_sda_i => sfp_sda_in,
       sfp_det_i => sfp_mod_def0_b,
+
+      spi_sclk_o => spi_sclk_o,
+      spi_ncs_o  => spi_ncs_o,
+      spi_mosi_o => spi_mosi_o,
+      spi_miso_i => spi_miso_i,
 
       uart_rxd_i => uart_rxd_i,
       uart_txd_o => uart_txd_o,
@@ -951,8 +949,8 @@ begin
       owr_en_o => wrc_owr_en,
       owr_i    => wrc_owr_in,
 
-      slave_i => cnx_wr_sync_master_out,
-      slave_o => cnx_wr_sync_master_in,
+      slave_i => cnx_master_out(c_WB_SLAVE_WR_CORE),
+      slave_o => cnx_master_in(c_WB_SLAVE_WR_CORE),
 
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
@@ -969,35 +967,6 @@ begin
       pps_p_o => open
       );
 
-
-  ------------------------------------------------------------------------------
-  -- Carrier 1-wire master
-  --    DS18B20 (thermometer + unique ID)
-  ------------------------------------------------------------------------------
-  cmp_carrier_onewire : xwb_onewire_master
-    generic map(
-      g_interface_mode      => CLASSIC,
-      g_address_granularity => BYTE,
-      g_num_ports           => 1,
-      g_ow_btp_normal       => "5.0",
-      g_ow_btp_overdrive    => "1.0"
-      )
-    port map(
-      clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_125_n,
-
-      slave_i => cnx_master_out(c_WB_SLAVE_ONEWIRE),
-      slave_o => cnx_master_in(c_WB_SLAVE_ONEWIRE),
-      desc_o  => open,
-
-      owr_pwren_o => open,
-      owr_en_o    => carrier_owr_en,
-      owr_i       => carrier_owr_i
-      );
-
-  carrier_onewire_b <= '0' when carrier_owr_en(0) = '1' else 'Z';
-  carrier_owr_i(0)  <= carrier_onewire_b;
-
   ------------------------------------------------------------------------------
   -- Carrier CSR
   --    Carrier type and PCB version
@@ -1007,8 +976,8 @@ begin
   ------------------------------------------------------------------------------
   cmp_carrier_csr : carrier_csr
     port map(
-      rst_n_i    => sys_rst_125_n,
-      clk_sys_i  => sys_clk_125,
+      rst_n_i    => sys_rst_62_5_n,
+      clk_sys_i  => sys_clk_62_5,
       wb_adr_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).dat,
       wb_dat_o   => cnx_master_in(c_WB_SLAVE_SPEC_CSR).dat,
@@ -1052,8 +1021,8 @@ begin
       g_num_interrupts      => 2,
       g_init_vectors        => c_VIC_VECTOR_TABLE)
     port map (
-      clk_sys_i    => sys_clk_125,
-      rst_n_i      => sys_rst_125_n,
+      clk_sys_i    => sys_clk_62_5,
+      rst_n_i      => sys_rst_62_5_n,
       slave_i      => cnx_master_out(c_WB_SLAVE_VIC),
       slave_o      => cnx_master_in(c_WB_SLAVE_VIC),
       irqs_i(0)    => fmc0_eic_irq,
@@ -1065,8 +1034,8 @@ begin
   ------------------------------------------------------------------------------
   cmp_dma_eic : dma_eic
     port map(
-      rst_n_i         => sys_rst_125_n,
-      clk_sys_i       => sys_clk_125,
+      rst_n_i         => sys_rst_62_5_n,
+      clk_sys_i       => sys_clk_62_5,
       wb_adr_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).adr(3 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).dat,
       wb_dat_o        => cnx_master_in(c_WB_SLAVE_DMA_EIC).dat,
@@ -1087,7 +1056,7 @@ begin
   cnx_master_in(c_WB_SLAVE_DMA_EIC).int <= '0';
 
   ------------------------------------------------------------------------------
-  -- FMC ADC mezzanine (wb bridge)
+  -- FMC ADC mezzanine (wb bridge with cross-clocking)
   --    System managment I2C master
   --    SPI master
   --    I2C
@@ -1096,6 +1065,22 @@ begin
   --    eic
   --    timetag core
   ------------------------------------------------------------------------------
+
+  cmp_xwb_clock_crossing : xwb_clock_crossing
+    generic map(
+      g_size => 16
+      )
+    port map(
+      slave_clk_i    => sys_clk_62_5,
+      slave_rst_n_i  => sys_rst_62_5_n,
+      slave_i        => cnx_master_out(c_WB_SLAVE_FMC_ADC),
+      slave_o        => cnx_master_in(c_WB_SLAVE_FMC_ADC),
+      master_clk_i   => sys_clk_125,
+      master_rst_n_i => sys_rst_125_n,
+      master_i       => cnx_fmc0_sync_master_in,
+      master_o       => cnx_fmc0_sync_master_out
+      );
+
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
       g_multishot_ram_size => g_multishot_ram_size,
@@ -1105,15 +1090,15 @@ begin
       sys_clk_i   => sys_clk_125,
       sys_rst_n_i => fmc0_rst_n,
 
-      wb_csr_adr_i   => cnx_master_out(c_WB_SLAVE_FMC_ADC).adr,
-      wb_csr_dat_i   => cnx_master_out(c_WB_SLAVE_FMC_ADC).dat,
-      wb_csr_dat_o   => cnx_master_in(c_WB_SLAVE_FMC_ADC).dat,
-      wb_csr_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC_ADC).cyc,
-      wb_csr_sel_i   => cnx_master_out(c_WB_SLAVE_FMC_ADC).sel,
-      wb_csr_stb_i   => cnx_master_out(c_WB_SLAVE_FMC_ADC).stb,
-      wb_csr_we_i    => cnx_master_out(c_WB_SLAVE_FMC_ADC).we,
-      wb_csr_ack_o   => cnx_master_in(c_WB_SLAVE_FMC_ADC).ack,
-      wb_csr_stall_o => cnx_master_in(c_WB_SLAVE_FMC_ADC).stall,
+      wb_csr_adr_i   => cnx_fmc0_sync_master_out.adr,
+      wb_csr_dat_i   => cnx_fmc0_sync_master_out.dat,
+      wb_csr_dat_o   => cnx_fmc0_sync_master_in.dat,
+      wb_csr_cyc_i   => cnx_fmc0_sync_master_out.cyc,
+      wb_csr_sel_i   => cnx_fmc0_sync_master_out.sel,
+      wb_csr_stb_i   => cnx_fmc0_sync_master_out.stb,
+      wb_csr_we_i    => cnx_fmc0_sync_master_out.we,
+      wb_csr_ack_o   => cnx_fmc0_sync_master_in.ack,
+      wb_csr_stall_o => cnx_fmc0_sync_master_in.stall,
 
       wb_ddr_clk_i   => sys_clk_125,
       wb_ddr_adr_o   => wb_ddr_adr,
@@ -1176,9 +1161,9 @@ begin
       );
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).err <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).rty <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).int <= '0';
+  cnx_fmc0_sync_master_in.err <= '0';
+  cnx_fmc0_sync_master_in.rty <= '0';
+  cnx_fmc0_sync_master_in.int <= '0';
 
   ------------------------------------------------------------------------------
   -- DMA wishbone bus slaves
@@ -1289,13 +1274,13 @@ begin
   ------------------------------------------------------------------------------
   -- FPGA loaded led (heart beat)
   ------------------------------------------------------------------------------
-  p_led_pwn_update_cnt : process (sys_clk_125)
+  p_led_pwn_update_cnt : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm_update_cnt <= (others => '0');
         led_pwm_update     <= '0';
-      elsif (led_pwm_update_cnt = to_unsigned(954, 10)) then
+      elsif (led_pwm_update_cnt = to_unsigned(477, 10)) then
         led_pwm_update_cnt <= (others => '0');
         led_pwm_update     <= '1';
       else
@@ -1305,10 +1290,10 @@ begin
     end if;
   end process p_led_pwn_update_cnt;
 
-  p_led_pwn_val : process (sys_clk_125)
+  p_led_pwn_val : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm_val      <= (others => '0');
         led_pwm_val_down <= '0';
       elsif (led_pwm_update = '1') then
@@ -1327,10 +1312,10 @@ begin
     end if;
   end process p_led_pwn_val;
 
-  p_led_pwn_cnt : process (sys_clk_125)
+  p_led_pwn_cnt : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm_cnt <= (others => '0');
       else
         led_pwm_cnt <= led_pwm_cnt + 1;
@@ -1338,10 +1323,10 @@ begin
     end if;
   end process p_led_pwn_cnt;
 
-  p_led_pwn : process (sys_clk_125)
+  p_led_pwn : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm <= '0';
       elsif (led_pwm_cnt = 0) then
         led_pwm <= '1';
@@ -1365,10 +1350,10 @@ begin
   gen_irq_led : for I in 0 to irq_sources'length-1 generate
     cmp_irq_led : gc_extend_pulse
       generic map (
-        g_width => 5000000)
+        g_width => 2500000)
       port map (
-        clk_i      => sys_clk_125,
-        rst_n_i    => sys_rst_125_n,
+        clk_i      => sys_clk_62_5,
+        rst_n_i    => sys_rst_62_5_n,
         pulse_i    => irq_sources(I),
         extended_o => irq_sources_2_led(I));
   end generate gen_irq_led;
