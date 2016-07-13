@@ -12,6 +12,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 
 /* Error codes start from 1024 to void conflicting with libc codes */
