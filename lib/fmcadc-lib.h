@@ -7,6 +7,7 @@
 #define FMCADC_LIB_H_
 
 #ifdef __cplusplus
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 extern "C" {
 #endif
 
