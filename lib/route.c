@@ -25,7 +25,7 @@ int fmcadc_acq_start(struct fmcadc_dev *dev,
 			     unsigned int flags,
 			     struct timeval *timeout)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->acq_start(dev, flags, timeout);
@@ -34,7 +34,7 @@ int fmcadc_acq_start(struct fmcadc_dev *dev,
 int fmcadc_acq_poll(struct fmcadc_dev *dev, unsigned int flags,
 		    struct timeval *timeout)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->acq_poll(dev, flags, timeout);
@@ -42,7 +42,7 @@ int fmcadc_acq_poll(struct fmcadc_dev *dev, unsigned int flags,
 
 int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->acq_stop(dev, flags);
@@ -51,7 +51,7 @@ int fmcadc_acq_stop(struct fmcadc_dev *dev, unsigned int flags)
 int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 			struct fmcadc_conf *conf)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 	uint64_t cap_mask;
 
@@ -70,7 +70,7 @@ int fmcadc_apply_config(struct fmcadc_dev *dev, unsigned int flags,
 
 int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 	uint64_t cap_mask;
 
@@ -90,7 +90,7 @@ int fmcadc_retrieve_config(struct fmcadc_dev *dev, struct fmcadc_conf *conf)
 int fmcadc_get_param(struct fmcadc_dev *dev, char *name,
 		     char *sptr, int *iptr)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->get_param(dev, name, sptr, iptr);
@@ -99,7 +99,7 @@ int fmcadc_get_param(struct fmcadc_dev *dev, char *name,
 int fmcadc_set_param(struct fmcadc_dev *dev, char *name,
 		     char *sptr, int *iptr)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->set_param(dev, name, sptr, iptr);
@@ -110,7 +110,7 @@ struct fmcadc_buffer *fmcadc_request_buffer(struct fmcadc_dev *dev,
 					    void *(*alloc)(size_t),
 					    unsigned int flags)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->request_buffer(dev, nsamples, alloc, flags);
@@ -121,7 +121,7 @@ int fmcadc_fill_buffer(struct fmcadc_dev *dev,
 		       unsigned int flags,
 		       struct timeval *timeout)
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->fill_buffer(dev, buf, flags, timeout);
@@ -130,7 +130,7 @@ int fmcadc_fill_buffer(struct fmcadc_dev *dev,
 struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
 					      struct fmcadc_timestamp *ts)
 {
-	struct fmcadc_gid *g = (void *)buf->dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)buf->dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	return b->fa_op->tstamp_buffer(buf, ts);
@@ -139,7 +139,7 @@ struct fmcadc_timestamp *fmcadc_tstamp_buffer(struct fmcadc_buffer *buf,
 int fmcadc_release_buffer(struct fmcadc_dev *dev, struct fmcadc_buffer *buf,
 			  void (*free)(void *))
 {
-	struct fmcadc_gid *g = (void *)dev;
+	struct fmcadc_gid *g = (struct fmcadc_gid *)dev;
 	const struct fmcadc_board_type *b = g->board;
 
 	if (!buf)

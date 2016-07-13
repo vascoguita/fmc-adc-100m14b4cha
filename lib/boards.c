@@ -134,7 +134,7 @@ struct fmcadc_dev *fmcadc_open_by_lun(char *name, int lun,
 
 int fmcadc_close(struct fmcadc_dev *dev)
 {
-	struct fmcadc_gid *b = (void *)dev;
+	struct fmcadc_gid *b = (struct fmcadc_gid *)dev;
 
 	return b->board->fa_op->close(dev);
 }

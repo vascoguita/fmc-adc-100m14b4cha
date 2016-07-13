@@ -115,7 +115,7 @@ int fmcadc_zio_get_param(struct fmcadc_dev *dev, char *name,
 static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *resp)
 {
-	struct fmcadc_dev *dev = (void *)&fa->gid; /* hack: back and forth.. */
+	struct fmcadc_dev *dev = (struct fmcadc_dev *)&fa->gid; /* hack: back and forth.. */
 	int ret;
 	int val;
 
@@ -139,7 +139,7 @@ static int fa_zio_sysfs_get(struct __fmcadc_dev_zio *fa, char *name,
 int fa_zio_sysfs_set(struct __fmcadc_dev_zio *fa, char *name,
 		uint32_t *value)
 {
-	struct fmcadc_dev *dev = (void *)&fa->gid; /* hack: back and forth.. */
+	struct fmcadc_dev *dev = (struct fmcadc_dev *)&fa->gid; /* hack: back and forth.. */
 	int ret;
 	int val = *value; /* different type */
 
