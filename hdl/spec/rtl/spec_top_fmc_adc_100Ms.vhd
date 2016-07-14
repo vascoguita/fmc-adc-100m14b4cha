@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-07-05
+-- Last update: 2016-07-06
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
@@ -199,10 +199,9 @@ entity spec_top_fmc_adc_100Ms is
       adc0_one_wire_b : inout std_logic;  -- Mezzanine 1-wire interface (DS18B20 thermometer + unique ID)
 
       -- FMC slot management
-      fmc0_prsnt_m2c_n_i : in std_logic;          -- Mezzanine present (active low)
-
-      fmc0_sys_scl_b : inout std_logic;           -- Mezzanine system I2C clock (EEPROM)
-      fmc0_sys_sda_b : inout std_logic            -- Mezzanine system I2C data (EEPROM)
+      fmc0_prsnt_m2c_n_i : in    std_logic;       -- Mezzanine present (active low)
+      fmc0_sys_scl_b     : inout std_logic;       -- Mezzanine system I2C clock (EEPROM)
+      fmc0_sys_sda_b     : inout std_logic        -- Mezzanine system I2C data (EEPROM)
       );
 end spec_top_fmc_adc_100Ms;
 
@@ -342,7 +341,7 @@ architecture rtl of spec_top_fmc_adc_100Ms is
       c_WB_SLAVE_VIC      => f_sdb_embed_device(c_xwb_vic_sdb, x"00001300"),
       c_WB_SLAVE_DMA_EIC  => f_sdb_embed_device(c_wb_dma_eic_sdb, x"00001400"),
       c_WB_SLAVE_FMC_ADC  => f_sdb_embed_bridge(c_fmc0_bridge_sdb, x"00002000"),
-      c_WB_SLAVE_WR_CORE  => f_sdb_embed_bridge(c_wr_core_bridge_sdb, x"000C0000"),
+      c_WB_SLAVE_WR_CORE  => f_sdb_embed_bridge(c_wr_core_bridge_sdb, x"00040000"),
       c_SDB_REPO_URL      => f_sdb_embed_repo_url(c_repo_url_sdb),
       c_SDB_SYNTHESIS     => f_sdb_embed_synthesis(c_synthesis_sdb),
       c_SDB_INTEGRATE     => f_sdb_embed_integration(c_integration_sdb)
@@ -383,14 +382,16 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   signal ddr_clk_buf : std_logic;
 
   -- Reset
-  signal powerup_arst_n  : std_logic := '0';
-  signal powerup_clk_in  : std_logic_vector(2 downto 0);
-  signal powerup_rst_out : std_logic_vector(2 downto 0);
-  signal sys_rst_62_5_n  : std_logic;
-  signal sys_rst_125_n   : std_logic;
-  signal sw_rst_fmc0     : std_logic := '1';
-  signal fmc0_rst_n      : std_logic;
-  signal ddr_rst_n       : std_logic;
+  signal powerup_arst_n   : std_logic := '0';
+  signal powerup_clk_in   : std_logic_vector(2 downto 0);
+  signal powerup_rst_out  : std_logic_vector(2 downto 0);
+  signal sys_rst_62_5_n   : std_logic;
+  signal sys_rst_125_n    : std_logic;
+  signal sw_rst_fmc0      : std_logic := '1';
+  signal sw_rst_fmc0_sync : std_logic;
+  signal sw_rst_ddr_sync  : std_logic;
+  signal fmc0_rst_n       : std_logic;
+  signal ddr_rst_n        : std_logic;
 
   -- Wishbone buse(s) from crossbar master port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
@@ -468,10 +469,6 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   -- SPI
   signal spi_din_t : std_logic_vector(3 downto 0);
   signal spi_ss_t  : std_logic_vector(7 downto 0);
-
-  -- Carrier 1-wire
-  signal carrier_owr_en : std_logic_vector(0 downto 0);
-  signal carrier_owr_i  : std_logic_vector(0 downto 0);
 
   -- led pwm
   signal led_pwm_update_cnt : unsigned(9 downto 0);
@@ -681,10 +678,27 @@ begin
   -- distribution of resets (already synchronized to their clock domains)
   sys_rst_62_5_n <= powerup_rst_out(0);
   sys_rst_125_n  <= powerup_rst_out(1);
-  ddr_rst_n      <= powerup_rst_out(2);
+
+  -- sync fmc sw reset to DDR clock
+  cmp_ddr_sw_reset_sync : gc_sync_ffs
+    port map (
+      clk_i    => ddr_clk,
+      rst_n_i  => ddr_rst_n,
+      data_i   => sw_rst_fmc0,
+      synced_o => sw_rst_ddr_sync);
+
+  ddr_rst_n <= powerup_rst_out(2) and (not sw_rst_ddr_sync);
+
+  -- sync fmc sw reset to 125MHz
+  cmp_fmc0_sw_reset_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_125,
+      rst_n_i  => sys_rst_125_n,
+      data_i   => sw_rst_fmc0,
+      synced_o => sw_rst_fmc0_sync);
 
   -- reset for mezzanine (including soft reset)
-  fmc0_rst_n <= sys_rst_125_n and (not sw_rst_fmc0);
+  fmc0_rst_n <= sys_rst_125_n and (not sw_rst_fmc0_sync);
 
 
   ------------------------------------------------------------------------------
@@ -748,7 +762,7 @@ begin
       csr_rty_i       => cnx_slave_out(c_MASTER_GENNUM).rty,
       csr_int_i       => cnx_slave_out(c_MASTER_GENNUM).int,
       -- DMA wishbone interface (pipelined)
-      dma_clk_i       => sys_clk_125,
+      dma_clk_i       => sys_clk_62_5,
       dma_adr_o       => wb_dma_adr,
       dma_dat_o       => wb_dma_dat_o,
       dma_sel_o       => wb_dma_sel,
@@ -1066,7 +1080,7 @@ begin
   --    timetag core
   ------------------------------------------------------------------------------
 
-  cmp_xwb_clock_crossing : xwb_clock_crossing
+  cmp_xwb_clock_crossing_0 : xwb_clock_crossing
     generic map(
       g_size => 16
       )
@@ -1232,8 +1246,8 @@ begin
       p0_wr_underrun_o => open,
       p0_wr_error_o    => open,
 
-      wb1_rst_n_i => sys_rst_125_n,
-      wb1_clk_i   => sys_clk_125,
+      wb1_rst_n_i => sys_rst_62_5_n,
+      wb1_clk_i   => sys_clk_62_5,
       wb1_sel_i   => wb_dma_sel,
       wb1_cyc_i   => wb_dma_cyc,
       wb1_stb_i   => wb_dma_stb,
