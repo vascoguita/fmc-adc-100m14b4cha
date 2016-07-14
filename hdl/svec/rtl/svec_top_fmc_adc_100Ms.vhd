@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-04
--- Last update: 2018-01-30
+-- Last update: 2018-10-24
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
@@ -53,19 +53,28 @@ use work.sdb_meta_pkg.all;
 use work.xvme64x_core_pkg.all;
 use work.timetag_core_pkg.all;
 use work.carrier_csr_wbgen2_pkg.all;
-
+use work.wrcore_pkg.all;
+use work.wr_xilinx_pkg.all;
 
 entity svec_top_fmc_adc_100Ms is
   generic(
-    g_SIMULATION    : string := "FALSE";
-    g_CALIB_SOFT_IP : string := "TRUE");
+    g_simulation_int     : integer := 0;          -- used in newer modules such as xwr_core
+    g_SIMULATION         : string  := "FALSE";    -- kept for backwards compatibility
+    g_multishot_ram_size : natural := 8192;
+    g_CALIB_SOFT_IP      : string  := "TRUE");
   port
     (
+      -- Reset from system fpga
+      rst_n_i : in std_logic;
+
       -- Local oscillators
-      -- clk20_vcxo_i : in std_logic;                -- 20MHz VCXO clock
+      clk_20m_vcxo_i : in std_logic;              -- 20MHz VCXO clock
 
       clk_125m_pllref_p_i : in std_logic;         -- 125 MHz PLL reference
       clk_125m_pllref_n_i : in std_logic;
+
+      clk_125m_gtp_n_i : in std_logic;            -- 125 MHz GTP reference
+      clk_125m_gtp_p_i : in std_logic;
 
       -- DAC interface (20MHz and 25MHz VCXO)
       pll20dac_din_o    : out std_logic;
@@ -74,9 +83,6 @@ entity svec_top_fmc_adc_100Ms is
       pll25dac_din_o    : out std_logic;
       pll25dac_sclk_o   : out std_logic;
       pll25dac_sync_n_o : out std_logic;
-
-      -- Reset from system fpga
-      rst_n_i : in std_logic;
 
       -- Carrier front panel LEDs
       fp_led_line_oen_o : out std_logic_vector(1 downto 0);
@@ -91,7 +97,30 @@ entity svec_top_fmc_adc_100Ms is
       pcbrev_i : in std_logic_vector(4 downto 0);
 
       -- Carrier 1-wire interface (DS18B20 thermometer + unique ID)
-      carrier_one_wire_b : inout std_logic;
+      carrier_onewire_b : inout std_logic;
+
+      -- SFP
+      sfp_txp_o         : out   std_logic;
+      sfp_txn_o         : out   std_logic;
+      sfp_rxp_i         : in    std_logic;
+      sfp_rxn_i         : in    std_logic;
+      sfp_mod_def0_b    : in    std_logic;        -- sfp detect
+      sfp_mod_def1_b    : inout std_logic;        -- scl
+      sfp_mod_def2_b    : inout std_logic;        -- sda
+      sfp_rate_select_b : inout std_logic;
+      sfp_tx_fault_i    : in    std_logic;
+      sfp_tx_disable_o  : out   std_logic;
+      sfp_los_i         : in    std_logic;
+
+      -- SPI
+      spi_sclk_o : out std_logic;
+      spi_ncs_o  : out std_logic;
+      spi_mosi_o : out std_logic;
+      spi_miso_i : in  std_logic := 'L';
+      
+      -- UART
+      uart_rxd_i : in  std_logic;
+      uart_txd_o : out std_logic;
 
       ------------------------------------------
       -- VME interface
@@ -298,6 +327,23 @@ architecture rtl of svec_top_fmc_adc_100Ms is
       );
   end component fmc_adc_eic;
 
+  component spec_serial_dac
+    generic (
+      g_num_data_bits  : integer;
+      g_num_extra_bits : integer;
+      g_num_cs_select  : integer);
+    port (
+      clk_i         : in  std_logic;
+      rst_n_i       : in  std_logic;
+      value_i       : in  std_logic_vector(g_num_data_bits-1 downto 0);
+      cs_sel_i      : in  std_logic_vector(g_num_cs_select-1 downto 0);
+      load_i        : in  std_logic;
+      sclk_divsel_i : in  std_logic_vector(2 downto 0);
+      dac_cs_n_o    : out std_logic_vector(g_num_cs_select-1 downto 0);
+      dac_sclk_o    : out std_logic;
+      dac_sdata_o   : out std_logic;
+      xdone_o       : out std_logic);
+  end component;
 
   ------------------------------------------------------------------------------
   -- SDB crossbar constants declaration
@@ -306,7 +352,7 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
 
   -- Number of master port(s) on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 10;
+  constant c_NUM_WB_MASTERS : integer := 9;
 
   -- Number of slave port(s) on the wishbone crossbar
   constant c_NUM_WB_SLAVES : integer := 1;
@@ -315,17 +361,20 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   constant c_WB_MASTER_VME : integer := 0;
 
   -- Wishbone slave(s)
-  constant c_WB_SLAVE_I2C          : integer := 0;  -- Carrier I2C master
-  constant c_WB_SLAVE_ONEWIRE      : integer := 1;  -- Carrier onewire interface
-  constant c_WB_SLAVE_SVEC_CSR     : integer := 2;  -- SVEC control and status registers
-  constant c_WB_SLAVE_VIC          : integer := 3;  -- Vectored interrupt controller
-  constant c_WB_SLAVE_FMC0_ADC     : integer := 4;  -- FMC slot 1 ADC mezzanine
-  constant c_WB_SLAVE_FMC0_DDR_ADR : integer := 5;  -- FMC slot 1 DDR address
-  constant c_WB_SLAVE_FMC0_DDR_DAT : integer := 6;  -- FMC slot 1 DDR data
-  constant c_WB_SLAVE_FMC1_ADC     : integer := 7;  -- FMC slot 2 ADC mezzanine
-  constant c_WB_SLAVE_FMC1_DDR_ADR : integer := 8;  -- FMC slot 2 DDR address
-  constant c_WB_SLAVE_FMC1_DDR_DAT : integer := 9;  -- FMC slot 2 DDR data
+  constant c_WB_SLAVE_SVEC_CSR     : integer := 0;  -- SVEC control and status registers
+  constant c_WB_SLAVE_VIC          : integer := 1;  -- Vectored interrupt controller
+  constant c_WB_SLAVE_FMC0_ADC     : integer := 2;  -- FMC slot 1 ADC mezzanine
+  constant c_WB_SLAVE_FMC0_DDR_ADR : integer := 3;  -- FMC slot 1 DDR address
+  constant c_WB_SLAVE_FMC0_DDR_DAT : integer := 4;  -- FMC slot 1 DDR data
+  constant c_WB_SLAVE_FMC1_ADC     : integer := 5;  -- FMC slot 2 ADC mezzanine
+  constant c_WB_SLAVE_FMC1_DDR_ADR : integer := 6;  -- FMC slot 2 DDR address
+  constant c_WB_SLAVE_FMC1_DDR_DAT : integer := 7;  -- FMC slot 2 DDR data
+  constant c_WB_SLAVE_WR_CORE      : integer := 8;  -- WR PTP core
 
+  -- SDB meta info
+  constant c_SDB_REPO_URL  : integer := c_NUM_WB_MASTERS;
+  constant c_SDB_SYNTHESIS : integer := c_NUM_WB_MASTERS + 1;
+  constant c_SDB_INTEGRATE : integer := c_NUM_WB_MASTERS + 2;
 
   -- Devices sdb description
   constant c_wb_svec_csr_sdb : t_sdb_device := (
@@ -378,28 +427,28 @@ architecture rtl of svec_top_fmc_adc_100Ms is
 
   -- f_xwb_bridge_manual_sdb(size, sdb_addr)
   -- Note: sdb_addr is the sdb records address relative to the bridge base address
-  constant c_fmc0_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
-  constant c_fmc1_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
+  constant c_fmc0_bridge_sdb    : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
+  constant c_fmc1_bridge_sdb    : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
+  constant c_wr_core_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
 
   -- sdb header address
   constant c_SDB_ADDRESS : t_wishbone_address := x"00000000";
 
   -- Wishbone crossbar layout
-  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(12 downto 0) :=
+  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_MASTERS + 2 downto 0) :=
     (
-      0  => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001000"),
-      1  => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001100"),
-      2  => f_sdb_embed_device(c_wb_svec_csr_sdb, x"00001200"),
-      3  => f_sdb_embed_device(c_xwb_vic_sdb, x"00001300"),
-      4  => f_sdb_embed_bridge(c_fmc0_bridge_sdb, x"00002000"),
-      5  => f_sdb_embed_device(c_wb_ddr_adr_sdb, x"00004000"),
-      6  => f_sdb_embed_device(c_wb_ddr_dat_sdb, x"00005000"),
-      7  => f_sdb_embed_bridge(c_fmc1_bridge_sdb, x"00006000"),
-      8  => f_sdb_embed_device(c_wb_ddr_adr_sdb, x"00008000"),
-      9  => f_sdb_embed_device(c_wb_ddr_dat_sdb, x"00009000"),
-      10 => f_sdb_embed_repo_url(c_repo_url_sdb),
-      11 => f_sdb_embed_synthesis(c_synthesis_sdb),
-      12 => f_sdb_embed_integration(c_integration_sdb)
+      c_WB_SLAVE_SVEC_CSR     => f_sdb_embed_device(c_wb_svec_csr_sdb, x"00001200"),
+      c_WB_SLAVE_VIC          => f_sdb_embed_device(c_xwb_vic_sdb, x"00001300"),
+      c_WB_SLAVE_FMC0_ADC     => f_sdb_embed_bridge(c_fmc0_bridge_sdb, x"00002000"),
+      c_WB_SLAVE_FMC0_DDR_ADR => f_sdb_embed_device(c_wb_ddr_adr_sdb, x"00004000"),
+      c_WB_SLAVE_FMC0_DDR_DAT => f_sdb_embed_device(c_wb_ddr_dat_sdb, x"00005000"),
+      c_WB_SLAVE_FMC1_ADC     => f_sdb_embed_bridge(c_fmc1_bridge_sdb, x"00006000"),
+      c_WB_SLAVE_FMC1_DDR_ADR => f_sdb_embed_device(c_wb_ddr_adr_sdb, x"00008000"),
+      c_WB_SLAVE_FMC1_DDR_DAT => f_sdb_embed_device(c_wb_ddr_dat_sdb, x"00009000"),
+      c_WB_SLAVE_WR_CORE      => f_sdb_embed_bridge(c_wr_core_bridge_sdb, x"00040000"),
+      c_SDB_REPO_URL          => f_sdb_embed_repo_url(c_repo_url_sdb),
+      c_SDB_SYNTHESIS         => f_sdb_embed_synthesis(c_synthesis_sdb),
+      c_SDB_INTEGRATE         => f_sdb_embed_integration(c_integration_sdb)
       );
 
   -- VIC default vector setting
@@ -422,30 +471,36 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
 
   -- System clock
-  signal sys_clk_in         : std_logic;
-  signal sys_clk_62_5_buf   : std_logic;
-  signal sys_clk_62_5       : std_logic;
-  signal sys_clk_125_buf    : std_logic;
-  signal sys_clk_125        : std_logic;
-  signal sys_clk_fb         : std_logic;
-  signal sys_clk_pll_locked : std_logic;
-  signal clk_125m_pllref    : std_logic;
+  signal sys_clk_62_5_buf    : std_logic;
+  signal sys_clk_62_5        : std_logic;
+  signal sys_clk_125_buf     : std_logic;
+  signal sys_clk_125         : std_logic;
+  signal sys_clk_pll_locked  : std_logic;
+  signal dmtd_clk_fb         : std_logic;
+  signal clk_125m_pllref     : std_logic;
+  signal clk_125m_pllref_buf : std_logic;
+  signal clk_125m_gtp        : std_logic;
+  signal clk_20m_vcxo_buf    : std_logic;
+  signal pllout_clk_dmtd     : std_logic;
+  signal clk_dmtd            : std_logic;
 
   -- DDR3 clock
   signal ddr_clk     : std_logic;
   signal ddr_clk_buf : std_logic;
 
   -- Reset
-  signal powerup_arst_n  : std_logic := '0';
-  signal powerup_clk_in  : std_logic_vector(2 downto 0);
-  signal powerup_rst_out : std_logic_vector(2 downto 0);
-  signal sys_rst_62_5_n  : std_logic;
-  signal sys_rst_125_n   : std_logic;
-  signal sw_rst_fmc0     : std_logic := '1';
-  signal sw_rst_fmc1     : std_logic := '1';
-  signal fmc0_rst_n      : std_logic;
-  signal fmc1_rst_n      : std_logic;
-  signal ddr_rst_n       : std_logic;
+  signal powerup_arst_n   : std_logic := '0';
+  signal powerup_clk_in   : std_logic_vector(2 downto 0);
+  signal powerup_rst_out  : std_logic_vector(2 downto 0);
+  signal sys_rst_62_5_n   : std_logic;
+  signal sys_rst_125_n    : std_logic;
+  signal sw_rst_fmc0      : std_logic := '1';
+  signal sw_rst_fmc1      : std_logic := '1';
+  signal sw_rst_fmc0_sync : std_logic;
+  signal sw_rst_fmc1_sync : std_logic;
+  signal fmc0_rst_n       : std_logic;
+  signal fmc1_rst_n       : std_logic;
+  signal ddr_rst_n        : std_logic;
 
   -- VME
   signal vme_data_b_out    : std_logic_vector(31 downto 0);
@@ -456,14 +511,6 @@ architecture rtl of svec_top_fmc_adc_100Ms is
 
   signal vme_access : std_logic;
 
-  -- Wishbone buses from vme core master
-  signal vme_master_out : t_wishbone_master_out;
-  signal vme_master_in  : t_wishbone_master_in;
-
-  -- Wishbone buses from vme core master (synchronised to 125MHz system clock)
-  signal vme_sync_master_out : t_wishbone_master_out;
-  signal vme_sync_master_in  : t_wishbone_master_in;
-
   -- Wishbone buse(s) from crossbar master port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
   signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
@@ -471,6 +518,14 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   -- Wishbone buse(s) to crossbar slave port(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
+
+  -- Wishbone bus from cross-clocking module to FMC0 mezzanine
+  signal cnx_fmc0_sync_master_out : t_wishbone_master_out;
+  signal cnx_fmc0_sync_master_in  : t_wishbone_master_in;
+
+  -- Wishbone bus from cross-clocking module to FMC1 mezzanine
+  signal cnx_fmc1_sync_master_out : t_wishbone_master_out;
+  signal cnx_fmc1_sync_master_in  : t_wishbone_master_in;
 
   -- Wishbone buses from FMC ADC cores to DDR controller
   signal wb_ddr0_adc_adr   : std_logic_vector(31 downto 0);
@@ -498,7 +553,6 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   signal fmc0_trig_irq_led    : std_logic;
   signal fmc0_acq_end_irq_led : std_logic;
   signal irq_to_vme           : std_logic;
-  signal irq_to_vme_sync      : std_logic;
   signal fmc_irq              : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
 
   -- Front panel LED control
@@ -519,18 +573,6 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   signal ddr1_dat_cyc_d   : std_logic;
   signal ddr1_addr_cnt_en : std_logic;
 
-  -- Carrier 1-wire
-  signal carrier_owr_en : std_logic_vector(0 downto 0);
-  signal carrier_owr_i  : std_logic_vector(0 downto 0);
-
-  -- Carrier I2C for EEPROM
-  signal carrier_scl_in   : std_logic;
-  signal carrier_scl_out  : std_logic;
-  signal carrier_scl_oe_n : std_logic;
-  signal carrier_sda_in   : std_logic;
-  signal carrier_sda_out  : std_logic;
-  signal carrier_sda_oe_n : std_logic;
-
   -- led pwm
   signal led_pwm_update_cnt : unsigned(9 downto 0);
   signal led_pwm_update     : std_logic;
@@ -539,8 +581,51 @@ architecture rtl of svec_top_fmc_adc_100Ms is
   signal led_pwm_cnt        : unsigned(16 downto 0);
   signal led_pwm            : std_logic;
 
+  -- SFP
+  signal sfp_scl_out : std_logic;
+  signal sfp_sda_out : std_logic;
+  signal sfp_scl_in  : std_logic;
+  signal sfp_sda_in  : std_logic;
+
+  -- PHY
+  signal phy_tx_data      : std_logic_vector(7 downto 0);
+  signal phy_tx_k         : std_logic;
+  signal phy_tx_disparity : std_logic;
+  signal phy_tx_enc_err   : std_logic;
+  signal phy_rx_data      : std_logic_vector(7 downto 0);
+  signal phy_rx_rbclk     : std_logic;
+  signal phy_rx_k         : std_logic;
+  signal phy_rx_enc_err   : std_logic;
+  signal phy_rx_bitslide  : std_logic_vector(3 downto 0);
+  signal phy_rst          : std_logic;
+  signal phy_loopen       : std_logic;
+  signal phy_loopen_vec   : std_logic_vector(2 downto 0);
+  signal phy_prbs_sel     : std_logic_vector(2 downto 0);
+  signal phy_rdy          : std_logic;
+
   -- White Rabbit
-  signal wrabbit_en : std_logic;
+  signal wrabbit_en  : std_logic;
+  signal wrc_scl_out : std_logic;
+  signal wrc_scl_in  : std_logic;
+  signal wrc_sda_out : std_logic;
+  signal wrc_sda_in  : std_logic;
+  signal wrc_owr_en  : std_logic_vector(1 downto 0);
+  signal wrc_owr_in  : std_logic_vector(1 downto 0);
+  signal wr_led_act  : std_logic;
+  signal wr_led_link : std_logic;
+
+  -- DACs
+  signal dac_hpll_load_p1 : std_logic;
+  signal dac_dpll_load_p1 : std_logic;
+  signal dac_hpll_data    : std_logic_vector(15 downto 0);
+  signal dac_dpll_data    : std_logic_vector(15 downto 0);
+
+  -- WR PTP core timing interface
+  signal tm_link_up    : std_logic;
+  signal tm_tai        : std_logic_vector(39 downto 0);
+  signal tm_cycles     : std_logic_vector(27 downto 0);
+  signal tm_time_valid : std_logic;
+
 
   -- IO for CSR registers
   signal csr_regin  : t_carrier_csr_in_registers;
@@ -549,65 +634,98 @@ architecture rtl of svec_top_fmc_adc_100Ms is
 begin
 
 
-  -- AD5662BRMZ-1 DAC output powers up to 0V. The output remains valid until a
-  -- write sequence arrives to the DAC.
-  -- To avoid spurious writes, the DAC interface outputs are fixed to safe values.
-  pll20dac_din_o    <= '0';
-  pll20dac_sclk_o   <= '0';
-  pll20dac_sync_n_o <= '1';
-  pll25dac_din_o    <= '0';
-  pll25dac_sclk_o   <= '0';
-  pll25dac_sync_n_o <= '1';
-
   -- diff clock buffer from 125MHz clock reference
-  cmp_pll_clk_buf : IBUFGDS
+  cmp_pll_clk_dsbuf : IBUFGDS
     generic map (
       DIFF_TERM    => TRUE,
       IBUF_LOW_PWR => TRUE)
     port map (
-      O  => clk_125m_pllref,
+      O  => clk_125m_pllref_buf,
       I  => clk_125m_pllref_p_i,
       IB => clk_125m_pllref_n_i);
 
-  -- just an alias to keep it backwards compatible
-  sys_clk_in <= clk_125m_pllref;
+  cmp_pll_clk_buf : BUFG
+    port map (
+      O => clk_125m_pllref,
+      I => clk_125m_pllref_buf);
 
-  --cmp_sys_clk_buf : IBUFG
-  --  port map (
-  --    I => clk_20m_vcxo_i,
-  --    O => sys_clk_in);
+  cmp_clk_vcxo : BUFG
+    port map (
+      O => clk_20m_vcxo_buf,
+      I => clk_20m_vcxo_i);
 
-  cmp_sys_clk_pll : PLL_BASE
+  cmp_sys_clk_pll : DCM_SP
+    generic map (
+      CLKDV_DIVIDE          => 2.0,               -- CLKDV divide value
+      -- (1.5,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8,9,10,11,12,13,14,15,16).
+      CLKFX_DIVIDE          => 3,                 -- Divide value on CLKFX outputs - D - (1-32)
+      CLKFX_MULTIPLY        => 8,                 -- Multiply value on CLKFX outputs - M - (2-32)
+      CLKIN_DIVIDE_BY_2     => FALSE,             -- CLKIN divide by two (TRUE/FALSE)
+      CLKIN_PERIOD          => 8.0,               -- Input clock period specified in nS
+      CLKOUT_PHASE_SHIFT    => "NONE",            -- Output phase shift (NONE, FIXED, VARIABLE)
+      CLK_FEEDBACK          => "1X",              -- Feedback source (NONE, 1X, 2X)
+      DESKEW_ADJUST         => "SYSTEM_SYNCHRONOUS",  -- SYSTEM_SYNCHRNOUS or SOURCE_SYNCHRONOUS
+      DFS_FREQUENCY_MODE    => "LOW",             -- Unsupported - Do not change value
+      DLL_FREQUENCY_MODE    => "LOW",             -- Unsupported - Do not change value
+      DSS_MODE              => "NONE",            -- Unsupported - Do not change value
+      DUTY_CYCLE_CORRECTION => TRUE,              -- Unsupported - Do not change value
+      FACTORY_JF            => X"c080",           -- Unsupported - Do not change value
+      PHASE_SHIFT           => 0,                 -- Amount of fixed phase shift (-255 to 255)
+      STARTUP_WAIT          => FALSE  -- Delay config DONE until DCM_SP LOCKED (TRUE/FALSE)
+      )
+    port map (
+      CLK0     => sys_clk_125_buf,                -- 1-bit output: 0 degree clock output
+      CLK180   => open,                           --  1-bit output: 180 degree clock output
+      CLK270   => open,                           --  1-bit output: 270 degree clock output
+      CLK2X    => open,                           --  1-bit output: 2X clock frequency clock output
+      CLK2X180 => open,               --  1-bit output: 2X clock frequency, 180 degree clock output
+      CLK90    => open,                           --  1-bit output: 90 degree clock output
+      CLKDV    => sys_clk_62_5_buf,               --  1-bit output: Divided clock output
+      CLKFX    => ddr_clk_buf,        --  1-bit output: Digital Frequency Synthesizer output (DFS)
+      CLKFX180 => open,                           --  1-bit output: 180 degree CLKFX output
+      LOCKED   => sys_clk_pll_locked,             --  1-bit output: DCM_SP Lock Output
+      PSDONE   => open,                           --  1-bit output: Phase shift done output
+      STATUS   => open,                           --  8-bit output: DCM_SP status output
+      CLKFB    => sys_clk_125,                    --  1-bit input: Clock feedback input
+      CLKIN    => clk_125m_pllref,                --  1-bit input: Clock input
+      DSSEN    => '0',                            --  1-bit input: Unsupported, specify to GND.
+      PSCLK    => '0',                            --  1-bit input: Phase shift clock input
+      PSEN     => '0',                            --  1-bit input: Phase shift enable
+      PSINCDEC => '0',                --  1-bit input: Phase shift increment/decrement input
+      RST      => '0'                             --  1-bit input: Active high reset input
+      );
+
+  cmp_dmtd_clk_pll : PLL_BASE
     generic map (
       BANDWIDTH          => "OPTIMIZED",
       CLK_FEEDBACK       => "CLKFBOUT",
       COMPENSATION       => "INTERNAL",
       DIVCLK_DIVIDE      => 1,
-      CLKFBOUT_MULT      => 8,                    -- 1GHz
+      CLKFBOUT_MULT      => 50,                   -- 1GHz
       CLKFBOUT_PHASE     => 0.000,
-      CLKOUT0_DIVIDE     => 8,                    -- 125MHz
+      CLKOUT0_DIVIDE     => 16,                   -- 62.5MHz
       CLKOUT0_PHASE      => 0.000,
       CLKOUT0_DUTY_CYCLE => 0.500,
-      CLKOUT1_DIVIDE     => 16,                   -- 62.5MHz
+      CLKOUT1_DIVIDE     => 16,
       CLKOUT1_PHASE      => 0.000,
       CLKOUT1_DUTY_CYCLE => 0.500,
-      CLKOUT2_DIVIDE     => 3,                    -- 333MHz
+      CLKOUT2_DIVIDE     => 16,
       CLKOUT2_PHASE      => 0.000,
       CLKOUT2_DUTY_CYCLE => 0.500,
-      CLKIN_PERIOD       => 8.0,
+      CLKIN_PERIOD       => 50.0,
       REF_JITTER         => 0.016)
     port map (
-      CLKFBOUT => sys_clk_fb,
-      CLKOUT0  => sys_clk_125_buf,
-      CLKOUT1  => sys_clk_62_5_buf,
-      CLKOUT2  => ddr_clk_buf,
+      CLKFBOUT => dmtd_clk_fb,
+      CLKOUT0  => pllout_clk_dmtd,
+      CLKOUT1  => open,
+      CLKOUT2  => open,
       CLKOUT3  => open,
       CLKOUT4  => open,
       CLKOUT5  => open,
-      LOCKED   => sys_clk_pll_locked,
+      LOCKED   => open,
       RST      => '0',
-      CLKFBIN  => sys_clk_fb,
-      CLKIN    => sys_clk_in);
+      CLKFBIN  => dmtd_clk_fb,
+      CLKIN    => clk_20m_vcxo_buf);
 
   cmp_clk_62_5_buf : BUFG
     port map (
@@ -623,6 +741,22 @@ begin
     port map (
       O => ddr_clk,
       I => ddr_clk_buf);
+
+  cmp_clk_dmtd_buf : BUFG
+    port map (
+      O => clk_dmtd,
+      I => pllout_clk_dmtd);
+
+  U_Dedicated_GTP_Clock_Buffer : IBUFGDS
+    generic map(
+      DIFF_TERM    => TRUE,
+      IBUF_LOW_PWR => TRUE,
+      IOSTANDARD   => "DEFAULT")
+    port map (
+      O  => clk_125m_gtp,
+      I  => clk_125m_gtp_p_i,
+      IB => clk_125m_gtp_n_i
+      );
 
   ------------------------------------------------------------------------------
   -- System reset
@@ -642,7 +776,7 @@ begin
       g_logdelay  => 4,                           -- 16 clock cycles
       g_syncdepth => 3)                           -- length of sync chains
     port map (
-      free_clk_i => sys_clk_62_5,
+      free_clk_i => clk_125m_pllref,
       locked_i   => powerup_arst_n,
       clks_i     => powerup_clk_in,
       rstn_o     => powerup_rst_out);
@@ -652,9 +786,25 @@ begin
   sys_rst_125_n  <= powerup_rst_out(1);
   ddr_rst_n      <= powerup_rst_out(2);
 
+  -- sync fmc sw reset to 125MHz
+  cmp_fmc0_sw_reset_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_125,
+      rst_n_i  => sys_rst_125_n,
+      data_i   => sw_rst_fmc0,
+      synced_o => sw_rst_fmc0_sync);
+
+  -- sync fmc sw reset to 125MHz
+  cmp_fmc1_sw_reset_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_125,
+      rst_n_i  => sys_rst_125_n,
+      data_i   => sw_rst_fmc1,
+      synced_o => sw_rst_fmc1_sync);
+
   -- reset for mezzanine (including soft reset)
-  fmc0_rst_n <= sys_rst_125_n and (not sw_rst_fmc0);
-  fmc1_rst_n <= sys_rst_125_n and (not sw_rst_fmc1);
+  fmc0_rst_n <= sys_rst_125_n and (not sw_rst_fmc0_sync);
+  fmc1_rst_n <= sys_rst_125_n and (not sw_rst_fmc1_sync);
 
   ------------------------------------------------------------------------------
   -- VME interface
@@ -688,9 +838,9 @@ begin
       VME_DATA_OE_N_o => vme_data_oe_n_o,
       VME_ADDR_DIR_o  => vme_addr_dir_int,
       VME_ADDR_OE_N_o => vme_addr_oe_n_o,
-      master_o        => vme_master_out,
-      master_i        => vme_master_in,
-      irq_i           => irq_to_vme_sync
+      master_o        => cnx_slave_in(c_WB_MASTER_VME),
+      master_i        => cnx_slave_out(c_WB_MASTER_VME),
+      irq_i           => irq_to_vme
       );
 
   -- VME tri-state buffers
@@ -700,34 +850,6 @@ begin
 
   vme_addr_dir_o <= vme_addr_dir_int;
   vme_data_dir_o <= vme_data_dir_int;
-
-  -- Wishbone bus synchronisation from vme 62.5MHz clock to 125MHz system clock
-  cmp_xwb_clock_crossing : xwb_clock_crossing
-    generic map(
-      g_size => 16
-      )
-    port map(
-      slave_clk_i    => sys_clk_62_5,
-      slave_rst_n_i  => sys_rst_62_5_n,
-      slave_i        => vme_master_out,
-      slave_o        => vme_master_in,
-      master_clk_i   => sys_clk_125,
-      master_rst_n_i => sys_rst_125_n,
-      master_i       => vme_sync_master_in,
-      master_o       => vme_sync_master_out
-      );
-
-  cnx_slave_in(c_WB_MASTER_VME) <= vme_sync_master_out;
-  vme_sync_master_in            <= cnx_slave_out(c_WB_MASTER_VME);
-
-  -- Interrupt line synchronisation to vme 62.5MHz  
-  cmp_irq_to_vme_sync : gc_sync_ffs
-    port map (
-      clk_i    => sys_clk_62_5,
-      rst_n_i  => sys_rst_62_5_n,
-      data_i   => irq_to_vme,
-      synced_o => irq_to_vme_sync
-      );
 
   ------------------------------------------------------------------------------
   -- CSR wishbone crossbar
@@ -741,72 +863,199 @@ begin
       g_layout      => c_INTERCONNECT_LAYOUT,
       g_sdb_addr    => c_SDB_ADDRESS)
     port map (
-      clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_125_n,
+      clk_sys_i => sys_clk_62_5,
+      rst_n_i   => sys_rst_62_5_n,
       slave_i   => cnx_slave_in,
       slave_o   => cnx_slave_out,
       master_i  => cnx_master_in,
       master_o  => cnx_master_out);
 
-  ------------------------------------------------------------------------------
-  -- Carrier 1-wire master
-  --    DS18B20 (thermometer + unique ID)
-  ------------------------------------------------------------------------------
-  cmp_carrier_onewire : xwb_onewire_master
-    generic map(
-      g_interface_mode      => CLASSIC,
-      g_address_granularity => BYTE,
-      g_num_ports           => 1,
-      g_ow_btp_normal       => "5.0",
-      g_ow_btp_overdrive    => "1.0"
-      )
-    port map(
-      clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_125_n,
 
-      slave_i => cnx_master_out(c_WB_SLAVE_ONEWIRE),
-      slave_o => cnx_master_in(c_WB_SLAVE_ONEWIRE),
-      desc_o  => open,
+  -------------------------------------------------------------------------------
+  -- White Rabbit Core + PHY
+  -------------------------------------------------------------------------------
 
-      owr_pwren_o => open,
-      owr_en_o    => carrier_owr_en,
-      owr_i       => carrier_owr_i
-      );
+  -- Tristates for Carrier EEPROM
+  carrier_scl_b <= '0' when (wrc_scl_out = '0') else 'Z';
+  carrier_sda_b <= '0' when (wrc_sda_out = '0') else 'Z';
+  wrc_scl_in    <= carrier_scl_b;
+  wrc_sda_in    <= carrier_sda_b;
 
-  carrier_one_wire_b <= '0' when carrier_owr_en(0) = '1' else 'Z';
-  carrier_owr_i(0)   <= carrier_one_wire_b;
+  -- Tristates for SFP EEPROM
+  sfp_mod_def1_b <= '0' when sfp_scl_out = '0' else 'Z';
+  sfp_mod_def2_b <= '0' when sfp_sda_out = '0' else 'Z';
+  sfp_scl_in     <= sfp_mod_def1_b;
+  sfp_sda_in     <= sfp_mod_def2_b;
 
-  ------------------------------------------------------------------------------
-  -- I2C master
-  --    Carrier EEPROM
-  ------------------------------------------------------------------------------
-  cmp_carrier_i2c : xwb_i2c_master
-    generic map(
-      g_interface_mode      => CLASSIC,
-      g_address_granularity => BYTE
-      )
+  carrier_onewire_b <= '0' when wrc_owr_en(0) = '1' else 'Z';
+  wrc_owr_in(0)     <= carrier_onewire_b;
+  wrc_owr_in(1)     <= '1';
+
+  ---------------------
+  U_GTP : wr_gtp_phy_spartan6
+    generic map (
+      g_simulation => g_simulation_int,
+      g_enable_ch0 => 0,
+      g_enable_ch1 => 1)
     port map (
-      clk_sys_i => sys_clk_125,
-      rst_n_i   => sys_rst_125_n,
+      gtp_clk_i          => clk_125m_gtp,
+      ch0_ref_clk_i      => clk_125m_pllref,
+      ch0_tx_data_i      => x"00",
+      ch0_tx_k_i         => '0',
+      ch0_tx_disparity_o => open,
+      ch0_tx_enc_err_o   => open,
+      ch0_rx_rbclk_o     => open,
+      ch0_rx_data_o      => open,
+      ch0_rx_k_o         => open,
+      ch0_rx_enc_err_o   => open,
+      ch0_rx_bitslide_o  => open,
+      ch0_rst_i          => '1',
+      ch0_loopen_i       => '0',
+      ch1_ref_clk_i      => clk_125m_pllref,
+      ch1_tx_data_i      => phy_tx_data,
+      ch1_tx_k_i         => phy_tx_k,
+      ch1_tx_disparity_o => phy_tx_disparity,
+      ch1_tx_enc_err_o   => phy_tx_enc_err,
+      ch1_rx_data_o      => phy_rx_data,
+      ch1_rx_rbclk_o     => phy_rx_rbclk,
+      ch1_rx_k_o         => phy_rx_k,
+      ch1_rx_enc_err_o   => phy_rx_enc_err,
+      ch1_rx_bitslide_o  => phy_rx_bitslide,
+      ch1_rst_i          => phy_rst,
 
-      slave_i => cnx_master_out(c_WB_SLAVE_I2C),
-      slave_o => cnx_master_in(c_WB_SLAVE_I2C),
-      desc_o  => open,
+      ch1_loopen_i      => phy_loopen,
+      ch1_loopen_vec_i  => phy_loopen_vec,
+      ch1_tx_prbs_sel_i => phy_prbs_sel,
 
-      scl_pad_i(0)    => carrier_scl_in,
-      scl_pad_o(0)    => carrier_scl_out,
-      scl_padoen_o(0) => carrier_scl_oe_n,
-      sda_pad_i(0)    => carrier_sda_in,
-      sda_pad_o(0)    => carrier_sda_out,
-      sda_padoen_o(0) => carrier_sda_oe_n
+      ch1_rdy_o  => phy_rdy,
+      pad_txn0_o => open,
+      pad_txp0_o => open,
+      pad_rxn0_i => '0',
+      pad_rxp0_i => '0',
+      pad_txn1_o => sfp_txn_o,
+      pad_txp1_o => sfp_txp_o,
+      pad_rxn1_i => sfp_rxn_i,
+      pad_rxp1_i => sfp_rxp_i);
+
+  U_DAC_Helper : spec_serial_dac
+    generic map (
+      g_num_data_bits  => 16,
+      g_num_extra_bits => 8,
+      g_num_cs_select  => 1)
+    port map (
+      clk_i         => sys_clk_62_5,
+      rst_n_i       => sys_rst_62_5_n,
+      value_i       => dac_hpll_data,
+      cs_sel_i      => "1",
+      load_i        => dac_hpll_load_p1,
+      sclk_divsel_i => "010",
+      dac_cs_n_o(0) => pll20dac_sync_n_o,
+      dac_sclk_o    => pll20dac_sclk_o,
+      dac_sdata_o   => pll20dac_din_o,
+      xdone_o       => open);
+
+  U_DAC_Main : spec_serial_dac
+    generic map (
+      g_num_data_bits  => 16,
+      g_num_extra_bits => 8,
+      g_num_cs_select  => 1)
+    port map (
+      clk_i         => sys_clk_62_5,
+      rst_n_i       => sys_rst_62_5_n,
+      value_i       => dac_dpll_data,
+      cs_sel_i      => "1",
+      load_i        => dac_dpll_load_p1,
+      sclk_divsel_i => "010",
+      dac_cs_n_o(0) => pll25dac_sync_n_o,
+      dac_sclk_o    => pll25dac_sclk_o,
+      dac_sdata_o   => pll25dac_din_o,
+      xdone_o       => open);
+
+  sfp_tx_disable_o <= '0';
+
+  U_WR_CORE : xwr_core
+    generic map (
+      g_simulation  => g_simulation_int,
+      g_dpram_initf => "")
+--      g_dpram_initf => "wrc.ram")
+    port map (
+      clk_sys_i  => sys_clk_62_5,
+      clk_dmtd_i => clk_dmtd,
+      clk_ref_i  => clk_125m_pllref,
+      rst_n_i    => sys_rst_62_5_n,
+
+      --wrf_snk_i => wrcore_snk_in,
+      --wrf_snk_o => wrcore_snk_out,
+      --wrf_src_i => wrcore_src_in,
+      --wrf_src_o => wrcore_src_out,
+
+      dac_hpll_load_p1_o => dac_hpll_load_p1,
+      dac_hpll_data_o    => dac_hpll_data,
+      dac_dpll_load_p1_o => dac_dpll_load_p1,
+      dac_dpll_data_o    => dac_dpll_data,
+
+      phy_ref_clk_i      => clk_125m_pllref,
+      phy_tx_data_o      => phy_tx_data,
+      phy_tx_k_o(0)      => phy_tx_k,
+      phy_tx_disparity_i => phy_tx_disparity,
+      phy_tx_enc_err_i   => phy_tx_enc_err,
+      phy_rx_data_i      => phy_rx_data,
+      phy_rx_rbclk_i     => phy_rx_rbclk,
+      phy_rx_k_i(0)      => phy_rx_k,
+      phy_rx_enc_err_i   => phy_rx_enc_err,
+      phy_rx_bitslide_i  => phy_rx_bitslide,
+      phy_rst_o          => phy_rst,
+
+      phy_loopen_o      => phy_loopen,
+      phy_loopen_vec_o  => phy_loopen_vec,
+      phy_tx_prbs_sel_o => phy_prbs_sel,
+      phy_rdy_i         => phy_rdy,
+--       phy_loopen_o               => phy_loopen,
+
+      led_act_o  => wr_led_act,
+      led_link_o => wr_led_link,
+
+      scl_o => wrc_scl_out,
+      scl_i => wrc_scl_in,
+      sda_o => wrc_sda_out,
+      sda_i => wrc_sda_in,
+
+      sfp_scl_o => sfp_scl_out,
+      sfp_scl_i => sfp_scl_in,
+      sfp_sda_o => sfp_sda_out,
+      sfp_sda_i => sfp_sda_in,
+      sfp_det_i => sfp_mod_def0_b,
+
+      -- SPI flash is connected to SFPGA, and routed
+      -- to AFPGA once boot process is complete
+      spi_sclk_o => spi_sclk_o,
+      spi_ncs_o  => spi_ncs_o,
+      spi_mosi_o => spi_mosi_o,
+      spi_miso_i => spi_miso_i,
+
+      uart_rxd_i => uart_rxd_i,
+      uart_txd_o => uart_txd_o,
+
+      owr_en_o => wrc_owr_en,
+      owr_i    => wrc_owr_in,
+
+      slave_i => cnx_master_out(c_WB_SLAVE_WR_CORE),
+      slave_o => cnx_master_in(c_WB_SLAVE_WR_CORE),
+
+      tm_dac_value_o       => open,
+      tm_dac_wr_o          => open,
+      tm_clk_aux_lock_en_i => (others => '0'),
+      tm_clk_aux_locked_o  => open,
+      tm_link_up_o         => tm_link_up,
+      tm_time_valid_o      => tm_time_valid,
+      tm_tai_o             => tm_tai,
+      tm_cycles_o          => tm_cycles,
+
+      btn1_i => '0',
+      btn2_i => '0',
+
+      pps_p_o => open
       );
-
-  -- Tri-state buffer for SDA and SCL
-  carrier_scl_b  <= carrier_scl_out when carrier_scl_oe_n = '0' else 'Z';
-  carrier_scl_in <= carrier_scl_b;
-
-  carrier_sda_b  <= carrier_sda_out when carrier_sda_oe_n = '0' else 'Z';
-  carrier_sda_in <= carrier_sda_b;
 
   ------------------------------------------------------------------------------
   -- Carrier CSR
@@ -816,8 +1065,8 @@ begin
   ------------------------------------------------------------------------------
   cmp_carrier_csr : carrier_csr
     port map(
-      rst_n_i    => sys_rst_125_n,
-      clk_sys_i  => sys_clk_125,
+      rst_n_i    => sys_rst_62_5_n,
+      clk_sys_i  => sys_clk_62_5,
       wb_adr_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
       wb_dat_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).dat,
       wb_dat_o   => cnx_master_in(c_WB_SLAVE_SVEC_CSR).dat,
@@ -844,7 +1093,6 @@ begin
   sw_rst_fmc0   <= csr_regout.rst_fmc0_o;
   sw_rst_fmc1   <= csr_regout.rst_fmc1_o;
 
-
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).err   <= '0';
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).rty   <= '0';
@@ -861,8 +1109,8 @@ begin
       g_num_interrupts      => 2,
       g_init_vectors        => c_VIC_VECTOR_TABLE)
     port map (
-      clk_sys_i    => sys_clk_125,
-      rst_n_i      => sys_rst_125_n,
+      clk_sys_i    => sys_clk_62_5,
+      rst_n_i      => sys_rst_62_5_n,
       slave_i      => cnx_master_out(c_WB_SLAVE_VIC),
       slave_o      => cnx_master_in(c_WB_SLAVE_VIC),
       irqs_i(0)    => fmc_irq(0),
@@ -870,31 +1118,47 @@ begin
       irq_master_o => irq_to_vme);
 
   ------------------------------------------------------------------------------
-  -- Slot 1 : FMC ADC mezzanine (wb bridge)
+  -- Slot 1 : FMC ADC mezzanine (wb bridge with cross-clocking)
   --    Mezzanine system managment I2C master
   --    Mezzanine SPI master
   --    Mezzanine I2C
   --    ADC core
   --    Mezzanine 1-wire master
   ------------------------------------------------------------------------------
+
+  cmp_xwb_clock_crossing_0 : xwb_clock_crossing
+    generic map(
+      g_size => 16
+      )
+    port map(
+      slave_clk_i    => sys_clk_62_5,
+      slave_rst_n_i  => sys_rst_62_5_n,
+      slave_i        => cnx_master_out(c_WB_SLAVE_FMC0_ADC),
+      slave_o        => cnx_master_in(c_WB_SLAVE_FMC0_ADC),
+      master_clk_i   => sys_clk_125,
+      master_rst_n_i => sys_rst_125_n,
+      master_i       => cnx_fmc0_sync_master_in,
+      master_o       => cnx_fmc0_sync_master_out
+      );
+
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
-      g_multishot_ram_size => 8192,
+      g_multishot_ram_size => g_multishot_ram_size,
       g_carrier_type       => "SVEC"
       )
     port map(
       sys_clk_i   => sys_clk_125,
       sys_rst_n_i => fmc0_rst_n,
 
-      wb_csr_adr_i   => cnx_master_out(c_WB_SLAVE_FMC0_ADC).adr,
-      wb_csr_dat_i   => cnx_master_out(c_WB_SLAVE_FMC0_ADC).dat,
-      wb_csr_dat_o   => cnx_master_in(c_WB_SLAVE_FMC0_ADC).dat,
-      wb_csr_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC0_ADC).cyc,
-      wb_csr_sel_i   => cnx_master_out(c_WB_SLAVE_FMC0_ADC).sel,
-      wb_csr_stb_i   => cnx_master_out(c_WB_SLAVE_FMC0_ADC).stb,
-      wb_csr_we_i    => cnx_master_out(c_WB_SLAVE_FMC0_ADC).we,
-      wb_csr_ack_o   => cnx_master_in(c_WB_SLAVE_FMC0_ADC).ack,
-      wb_csr_stall_o => cnx_master_in(c_WB_SLAVE_FMC0_ADC).stall,
+      wb_csr_adr_i   => cnx_fmc0_sync_master_out.adr,
+      wb_csr_dat_i   => cnx_fmc0_sync_master_out.dat,
+      wb_csr_dat_o   => cnx_fmc0_sync_master_in.dat,
+      wb_csr_cyc_i   => cnx_fmc0_sync_master_out.cyc,
+      wb_csr_sel_i   => cnx_fmc0_sync_master_out.sel,
+      wb_csr_stb_i   => cnx_fmc0_sync_master_out.stb,
+      wb_csr_we_i    => cnx_fmc0_sync_master_out.we,
+      wb_csr_ack_o   => cnx_fmc0_sync_master_in.ack,
+      wb_csr_stall_o => cnx_fmc0_sync_master_in.stall,
 
       wb_ddr_clk_i   => sys_clk_125,
       wb_ddr_adr_o   => wb_ddr0_adc_adr,
@@ -949,41 +1213,61 @@ begin
       sys_scl_b => fmc0_scl_b,
       sys_sda_b => fmc0_sda_b,
 
-      wr_enable_i => wrabbit_en
+      wr_tm_link_up_i    => tm_link_up,
+      wr_tm_time_valid_i => tm_time_valid,
+      wr_tm_tai_i        => tm_tai,
+      wr_tm_cycles_i     => tm_cycles,
+      wr_enable_i        => wrabbit_en
 
       );
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC0_ADC).err <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_ADC).rty <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_ADC).int <= '0';
+  cnx_fmc0_sync_master_in.err <= '0';
+  cnx_fmc0_sync_master_in.rty <= '0';
+  cnx_fmc0_sync_master_in.int <= '0';
 
   ------------------------------------------------------------------------------
-  -- Slot 2 : FMC ADC mezzanine (wb bridge)
+  -- Slot 2 : FMC ADC mezzanine (wb bridge with cross-clocking)
   --    Mezzanine system managment I2C master
   --    Mezzanine SPI master
   --    Mezzanine I2C
   --    ADC core
   --    Mezzanine 1-wire master
   ------------------------------------------------------------------------------
+
+  cmp_xwb_clock_crossing_1 : xwb_clock_crossing
+    generic map(
+      g_size => 16
+      )
+    port map(
+      slave_clk_i    => sys_clk_62_5,
+      slave_rst_n_i  => sys_rst_62_5_n,
+      slave_i        => cnx_master_out(c_WB_SLAVE_FMC1_ADC),
+      slave_o        => cnx_master_in(c_WB_SLAVE_FMC1_ADC),
+      master_clk_i   => sys_clk_125,
+      master_rst_n_i => sys_rst_125_n,
+      master_i       => cnx_fmc1_sync_master_in,
+      master_o       => cnx_fmc1_sync_master_out
+      );
+
   cmp_fmc_adc_mezzanine_1 : fmc_adc_mezzanine
     generic map(
-      g_multishot_ram_size => 8192,
+      g_multishot_ram_size => g_multishot_ram_size,
       g_carrier_type       => "SVEC"
       )
     port map(
       sys_clk_i   => sys_clk_125,
       sys_rst_n_i => fmc1_rst_n,
 
-      wb_csr_adr_i   => cnx_master_out(c_WB_SLAVE_FMC1_ADC).adr,
-      wb_csr_dat_i   => cnx_master_out(c_WB_SLAVE_FMC1_ADC).dat,
-      wb_csr_dat_o   => cnx_master_in(c_WB_SLAVE_FMC1_ADC).dat,
-      wb_csr_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC1_ADC).cyc,
-      wb_csr_sel_i   => cnx_master_out(c_WB_SLAVE_FMC1_ADC).sel,
-      wb_csr_stb_i   => cnx_master_out(c_WB_SLAVE_FMC1_ADC).stb,
-      wb_csr_we_i    => cnx_master_out(c_WB_SLAVE_FMC1_ADC).we,
-      wb_csr_ack_o   => cnx_master_in(c_WB_SLAVE_FMC1_ADC).ack,
-      wb_csr_stall_o => cnx_master_in(c_WB_SLAVE_FMC1_ADC).stall,
+      wb_csr_adr_i   => cnx_fmc1_sync_master_out.adr,
+      wb_csr_dat_i   => cnx_fmc1_sync_master_out.dat,
+      wb_csr_dat_o   => cnx_fmc1_sync_master_in.dat,
+      wb_csr_cyc_i   => cnx_fmc1_sync_master_out.cyc,
+      wb_csr_sel_i   => cnx_fmc1_sync_master_out.sel,
+      wb_csr_stb_i   => cnx_fmc1_sync_master_out.stb,
+      wb_csr_we_i    => cnx_fmc1_sync_master_out.we,
+      wb_csr_ack_o   => cnx_fmc1_sync_master_in.ack,
+      wb_csr_stall_o => cnx_fmc1_sync_master_in.stall,
 
       wb_ddr_clk_i   => sys_clk_125,
       wb_ddr_adr_o   => wb_ddr1_adc_adr,
@@ -1038,14 +1322,18 @@ begin
       sys_scl_b => fmc1_scl_b,
       sys_sda_b => fmc1_sda_b,
 
-      wr_enable_i => wrabbit_en
+      wr_tm_link_up_i    => tm_link_up,
+      wr_tm_time_valid_i => tm_time_valid,
+      wr_tm_tai_i        => tm_tai,
+      wr_tm_cycles_i     => tm_cycles,
+      wr_enable_i        => wrabbit_en
 
       );
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC1_ADC).err <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_ADC).rty <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_ADC).int <= '0';
+  cnx_fmc1_sync_master_in.err <= '0';
+  cnx_fmc1_sync_master_in.rty <= '0';
+  cnx_fmc1_sync_master_in.int <= '0';
 
   ------------------------------------------------------------------------------
   -- DDR0 controller (bank 4)
@@ -1113,8 +1401,8 @@ begin
       p0_wr_underrun_o => open,
       p0_wr_error_o    => open,
 
-      wb1_rst_n_i => sys_rst_125_n,
-      wb1_clk_i   => sys_clk_125,
+      wb1_rst_n_i => sys_rst_62_5_n,
+      wb1_clk_i   => sys_clk_62_5,
       wb1_sel_i   => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).sel,
       wb1_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).cyc,
       wb1_stb_i   => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).stb,
@@ -1148,10 +1436,10 @@ begin
   --  The counter is incremented on the falling edge of cyc. This is because the ddr controller
   --  samples the address on (cyc_re and stb)+1
 
-  p_ddr0_dat_cyc : process (sys_clk_125)
+  p_ddr0_dat_cyc : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if fmc0_rst_n = '0' then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0' or sw_rst_fmc0 = '1') then
         ddr0_dat_cyc_d <= '0';
       else
         ddr0_dat_cyc_d <= cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).cyc;
@@ -1162,10 +1450,10 @@ begin
   ddr0_addr_cnt_en <= not(cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).cyc) and ddr0_dat_cyc_d;
 
   -- address counter
-  p_ddr0_addr_cnt : process (sys_clk_125)
+  p_ddr0_addr_cnt : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (fmc0_rst_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0' or sw_rst_fmc0 = '1') then
         ddr0_addr_cnt <= (others => '0');
       elsif (cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).we = '1' and
              cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).stb = '1' and
@@ -1178,10 +1466,10 @@ begin
   end process p_ddr0_addr_cnt;
 
   -- ack generation
-  p_ddr0_addr_ack : process (sys_clk_125)
+  p_ddr0_addr_ack : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (fmc0_rst_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0' or sw_rst_fmc0 = '1') then
         cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '0';
       elsif (cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).stb = '1' and
              cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).cyc = '1') then
@@ -1267,8 +1555,8 @@ begin
       p0_wr_underrun_o => open,
       p0_wr_error_o    => open,
 
-      wb1_rst_n_i => sys_rst_125_n,
-      wb1_clk_i   => sys_clk_125,
+      wb1_rst_n_i => sys_rst_62_5_n,
+      wb1_clk_i   => sys_clk_62_5,
       wb1_sel_i   => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).sel,
       wb1_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).cyc,
       wb1_stb_i   => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).stb,
@@ -1302,10 +1590,10 @@ begin
   --  The counter is incremented on the falling edge of cyc. This is because the ddr controller
   --  samples the address on (cyc_re and stb)+1
 
-  p_ddr1_dat_cyc : process (sys_clk_125)
+  p_ddr1_dat_cyc : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if fmc1_rst_n = '0' then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0' or sw_rst_fmc0 = '1') then
         ddr1_dat_cyc_d <= '0';
       else
         ddr1_dat_cyc_d <= cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).cyc;
@@ -1316,10 +1604,10 @@ begin
   ddr1_addr_cnt_en <= not(cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).cyc) and ddr1_dat_cyc_d;
 
   -- address counter
-  p_ddr1_addr_cnt : process (sys_clk_125)
+  p_ddr1_addr_cnt : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (fmc1_rst_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0' or sw_rst_fmc0 = '1') then
         ddr1_addr_cnt <= (others => '0');
       elsif (cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).we = '1' and
              cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).stb = '1' and
@@ -1332,10 +1620,10 @@ begin
   end process p_ddr1_addr_cnt;
 
   -- ack generation
-  p_ddr1_addr_ack : process (sys_clk_125)
+  p_ddr1_addr_ack : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (fmc1_rst_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0' or sw_rst_fmc0 = '1') then
         cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '0';
       elsif (cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).stb = '1' and
              cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).cyc = '1') then
@@ -1363,12 +1651,12 @@ begin
     generic map(
       g_nb_column    => 4,
       g_nb_line      => 2,
-      g_clk_freq     => 125000000,                -- in Hz
+      g_clk_freq     => 62500000,                 -- in Hz
       g_refresh_rate => 250                       -- in Hz
       )
     port map(
-      rst_n_i => sys_rst_125_n,
-      clk_i   => sys_clk_125,
+      rst_n_i => sys_rst_62_5_n,
+      clk_i   => sys_clk_62_5,
 
       led_intensity_i => "1100100",               -- in %
 
@@ -1381,30 +1669,30 @@ begin
 
   cmp_vme_access_led : gc_extend_pulse
     generic map (
-      g_width => 5000000)
+      g_width => 2500000)
     port map (
-      clk_i      => sys_clk_125,
-      rst_n_i    => sys_rst_125_n,
+      clk_i      => sys_clk_62_5,
+      rst_n_i    => sys_rst_62_5_n,
       pulse_i    => cnx_slave_in(c_WB_MASTER_VME).cyc,
       extended_o => vme_access
       );
 
   cmp_fmc0_trig_irq_led : gc_extend_pulse
     generic map (
-      g_width => 5000000)
+      g_width => 2500000)
     port map (
-      clk_i      => sys_clk_125,
-      rst_n_i    => sys_rst_125_n,
+      clk_i      => sys_clk_62_5,
+      rst_n_i    => sys_rst_62_5_n,
       pulse_i    => trig_irq_p(0),
       extended_o => fmc0_trig_irq_led
       );
 
   cmp_fmc0_acq_end_irq_led : gc_extend_pulse
     generic map (
-      g_width => 5000000)
+      g_width => 2500000)
     port map (
-      clk_i      => sys_clk_125,
-      rst_n_i    => sys_rst_125_n,
+      clk_i      => sys_clk_62_5,
+      rst_n_i    => sys_rst_62_5_n,
       pulse_i    => acq_end_irq_p(0),
       extended_o => fmc0_acq_end_irq_led
       );
@@ -1413,10 +1701,10 @@ begin
   led_state(1 downto 0) <= c_led_green when vme_access = '1' else c_led_off;
 
   -- LED 2 :
-  led_state(3 downto 2) <= c_led_red;
+  led_state(3 downto 2) <= c_led_red when wr_led_act = '1' else c_led_off;
 
   -- LED 3 :
-  led_state(5 downto 4) <= c_led_red_green;
+  led_state(5 downto 4) <= c_led_green when wr_led_link = '1' else c_led_off;
 
   -- LED 4 :
   led_state(7 downto 6) <= '0' & led_pwm;
@@ -1431,20 +1719,20 @@ begin
   led_state(13 downto 12) <= '0' & fmc_irq(0);
 
   -- LED 8 :
-  led_state(15 downto 14) <= '0' & irq_to_vme_sync;
+  led_state(15 downto 14) <= '0' & irq_to_vme;
 
   --led_state(15 downto 12) <= led_state_man(15 downto 12);
 
   ------------------------------------------------------------------------------
   -- FPGA loaded led (heart beat)
   ------------------------------------------------------------------------------
-  p_led_pwn_update_cnt : process (sys_clk_125)
+  p_led_pwn_update_cnt : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm_update_cnt <= (others => '0');
         led_pwm_update     <= '0';
-      elsif (led_pwm_update_cnt = to_unsigned(954, 10)) then
+      elsif (led_pwm_update_cnt = to_unsigned(477, 10)) then
         led_pwm_update_cnt <= (others => '0');
         led_pwm_update     <= '1';
       else
@@ -1454,10 +1742,10 @@ begin
     end if;
   end process p_led_pwn_update_cnt;
 
-  p_led_pwn_val : process (sys_clk_125)
+  p_led_pwn_val : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm_val      <= (others => '0');
         led_pwm_val_down <= '0';
       elsif (led_pwm_update = '1') then
@@ -1476,10 +1764,10 @@ begin
     end if;
   end process p_led_pwn_val;
 
-  p_led_pwn_cnt : process (sys_clk_125)
+  p_led_pwn_cnt : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm_cnt <= (others => '0');
       else
         led_pwm_cnt <= led_pwm_cnt + 1;
@@ -1487,10 +1775,10 @@ begin
     end if;
   end process p_led_pwn_cnt;
 
-  p_led_pwn : process (sys_clk_125)
+  p_led_pwn : process (sys_clk_62_5)
   begin
-    if rising_edge(sys_clk_125) then
-      if (sys_rst_125_n = '0') then
+    if rising_edge(sys_clk_62_5) then
+      if (sys_rst_62_5_n = '0') then
         led_pwm <= '0';
       elsif (led_pwm_cnt = 0) then
         led_pwm <= '1';

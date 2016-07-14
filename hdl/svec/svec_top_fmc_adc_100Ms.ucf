@@ -422,37 +422,38 @@ NET "ddr1_a_o[0]" IOSTANDARD = "SSTL15_II";
 NET "rst_n_i" LOC = AD28;
 NET "rst_n_i" IOSTANDARD = "LVCMOS33";
 
-#NET "clk_20m_vcxo_i" LOC = V26;
+NET "clk_20m_vcxo_i" LOC = V26;
 NET "clk_125m_pllref_n_i" LOC = AB30;
 NET "clk_125m_pllref_p_i" LOC = AB28;
-#NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS33";
+NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS33";
 NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
 NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
 
 #----------------------------------------
 # SFP slot
 #----------------------------------------
-#NET "sfp_txp_o" LOC = B23;
-#NET "sfp_txn_o" LOC = A23;
-#NET "sfp_rxp_i" LOC = D22;
-#NET "sfp_rxn_i" LOC = C22;
-#NET "clk_125m_gtp_p_i" LOC = B19;
-#NET "clk_125m_gtp_n_i" LOC = A19;
+NET "sfp_txp_o" LOC = B23;
+NET "sfp_txn_o" LOC = A23;
+NET "sfp_rxp_i" LOC = D22;
+NET "sfp_rxn_i" LOC = C22;
 
-#NET "sfp_los_i" LOC = W25;
-#NET "sfp_mod_def0_b" LOC = Y26;
-#NET "sfp_mod_def1_b" LOC = Y27;
-#NET "sfp_mod_def2_b" LOC = AA24;
-#NET "sfp_rate_select_o" LOC = W24;
-#NET "sfp_tx_disable_o" LOC = AA25;
-#NET "sfp_tx_fault_i" LOC = AA27;
-#NET "sfp_los_i" IOSTANDARD = "LVCMOS33";
-#NET "sfp_mod_def0_b" IOSTANDARD = "LVCMOS33";
-#NET "sfp_mod_def1_b" IOSTANDARD = "LVCMOS33";
-#NET "sfp_mod_def2_b" IOSTANDARD = "LVCMOS33";
-#NET "sfp_rate_select_o" IOSTANDARD = "LVCMOS33";
-#NET "sfp_tx_disable_o" IOSTANDARD = "LVCMOS33";
-#NET "sfp_tx_fault_i" IOSTANDARD = "LVCMOS33";
+NET "clk_125m_gtp_p_i" LOC = B19;
+NET "clk_125m_gtp_n_i" LOC = A19;
+
+NET "sfp_los_i" LOC = W25;
+NET "sfp_mod_def0_b" LOC = Y26;
+NET "sfp_mod_def1_b" LOC = Y27;
+NET "sfp_mod_def2_b" LOC = AA24;
+NET "sfp_rate_select_b" LOC = W24;
+NET "sfp_tx_disable_o" LOC = AA25;
+NET "sfp_tx_fault_i" LOC = AA27;
+NET "sfp_los_i" IOSTANDARD = "LVCMOS33";
+NET "sfp_mod_def0_b" IOSTANDARD = "LVCMOS33";
+NET "sfp_mod_def1_b" IOSTANDARD = "LVCMOS33";
+NET "sfp_mod_def2_b" IOSTANDARD = "LVCMOS33";
+NET "sfp_rate_select_b" IOSTANDARD = "LVCMOS33";
+NET "sfp_tx_disable_o" IOSTANDARD = "LVCMOS33";
+NET "sfp_tx_fault_i" IOSTANDARD = "LVCMOS33";
 
 #----------------------------------------
 # Clock controls
@@ -471,18 +472,30 @@ NET "pll25dac_sclk_o" IOSTANDARD = "LVCMOS33";
 NET "pll25dac_sync_n_o" IOSTANDARD = "LVCMOS33";
 
 #----------------------------------------
+# SPI FLASH
+#----------------------------------------
+NET "SPI_NCS_O"  LOC = AG27;
+NET "SPI_NCS_O"  IOSTANDARD = "LVCMOS33";
+NET "SPI_SCLK_O" LOC = AG26;
+NET "SPI_SCLK_O"  IOSTANDARD = "LVCMOS33";
+NET "SPI_MOSI_O" LOC = AH26;
+NET "SPI_MOSI_O"  IOSTANDARD = "LVCMOS33";
+NET "SPI_MISO_I" LOC = AH27;
+NET "SPI_MISO_I"  IOSTANDARD = "LVCMOS33";
+
+#----------------------------------------
 # UART
 #----------------------------------------
-#NET "uart_txd_o" LOC = U27;
-#NET "uart_rxd_i" LOC = U25;
-#NET "uart_txd_o" IOSTANDARD = "LVCMOS33";
-#NET "uart_rxd_i" IOSTANDARD = "LVCMOS33";
+NET "uart_txd_o" LOC = U27;
+NET "uart_rxd_i" LOC = U25;
+NET "uart_txd_o" IOSTANDARD = "LVCMOS33";
+NET "uart_rxd_i" IOSTANDARD = "LVCMOS33";
 
 #----------------------------------------
 # 1-wire thermoeter + unique ID
 #----------------------------------------
-NET "carrier_one_wire_b" LOC = AC30;
-NET "carrier_one_wire_b" IOSTANDARD = "LVCMOS33";
+NET "carrier_onewire_b" LOC = AC30;
+NET "carrier_onewire_b" IOSTANDARD = "LVCMOS33";
 
 #----------------------------------------
 # Front panel LEDs
@@ -893,35 +906,14 @@ NET "adc1_one_wire_b" LOC = "AD24";
 NET "adc1_one_wire_b" IOSTANDARD = "LVCMOS25";
 # <ucfgen_end>
 
-
-#===============================================================================
-# Timing constraints
-#===============================================================================
-
-# System clock
-NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_pllref_n_i;
-TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
-
-# 20MHz clock for DMTD
-#NET "clk_20m_vcxo_i" TNM_NET = clk_20m_vcxo_i;
-#TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
-
-# DDR3
-#NET "cmp_ddr_ctrl/cmp_ddr3_ctrl_wrapper/gen_spec_bank3_64b_32b.cmp_ddr3_ctrl/memc3_infrastructure_inst/sys_clk_ibufg" TNM_NET = "SYS_CLK5";
-#TIMESPEC "TS_SYS_CLK5" = PERIOD "SYS_CLK5"  3.0  ns HIGH 50 %;
-
-# ADC
-NET "adc0_dco_n_i" TNM_NET = adc0_dco_n_i;
-TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2.5 ns HIGH 50%;
-NET "adc1_dco_n_i" TNM_NET = adc1_dco_n_i;
-TIMESPEC TS_adc1_dco_n_i = PERIOD "adc1_dco_n_i" 2.5 ns HIGH 50%;
-
 #===============================================================================
 # IOBs
 #===============================================================================
 
-#INST "cmp_fmc_adc_mezzanine_0/cmp_fmc_spi/U_Wrapped_SPI/Wrapped_SPI/shift/s_out" IOB=FALSE;
-#INST "cmp_fmc_adc_mezzanine_0/cmp_fmc_spi/U_Wrapped_SPI/Wrapped_SPI/clgen/clk_out" IOB=FALSE;
+INST "cmp_fmc_adc_mezzanine_0/cmp_fmc_spi/U_Wrapped_SPI/Wrapped_SPI/shift/s_out" IOB=FALSE;
+INST "cmp_fmc_adc_mezzanine_0/cmp_fmc_spi/U_Wrapped_SPI/Wrapped_SPI/clgen/clk_out" IOB=FALSE;
+INST "cmp_fmc_adc_mezzanine_1/cmp_fmc_spi/U_Wrapped_SPI/Wrapped_SPI/shift/s_out" IOB=FALSE;
+INST "cmp_fmc_adc_mezzanine_1/cmp_fmc_spi/U_Wrapped_SPI/Wrapped_SPI/clgen/clk_out" IOB=FALSE;
 
 
 #===============================================================================
@@ -941,6 +933,38 @@ NET "ddr1_ldqs_p_b"  IN_TERM = NONE;
 NET "ddr1_ldqs_n_b"  IN_TERM = NONE;
 NET "ddr1_udqs_p_b"  IN_TERM = NONE;
 NET "ddr1_udqs_n_b"  IN_TERM = NONE;
+
+
+#===============================================================================
+# Timing constraints
+#===============================================================================
+
+NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_pllref_n_i;
+TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
+
+NET "clk_125m_gtp_n_i" TNM_NET = clk_125m_gtp_n_i;
+TIMESPEC TS_clk_125m_gtp_n_i = PERIOD "clk_125m_gtp_n_i" 8 ns HIGH 50%;
+
+NET "clk_20m_vcxo_i" TNM_NET = "clk_20m_vcxo_i";
+TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
+
+#NET "U_GTP/ch1_gtp_clkout_int<1>" TNM_NET = U_GTP/ch1_gtp_clkout_int<1>;
+#TIMESPEC TS_U_GTP_ch1_gtp_clkout_int_1_ = PERIOD "U_GTP/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
+
+# ADC
+NET "adc0_dco_n_i" TNM_NET = adc0_dco_n_i;
+TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2 ns HIGH 50%;
+NET "adc1_dco_n_i" TNM_NET = adc1_dco_n_i;
+TIMESPEC TS_adc1_dco_n_i = PERIOD "adc1_dco_n_i" 2 ns HIGH 50%;
+
+#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
+#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
+#TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
+
+NET "clk_125m_pllref" TNM_NET = clk_125m_pllref;
+NET "sys_clk_62_5"    TNM_NET = sys_clk_62_5;
+TIMESPEC TS_crossdomain_01 = FROM "clk_125m_pllref" TO "sys_clk_62_5"    4ns DATAPATHONLY;
+TIMESPEC TS_crossdomain_02 = FROM "sys_clk_62_5"    TO "clk_125m_pllref" 4ns DATAPATHONLY;
 
 
 #===============================================================================
