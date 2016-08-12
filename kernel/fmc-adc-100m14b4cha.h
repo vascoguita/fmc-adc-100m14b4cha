@@ -419,13 +419,23 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 	return NULL;
 }
 
+static inline u32 fa_ioread(struct fa_dev *fa, unsigned long addr)
+{
+	return fmc_readl(fa->fmc, addr);
+}
+
+static inline void fa_iowrite(struct fa_dev *fa, u32 value, unsigned long addr)
+{
+	fmc_writel(fa->fmc, value, addr);
+}
+
 static inline uint32_t fa_readl(struct fa_dev *fa,
 				unsigned int base_off,
 				const struct zfa_field_desc *field)
 {
 	uint32_t cur;
 
-	cur = fmc_readl(fa->fmc, base_off+field->offset);
+	cur = fa_ioread(fa, base_off+field->offset);
 	if (field->is_bitfield) {
 		/* apply mask and shift right accordlying to the mask */
 		cur &= field->mask;
@@ -446,7 +456,7 @@ static inline void fa_writel(struct fa_dev *fa,
 	val = usr_val;
 	/* Read current register value first if it's a bitfield */
 	if (field->is_bitfield) {
-		cur = fmc_readl(fa->fmc, base_off+field->offset);
+		cur = fa_ioread(fa, base_off+field->offset);
 		/* */
 		cur &= ~field->mask; /* clear bits according to the mask */
 		val = usr_val * (field->mask & -(field->mask));
@@ -457,7 +467,7 @@ static inline void fa_writel(struct fa_dev *fa,
 		val &= field->mask;
 		val |= cur;
 	}
-	fmc_writel(fa->fmc, val, base_off+field->offset);
+	fa_iowrite(fa, val, base_off+field->offset);
 }
 
 /* Global variable exported by fa-core.c */
