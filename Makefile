@@ -7,7 +7,7 @@ REPO_PARENT ?= $(CURDIR)/..
 all: kernel tools lib libtools
 
 FMC_BUS ?= fmc-bus
-ZIO ?= zio
+ZIO = zio
 SPEC_SW ?= spec-sw
 SVEC_SW ?= svec-sw
 
