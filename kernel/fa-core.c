@@ -19,10 +19,6 @@ static struct fmc_driver fa_dev_drv;
 FMC_PARAM_BUSID(fa_dev_drv);
 FMC_PARAM_GATEWARE(fa_dev_drv);
 
-static int fa_show_sdb;
-module_param_named(show_sdb, fa_show_sdb, int, 0444);
-MODULE_PARM_DESC(show_sdb, "Print a dump of the gateware's SDB tree.");
-
 static int fa_enable_test_data;
 module_param_named(enable_test_data, fa_enable_test_data, int, 0444);
 
@@ -292,10 +288,6 @@ static int __fa_sdb_get_device(struct fa_dev *fa)
 			KBUILD_MODNAME);
 		return ret;
 	}
-
-	/* FIXME: this is obsoleted by fmc-bus internal parameters */
-	if (fa_show_sdb)
-		fmc_show_sdb_tree(fmc);
 
 	/* Now use SDB to find the base addresses */
 	fa->fa_irq_vic_base = fmc_find_sdb_device(fmc->sdb, 0xce42,
