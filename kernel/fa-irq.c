@@ -13,9 +13,6 @@
 #include <linux/spinlock.h>
 #include <linux/io.h>
 
-#include <linux/zio.h>
-#include <linux/zio-trigger.h>
-
 #include "fmc-adc-100m14b4cha.h"
 #include "fa-spec.h"
 

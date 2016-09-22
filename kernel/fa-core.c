@@ -10,11 +10,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/workqueue.h>
 #include <linux/version.h>
-
-#include <linux/fmc.h>
-#include <linux/fmc-sdb.h>
 
 #include "fmc-adc-100m14b4cha.h"
 

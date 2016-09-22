@@ -11,15 +11,6 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/mm.h>
-#include <linux/dma-mapping.h>
-#include <linux/scatterlist.h>
-
-#include <linux/fmc.h>
-
-#include <linux/zio.h>
-#include <linux/zio-dma.h>
-#include <linux/zio-buffer.h>
-#include <linux/zio-trigger.h>
 
 #include "fmc-adc-100m14b4cha.h"
 #include "fa-spec.h"

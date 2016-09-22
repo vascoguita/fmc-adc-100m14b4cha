@@ -11,8 +11,6 @@
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <linux/fmc.h>
-#include <linux/fmc-sdb.h>
 
 #include <svec.h>
 #include "fmc-adc-100m14b4cha.h"

@@ -13,12 +13,6 @@
 #include <linux/time.h>
 #include <linux/delay.h>
 
-#include <linux/fmc.h>
-
-#include <linux/zio.h>
-#include <linux/zio-buffer.h>
-#include <linux/zio-trigger.h>
-
 #include <asm/byteorder.h>
 
 #include "fmc-adc-100m14b4cha.h"

@@ -10,15 +10,6 @@
 #include <linux/slab.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/scatterlist.h>
-
-#include <linux/fmc.h>
-
-#include <linux/zio.h>
-#include <linux/zio-sysfs.h>
-#include <linux/zio-buffer.h>
-#include <linux/zio-trigger.h>
 
 #include "fmc-adc-100m14b4cha.h"
 

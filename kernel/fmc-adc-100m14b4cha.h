@@ -96,7 +96,11 @@ enum fa100m14b4c_fsm_state {
 #include <linux/workqueue.h>
 
 #include <linux/fmc.h>
+#include <linux/fmc-sdb.h>
 #include <linux/zio.h>
+#include <linux/zio-dma.h>
+#include <linux/zio-sysfs.h>
+#include <linux/zio-buffer.h>
 #include <linux/zio-trigger.h>
 
 #include "field-desc.h"
