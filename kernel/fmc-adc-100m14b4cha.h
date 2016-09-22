@@ -540,6 +540,8 @@ static inline void fa_writel(struct fa_dev *fa,
 	fa_iowrite(fa, val, base_off+field->offset);
 }
 
+extern struct bin_attribute dev_attr_calibration;
+
 /* Global variable exported by fa-core.c */
 extern struct workqueue_struct *fa_workqueue;
 

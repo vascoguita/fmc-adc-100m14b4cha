@@ -394,7 +394,7 @@ static int __fa_init(struct fa_dev *fa)
 		}
 	}
 
-	/* Retrieve calibration from the eeprom and validate*/
+	/* Use identity calibration */
 	fa_read_eeprom_calib(fa);
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
 					 &zfad_regs[ZFA_MULT_MAX_SAMP]);
@@ -557,7 +557,7 @@ int fa_probe(struct fmc_device *fmc)
 
 	err = fa_setup_irqs(fa);
 	if (err < 0)
-		goto out;
+		goto out_irq;
 
 	/* Pin the carrier */
 	if (!try_module_get(fmc->owner))
@@ -567,6 +567,7 @@ int fa_probe(struct fmc_device *fmc)
 
 out_mod:
 	fa_free_irqs(fa);
+out_irq:
 out:
 	while (--m, --i >= 0)
 		if (m->exit)
