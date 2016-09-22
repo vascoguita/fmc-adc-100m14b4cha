@@ -309,6 +309,7 @@ struct fa_calib {
  *
  */
 struct fa_dev {
+	struct device *msgdev; /**< device used to print messages */
 	/* the pointer to the fmc_device generic structure */
 	struct fmc_device	*fmc;
 	/* the pointer to the real zio_device in use */
@@ -461,7 +462,7 @@ static inline void fa_writel(struct fa_dev *fa,
 		cur &= ~field->mask; /* clear bits according to the mask */
 		val = usr_val * (field->mask & -(field->mask));
 		if (val & ~field->mask)
-			dev_warn(fa->fmc->hwdev,
+			dev_warn(fa->msgdev,
 				"addr 0x%lx: value 0x%x doesn't fit mask 0x%x\n",
 				base_off+field->offset, val, field->mask);
 		val &= field->mask;

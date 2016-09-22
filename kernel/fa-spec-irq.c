@@ -32,12 +32,12 @@
 static void fa_get_irq_status(struct fa_dev *fa, int irq_core_base,
 			      uint32_t *irq_status)
 {
-
 	/* Get current interrupts status */
 	*irq_status = fa_readl(fa, irq_core_base,
 			&fa_spec_regs[ZFA_IRQ_DMA_SRC]);
-	dev_dbg(&fa->fmc->dev, "core DMA: 0x%x fired an interrupt. IRQ status register: 0x%x\n",
-			irq_core_base, *irq_status);
+	dev_dbg(fa->msgdev,
+		"core DMA: 0x%x fired an interrupt. IRQ status register: 0x%x\n",
+		irq_core_base, *irq_status);
 	if (*irq_status)
 		/* Clear current interrupts status */
 		fa_writel(fa, irq_core_base,
@@ -79,7 +79,7 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 		 * with DMA with two different programs/drivers ... well *you*
 		 * have a problem and this driver may crash badly.
 		 */
-		dev_err(&fa->fmc->dev,
+		dev_err(fa->msgdev,
 			"No programmed shot, implies no DMA to perform\n");
 
 		goto out;
@@ -95,7 +95,7 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 		goto out;
 	}
 
-	dev_dbg(&fa->fmc->dev, "Handle ADC interrupts\n");
+	dev_dbg(fa->msgdev, "Handle ADC interrupts\n");
 
 	if (status & FA_SPEC_IRQ_DMA_DONE)
 		zfad_dma_done(cset);
@@ -120,4 +120,3 @@ out:
 
 	return IRQ_HANDLED;
 }
-

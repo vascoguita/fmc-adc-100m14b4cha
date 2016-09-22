@@ -258,7 +258,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFA_UTC_COARSE:
 		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {
-			dev_err(dev,
+			dev_err(fa->msgdev,
 				"ticks time must be in the range [0, %d]\n",
 				FA100M14B4C_UTC_CLOCK_FREQ);
 			return -EINVAL;
@@ -363,14 +363,14 @@ static inline int zfat_overflow_detection(struct zio_ti *ti)
 		   ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
 	shot_size = ((nsamples + 2) * ti->cset->ssize) * FA100M14B4C_NCHAN;
 	if ( (shot_size * nshot_t) > FA100M14B4C_MAX_ACQ_BYTE ) {
-		dev_err(&ti->head.dev, "Cannot acquire, dev memory overflow\n");
+		dev_err(fa->msgdev, "Cannot acquire, dev memory overflow\n");
 		return -ENOMEM;
 	}
 
 	/* in case of multi shot, each shot cannot exceed the dpram size */
 	if ( (nshot_t > 1) &&
 	     (nsamples > fa->mshot_max_samples) ) {
-		dev_err(&ti->head.dev, "Cannot acquire such amount of samples "
+		dev_err(fa->msgdev, "Cannot acquire such amount of samples "
 				"(req: %d , max: %d) in multi shot mode."
 				"dev memory overflow\n",
 			        nsamples, fa->mshot_max_samples);
@@ -432,13 +432,13 @@ static int zfad_input_cset(struct zio_cset *cset)
 	if (err)
 		return err;
 
-	dev_dbg(&fa->fmc->dev, "Ready to acquire\n");
+	dev_dbg(fa->msgdev, "Ready to acquire\n");
 	/* ZIO should configure only the interleaved channel */
 	if (!cset->interleave)
 		return -EINVAL;
 	/* nsamples can't be 0 */
 	if (!cset->interleave->current_ctrl->nsamples) {
-		dev_info(&fa->fmc->dev, "pre + post = 0: can't acquire\n");
+		dev_info(fa->msgdev, "pre + post = 0: can't acquire\n");
 		return -EINVAL;
 	}
 
@@ -484,7 +484,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
 
-	dev_dbg(&zdev->head.dev, "%s:%d\n", __func__, __LINE__);
+	dev_dbg(fa->msgdev, "%s:%d\n", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
 
@@ -598,7 +598,6 @@ void fa_zio_unregister(void)
  */
 int fa_zio_init(struct fa_dev *fa)
 {
-	struct device *msgdev = &fa->fmc->dev;
 	int err;
 
 	if (adc_buffer)
@@ -607,7 +606,7 @@ int fa_zio_init(struct fa_dev *fa)
 	/* Allocate the hardware zio_device for registration */
 	fa->hwzdev = zio_allocate_device();
 	if (IS_ERR(fa->hwzdev)) {
-		dev_err(msgdev, "Cannot allocate ZIO device\n");
+		dev_err(fa->msgdev, "Cannot allocate ZIO device\n");
 		return PTR_ERR(fa->hwzdev);
 	}
 
@@ -619,7 +618,7 @@ int fa_zio_init(struct fa_dev *fa)
 	err = zio_register_device(fa->hwzdev, "adc-100m14b",
 				  fa->fmc->device_id);
 	if (err) {
-		dev_err(msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
+		dev_err(fa->msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
 		zio_free_device(fa->hwzdev);
 	}
 	return err;

@@ -46,7 +46,7 @@ int zfad_dma_start(struct zio_cset *cset)
 
 	if (val != FA100M14B4C_STATE_IDLE) {
 		/* we can't DMA if the state machine is not idle */
-		dev_warn(&fa->fmc->dev,
+		dev_warn(fa->msgdev,
 			 "Can't start DMA on the last acquisition, "
 			 "State Machine is not IDLE (status:%d)\n", val);
 		return -EBUSY;
@@ -74,14 +74,14 @@ int zfad_dma_start(struct zio_cset *cset)
 		 * bytes
 		 */
 		dev_mem_off = trg_pos - (pre_samp * cset->ssize * nchan);
-		dev_dbg(&fa->fmc->dev,
+		dev_dbg(fa->msgdev,
 			"Trigger @ 0x%08x, pre_samp %i, offset 0x%08x\n",
 			trg_pos, pre_samp, dev_mem_off);
 
 		zfad_block[0].dev_mem_off = dev_mem_off;
 	}
 
-	dev_dbg(&fa->fmc->dev, "Start DMA transfer\n");
+	dev_dbg(fa->msgdev, "Start DMA transfer\n");
 	err = fa->carrier_op->dma_start(cset);
 	if (err)
 		return err;
@@ -128,7 +128,7 @@ void zfad_dma_done(struct zio_cset *cset)
 		trig_timetag = (uint32_t *)(block->data + block->datalen
 					    - FA_TRIG_TIMETAG_BYTES);
 		/* Timetag marker (metadata) used for debugging */
-		dev_dbg(&fa->fmc->dev, "trig_timetag metadata of the shot %d"
+		dev_dbg(fa->msgdev, "trig_timetag metadata of the shot %d"
 			" (expected value: 0x6fc8ad2d): 0x%x\n",
 			i, *trig_timetag);
 		ctrl->tstamp.secs = *(++trig_timetag);
@@ -159,7 +159,7 @@ void zfad_dma_done(struct zio_cset *cset)
 	 * All DMA transfers done! Inform the trigger about this, so
 	 * it can store blocks into the buffer
 	 */
-	dev_dbg(&fa->fmc->dev, "%i blocks transfered\n", fa->n_shots);
+	dev_dbg(fa->msgdev, "%i blocks transfered\n", fa->n_shots);
 	zio_trigger_data_done(cset);
 
 	/*
@@ -176,7 +176,7 @@ void zfad_dma_done(struct zio_cset *cset)
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
 				    ti->zattr_set.ext_zattr[6].value);
 	} else {
-		dev_dbg(&fa->fmc->dev, "Software acquisition over\n");
+		dev_dbg(fa->msgdev, "Software acquisition over\n");
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
 			  1);
 	}
@@ -199,7 +199,7 @@ void zfad_dma_error(struct zio_cset *cset)
 	fa->n_dma_err++;
 
 	if (fa->n_fires == 0)
-		dev_err(&fa->fmc->dev,
+		dev_err(fa->msgdev,
 			"DMA error occurs but no block was acquired\n");
 }
 
@@ -214,7 +214,7 @@ void zfat_irq_acq_end(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	dev_dbg(&fa->fmc->dev, "Acquisition done\n");
+	dev_dbg(fa->msgdev, "Acquisition done\n");
 	/*
 	 * because the driver doesn't listen anymore trig-event
 	 * we agreed that the HW will provide a dedicated register
@@ -228,7 +228,7 @@ void zfat_irq_acq_end(struct zio_cset *cset)
 					     &zfad_regs[ZFAT_SHOTS_REM]);
 
 	if (fa->n_fires != fa->n_shots) {
-		dev_err(&fa->fmc->dev,
+		dev_err(fa->msgdev,
 			"Expected %i trigger fires, but %i occurs\n",
 			fa->n_shots, fa->n_fires);
 	}
@@ -286,7 +286,7 @@ end:
 		zfad_dma_error(cset);
 	} else if (fa->enable_auto_start) {
 		/* Automatic start next acquisition */
-		dev_dbg(&fa->fmc->dev, "Automatic start\n");
+		dev_dbg(fa->msgdev, "Automatic start\n");
 		zfad_fsm_command(fa, FA100M14B4C_CMD_START);
 	}
 
@@ -305,10 +305,9 @@ end:
 static void fa_get_irq_status(struct fa_dev *fa, int irq_core_base,
 			      uint32_t *irq_status)
 {
-
 	/* Get current interrupts status */
 	*irq_status = fa_readl(fa, irq_core_base, &zfad_regs[ZFA_IRQ_ADC_SRC]);
-	dev_dbg(&fa->fmc->dev,
+	dev_dbg(fa->msgdev,
 		"IRQ 0x%x fired an interrupt. IRQ status register: 0x%x\n",
 		irq_core_base, *irq_status);
 
@@ -347,7 +346,7 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 	if (!status)
 		return IRQ_NONE; /* No interrupt fired by this mezzanine */
 
-	dev_dbg(&fa->fmc->dev, "Handle ADC interrupts fmc slot: %d\n",
+	dev_dbg(fa->msgdev, "Handle ADC interrupts fmc slot: %d\n",
 		fmc->slot_id);
 
 	if (status & FA_IRQ_ADC_ACQ_END) {
@@ -375,7 +374,7 @@ irqreturn_t fa_irq_handler(int irq_core_base, void *dev_id)
 		} else /* current Acquiistion has been stopped */
 			fmc_irq_ack(fmc);
 	} else { /* unexpected interrupt we have to ack anyway */
-		dev_err(&fa->fmc->dev,
+		dev_err(fa->msgdev,
 			"%s unexpected interrupt 0x%x\n",
 			__func__, status);
 		fmc_irq_ack(fmc);
@@ -391,7 +390,7 @@ int fa_setup_irqs(struct fa_dev *fa)
 	int err;
 
 	/* Request IRQ */
-	dev_dbg(&fa->fmc->dev, "%s request irq fmc slot: %d\n",
+	dev_dbg(fa->msgdev, "%s request irq fmc slot: %d\n",
 		__func__, fa->fmc->slot_id);
 	/* VIC svec setup */
 	fa_writel(fa, fa->fa_irq_vic_base,
@@ -410,7 +409,7 @@ int fa_setup_irqs(struct fa_dev *fa)
 			      "fmc-adc-100m14b",
 			      0 /*VIC is used */);
 	if (err) {
-		dev_err(&fa->fmc->dev, "can't request irq %i (error %i)\n",
+		dev_err(fa->msgdev, "can't request irq %i (error %i)\n",
 			fa->fmc->irq, err);
 		return err;
 	}
@@ -450,7 +449,7 @@ int fa_free_irqs(struct fa_dev *fa)
 
 int fa_enable_irqs(struct fa_dev *fa)
 {
-	dev_dbg(&fa->fmc->dev, "%s Enable interrupts fmc slot:%d\n",
+	dev_dbg(fa->msgdev, "%s Enable interrupts fmc slot:%d\n",
 		__func__, fa->fmc->slot_id);
 
 	fa_writel(fa, fa->fa_irq_adc_base,
@@ -464,7 +463,7 @@ int fa_enable_irqs(struct fa_dev *fa)
 
 int fa_disable_irqs(struct fa_dev *fa)
 {
-	dev_dbg(&fa->fmc->dev, "%s Disable interrupts fmc slot:%d\n",
+	dev_dbg(fa->msgdev, "%s Disable interrupts fmc slot:%d\n",
 		__func__, fa->fmc->slot_id);
 
 	fa_writel(fa, fa->fa_irq_adc_base,
@@ -480,4 +479,3 @@ int fa_ack_irq(struct fa_dev *fa, int irq_id)
 {
 	return 0;
 }
-

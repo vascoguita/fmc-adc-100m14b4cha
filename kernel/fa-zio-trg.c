@@ -104,13 +104,13 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
 		if (!tmp_val) {
-			dev_err(dev, "nshots cannot be 0\n");
+			dev_err(fa->msgdev, "nshots cannot be 0\n");
 			return -EINVAL;
 		}
 		break;
 	case ZFAT_POST:
 		if (tmp_val < 2) {
-			dev_err(dev, "minimum post samples 2 (HW limitation)\n");
+			dev_err(fa->msgdev, "minimum post samples 2 (HW limitation)\n");
 			return -EINVAL;
 		}
 		tmp_val--;  /* Remove one sample for the trigger */
@@ -118,12 +118,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
 		if (!ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SW_EN].value) {
-			dev_info(dev, "sw trigger is not enabled\n");
+			dev_info(fa->msgdev, "sw trigger is not enabled\n");
 			return -EPERM;
 		}
 		/* Fire if nsamples!=0 */
 		if (!ti->nsamples) {
-			dev_info(dev, "pre + post = 0: cannot acquire\n");
+			dev_info(fa->msgdev, "pre + post = 0: cannot acquire\n");
 			return -EINVAL;
 		}
 		/*
@@ -191,7 +191,7 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 
 	if (!fa) {
 		/* This only happens if we have a bug in the init sequence */
-		dev_err(&cset->head.dev, "No FMC device associated\n");
+		dev_err(fa->msgdev, "No FMC device associated\n");
 		return ERR_PTR(-ENODEV);
 	}
 
@@ -259,7 +259,7 @@ static int zfat_data_done(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	unsigned int i;
 
-	dev_dbg(&fa->fmc->dev, "Data done\n");
+	dev_dbg(fa->msgdev, "Data done\n");
 
 	/* Nothing to store */
 	if (!zfad_block)
@@ -268,11 +268,11 @@ static int zfat_data_done(struct zio_cset *cset)
 	/* Store blocks */
 	for (i = 0; i < fa->n_shots; ++i)
 		if (likely(i < fa->n_fires)) {/* Store filled blocks */
-			dev_dbg(&fa->fmc->dev, "Store Block %i/%i\n",
+			dev_dbg(fa->msgdev, "Store Block %i/%i\n",
 				i + 1, fa->n_shots);
 			zio_buffer_store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
-			dev_dbg(&fa->fmc->dev, "Free un-acquired block %d/%d "
+			dev_dbg(fa->msgdev, "Free un-acquired block %d/%d "
 					"(received %d shots)\n",
 					i + 1, fa->n_shots, fa->n_fires);
 			zio_buffer_free_block(bi, zfad_block[i].block);
@@ -297,7 +297,6 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 {
 	struct zio_channel *interleave = ti->cset->interleave;
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
-	struct device *msgdev = &fa->fmc->dev;
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
 	unsigned int size;
@@ -305,17 +304,17 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	int i, err = 0;
 	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
 
-	dev_dbg(msgdev, "Arming trigger\n");
+	dev_dbg(fa->msgdev, "Arming trigger\n");
 
 	/* Update the current control: sequence, nsamples and tstamp */
 	interleave->current_ctrl->nsamples = ti->nsamples;
 
 	/* Allocate the necessary blocks for multi-shot acquisition */
 	fa->n_shots = ti->zattr_set.std_zattr[ZIO_ATTR_TRIG_N_SHOTS].value;
-	dev_dbg(msgdev, "programmed shot %i\n", fa->n_shots);
+	dev_dbg(fa->msgdev, "programmed shot %i\n", fa->n_shots);
 
 	if (!fa->n_shots) {
-		dev_info(msgdev, "Cannot arm. No programmed shots\n");
+		dev_info(fa->msgdev, "Cannot arm. No programmed shots\n");
 		return -EINVAL;
 	}
 
@@ -344,7 +343,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	/* check if size is 32 bits word aligned: should be always the case */
 	if (size % 4) {
 		/* should never happen: increase the size accordling */
-		dev_warn(msgdev,
+		dev_warn(fa->msgdev,
 			"\nzio data block size should 32bit word aligned."
 			"original size:%d was increased by %d bytes\n",
 			size, size%4);
@@ -353,11 +352,11 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_mem_off = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
-		dev_dbg(msgdev, "Allocating block %d ...\n", i);
+		dev_dbg(fa->msgdev, "Allocating block %d ...\n", i);
 		block = zio_buffer_alloc_block(interleave->bi, size,
 					       GFP_ATOMIC);
 		if (!block) {
-			dev_err(msgdev,
+			dev_err(fa->msgdev,
 				"\narm trigger fail, cannot allocate block\n");
 			err = -ENOMEM;
 			goto out_allocate;
@@ -369,7 +368,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		zfad_block[i].block = block;
 		zfad_block[i].dev_mem_off = dev_mem_off;
 		dev_mem_off += size;
-		dev_dbg(msgdev, "next dev_mem_off 0x%x (+%d)\n",
+		dev_dbg(fa->msgdev, "next dev_mem_off 0x%x (+%d)\n",
 			dev_mem_off, size);
 	}
 
@@ -402,7 +401,7 @@ static void zfat_abort(struct zio_ti *ti)
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	unsigned int i;
 
-	dev_dbg(&fa->fmc->dev, "Aborting trigger\n");
+	dev_dbg(fa->msgdev, "Aborting trigger\n");
 
 	/* Nothing to free */
 	if (!zfad_block)
@@ -419,7 +418,10 @@ static void zfat_abort(struct zio_ti *ti)
 static int zfat_push(struct zio_ti *ti, struct zio_channel *chan,
 		     struct zio_block *block)
 {
-	dev_err(&ti->head.dev, "trigger \"%s\" does not support output\n",
+	struct zio_cset *cset = ti->cset;
+	struct fa_dev *fa = cset->zdev->priv_d;
+
+	dev_err(fa->msgdev, "trigger \"%s\" does not support output\n",
 		ti->head.name);
 	return -EIO;
 }

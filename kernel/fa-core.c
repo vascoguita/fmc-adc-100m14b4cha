@@ -169,7 +169,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		gain = FA_CAL_NO_GAIN;
 	} else {
 		if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
-			dev_info(&fa->fmc->dev, "Invalid range %i or ch %i\n",
+			dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
 				 range, chan->index);
 			return -EINVAL;
 		}
@@ -199,13 +199,12 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
  */
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
-	struct device *dev = &fa->fmc->dev;
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
 
 	if (command != FA100M14B4C_CMD_START &&
 	    command != FA100M14B4C_CMD_STOP) {
-		dev_info(dev, "Invalid command %i\n", command);
+		dev_info(fa->msgdev, "Invalid command %i\n", command);
 		return -EINVAL;
 	}
 
@@ -236,7 +235,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		val = fa_readl(fa, fa->fa_adc_csr_base,
 			       &zfad_regs[ZFA_STA_SERDES_PLL]);
 		if (!val) {
-			dev_info(dev, "Cannot start acquisition: "
+			dev_info(fa->msgdev, "Cannot start acquisition: "
 				 "SerDes PLL not locked\n");
 			return -EBUSY;
 		}
@@ -244,7 +243,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		val = fa_readl(fa, fa->fa_adc_csr_base,
 			       &zfad_regs[ZFA_STA_SERDES_SYNCED]);
 		if (!val) {
-			dev_info(dev, "Cannot start acquisition: "
+			dev_info(fa->msgdev, "Cannot start acquisition: "
 				 "SerDes not synchronized\n");
 			return -EBUSY;
 		}
@@ -259,15 +258,15 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		 * from zfat_arm_trigger() or zfad_input_cset()
 		 */
 		if (!(cset->ti->flags & ZIO_TI_ARMED)) {
-			dev_info(dev, "Cannot start acquisition: "
+			dev_info(fa->msgdev, "Cannot start acquisition: "
 				 "Trigger refuses to arm\n");
 			return -EIO;
 		}
 
-		dev_dbg(dev, "FSM START Command, Enable interrupts\n");
+		dev_dbg(fa->msgdev, "FSM START Command, Enable interrupts\n");
 		fa_enable_irqs(fa);
 	} else {
-		dev_dbg(dev, "FSM STOP Command, Disable interrupts\n");
+		dev_dbg(fa->msgdev, "FSM STOP Command, Disable interrupts\n");
 		fa->enable_auto_start = 0;
 		fa_disable_irqs(fa);
 	}
@@ -282,7 +281,6 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 static int __fa_sdb_get_device(struct fa_dev *fa)
 {
 	struct fmc_device *fmc = fa->fmc;
-	struct device *dev = fmc->hwdev;
 	int ret;
 
 	ret = fmc_scan_sdb_tree(fmc, 0);
@@ -292,7 +290,7 @@ static int __fa_sdb_get_device(struct fa_dev *fa)
 		ret = 0;
 	}
 	if (ret < 0) {
-		dev_err(dev,
+		dev_err(fa->msgdev,
 			"%s: no SDB in the bitstream."
 			"Are you sure you've provided the correct one?\n",
 			KBUILD_MODNAME);
@@ -328,7 +326,6 @@ static int __fa_sdb_get_device(struct fa_dev *fa)
 static int __fa_init(struct fa_dev *fa)
 {
 	struct device *hwdev = fa->fmc->hwdev;
-	struct device *msgdev = &fa->fmc->dev;
 	struct zio_device *zdev = fa->zdev;
 	int i, addr;
 
@@ -336,7 +333,7 @@ static int __fa_init(struct fa_dev *fa)
 	if (dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
 		/* Check if hardware supports 32-bit DMA */
 		if (dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
-			dev_err(msgdev, "32-bit DMA addressing not available\n");
+			dev_err(fa->msgdev, "32-bit DMA addressing not available\n");
 			return -EINVAL;
 		}
 	}
@@ -447,6 +444,7 @@ int fa_probe(struct fmc_device *fmc)
 		return -ENOMEM;
 	fmc_set_drvdata(fmc, fa);
 	fa->fmc = fmc;
+	fa->msgdev = &fa->fmc->dev;
 
 	/* apply carrier-specific hacks and workarounds */
 	fa->carrier_op = NULL;
@@ -463,7 +461,7 @@ int fa_probe(struct fmc_device *fmc)
 	 * driver was compiled without enable any carrier, so it cannot work
 	 */
 	if (!fa->carrier_op) {
-		dev_err(fmc->hwdev,
+		dev_err(fa->msgdev,
 			"This binary doesn't support the '%s' carrier\n",
 			fmc->carrier_name);
 		return -ENODEV;
@@ -479,18 +477,18 @@ int fa_probe(struct fmc_device *fmc)
 			fwname = ""; /* reprogram will pick from module parameter */
 		else
 			fwname = fa->carrier_op->get_gwname();
-		dev_info(fmc->hwdev, "Gateware (%s)\n", fwname);
+		dev_info(fa->msgdev, "Gateware (%s)\n", fwname);
 
 		/* We first write a new binary (and lm32) within the carrier */
 		err = fmc_reprogram(fmc, &fa_dev_drv, fwname, 0x0);
 		if (err) {
-			dev_err(fmc->hwdev, "write firmware \"%s\": error %i\n",
+			dev_err(fa->msgdev, "write firmware \"%s\": error %i\n",
 				fwname, err);
 			goto out;
 		}
-		dev_info(fmc->hwdev, "Gateware successfully loaded\n");
+		dev_info(fa->msgdev, "Gateware successfully loaded\n");
 	} else {
-		dev_info(fmc->hwdev,
+		dev_info(fa->msgdev,
 			 "Gateware already there. Set the \"gateware\" parameter to overwrite the current gateware\n");
 	}
 
@@ -509,10 +507,10 @@ int fa_probe(struct fmc_device *fmc)
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
-		dev_dbg(&fmc->dev, "Calling init for \"%s\"\n", m->name);
+		dev_dbg(fa->msgdev, "Calling init for \"%s\"\n", m->name);
 		err = m->init(fa);
 		if (err) {
-			dev_err(&fmc->dev, "error initializing %s\n", m->name);
+			dev_err(fa->msgdev, "error initializing %s\n", m->name);
 			goto out;
 		}
 	}

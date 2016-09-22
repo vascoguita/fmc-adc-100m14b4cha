@@ -56,7 +56,7 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 	while (fa_ioread(fa, fa->fa_spi_base + FA_SPI_CTRL)
 	       & FA_SPI_CTRL_BUSY) {
 		if (jiffies > j) {
-			dev_err(&fa->fmc->dev, "SPI transfer error\n");
+			dev_err(fa->msgdev, "SPI transfer error\n");
 			err = -EIO;
 			goto out;
 		}
@@ -89,7 +89,7 @@ int fa_spi_init(struct fa_dev *fa)
 		for (i = 0; i < 5; i++) {
 			tx = 0x8000 | (i << 8);
 			fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
-			dev_dbg(&fa->fmc->dev, "LTC register %02x: 0x%02x\n",
+			dev_dbg(fa->msgdev, "LTC register %02x: 0x%02x\n",
 				i, rx & 0xff);
 		}
 	}

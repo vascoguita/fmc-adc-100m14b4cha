@@ -22,7 +22,6 @@ static char *fa_spec_get_gwname(void)
 
 static int fa_spec_init(struct fa_dev *fa)
 {
-	struct device *msgdev = &fa->fmc->dev;
 	struct fa_spec_data *cdata;
 	uint32_t val;
 
@@ -39,7 +38,7 @@ static int fa_spec_init(struct fa_dev *fa)
 	cdata->fa_irq_dma_base =
 	    fmc_find_sdb_device(fa->fmc->sdb, 0xce42, 0xd5735ab4, NULL);
 
-	dev_info(msgdev,
+	dev_info(fa->msgdev,
 		"Spec Base addrs: irq_dmma:0x%x, dma_ctrl:0x%x, csr:0x%x\n",
 		cdata->fa_irq_dma_base, cdata->fa_dma_base,
 		fa->fa_carrier_csr_base);
@@ -55,21 +54,21 @@ static int fa_spec_init(struct fa_dev *fa)
 	val = fa_readl(fa, fa->fa_carrier_csr_base,
 		       &fa_spec_regs[ZFA_CAR_FMC_PRES]);
 	if (val) {
-		dev_err(msgdev, "No FCM ADC plugged\n");
+		dev_err(fa->msgdev, "No FCM ADC plugged\n");
 		return -ENODEV;
 	}
 	/* Verify that system PLL is locked (1 is calibrated) */
 	val = fa_readl(fa, fa->fa_carrier_csr_base,
 		       &fa_spec_regs[ZFA_CAR_SYS_PLL]);
 	if (!val) {
-		dev_err(msgdev, "System PLL not locked\n");
+		dev_err(fa->msgdev, "System PLL not locked\n");
 		return -ENODEV;
 	}
 	/* Verify that DDR3 calibration is done (1 is calibrated) */
 	val = fa_readl(fa, fa->fa_carrier_csr_base,
 		       &fa_spec_regs[ZFA_CAR_DDR_CAL]);
 	if (!val) {
-		dev_err(msgdev, "DDR3 Calibration not done\n");
+		dev_err(fa->msgdev, "DDR3 Calibration not done\n");
 		return -ENODEV;
 	}
 
@@ -79,7 +78,7 @@ static int fa_spec_init(struct fa_dev *fa)
 
 	/* register carrier data */
 	fa->carrier_data = cdata;
-	dev_info(msgdev, "spec::%s successfully executed\n", __func__);
+	dev_info(fa->msgdev, "spec::%s successfully executed\n", __func__);
 	return 0;
 }
 
@@ -87,7 +86,7 @@ static int fa_spec_reset(struct fa_dev *fa)
 {
 	/*struct spec_dev *spec = fa->fmc->carrier_data;*/
 
-	dev_info(&fa->fmc->dev, "%s: resetting ADC core through Gennum.\n",
+	dev_info(fa->msgdev, "%s: resetting ADC core through Gennum.\n",
 		 __func__);
 	return 0;
 }
@@ -129,12 +128,12 @@ static int fa_spec_setup_irqs(struct fa_dev *fa)
 	err = fmc_irq_request(fmc, fa_spec_irq_handler,
 			      "fmc-adc-100m14b", 0);
 	if (err) {
-		dev_err(&fmc->dev, "can't request irq 0x%x (error %i)\n",
+		dev_err(fa->msgdev, "can't request irq 0x%x (error %i)\n",
 			fmc->irq, err);
 		return err;
 	}
 	fmc_gpio_config(fmc, fa_gpio_on, ARRAY_SIZE(fa_gpio_on));
-	dev_info(&fmc->dev, "spec::%s successfully executed\n", __func__);
+	dev_info(fa->msgdev, "spec::%s successfully executed\n", __func__);
 
 	/* Add SPEC specific IRQ sources to listen */
 	fa->irq_src |= FA_IRQ_SRC_DMA;

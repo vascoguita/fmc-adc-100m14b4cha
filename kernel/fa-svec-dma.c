@@ -103,7 +103,8 @@ int fa_svec_dma_start(struct zio_cset *cset)
 			fa_dma_block[0].dev_mem_off/4);
 	/* Execute DMA shot by shot */
 	for (i = 0; i < fa->n_shots; ++i) {
-		pr_debug("configure DMA descriptor shot %d "
+		dev_dbg(fa->msgdev,
+			"configure DMA descriptor shot %d "
 			"vme addr: 0x%llx destination address: 0x%p len: %d\n",
 			i, (long long)vme_addr, fa_dma_block[i].block->data,
 			(int)fa_dma_block[i].block->datalen);
@@ -129,6 +130,6 @@ void fa_svec_dma_error(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	dev_err(&fa->fmc->dev,
+	dev_err(fa->msgdev,
 		"DMA error. All acquisition lost\n");
 }

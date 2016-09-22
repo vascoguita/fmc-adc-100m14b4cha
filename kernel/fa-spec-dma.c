@@ -71,7 +71,7 @@ static int gncore_dma_fill(struct zio_dma_sg *zsg)
 			  &fa_spec_regs[ZFA_DMA_BR_LAST], item->attribute);
 	}
 
-	dev_dbg(zsg->zsgt->hwdev, "DMA item %d (block %d)\n"
+	dev_dbg(fa->msgdev, "DMA item %d (block %d)\n"
 		"    addr   0x%x\n"
 		"    addr_l 0x%x\n"
 		"    addr_h 0x%x\n"
@@ -148,6 +148,6 @@ void fa_spec_dma_error(struct zio_cset *cset)
 	val = fa_readl(fa, spec_data->fa_dma_base,
 			&fa_spec_regs[ZFA_DMA_STA]);
 	if (val)
-		dev_err(&fa->fmc->dev,
+		dev_err(fa->msgdev,
 			"DMA error (status 0x%x). All acquisition lost\n", val);
 }
