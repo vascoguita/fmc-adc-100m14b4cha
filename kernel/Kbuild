@@ -3,7 +3,6 @@ CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 VMEBUS_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
 KBUILD_EXTRA_SYMBOLS := \
 	$(ZIO_ABS)/Module.symvers \
-	$(FMC_BUS_ABS)/kernel/Module.symvers \
 	$(VMEBUS_EXTRA_SYMBOLS-y)
 
 # add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
@@ -14,23 +13,16 @@ SUBMODULE_VERSIONS-y += MODULE_INFO(version_$(CONFIG_SUPER_REPO),\"$(CONFIG_SUPE
 endif
 endif
 # add versions of used submodules
-SUBMODULE_VERSIONS-y += MODULE_INFO(version_fmc_bus,\"$(FMC_BUS_VERSION)\");
 SUBMODULE_VERSIONS-y += MODULE_INFO(version_zio,\"$(ZIO_VERSION)\");
 
 ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS-y)"
-
-# The library includes <sdb.h>, so point -I directtly there
-# include our header before to avoid conflicts with the kernel
-LINUXINCLUDE :=  -I$(FMC_BUS_ABS)/kernel/include $(LINUXINCLUDE)
-
 ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(ZIO_ABS)/include \
+	-I $(VMEBUS_ABS)/driver \
 	-I$(src)
 
-ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(SVEC_SW_ABS)/kernel
 ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(VMEBUS_ABS)/include
 ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
-ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
 
 # Extract ZIO minimum compatible version
 ccflags-y += -D__ZIO_MIN_MAJOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 2 | cut -d '.' -f 1; )
@@ -48,7 +40,6 @@ fmc-adc-100m14b-y += fa-irq.o
 fmc-adc-100m14b-y += fa-debug.o
 fmc-adc-100m14b-y += onewire.o
 fmc-adc-100m14b-y += spi.o
-fmc-adc-100m14b-y += fmc-util.o
 fmc-adc-100m14b-y += fa-spec-core.o
 fmc-adc-100m14b-y += fa-spec-regtable.o
 fmc-adc-100m14b-y += fa-spec-dma.o

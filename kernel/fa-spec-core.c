@@ -11,31 +11,22 @@
 #include "fmc-adc-100m14b4cha.h"
 #include "fa-spec.h"
 
-static char *fa_spec_get_gwname(void)
-{
-	return FA_GATEWARE_SPEC;
-}
-
 static int fa_spec_init(struct fa_dev *fa)
 {
+	struct resource *r;
 	struct fa_spec_data *cdata;
 	uint32_t val;
-
-	fa->fa_carrier_csr_base = fmc_find_sdb_device(fa->fmc->sdb, 0xce42,
-						      0x603, NULL);
 
 	cdata = kzalloc(sizeof(struct fa_spec_data), GFP_KERNEL);
 	if (!cdata)
 		return -ENOMEM;
 
-	/* SDB carrier specific */
-	cdata->fa_dma_base =
-	    fmc_find_sdb_device(fa->fmc->sdb, 0xce42, 0x601, NULL);
-	cdata->fa_irq_dma_base =
-	    fmc_find_sdb_device(fa->fmc->sdb, 0xce42, 0xd5735ab4, NULL);
+	r = platform_get_resource(fa->pdev, IORESOURCE_MEM, ADC_CARR_DMA);
+	cdata->fa_dma_base = ioremap(r->start, resource_size(r));
+	cdata->fa_irq_dma_base = cdata->fa_dma_base + 0x0200;
 
 	dev_info(fa->msgdev,
-		"Spec Base addrs: irq_dmma:0x%x, dma_ctrl:0x%x, csr:0x%x\n",
+		"Spec Base addrs: irq_dmma: %p, dma_ctrl: %p, csr: %p\n",
 		cdata->fa_irq_dma_base, cdata->fa_dma_base,
 		fa->fa_carrier_csr_base);
 
@@ -94,42 +85,40 @@ static void fa_spec_exit(struct fa_dev *fa)
 }
 
 /* Unfortunately, on the spec this is GPIO9, i.e. IRQ(1) */
-static struct fmc_gpio fa_gpio_on[] = {
-	{
-	 .gpio = FMC_GPIO_IRQ(0),
-	 .mode = GPIOF_DIR_IN,
-	 .irqmode = IRQF_TRIGGER_RISING,
-	 }
-};
+/* FIXME find a way to get rid of fmc here
+ * This is used only by the SPEC design, is it not possible to avoid it
+ * and let the VHDL configure the GPIO?
+ */
+/* static struct fmc_gpio fa_gpio_on[] = { */
+/* 	{ */
+/* 	 .gpio = FMC_GPIO_IRQ(0), */
+/* 	 .mode = GPIOF_DIR_IN, */
+/* 	 .irqmode = IRQF_TRIGGER_RISING, */
+/* 	 } */
+/* }; */
 
-static struct fmc_gpio fa_gpio_off[] = {
-	{
-	 .gpio = FMC_GPIO_IRQ(0),
-	 .mode = GPIOF_DIR_IN,
-	 .irqmode = 0,
-	 }
-};
+/* static struct fmc_gpio fa_gpio_off[] = { */
+/* 	{ */
+/* 	 .gpio = FMC_GPIO_IRQ(0), */
+/* 	 .mode = GPIOF_DIR_IN, */
+/* 	 .irqmode = 0, */
+/* 	 } */
+/* }; */
 
 static int fa_spec_setup_irqs(struct fa_dev *fa)
 {
-	struct fmc_device *fmc = fa->fmc;
-	struct fa_spec_data *spec_data = fa->carrier_data;
+	struct resource *r;
 	int err;
 
-	/* Request IRQ
-	 * trick : vic needs the base address of teh core firing the irq
-	 * It cannot provided throught irq_request() call therefore the trick
-	 * is to set it by means of the field irq provided by the fmc device
-	 */
-	fmc->irq = spec_data->fa_irq_dma_base;
-	err = fmc_irq_request(fmc, fa_spec_irq_handler,
-			      "fmc-adc-100m14b", 0);
-	if (err) {
-		dev_err(fa->msgdev, "can't request irq 0x%x (error %i)\n",
-			fmc->irq, err);
+	r = platform_get_resource(fa->pdev, IORESOURCE_IRQ, ADC_IRQ_DMA);
+	err = request_any_context_irq(r->start, fa_spec_irq_handler, 0,
+				      r->name, fa);
+	if (err < 0) {
+		dev_err(fa->msgdev, "can't request irq 0x%llx (error %i)\n",
+			r->start, err);
 		return err;
 	}
-	fmc_gpio_config(fmc, fa_gpio_on, ARRAY_SIZE(fa_gpio_on));
+	//fmc_gpio_config(fmc, fa_gpio_on, ARRAY_SIZE(fa_gpio_on));
 	dev_info(fa->msgdev, "spec::%s successfully executed\n", __func__);
 
 	/* Add SPEC specific IRQ sources to listen */
@@ -140,14 +129,10 @@ static int fa_spec_setup_irqs(struct fa_dev *fa)
 
 static int fa_spec_free_irqs(struct fa_dev *fa)
 {
-	struct fmc_device *fmc = fa->fmc;
-	struct fa_spec_data *spec_data = fa->carrier_data;
-
 	/* Release DMA IRQs */
-	fmc->irq = spec_data->fa_irq_dma_base;
-	fmc_irq_free(fmc);
+	free_irq(platform_get_irq(fa->pdev, ADC_IRQ_DMA), fa);
 
-	fmc_gpio_config(fmc, fa_gpio_off, ARRAY_SIZE(fa_gpio_off));
+	/* fmc_gpio_config(fmc, fa_gpio_off, ARRAY_SIZE(fa_gpio_off)); */
 
 	return 0;
 }
@@ -180,7 +165,6 @@ static int fa_spec_ack_irq(struct fa_dev *fa, int irq_id)
 }
 
 struct fa_carrier_op fa_spec_op = {
-	.get_gwname = fa_spec_get_gwname,
 	.init = fa_spec_init,
 	.reset_core = fa_spec_reset,
 	.exit = fa_spec_exit,

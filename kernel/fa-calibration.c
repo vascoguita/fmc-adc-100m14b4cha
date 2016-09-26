@@ -98,12 +98,13 @@ static void fa_calib_cpu_to_le16s(struct fa_calib *calib)
 		cpu_to_le16s(p + i); /* s == in situ */
 }
 
-void fa_read_eeprom_calib(struct fa_dev *fa)
+void fa_identity_calib_set(struct fa_dev *fa)
 {
 	/* Retrieve calibration data from the eeprom, then verify it */
-	memcpy(&fa->calib, fa->fmc->eeprom + FA_CAL_OFFSET, sizeof(fa->calib));
+	memcpy(&fa->calib, &fa_identity_calib, sizeof(fa->calib));
 	fa_calib_le16_to_cpus(&fa->calib);
-	fa_verify_calib(&fa->fmc->dev, &fa->calib, &fa_identity_calib);
+	fa_verify_calib(&fa->pdev->dev, &fa->calib, &fa_identity_calib);
+	dev_info(fa->msgdev, "%s succeeds.\n", __func__);
 }
 
 /**

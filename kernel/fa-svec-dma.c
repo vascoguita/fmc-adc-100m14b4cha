@@ -93,9 +93,6 @@ int fa_svec_dma_start(struct zio_cset *cset)
 	struct zfad_block *fa_dma_block = interleave->priv_d;
 	int i;
 	struct vme_dma desc;    /* Vme driver DMA structure */
-	unsigned long vme_addr;
-
-	vme_addr = svec_data->vme_base + svec_data->fa_dma_ddr_data;
 
 	/*
 	 * write the data address in the ddr_addr register: this
@@ -107,14 +104,18 @@ int fa_svec_dma_start(struct zio_cset *cset)
 	fa_writel(fa, svec_data->fa_dma_ddr_addr,
 			&fa_svec_regfield[FA_DMA_DDR_ADDR],
 			fa_dma_block[0].dev_mem_off/4);
+	pr_info("%s:%d 0x%x\n", __func__, __LINE__,
+		fa_dma_block[0].dev_mem_off/4);
 	/* Execute DMA shot by shot */
 	for (i = 0; i < fa->n_shots; ++i) {
-		dev_dbg(fa->msgdev,
+		dev_info(fa->msgdev,
 			"configure DMA descriptor shot %d "
 			"vme addr: 0x%llx destination address: 0x%p len: %d\n",
-			i, (long long)vme_addr, fa_dma_block[i].block->data,
+			i, (long long)svec_data->vme_ddr_data,
+			 fa_dma_block[i].block->data,
 			(int)fa_dma_block[i].block->datalen);
-		build_dma_desc(&desc, vme_addr,
+		memset(fa_dma_block[i].block->data, 5, fa_dma_block[i].block->datalen);
+		build_dma_desc(&desc, svec_data->vme_ddr_data,
 				fa_dma_block[i].block->data,
 				fa_dma_block[i].block->datalen);
 

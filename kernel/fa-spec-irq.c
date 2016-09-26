@@ -25,18 +25,20 @@
  * Get irq and clear the register. To clear an interrupt we have to write 1
  * on the handled interrupt. We handle all interrupt so we clear all interrupts
  */
-static void fa_get_irq_status(struct fa_dev *fa, int irq_core_base,
-			      uint32_t *irq_status)
+static void fa_get_irq_status(struct fa_dev *fa, uint32_t *irq_status)
 {
+	struct fa_spec_data *cdata = fa->carrier_data;
+
 	/* Get current interrupts status */
-	*irq_status = fa_readl(fa, irq_core_base,
+	*irq_status = fa_readl(fa, cdata->fa_irq_dma_base,
 			&fa_spec_regs[ZFA_IRQ_DMA_SRC]);
 	dev_dbg(fa->msgdev,
-		"core DMA: 0x%x fired an interrupt. IRQ status register: 0x%x\n",
-		irq_core_base, *irq_status);
+		"core DMA: %p fired an interrupt. IRQ status register: 0x%x\n",
+		cdata->fa_irq_dma_base, *irq_status);
+
 	if (*irq_status)
 		/* Clear current interrupts status */
-		fa_writel(fa, irq_core_base,
+		fa_writel(fa, cdata->fa_irq_dma_base,
 			&fa_spec_regs[ZFA_IRQ_DMA_SRC], *irq_status);
 }
 
@@ -55,15 +57,14 @@ static void fa_get_irq_status(struct fa_dev *fa, int irq_core_base,
  * of small number of samples and makes the retry loop in the hanlder
  * obsolete.
  */
-irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
+irqreturn_t fa_spec_irq_handler(int irq, void *arg)
 {
-	struct fmc_device *fmc = ptr;
-	struct fa_dev *fa = fmc_get_drvdata(fmc);
+	struct fa_dev *fa = arg;
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t status;
 
 	/* irq to handle */
-	fa_get_irq_status(fa, irq_core_base, &status);
+	fa_get_irq_status(fa, &status);
 	if (!status)
 		return IRQ_NONE;
 
@@ -81,15 +82,16 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 		goto out;
 	}
 
-	if (unlikely(fa->last_irq_core_src == irq_core_base)) {
-		WARN(1, "Cannot handle two consecutives %s interrupt."
-			"The ADC doesn't behave properly\n",
-			(irq_core_base == fa->fa_irq_adc_base) ? "ACQ" : "DMA");
-		/* Stop Acquisition, ADC it is not working properly */
-		zfad_fsm_command(fa, FA100M14B4C_CMD_STOP);
-		fa->last_irq_core_src = FA_SPEC_IRQ_SRC_NONE;
-		goto out;
-	}
+	/* FIXME handle it better */
+	/* if (unlikely(fa->last_irq_core_src == irq_core_base)) { */
+	/* 	WARN(1, "Cannot handle two consecutives %s interrupt." */
+	/* 		"The ADC doesn't behave properly\n", */
+	/* 		(irq_core_base == fa->fa_irq_adc_base) ? "ACQ" : "DMA"); */
+	/* 	/\* Stop Acquisition, ADC it is not working properly *\/ */
+	/* 	zfad_fsm_command(fa, FA100M14B4C_CMD_STOP); */
+	/* 	fa->last_irq_core_src = FA_SPEC_IRQ_SRC_NONE; */
+	/* 	goto out; */
+	/* } */
 
 	dev_dbg(fa->msgdev, "Handle ADC interrupts\n");
 
@@ -100,7 +102,8 @@ irqreturn_t fa_spec_irq_handler(int irq_core_base, void *ptr)
 
 	/* register the core which just fired the IRQ */
 	/* check proper sequence of IRQ in case of multi IRQ (ACQ + DMA)*/
-	fa->last_irq_core_src = irq_core_base;
+	/* FIXME */
+	/* fa->last_irq_core_src = irq_core_base; */
 
 out:
 	/*
@@ -110,9 +113,6 @@ out:
 	spin_lock(&cset->lock);
 	cset->flags &= ~ZIO_CSET_HW_BUSY;
 	spin_unlock(&cset->lock);
-
-	/* ack the irq */
-	fmc_irq_ack(fa->fmc);
 
 	return IRQ_HANDLED;
 }

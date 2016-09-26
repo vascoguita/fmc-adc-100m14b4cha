@@ -36,6 +36,10 @@
 #define FA100M14B4C_TRG_POL_CH4 FA100M14B4C_TRG_SRC_CH4
 #define FA100M14B4C_TRG_POL_CHx(_x) (FA100M14B4C_TRG_POL_CH1 << ((_x) - 1))
 
+enum fa_versions {
+	ADC_VER_SPEC = 0,
+	ADC_VER_SVEC,
+};
 
 /*
  * Trigger Extended Attribute Enumeration
@@ -150,9 +154,8 @@ struct fa_calib {
 #include <linux/scatterlist.h>
 #include <linux/workqueue.h>
 #include <linux/debugfs.h>
+#include <linux/platform_device.h>
 
-#include <linux/fmc.h>
-#include <linux/fmc-sdb.h>
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
 #include <linux/zio-sysfs.h>
@@ -162,6 +165,29 @@ struct fa_calib {
 #include "field-desc.h"
 
 extern int fa_enable_test_data_adc;
+
+enum fa_irq_resource {
+	ADC_IRQ_TRG = 0,
+	ADC_IRQ_DMA,
+};
+
+enum fa_mem_resource {
+	ADC_MEM_BASE = 0,
+	ADC_CARR_MEM_BASE,
+	ADC_CARR_DMA, /* SPEC only, remove it when we support DMA engine */
+};
+
+enum fa_bus_resource {
+	ADC_BUS_FMC_SLOT = 0,
+	ADC_CARR_VME_ADDR,
+};
+
+struct fa_memory_ops {
+	u32 (*read)(void *addr);
+	void (*write)(u32 value, void *addr);
+};
+
+extern struct fa_memory_ops memops;
 
 /*
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
@@ -369,7 +395,7 @@ struct fa_carrier_op {
 /*
  * fa_dev: is the descriptor of the FMC ADC mezzanine
  *
- * @fmc: the pointer to the fmc_device generic structure
+ * @pdev: the pointer to the fmc_device generic structure
  * @zdev: is the pointer to the real zio_device in use
  * @hwzdev: is the pointer to the fake zio_device, used to initialize and
  *          to remove a zio_device
@@ -383,21 +409,22 @@ struct fa_carrier_op {
  */
 struct fa_dev {
 	struct device *msgdev; /**< device used to print messages */
-	/* the pointer to the fmc_device generic structure */
-	struct fmc_device	*fmc;
+	/* the pointer to the platform_device generic structure */
+	struct platform_device	*pdev;
 	/* the pointer to the real zio_device in use */
 	struct zio_device	*zdev;
 	/* the pointer to the fake zio_device, used for init/remove */
 	struct zio_device	*hwzdev;
 
 	/* carrier common base offset addresses obtained from SDB */
-	unsigned int fa_adc_csr_base;
-	unsigned int fa_spi_base;
-	unsigned int fa_ow_base;
-	unsigned int fa_carrier_csr_base;
-	unsigned int fa_irq_vic_base;
-	unsigned int fa_irq_adc_base;
-	unsigned int fa_utc_base;
+	void *fa_adc_csr_base;
+	void *fa_spi_base;
+	void *fa_ow_base;
+	void *fa_top_level;
+	void *fa_carrier_csr_base;
+	void *fa_irq_vic_base;
+	void *fa_irq_adc_base;
+	void *fa_utc_base;
 
 	/* DMA description */
 	struct zio_dma_sgt *zdma;
@@ -493,23 +520,23 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 	return NULL;
 }
 
-static inline u32 fa_ioread(struct fa_dev *fa, unsigned long addr)
+static inline u32 fa_ioread(struct fa_dev *fa, void *addr)
 {
-	return fmc_readl(fa->fmc, addr);
+	return memops.read(addr);
 }
 
-static inline void fa_iowrite(struct fa_dev *fa, u32 value, unsigned long addr)
+static inline void fa_iowrite(struct fa_dev *fa, u32 value, void *addr)
 {
-	fmc_writel(fa->fmc, value, addr);
+	memops.write(value, addr);
 }
 
 static inline uint32_t fa_readl(struct fa_dev *fa,
-				unsigned int base_off,
+				void *base_off,
 				const struct zfa_field_desc *field)
 {
 	uint32_t cur;
 
-	cur = fa_ioread(fa, base_off+field->offset);
+	cur = fa_ioread(fa, base_off + field->offset);
 	if (field->is_bitfield) {
 		/* apply mask and shift right accordlying to the mask */
 		cur &= field->mask;
@@ -517,11 +544,12 @@ static inline uint32_t fa_readl(struct fa_dev *fa,
 	} else {
 		cur &= field->mask; /* bitwise and with the mask */
 	}
+
 	return cur;
 }
 
 static inline void fa_writel(struct fa_dev *fa,
-				unsigned int base_off,
+			     void *base_off,
 				const struct zfa_field_desc *field,
 				uint32_t usr_val)
 {
@@ -536,12 +564,12 @@ static inline void fa_writel(struct fa_dev *fa,
 		val = usr_val * (field->mask & -(field->mask));
 		if (val & ~field->mask)
 			dev_warn(fa->msgdev,
-				"addr 0x%lx: value 0x%x doesn't fit mask 0x%x\n",
+				"addr %p: value 0x%x doesn't fit mask 0x%x\n",
 				base_off+field->offset, val, field->mask);
 		val &= field->mask;
 		val |= cur;
 	}
-	fa_iowrite(fa, val, base_off+field->offset);
+	fa_iowrite(fa, val, base_off + field->offset);
 }
 
 extern struct bin_attribute dev_attr_calibration;
@@ -601,13 +629,8 @@ extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 extern int fa_spi_init(struct fa_dev *fd);
 extern void fa_spi_exit(struct fa_dev *fd);
 
-/* fmc extended function */
-signed long fmc_find_sdb_device_ext(struct sdb_array *tree,
-					uint64_t vid, uint32_t did, int index,
-					unsigned long *sz);
-
 /* function exporetd by fa-calibration.c */
-extern void fa_read_eeprom_calib(struct fa_dev *fa);
+extern void fa_identity_calib_set(struct fa_dev *fa);
 
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);

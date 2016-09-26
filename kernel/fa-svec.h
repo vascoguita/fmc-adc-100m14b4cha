@@ -32,9 +32,8 @@ enum fa_spec_regs_id {
 /* specific carrier data */
 struct fa_svec_data {
 	/* DMA attributes */
-	unsigned long	vme_base;
-	unsigned int	fa_dma_ddr_data; /* offset */
-	unsigned int	fa_dma_ddr_addr; /* offset */
+	unsigned long vme_ddr_data; /* offset */
+	void *fa_dma_ddr_addr; /* offset */
 	unsigned int	n_dma_err; /* statistics */
 };
 

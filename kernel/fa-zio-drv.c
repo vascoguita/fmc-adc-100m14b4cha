@@ -169,7 +169,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	unsigned int baseoff = fa->fa_adc_csr_base;
+	void *baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
 	int i, range, err = 0, reg_index;
 
@@ -322,7 +322,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	unsigned int baseoff = fa->fa_adc_csr_base;
+	void *baseoff = fa->fa_adc_csr_base;
 	int i, reg_index;
 
 	i = FA100M14B4C_NCHAN;
@@ -677,7 +677,7 @@ int fa_zio_init(struct fa_dev *fa)
 
 	/* Register the hardware zio_device */
 	err = zio_register_device(fa->hwzdev, "adc-100m14b",
-				  fa->fmc->device_id);
+				  fa->pdev->id);
 	if (err) {
 		dev_err(fa->msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
 		zio_free_device(fa->hwzdev);

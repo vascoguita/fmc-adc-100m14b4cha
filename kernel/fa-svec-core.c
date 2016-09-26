@@ -8,51 +8,44 @@
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <svec.h>
 
 #include "fmc-adc-100m14b4cha.h"
 #include "fa-svec.h"
 
-static char *fa_svec_get_gwname(void)
-{
-	return FA_GATEWARE_SVEC;
-}
-
 static int fa_svec_init(struct fa_dev *fa)
 {
-	struct fmc_device *fmc = fa->fmc;
 	struct fa_svec_data *cdata;
-	struct svec_dev *svec = fmc->carrier_data;
+	struct resource *r;
+	unsigned int res_i;
 
 	cdata = kzalloc(sizeof(struct fa_svec_data), GFP_KERNEL);
 	if (!cdata)
 		return -ENOMEM;
 
-	cdata->vme_base = svec->cfg_cur.vme_base;
-	fa->fa_carrier_csr_base = fmc_find_sdb_device(fmc->sdb, 0xce42,
-						      0x6603, NULL);
-	cdata->fa_dma_ddr_addr = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-							 0x10006611,
-							fmc->slot_id, NULL);
-	cdata->fa_dma_ddr_data = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-							 0x10006610,
-							fmc->slot_id, NULL);
+	r = platform_get_resource(fa->pdev, IORESOURCE_BUS, ADC_CARR_VME_ADDR);
+	cdata->vme_ddr_data = r->start;
 
-	/* Reset the FMC slot*/
-	fa_writel(fa, fa->fa_carrier_csr_base,
-		  &fa_svec_regfield[FA_CAR_FMC0_RES + fmc->slot_id], 1);
+	r = platform_get_resource(fa->pdev, IORESOURCE_BUS, ADC_BUS_FMC_SLOT);
+	switch(r->start) {
+	case 1:
+		res_i = FA_CAR_FMC0_RES;
+		break;
+	case 2:
+		res_i = FA_CAR_FMC1_RES;
+		break;
+	default:
+		return -EINVAL;
+	}
+	cdata->fa_dma_ddr_addr = fa->fa_top_level + 0x2000;
+
+	fa_writel(fa, fa->fa_carrier_csr_base, &fa_svec_regfield[res_i], 1);
 	mdelay(50);
-	fa_writel(fa, fa->fa_carrier_csr_base,
-		  &fa_svec_regfield[FA_CAR_FMC0_RES + fmc->slot_id], 0);
+	fa_writel(fa, fa->fa_carrier_csr_base, &fa_svec_regfield[res_i], 0);
 	mdelay(50);
 
 	/* register carrier data */
 	fa->carrier_data = cdata;
-	return 0;
-}
 
-static int fa_svec_reset(struct fa_dev *fa)
-{
 	return 0;
 }
 
@@ -62,9 +55,7 @@ static void fa_svec_exit(struct fa_dev *fa)
 }
 
 struct fa_carrier_op fa_svec_op = {
-	.get_gwname = fa_svec_get_gwname,
 	.init = fa_svec_init,
-	.reset_core = fa_svec_reset,
 	.exit = fa_svec_exit,
 	.dma_start = fa_svec_dma_start,
 	.dma_done = fa_svec_dma_done,

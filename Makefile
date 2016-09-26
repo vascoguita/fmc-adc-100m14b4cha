@@ -6,7 +6,6 @@ REPO_PARENT ?= $(CURDIR)/..
 
 all: kernel tools
 
-FMC_BUS ?= fmc-bus
 ZIO ?= zio
 SVEC_SW ?= svec-sw
 VMEBUS ?= $(REPO_PARENT)/vmebridge
@@ -45,7 +44,7 @@ $(DIRS):
 	$(MAKE) -C $@ $(TARGET)
 
 
-SUBMOD = $(FMC_BUS_ABS) $(ZIO_ABS)
+SUBMOD = $(ZIO_ABS)
 
 prereq_install_warn:
 	@test -f .prereq_installed || \
@@ -55,12 +54,7 @@ prereq_install:
 	for d in $(SUBMOD); do $(MAKE) -C $$d modules_install || exit 1; done
 	touch .prereq_installed
 
-$(FMC_BUS_ABS): fmc-bus-init_repo
 $(ZIO_ABS): zio-init_repo
-
-# init submodule if missing
-fmc-bus-init_repo:
-	@test -d $(FMC_BUS_ABS)/doc || ( echo "Checking out submodule $(FMC_BUS_ABS)" && git submodule update --init $(FMC_BUS_ABS) )
 
 # init submodule if missing
 zio-init_repo:

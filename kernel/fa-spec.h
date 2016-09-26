@@ -85,8 +85,8 @@ enum fa_spec_irq {
 /* specific carrier data */
 struct fa_spec_data {
 	/* DMA attributes */
-	unsigned int		fa_dma_base;
-	unsigned int		fa_irq_dma_base;
+	void *fa_dma_base;
+	void *fa_irq_dma_base;
 	struct fa_dma_item	*items;
 	dma_addr_t		dma_list_item;
 	unsigned int		n_dma_err; /* statistics */

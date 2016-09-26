@@ -94,7 +94,7 @@ int fa_spec_dma_start(struct zio_cset *cset)
 	for (i = 0; i < fa->n_shots; ++i)
 		blocks[i] = zfad_block[i].block;
 
-	fa->zdma = zio_dma_alloc_sg(interleave, fa->fmc->hwdev, blocks,
+	fa->zdma = zio_dma_alloc_sg(interleave, fa->pdev->dev.parent, blocks,
 				    fa->n_shots, GFP_ATOMIC);
 	if (IS_ERR(fa->zdma))
 		return PTR_ERR(fa->zdma);

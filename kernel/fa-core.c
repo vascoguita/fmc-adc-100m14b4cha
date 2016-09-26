@@ -11,15 +11,17 @@
 
 #include "fmc-adc-100m14b4cha.h"
 
-/* Module parameters */
-static struct fmc_driver fa_dev_drv;
-FMC_PARAM_BUSID(fa_dev_drv);
-FMC_PARAM_GATEWARE(fa_dev_drv);
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
 int fa_enable_test_data_adc = 0;
 module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
+
+struct fa_memory_ops memops = {
+	.read = NULL,
+	.write = NULL,
+};
+
 
 static const int zfad_hw_range[] = {
 	[FA100M14B4C_RANGE_10V_CAL]   = 0x44,
@@ -333,66 +335,27 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	return 0;
 }
 
-/* Extract from SDB the base address of the core components */
-/* which are not carrier specific */
-static int __fa_sdb_get_device(struct fa_dev *fa)
-{
-	struct fmc_device *fmc = fa->fmc;
-	int ret;
-
-	ret = fmc_scan_sdb_tree(fmc, 0);
-	if (ret == -EBUSY) {
-		/* Not a problem, it's already there. We assume that
-		   it's the correct one */
-		ret = 0;
-	}
-	if (ret < 0) {
-		dev_err(fa->msgdev,
-			"%s: no SDB in the bitstream."
-			"Are you sure you've provided the correct one?\n",
-			KBUILD_MODNAME);
-		return ret;
-	}
-
-	/* Now use SDB to find the base addresses */
-	fa->fa_irq_vic_base = fmc_find_sdb_device(fmc->sdb, 0xce42,
-						  0x13, NULL);
-	fa->fa_adc_csr_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-						      0x608,
-						      fmc->slot_id, NULL);
-	fa->fa_irq_adc_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-						      0x26ec6086,
-						      fmc->slot_id, NULL);
-	fa->fa_utc_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-						  0x604, fmc->slot_id, NULL);
-	fa->fa_spi_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42, 0xe503947e,
-							fmc->slot_id, NULL);
-	fa->fa_ow_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42, 0x779c5443,
-							fmc->slot_id, NULL);
-
-	return ret;
-}
 
 /*
  * Specific check and init
  */
 static int __fa_init(struct fa_dev *fa)
 {
-	struct device *hwdev = fa->fmc->hwdev;
 	struct zio_device *zdev = fa->zdev;
 	int i, addr;
 
 	/* Check if hardware supports 64-bit DMA */
-	if (dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
+	if (dma_set_mask(fa->pdev->dev.parent, DMA_BIT_MASK(64))) {
 		/* Check if hardware supports 32-bit DMA */
-		if (dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
-			dev_err(fa->msgdev, "32-bit DMA addressing not available\n");
+		if (dma_set_mask(fa->pdev->dev.parent, DMA_BIT_MASK(32))) {
+			dev_err(fa->msgdev,
+				"32-bit DMA addressing not available\n");
 			return -EINVAL;
 		}
 	}
 
 	/* Use identity calibration */
-	fa_read_eeprom_calib(fa);
+	fa_identity_calib_set(fa);
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
 					 &zfad_regs[ZFA_MULT_MAX_SAMP]);
 
@@ -456,84 +419,127 @@ static struct fa_modlist mods[] = {
 	{"debug", fa_debug_init, fa_debug_exit},
 };
 
+
+static int fa_resource_validation(struct platform_device *pdev)
+{
+	struct resource *r;
+
+	r = platform_get_resource(pdev, IORESOURCE_IRQ, ADC_IRQ_TRG);
+	if (!r) {
+		dev_err(&pdev->dev,
+			"The ADC needs an interrupt number for the IRQ\n");
+		return -ENXIO;
+	}
+
+	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
+	if (!r) {
+		dev_err(&pdev->dev,
+			"The ADC needs base address\n");
+		return -ENXIO;
+	}
+
+	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_CARR_MEM_BASE);
+	if (!r) {
+		dev_err(&pdev->dev,
+			"The ADC needs the carrier base address\n");
+		return -ENXIO;
+	}
+
+	r = platform_get_resource(pdev, IORESOURCE_BUS, ADC_BUS_FMC_SLOT);
+	if (!r) {
+		dev_err(&pdev->dev,
+			"The ADC needs to be assigned to an FMC slot\n");
+		return -ENXIO;
+	}
+
+	/* Special Configurations */
+	switch (pdev->id_entry->driver_data) {
+	case ADC_VER_SPEC:
+		r = platform_get_resource(pdev, IORESOURCE_IRQ, ADC_IRQ_DMA);
+		if (!r) {
+			dev_err(&pdev->dev,
+				"The ADC needs an interrupt number for the DMA\n");
+			return -ENXIO;
+		}
+
+		r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_CARR_DMA);
+		if (!r) {
+			dev_err(&pdev->dev,
+				"The ADC needs address to SPEC DMA engine\n");
+			return -ENXIO;
+		}
+		break;
+#ifdef CONFIG_FMC_ADC_SVEC
+	case ADC_VER_SVEC:
+		r = platform_get_resource(pdev, IORESOURCE_BUS,
+					  ADC_CARR_VME_ADDR);
+		if (!r) {
+			dev_err(&pdev->dev,
+				"The ADC needs a DMA ADDR register\n");
+			return -ENXIO;
+		}
+		break;
+#endif
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 /* probe and remove are called by fa-spec.c */
-int fa_probe(struct fmc_device *fmc)
+int fa_probe(struct platform_device *pdev)
 {
 	struct fa_modlist *m = NULL;
 	struct fa_dev *fa;
+	struct resource *r;
 	int err, i = 0;
-	char *fwname;
 
-	/* Validate the new FMC device */
-	i = fmc_validate(fmc, &fa_dev_drv);
-	if (i < 0) {
-		dev_info(&fmc->dev, "not using \"%s\" according to "
-			 "modparam\n", KBUILD_MODNAME);
-		return -ENODEV;
-	}
+	err = fa_resource_validation(pdev);
+	if (err)
+		return err;
 
 	/* Driver data */
-	fa = devm_kzalloc(&fmc->dev, sizeof(struct fa_dev), GFP_KERNEL);
+	fa = devm_kzalloc(&pdev->dev, sizeof(struct fa_dev), GFP_KERNEL);
 	if (!fa)
 		return -ENOMEM;
-	fmc_set_drvdata(fmc, fa);
-	fa->fmc = fmc;
-	fa->msgdev = &fa->fmc->dev;
 
-	/* apply carrier-specific hacks and workarounds */
-	fa->carrier_op = NULL;
-	if (!strcmp(fmc->carrier_name, "SPEC")) {
+	platform_set_drvdata(pdev, fa);
+	fa->pdev = pdev;
+	fa->msgdev = &fa->pdev->dev;
+
+	/* Assign IO operation */
+	switch (pdev->id_entry->driver_data) {
+	case ADC_VER_SPEC:
+		memops.read = ioread32;
+		memops.write = iowrite32;
 		fa->carrier_op = &fa_spec_op;
-	} else if (!strcmp(fmc->carrier_name, "SVEC")) {
+		break;
 #ifdef CONFIG_FMC_ADC_SVEC
+	case ADC_VER_SVEC:
+		memops.read = ioread32be;
+		memops.write = iowrite32be;
 		fa->carrier_op = &fa_svec_op;
+		break;
 #endif
+	default:
+		dev_err(fa->msgdev, "Unknow version %lu\n",
+			pdev->id_entry->driver_data);
+		return -EINVAL;
 	}
 
-	/*
-	 * Check if carrier operations exists. Otherwise it means that the
-	 * driver was compiled without enable any carrier, so it cannot work
-	 */
-	if (!fa->carrier_op) {
-		dev_err(fa->msgdev,
-			"This binary doesn't support the '%s' carrier\n",
-			fmc->carrier_name);
-		return -ENODEV;
-	}
+	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
+	fa->fa_top_level = ioremap(r->start, resource_size(r));
+	fa->fa_adc_csr_base = fa->fa_top_level + 0x1000;
+	fa->fa_irq_adc_base = fa->fa_top_level + 0x1500;
+	fa->fa_ow_base =      fa->fa_top_level + 0x1700;
+	fa->fa_spi_base =     fa->fa_top_level + 0x1800;
+	fa->fa_utc_base =     fa->fa_top_level + 0x1900;
 
-	/*
-	 * If the carrier is still using the golden bitstream or the user is
-	 * asking for a particular one, then program our bistream, otherwise
-	 * we already have our bitstream
-	 */
-	if (fmc->flags & FMC_DEVICE_HAS_GOLDEN || fa_dev_drv.gw_n) {
-		if (fa_dev_drv.gw_n)
-			fwname = ""; /* reprogram will pick from module parameter */
-		else
-			fwname = fa->carrier_op->get_gwname();
-
-		/* We first write a new binary (and lm32) within the carrier */
-		err = fmc_reprogram(fmc, &fa_dev_drv, fwname, 0x0);
-		if (err) {
-			dev_err(fa->msgdev, "write firmware \"%s\": error %i\n",
-				fwname, err);
-			goto out;
-		}
-	} else {
-		dev_info(fa->msgdev,
-			 "Gateware already there. Set the \"gateware\" parameter to overwrite the current gateware\n");
-	}
-
-	/* Extract whisbone core base address fron SDB */
-	err = __fa_sdb_get_device(fa);
-	if (err < 0)
-		goto out;
+	r = platform_get_resource(fa->pdev, IORESOURCE_MEM, ADC_CARR_MEM_BASE);
+	fa->fa_carrier_csr_base = ioremap(r->start, resource_size(r));
 
 	err = fa->carrier_op->init(fa);
-	if (err < 0)
-		goto out;
-
-	err = fa->carrier_op->reset_core(fa);
 	if (err < 0)
 		goto out;
 
@@ -556,14 +562,8 @@ int fa_probe(struct fmc_device *fmc)
 	if (err < 0)
 		goto out_irq;
 
-	/* Pin the carrier */
-	if (!try_module_get(fmc->owner))
-		goto out_mod;
-
 	return 0;
 
-out_mod:
-	fa_free_irqs(fa);
 out_irq:
 out:
 	while (--m, --i >= 0)
@@ -572,9 +572,9 @@ out:
 	return err;
 }
 
-int fa_remove(struct fmc_device *fmc)
+int fa_remove(struct platform_device *pdev)
 {
-	struct fa_dev *fa = fmc_get_drvdata(fmc);
+	struct fa_dev *fa = platform_get_drvdata(pdev);
 	struct fa_modlist *m;
 	int i = ARRAY_SIZE(mods);
 
@@ -589,27 +589,31 @@ int fa_remove(struct fmc_device *fmc)
 
 	fa->carrier_op->exit(fa);
 
-	/* Release the carrier */
-	module_put(fmc->owner);
-
 	return 0;
 }
 
-static struct fmc_fru_id fa_fru_id[] = {
+
+static const struct platform_device_id fa_id[] = {
 	{
-		.product_name = "FmcAdc100m14b4cha",
+		.name = "adc-100m-spec",
+		.driver_data = ADC_VER_SPEC,
 	},
+#ifdef CONFIG_FMC_ADC_SVEC
+	{
+		.name = "adc-100m-svec",
+		.driver_data = ADC_VER_SVEC,
+	},
+#endif
+	/* TODO we should support different version */
 };
 
-static struct fmc_driver fa_dev_drv = {
-	.version = FMC_VERSION,
-	.driver.name = KBUILD_MODNAME,
+static struct platform_driver fa_dev_drv = {
+	.driver = {
+		.name = KBUILD_MODNAME,
+	},
 	.probe = fa_probe,
 	.remove = fa_remove,
-	.id_table = {
-		.fru_id = fa_fru_id,
-		.fru_id_nr = ARRAY_SIZE(fa_fru_id),
-	},
+	.id_table = fa_id,
 };
 
 static int fa_init(void)
@@ -637,7 +641,7 @@ static int fa_init(void)
 		goto out2;
 
 	/* Finally the fmc driver, whose probe instantiates zio devices */
-	ret = fmc_driver_register(&fa_dev_drv);
+	ret = platform_driver_register(&fa_dev_drv);
 	if (ret)
 		goto out3;
 
@@ -655,7 +659,7 @@ out1:
 
 static void fa_exit(void)
 {
-	fmc_driver_unregister(&fa_dev_drv);
+	platform_driver_unregister(&fa_dev_drv);
 	fa_zio_unregister();
 	fa_trig_exit();
 	if (fa_workqueue != NULL)
