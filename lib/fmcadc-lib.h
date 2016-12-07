@@ -250,6 +250,30 @@ static inline int fmcadc_buffer_maximum_size_set(struct fmcadc_dev *dev,
 	return -1;
 }
 
+static inline int fmcadc_trigger_sw_status(struct fmcadc_dev *dev,
+					   unsigned int *enable)
+{
+	return fmcadc_get_param(dev, "cset0/trigger/sw-trg-enable",
+				NULL, (int *)enable);
+}
+
+static inline int fmcadc_trigger_sw_enable(struct fmcadc_dev *dev,
+					   unsigned int enable)
+{
+	int value = !!enable;
+
+	return fmcadc_set_param(dev, "cset0/trigger/sw-trg-enable",
+				NULL, &value);
+}
+
+static inline int fmcadc_trigger_sw_fire(struct fmcadc_dev *dev)
+{
+	int value = 1;
+
+	return fmcadc_set_param(dev, "cset0/trigger/sw-trg-fire",
+				NULL, &value);
+}
+
 
 #ifdef __cplusplus
 }
