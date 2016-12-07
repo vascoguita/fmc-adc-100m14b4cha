@@ -52,6 +52,8 @@ static void fald_help()
 	printf("  --channel|-c <num>       channel used as trigger (1..4)\n");
 	printf("  --range|-r <num>         channel input range: "
 						"100(100mv) 1(1v) 10(10v)\n");
+	printf("  --sw-trigger|-w <num>         ms to wait before generating "
+						"a software trigger\n");
 	printf("  --tiemout|-T <millisec>  timeout for acquisition\n");
 	printf("  --negative-edge          internal trigger is falling edge\n");
 	printf("  --binary|-B <file>       save binary to <file>\n");
@@ -81,6 +83,7 @@ static struct option options[] = {
 	{"timeout",	required_argument, 0, 'T'},
 	{"negative-edge", no_argument,
 			&trg_cfgval[FMCADC_CONF_TRG_POLARITY], 1},
+	{"sw-trigger",	required_argument, 0, 'w'},
 
 	/* new options, to help stress-test */
 	{"binary",	required_argument, 0, 'B'},
@@ -105,7 +108,7 @@ static struct option options[] = {
 	{0, 0, 0, 0}
 };
 
-#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:Vhe"
+#define GETOPT_STRING "b:a:n:d:u:t:c:T:B:M:N:l:s:r:g:X:p:P:D:Vhew:"
 
 static void print_version(char *pname)
 {
@@ -136,6 +139,9 @@ static char *basefile;
 static char buf_fifo[MAX_BUF];
 static char *_argv[16];
 static int _argc;
+static unsigned int sw_trigger_enable;
+static unsigned int sw_trigger_enable_old;
+static unsigned int sw_trigger_wait;
 #define ADC_STATE_START_ACQ (1 << 0)
 #define ADC_STATE_CHANGE_CFG (1 << 1)
 #define ADC_STATE_FAILURE (1 << 2)
@@ -307,6 +313,10 @@ static void fald_acq_parse_args_and_configure(int argc, char *argv[])
 		case 'V':
 			print_version(argv[0]);
 			exit(0);
+		case 'w':
+			sw_trigger_enable = 1;
+			sw_trigger_wait = atoi(optarg);
+			break;
 
 		case 'h': case '?':
 			fald_help();
@@ -445,6 +455,12 @@ static void fald_acq_stop(struct fmcadc_dev *adc, char *called_from)
 	}
 }
 
+static void adc_trigger_sw(struct fmcadc_dev *adc, unsigned int sdelay)
+{
+	sleep(sdelay);
+	fmcadc_trigger_sw_fire(adc);
+}
+
 /**
  * It waits until data is ready, then it send a signal and wait again for the
  * next block of data
@@ -464,6 +480,10 @@ static void *adc_wait_thread(void *arg)
 		}
 		poll_state = 0;
 		pthread_mutex_unlock(&mtx);
+
+		if (sw_trigger_enable)
+			adc_trigger_sw(adc, sw_trigger_wait);
+
 		fald_print_debug("It's time to call fmcadc_acq_poll\n");
 		err = fmcadc_acq_poll(adc, 0 , NULL);
 		if (err) {
@@ -901,6 +921,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	fmcadc_trigger_sw_status(adc, &sw_trigger_enable_old);
+	if (sw_trigger_enable) {
+		fmcadc_trigger_sw_enable(adc, sw_trigger_enable);
+	}
+
 	/* Before parsing args : */
 	/* First retrieve current config in case the program */
 	/* is launched with a subset of options */
@@ -993,6 +1018,8 @@ int main(int argc, char *argv[])
 		else if (plot_chno != -1)  /* Plot only the last Acquisition */
 			fald_acq_plot_data(buf, plot_chno);
 	}
+
+	fmcadc_trigger_sw_enable(adc, sw_trigger_enable_old);
 	fmcadc_close(adc);
 	exit(0);
 }
