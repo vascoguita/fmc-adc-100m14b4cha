@@ -252,6 +252,13 @@ static inline int fmcadc_buffer_maximum_size_set(struct fmcadc_dev *dev,
 	return -1;
 }
 
+
+/**
+ * Get the current software trigger enable status
+ * @param[in] dev adc device token
+ * @param[out] enable enable status
+ * @return 0 on success. -1 on error and errno is set appropriately
+ */
 static inline int fmcadc_trigger_sw_status(struct fmcadc_dev *dev,
 					   unsigned int *enable)
 {
@@ -259,6 +266,13 @@ static inline int fmcadc_trigger_sw_status(struct fmcadc_dev *dev,
 				NULL, (int *)enable);
 }
 
+
+/**
+ * Set the current software trigger enable status
+ * @param[in] dev adc device token
+ * @param[in] enable 0 disable, 1 enable
+ * @return 0 on success. -1 on error and errno is set appropriately
+ */
 static inline int fmcadc_trigger_sw_enable(struct fmcadc_dev *dev,
 					   unsigned int enable)
 {
@@ -268,6 +282,12 @@ static inline int fmcadc_trigger_sw_enable(struct fmcadc_dev *dev,
 				NULL, &value);
 }
 
+
+/**
+ * Execute a software trigger
+ * @param[in] dev adc device token
+ * @return 0 on success. -1 on error and errno is set appropriately
+ */
 static inline int fmcadc_trigger_sw_fire(struct fmcadc_dev *dev)
 {
 	int value = 1;
