@@ -94,10 +94,12 @@ enum fmcadc_configuration_type {
 	FMCADC_CONF_TYPE_TRG = 0,	/* Trigger */
 	FMCADC_CONF_TYPE_ACQ,		/* Acquisition */
 	FMCADC_CONF_TYPE_CHN,		/* Channel */
-	FMCADC_CONT_TYPE_BRD,		/* Board */
+	FMCADC_CONF_TYPE_BRD,		/* Board */
 	__FMCADC_CONF_TYPE_LAST_INDEX,
 };
 
+/* @deprecated: old typo, keep it for compatibility */
+#define FMCADC_CONT_TYPE_BRD FMCADC_CONF_TYPE_BRD
 
 #define __FMCADC_CONF_LEN 64 /* number of allocated items in each structure */
 struct fmcadc_conf {
