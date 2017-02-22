@@ -23,7 +23,7 @@ LOBJ += config-zio.o
 LOBJ += buffer-zio.o
 LOBJ += lib.o
 LOBJ += fmc-adc-100m14b4cha.o
-CFLAGS = -Wall -ggdb -O2 -I../kernel -I$(ZIO_ABS)/include $(EXTRACFLAGS)
+CFLAGS = -Wall -ggdb -O2 -fPIC -I../kernel -I$(ZIO_ABS)/include $(EXTRACFLAGS)
 CFLAGS += -DGIT_VERSION="\"$(GIT_VERSION)\""
 CFLAGS += -DZIO_GIT_VERSION="\"$(ZIO_GIT_VERSION)\""
 LDFLAGS = -L. -lfmcadc
