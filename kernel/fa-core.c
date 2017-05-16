@@ -8,6 +8,7 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/version.h>
+#include <linux/dmaengine.h>
 
 #include "fmc-adc-100m14b4cha.h"
 
@@ -45,7 +46,7 @@ struct workqueue_struct *fa_workqueue;
 static int sg_alloc_table_from_pages_no_squash(struct sg_table *sgt,
 					       struct page **pages,
 					       unsigned int n_pages,
-					       unsigned long offset,
+					       unsigned int offset,
 					       unsigned long size,
 					       gfp_t gfp_mask)
 {
@@ -377,16 +378,6 @@ static int __fa_init(struct fa_dev *fa)
 	struct zio_device *zdev = fa->zdev;
 	int i, addr;
 
-	/* Check if hardware supports 64-bit DMA */
-	if (dma_set_mask(fa->pdev->dev.parent, DMA_BIT_MASK(64))) {
-		/* Check if hardware supports 32-bit DMA */
-		if (dma_set_mask(fa->pdev->dev.parent, DMA_BIT_MASK(32))) {
-			dev_err(fa->msgdev,
-				"32-bit DMA addressing not available\n");
-			return -EINVAL;
-		}
-	}
-
 	/* Use identity calibration */
 	fa_identity_calib_set(fa);
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
@@ -481,19 +472,6 @@ static int fa_resource_validation(struct platform_device *pdev)
 	/* Special Configurations */
 	switch (pdev->id_entry->driver_data) {
 	case ADC_VER_SPEC:
-		r = platform_get_resource(pdev, IORESOURCE_IRQ, ADC_IRQ_DMA);
-		if (!r) {
-			dev_err(&pdev->dev,
-				"The ADC needs an interrupt number for the DMA\n");
-			return -ENXIO;
-		}
-
-		r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_CARR_DMA);
-		if (!r) {
-			dev_err(&pdev->dev,
-				"The ADC needs address to SPEC DMA engine\n");
-			return -ENXIO;
-		}
 		break;
 #ifdef CONFIG_FMC_ADC_SVEC
 	case ADC_VER_SVEC:
@@ -542,14 +520,12 @@ int fa_probe(struct platform_device *pdev)
 		fa->carrier_op = &fa_spec_op;
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages;
 		break;
-#ifdef CONFIG_FMC_ADC_SVEC
 	case ADC_VER_SVEC:
 		memops.read = ioread32be;
 		memops.write = iowrite32be;
 		fa->carrier_op = &fa_svec_op;
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
 		break;
-#endif
 	default:
 		dev_err(fa->msgdev, "Unknow version %lu\n",
 			pdev->id_entry->driver_data);
@@ -623,12 +599,10 @@ static const struct platform_device_id fa_id[] = {
 		.name = "adc-100m-spec",
 		.driver_data = ADC_VER_SPEC,
 	},
-#ifdef CONFIG_FMC_ADC_SVEC
 	{
 		.name = "adc-100m-svec",
 		.driver_data = ADC_VER_SVEC,
 	},
-#endif
 	/* TODO we should support different version */
 };
 

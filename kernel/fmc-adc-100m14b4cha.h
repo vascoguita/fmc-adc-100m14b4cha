@@ -150,6 +150,7 @@ struct fa_calib {
 };
 
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
+#include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 #include <linux/workqueue.h>
@@ -168,12 +169,10 @@ extern int fa_enable_test_data_adc;
 
 enum fa_irq_resource {
 	ADC_IRQ_TRG = 0,
-	ADC_IRQ_DMA,
 };
 
 enum fa_mem_resource {
 	ADC_MEM_BASE = 0,
-	ADC_CARR_DMA, /* SPEC only, remove it when we support DMA engine */
 };
 
 enum fa_bus_resource {
@@ -386,9 +385,6 @@ struct fa_carrier_op {
 	int (*enable_irqs) (struct fa_dev *);
 	int (*disable_irqs) (struct fa_dev *);
 	int (*ack_irq) (struct fa_dev *, int irq_id);
-	int (*dma_start)(struct zio_cset *cset);
-	void (*dma_done)(struct zio_cset *cset);
-	void (*dma_error)(struct zio_cset *cset);
 };
 
 /*
@@ -426,6 +422,7 @@ struct fa_dev {
 
 	/* DMA description */
 	struct zio_dma_sgt *zdma;
+	struct sg_table sgt;
 
 	/* carrier specific functions (init/exit/reset/readout/irq handling) */
 	struct fa_carrier_op *carrier_op;
@@ -442,6 +439,7 @@ struct fa_dev {
 	/* Acquisition */
 	unsigned int		n_shots;
 	unsigned int		n_fires;
+	unsigned int		transfers_left;
 	unsigned int		mshot_max_samples;
 
 	/* Statistic informations */
@@ -465,8 +463,10 @@ struct fa_dev {
 
 	/* Operations */
 	int (*sg_alloc_table_from_pages)(struct sg_table *sgt,
-					 struct page **pages, unsigned int n_pages,
-					 unsigned long offset, unsigned long size,
+					 struct page **pages,
+					 unsigned int n_pages,
+					 unsigned int offset,
+					 unsigned long size,
 					 gfp_t gfp_mask);
 };
 
@@ -476,11 +476,19 @@ struct fa_dev {
  * @dev_mem_off is the offset in ADC internal memory. It points to the first
  *              sample of the stored shot
  * @first_nent is the index of the first nent used for this block
+ * @cset: channel set source for the block
+ * @tx: DMA transfer descriptor
+ * @cookie: transfer token
  */
 struct zfad_block {
 	struct zio_block *block;
 	uint32_t	dev_mem_off;
 	unsigned int first_nent;
+	struct zio_cset *cset;
+	struct dma_async_tx_descriptor *tx;
+	dma_cookie_t cookie;
+	struct sg_table sgt;
+	void *dma_ctx;
 };
 
 /*
@@ -602,9 +610,6 @@ extern int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
 				    unsigned int enable);
 
 /* Function exported by fa-dma.c */
-extern int zfad_dma_start(struct zio_cset *cset);
-extern void zfad_dma_done(struct zio_cset *cset);
-extern void zfad_dma_error(struct zio_cset *cset);
 extern void fa_irq_work(struct work_struct *work);
 
 /* Functions exported by fa-zio-drv.c */

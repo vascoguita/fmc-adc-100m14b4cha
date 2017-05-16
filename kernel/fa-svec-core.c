@@ -39,7 +39,4 @@ static void fa_svec_exit(struct fa_dev *fa)
 struct fa_carrier_op fa_svec_op = {
 	.init = fa_svec_init,
 	.exit = fa_svec_exit,
-	.dma_start = fa_svec_dma_start,
-	.dma_done = fa_svec_dma_done,
-	.dma_error = fa_svec_dma_error,
 };
