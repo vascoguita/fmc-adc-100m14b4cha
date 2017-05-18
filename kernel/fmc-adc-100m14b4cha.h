@@ -462,6 +462,12 @@ struct fa_dev {
 	int enable_auto_start;
 
 	struct dentry *reg_dump;
+
+	/* Operations */
+	int (*sg_alloc_table_from_pages)(struct sg_table *sgt,
+					 struct page **pages, unsigned int n_pages,
+					 unsigned long offset, unsigned long size,
+					 gfp_t gfp_mask);
 };
 
 /*
