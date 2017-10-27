@@ -75,65 +75,81 @@ REG @tab
 Channel 1 saturation register
 @item @code{0x48} @tab
 REG @tab
+@code{ch1_trig} @tab
+Channel 1 trigger configuration register
+@item @code{0x4c} @tab
+REG @tab
 @code{ch2_ctl} @tab
 Channel 2 control register
-@item @code{0x4c} @tab
+@item @code{0x50} @tab
 REG @tab
 @code{ch2_sta} @tab
 Channel 2 status register
-@item @code{0x50} @tab
+@item @code{0x54} @tab
 REG @tab
 @code{ch2_gain} @tab
 Channel 2 gain calibration register
-@item @code{0x54} @tab
+@item @code{0x58} @tab
 REG @tab
 @code{ch2_offset} @tab
 Channel 2 offset calibration register
-@item @code{0x58} @tab
+@item @code{0x5c} @tab
 REG @tab
 @code{ch2_sat} @tab
 Channel 2 saturation register
-@item @code{0x5c} @tab
+@item @code{0x60} @tab
+REG @tab
+@code{ch2_trig} @tab
+Channel 2 trigger configuration register
+@item @code{0x64} @tab
 REG @tab
 @code{ch3_ctl} @tab
 Channel 3 control register
-@item @code{0x60} @tab
+@item @code{0x68} @tab
 REG @tab
 @code{ch3_sta} @tab
 Channel 3 status register
-@item @code{0x64} @tab
+@item @code{0x6c} @tab
 REG @tab
 @code{ch3_gain} @tab
 Channel 3 gain calibration register
-@item @code{0x68} @tab
+@item @code{0x70} @tab
 REG @tab
 @code{ch3_offset} @tab
 Channel 3 offset calibration register
-@item @code{0x6c} @tab
+@item @code{0x74} @tab
 REG @tab
 @code{ch3_sat} @tab
 Channel 3 saturation register
-@item @code{0x70} @tab
+@item @code{0x78} @tab
+REG @tab
+@code{ch3_trig} @tab
+Channel 3 trigger configuration register
+@item @code{0x7c} @tab
 REG @tab
 @code{ch4_ctl} @tab
 Channel 4 control register
-@item @code{0x74} @tab
+@item @code{0x80} @tab
 REG @tab
 @code{ch4_sta} @tab
 Channel 4 status register
-@item @code{0x78} @tab
+@item @code{0x84} @tab
 REG @tab
 @code{ch4_gain} @tab
 Channel 4 gain calibration register
-@item @code{0x7c} @tab
+@item @code{0x88} @tab
 REG @tab
 @code{ch4_offset} @tab
 Channel 4 offset calibration register
-@item @code{0x80} @tab
+@item @code{0x8c} @tab
 REG @tab
 @code{ch4_sat} @tab
 Channel 4 saturation register
-@item @code{0x84} @tab
+@item @code{0x90} @tab
+REG @tab
+@code{ch4_trig} @tab
+Channel 4 trigger configuration register
+@item @code{0x94} @tab
 REG @tab
 @code{multi_depth} @tab
 Multi-shot sample depth register
@@ -225,9 +241,9 @@ Acquisition configuration status
 Hardware trigger selection
 @item @code{2}
 @tab R/W @tab
-@code{HW_TRIG_POL}
+@code{EX_HW_TRIG_POL}
 @tab @code{0} @tab 
-Hardware trigger polarity
+External Hardware trigger polarity
 @item @code{3}
 @tab R/W @tab
 @code{HW_TRIG_EN}
@@ -238,37 +254,19 @@ Hardware trigger enable
 @code{SW_TRIG_EN}
 @tab @code{0} @tab 
 Software trigger enable
-@item @code{6...5}
-@tab R/W @tab
-@code{INT_TRIG_SEL}
-@tab @code{0} @tab 
-Channel selection for internal trigger
-@item @code{7}
+@item @code{5}
 @tab R/W @tab
 @code{INT_TRIG_TEST_EN}
 @tab @code{0} @tab 
 Enable internal trigger test mode
-@item @code{15...8}
-@tab R/W @tab
-@code{INT_TRIG_THRES_FILT}
-@tab @code{0} @tab 
-Internal trigger threshold glitch filter
-@item @code{31...16}
-@tab R/W @tab
-@code{INT_TRIG_THRES}
-@tab @code{0} @tab 
-Threshold for internal trigger
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{hw_trig_sel} @tab 00: internal (data threshold)@*01: external (front panel trigger input)@*10: trigger from timetag core@*11: reserved (for WR message-based trigger)
-@item @code{hw_trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{ex_hw_trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
 @item @code{hw_trig_en} @tab 0: disable@*1: enable
 @item @code{sw_trig_en} @tab 0: disable@*1: enable
-@item @code{int_trig_sel} @tab 00: channel 1@*01: channel 2@*10: channel 3@*11: channel 4
 @item @code{int_trig_test_en} @tab Test mode:@* ch1 = Channel 1 input(analogue)@* ch2 = Channel input over threshold (digital)@* ch3 = Channel input over threshold filtered (digital)@* ch4 = Trigger (digital)
-@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
-@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
 @end multitable
 @regsection @code{trig_dly} - Trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -462,6 +460,42 @@ Saturation value for channel 1
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 @end multitable
+@regsection @code{ch1_trig} - Channel 1 trigger configuration register
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{0}
+@tab R/W @tab
+@code{TRIG_EN}
+@tab @code{0} @tab 
+Trigger enable for channel 1
+@item @code{1}
+@tab R/W @tab
+@code{TRIG_POL}
+@tab @code{0} @tab 
+Trigger polarity
+@item @code{7...2}
+@tab R/W @tab
+@code{RESERVED}
+@tab @code{0} @tab 
+Reserved
+@item @code{15...8}
+@tab R/W @tab
+@code{INT_TRIG_THRES_FILT}
+@tab @code{0} @tab 
+Internal trigger threshold glitch filter for Channel 1
+@item @code{31...16}
+@tab R/W @tab
+@code{INT_TRIG_THRES}
+@tab @code{0} @tab 
+Threshold for Channel 1 internal trigger
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{reserved} @tab Ignore on read, write with 0's
+@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
+@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
+@end multitable
 @regsection @code{ch2_ctl} - Channel 2 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
@@ -526,6 +560,42 @@ Saturation value for channel 2
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+@end multitable
+@regsection @code{ch2_trig} - Channel 2 trigger configuration register
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{0}
+@tab R/W @tab
+@code{TRIG_EN}
+@tab @code{0} @tab 
+Trigger enable for channel 2
+@item @code{1}
+@tab R/W @tab
+@code{TRIG_POL}
+@tab @code{0} @tab 
+Trigger polarity
+@item @code{7...2}
+@tab R/W @tab
+@code{RESERVED}
+@tab @code{0} @tab 
+Reserved
+@item @code{15...8}
+@tab R/W @tab
+@code{INT_TRIG_THRES_FILT}
+@tab @code{0} @tab 
+Internal trigger threshold glitch filter for Channel 2
+@item @code{31...16}
+@tab R/W @tab
+@code{INT_TRIG_THRES}
+@tab @code{0} @tab 
+Threshold for Channel 2 internal trigger
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{reserved} @tab Ignore on read, write with 0's
+@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
+@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
 @end multitable
 @regsection @code{ch3_ctl} - Channel 3 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -592,6 +662,42 @@ Saturation value for channel 3
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 @end multitable
+@regsection @code{ch3_trig} - Channel 3 trigger configuration register
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{0}
+@tab R/W @tab
+@code{TRIG_EN}
+@tab @code{0} @tab 
+Trigger enable for channel 3
+@item @code{1}
+@tab R/W @tab
+@code{TRIG_POL}
+@tab @code{0} @tab 
+Trigger polarity
+@item @code{7...2}
+@tab R/W @tab
+@code{RESERVED}
+@tab @code{0} @tab 
+Reserved
+@item @code{15...8}
+@tab R/W @tab
+@code{INT_TRIG_THRES_FILT}
+@tab @code{0} @tab 
+Internal trigger threshold glitch filter for Channel 3
+@item @code{31...16}
+@tab R/W @tab
+@code{INT_TRIG_THRES}
+@tab @code{0} @tab 
+Threshold for Channel 3 internal trigger
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{reserved} @tab Ignore on read, write with 0's
+@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
+@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
+@end multitable
 @regsection @code{ch4_ctl} - Channel 4 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
@@ -656,6 +762,42 @@ Saturation value for channel 4
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+@end multitable
+@regsection @code{ch4_trig} - Channel 4 trigger configuration register
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{0}
+@tab R/W @tab
+@code{TRIG_EN}
+@tab @code{0} @tab 
+Trigger enable for channel 4
+@item @code{1}
+@tab R/W @tab
+@code{TRIG_POL}
+@tab @code{0} @tab 
+trigger polarity
+@item @code{7...2}
+@tab R/W @tab
+@code{RESERVED}
+@tab @code{0} @tab 
+Reserved
+@item @code{15...8}
+@tab R/W @tab
+@code{INT_TRIG_THRES_FILT}
+@tab @code{0} @tab 
+Internal trigger threshold glitch filter for Channel 4
+@item @code{31...16}
+@tab R/W @tab
+@code{INT_TRIG_THRES}
+@tab @code{0} @tab 
+Threshold for Channel 4 internal trigger
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{reserved} @tab Ignore on read, write with 0's
+@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
+@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
 @end multitable
 @regsection @code{multi_depth} - Multi-shot sample depth register
 @multitable @columnfractions .10 .10 .15 .10 .55

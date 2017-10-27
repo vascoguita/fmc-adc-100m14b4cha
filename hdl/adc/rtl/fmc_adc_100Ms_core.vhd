@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2016-06-23
+-- Last update: 2018-01-22
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -195,6 +195,8 @@ architecture rtl of fmc_adc_100Ms_core is
   ------------------------------------------------------------------------------
   type t_acq_fsm_state is (IDLE, PRE_TRIG, WAIT_TRIG, POST_TRIG, TRIG_TAG, DECR_SHOT);
   type t_data_pipe is array (natural range<>) of std_logic_vector(63 downto 0);
+  type t_fmc_adc_vec8_array is array (positive range<>) of std_logic_vector(7 downto 0);
+  type t_fmc_adc_vec16_array is array (positive range<>) of std_logic_vector(15 downto 0);
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -236,20 +238,22 @@ architecture rtl of fmc_adc_100Ms_core is
   signal ext_trig_p, ext_trig_n     : std_logic;
   signal time_trig                  : std_logic;
   signal int_trig                   : std_logic;
-  signal int_trig_over_thres        : std_logic;
-  signal int_trig_over_thres_d      : std_logic;
-  signal int_trig_over_thres_filt   : std_logic;
-  signal int_trig_over_thres_filt_d : std_logic;
-  signal int_trig_sel               : std_logic_vector(1 downto 0);
-  signal int_trig_data              : std_logic_vector(15 downto 0);
-  signal int_trig_thres             : std_logic_vector(15 downto 0);
+  signal int_ch_trig                : std_logic_vector(1 to 4);
+  signal int_trig_over_thres        : std_logic_vector(1 to 4);
+  signal int_trig_over_thres_d      : std_logic_vector(1 to 4);
+  signal int_trig_over_thres_filt   : std_logic_vector(1 to 4);
+  signal int_trig_over_thres_filt_d : std_logic_vector(1 to 4);
+  signal int_trig_data              : t_fmc_adc_vec16_array(1 to 4);
+  signal int_trig_thres             : t_fmc_adc_vec16_array(1 to 4);
   signal int_trig_test_en           : std_logic;
-  signal int_trig_thres_filt        : std_logic_vector(7 downto 0);
+  signal int_trig_thres_filt        : t_fmc_adc_vec8_array(1 to 4);
   signal hw_trig_pol                : std_logic;
+  signal int_trig_pol               : std_logic_vector(1 to 4);
   signal hw_trig                    : std_logic;
   signal hw_trig_t                  : std_logic;
   signal hw_trig_sel                : std_logic_vector(1 downto 0);
   signal hw_trig_en                 : std_logic;
+  signal int_trig_en                : std_logic_vector(1 to 4);
   signal sw_trig                    : std_logic;
   signal sw_trig_t                  : std_logic;
   signal sw_trig_en                 : std_logic;
@@ -665,32 +669,45 @@ begin
   csr_regin.ch4_sta_val_i       <= serdes_out_data(63 downto 48);
   csr_regin.multi_depth_i       <= c_MULTISHOT_SAMPLE_DEPTH;
 
-  fsm_cmd             <= csr_regout.ctl_fsm_cmd_o;
-  fsm_cmd_wr          <= csr_regout.ctl_fsm_cmd_wr_o;
-  gpio_si570_oe_o     <= csr_regout.ctl_fmc_clk_oe_o;
-  gpio_dac_clr_n_o    <= csr_regout.ctl_offset_dac_clr_n_o;
-  serdes_man_bitslip  <= csr_regout.ctl_man_bitslip_o;
-  test_data_en        <= csr_regout.ctl_test_data_en_o;
-  trig_led_man        <= csr_regout.ctl_trig_led_o;
-  acq_led_man         <= csr_regout.ctl_acq_led_o;
-  hw_trig_sel         <= csr_regout.trig_cfg_hw_trig_sel_o;
-  hw_trig_pol         <= csr_regout.trig_cfg_hw_trig_pol_o;
-  hw_trig_en          <= csr_regout.trig_cfg_hw_trig_en_o;
-  sw_trig_en          <= csr_regout.trig_cfg_sw_trig_en_o;
-  int_trig_sel        <= csr_regout.trig_cfg_int_trig_sel_o;
-  int_trig_test_en    <= csr_regout.trig_cfg_int_trig_test_en_o;
-  int_trig_thres_filt <= csr_regout.trig_cfg_int_trig_thres_filt_o;
-  int_trig_thres      <= csr_regout.trig_cfg_int_trig_thres_o;
-  trig_delay          <= csr_regout.trig_dly_o;
-  sw_trig_t           <= csr_regout.sw_trig_wr_o;
-  shots_value         <= csr_regout.shots_nb_o;
-  undersample_factor  <= csr_regout.sr_undersample_o;
-  pre_trig_value      <= csr_regout.pre_samples_o;
-  post_trig_value     <= csr_regout.post_samples_o;
-  gpio_ssr_ch1_o      <= csr_regout.ch1_ctl_ssr_o;
-  gpio_ssr_ch2_o      <= csr_regout.ch2_ctl_ssr_o;
-  gpio_ssr_ch3_o      <= csr_regout.ch3_ctl_ssr_o;
-  gpio_ssr_ch4_o      <= csr_regout.ch4_ctl_ssr_o;
+  fsm_cmd                <= csr_regout.ctl_fsm_cmd_o;
+  fsm_cmd_wr             <= csr_regout.ctl_fsm_cmd_wr_o;
+  gpio_si570_oe_o        <= csr_regout.ctl_fmc_clk_oe_o;
+  gpio_dac_clr_n_o       <= csr_regout.ctl_offset_dac_clr_n_o;
+  serdes_man_bitslip     <= csr_regout.ctl_man_bitslip_o;
+  test_data_en           <= csr_regout.ctl_test_data_en_o;
+  trig_led_man           <= csr_regout.ctl_trig_led_o;
+  acq_led_man            <= csr_regout.ctl_acq_led_o;
+  hw_trig_sel            <= csr_regout.trig_cfg_hw_trig_sel_o;
+  hw_trig_pol            <= csr_regout.trig_cfg_ex_hw_trig_pol_o;
+  int_trig_pol(1)        <= csr_regout.ch1_trig_trig_pol_o;
+  int_trig_pol(2)        <= csr_regout.ch2_trig_trig_pol_o;
+  int_trig_pol(3)        <= csr_regout.ch3_trig_trig_pol_o;
+  int_trig_pol(4)        <= csr_regout.ch4_trig_trig_pol_o;
+  hw_trig_en             <= csr_regout.trig_cfg_hw_trig_en_o;
+  sw_trig_en             <= csr_regout.trig_cfg_sw_trig_en_o;
+  int_trig_en(1)         <= csr_regout.ch1_trig_trig_en_o;
+  int_trig_en(2)         <= csr_regout.ch2_trig_trig_en_o;
+  int_trig_en(3)         <= csr_regout.ch3_trig_trig_en_o;
+  int_trig_en(4)         <= csr_regout.ch4_trig_trig_en_o;
+  int_trig_test_en       <= csr_regout.trig_cfg_int_trig_test_en_o;
+  int_trig_thres_filt(1) <= csr_regout.ch1_trig_int_trig_thres_filt_o;
+  int_trig_thres_filt(2) <= csr_regout.ch2_trig_int_trig_thres_filt_o;
+  int_trig_thres_filt(3) <= csr_regout.ch3_trig_int_trig_thres_filt_o;
+  int_trig_thres_filt(4) <= csr_regout.ch4_trig_int_trig_thres_filt_o;
+  int_trig_thres(1)      <= csr_regout.ch1_trig_int_trig_thres_o;
+  int_trig_thres(2)      <= csr_regout.ch2_trig_int_trig_thres_o;
+  int_trig_thres(3)      <= csr_regout.ch3_trig_int_trig_thres_o;
+  int_trig_thres(4)      <= csr_regout.ch4_trig_int_trig_thres_o;
+  trig_delay             <= csr_regout.trig_dly_o;
+  sw_trig_t              <= csr_regout.sw_trig_wr_o;
+  shots_value            <= csr_regout.shots_nb_o;
+  undersample_factor     <= csr_regout.sr_undersample_o;
+  pre_trig_value         <= csr_regout.pre_samples_o;
+  post_trig_value        <= csr_regout.post_samples_o;
+  gpio_ssr_ch1_o         <= csr_regout.ch1_ctl_ssr_o;
+  gpio_ssr_ch2_o         <= csr_regout.ch2_ctl_ssr_o;
+  gpio_ssr_ch3_o         <= csr_regout.ch3_ctl_ssr_o;
+  gpio_ssr_ch4_o         <= csr_regout.ch4_ctl_ssr_o;
 
   gain_calibr <= csr_regout.ch4_gain_val_o & csr_regout.ch3_gain_val_o &
                  csr_regout.ch2_gain_val_o & csr_regout.ch1_gain_val_o;
@@ -759,51 +776,51 @@ begin
       ppulse_o => time_trig);
 
   -- Internal hardware trigger
-  int_trig_data <= data_calibr_out(15 downto 0) when int_trig_sel = "00" else   -- CH1 selected
-                   data_calibr_out(31 downto 16) when int_trig_sel = "01" else  -- CH2 selected
-                   data_calibr_out(47 downto 32) when int_trig_sel = "10" else  -- CH3 selected
-                   data_calibr_out(63 downto 48) when int_trig_sel = "11" else  -- CH4 selected
-                   (others => '0');
+  g_int_trig : for I in 1 to 4 generate
+    int_trig_data(I) <= data_calibr_out(16*I-1 downto 16*I-16);
 
-  -- Detects input data going over the internal trigger threshold
-  p_int_trig : process (fs_clk, fs_rst_n)
-  begin
-    if fs_rst_n = '0' then
-      int_trig_over_thres <= '0';
-    elsif rising_edge(fs_clk) then
-      if signed(int_trig_data) > signed(int_trig_thres) then
-        int_trig_over_thres <= '1';
-      else
-        int_trig_over_thres <= '0';
+    -- Detects input data going over the internal trigger threshold
+    p_int_trig : process (fs_clk, fs_rst_n)
+    begin
+      if (fs_rst_n = '0' or int_trig_en(I) = '0') then
+        int_trig_over_thres(I) <= '0';
+      elsif rising_edge(fs_clk) then
+        if signed(int_trig_data(I)) > signed(int_trig_thres(I)) then
+          int_trig_over_thres(I) <= '1';
+        else
+          int_trig_over_thres(I) <= '0';
+        end if;
       end if;
-    end if;
-  end process p_int_trig;
+    end process p_int_trig;
 
-  -- Filters out glitches from over threshold signal (rejects noise around the threshold -> hysteresis)
-  cmp_dyn_glitch_filt : gc_dyn_glitch_filt
-    generic map(
-      g_len_width => 8
-      )
-    port map(
-      clk_i   => fs_clk,
-      rst_n_i => fs_rst_n,
-      len_i   => int_trig_thres_filt(7 downto 0),
-      dat_i   => int_trig_over_thres,
-      dat_o   => int_trig_over_thres_filt
-      );
+    -- Filters out glitches from over threshold signal (rejects noise around the threshold -> hysteresis)
+    cmp_dyn_glitch_filt : gc_dyn_glitch_filt
+      generic map(
+        g_len_width => 8
+        )
+      port map(
+        clk_i   => fs_clk,
+        rst_n_i => fs_rst_n,
+        len_i   => int_trig_thres_filt(I),
+        dat_i   => int_trig_over_thres(I),
+        dat_o   => int_trig_over_thres_filt(I)
+        );
 
-  -- Detects whether it's a positive or negative slope
-  p_int_trig_slope : process (fs_clk, fs_rst_n)
-  begin
-    if fs_rst_n = '0' then
-      int_trig_over_thres_filt_d <= '0';
-    elsif rising_edge(fs_clk) then
-      int_trig_over_thres_filt_d <= int_trig_over_thres_filt;
-    end if;
-  end process;
+    -- Detects whether it's a positive or negative slope
+    p_int_trig_slope : process (fs_clk, fs_rst_n)
+    begin
+      if fs_rst_n = '0' then
+        int_trig_over_thres_filt_d(I) <= '0';
+      elsif rising_edge(fs_clk) then
+        int_trig_over_thres_filt_d(I) <= int_trig_over_thres_filt(I);
+      end if;
+    end process;
 
-  int_trig <= int_trig_over_thres_filt and not(int_trig_over_thres_filt_d) when hw_trig_pol = '0' else  -- positive slope
-              not(int_trig_over_thres_filt) and int_trig_over_thres_filt_d;  -- negative slope
+    int_ch_trig(I) <= int_trig_over_thres_filt(I) and not(int_trig_over_thres_filt_d(I)) when int_trig_pol(I) = '0' else  -- positive slope
+                     not(int_trig_over_thres_filt(I)) and int_trig_over_thres_filt_d(I);  -- negative slope
+  end generate g_int_trig;
+
+  int_trig <= int_ch_trig(1) or int_ch_trig(2) or int_ch_trig(3) or int_ch_trig(4);
 
   -- Hardware trigger selection
   --    00: internal = adc data threshold
@@ -952,9 +969,9 @@ begin
   end process;
 
   -- Internal trigger test mode
-  int_trig_over_thres_tst      <= X"1000" when int_trig_over_thres = '1'      else X"0000";
-  int_trig_over_thres_filt_tst <= X"1000" when int_trig_over_thres_filt = '1' else X"0000";
-  trig_tst                     <= X"1000" when trig_align = '1'               else X"0000";
+  int_trig_over_thres_tst      <= X"1000" when int_trig_over_thres(1) = '1'      else X"0000";
+  int_trig_over_thres_filt_tst <= X"1000" when int_trig_over_thres_filt(1) = '1' else X"0000";
+  trig_tst                     <= X"1000" when trig_align = '1'                  else X"0000";
 
   -- Delay data to compoensate for internal trigger detection
   p_data_delay : process (fs_clk, fs_rst_n)
