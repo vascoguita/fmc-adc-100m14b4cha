@@ -1,10 +1,8 @@
 CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
-SVEC_SW_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(SVEC_SW_ABS)/kernel/Module.symvers.vmebus
 KBUILD_EXTRA_SYMBOLS := \
 	$(ZIO_ABS)/Module.symvers \
-	$(FMC_BUS_ABS)/kernel/Module.symvers \
-	$(SVEC_SW_EXTRA_SYMBOLS-y)
+	$(FMC_BUS_ABS)/kernel/Module.symvers
 
 # add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
 # of a bigger project that we want to track
@@ -16,8 +14,6 @@ endif
 # add versions of used submodules
 SUBMODULE_VERSIONS-y += MODULE_INFO(version_fmc_bus,\"$(FMC_BUS_VERSION)\");
 SUBMODULE_VERSIONS-y += MODULE_INFO(version_zio,\"$(ZIO_VERSION)\");
-SUBMODULE_VERSIONS-y += MODULE_INFO(version_spec_sw,\"$(SPEC_SW_VERSION)\");
-SUBMODULE_VERSIONS-$(CONFIG_FMC_ADC_SVEC) += MODULE_INFO(version_svec_sw,\"$(SVEC_SW_VERSION)\");
 
 ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS-y)"
 
@@ -27,10 +23,8 @@ LINUXINCLUDE :=  -I$(FMC_BUS_ABS)/kernel/include $(LINUXINCLUDE)
 
 ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(ZIO_ABS)/include \
-	-I$(SPEC_SW_ABS)/kernel \
 	-I$(src)
 
-ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(SVEC_SW_ABS)/kernel
 ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
 ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
 
