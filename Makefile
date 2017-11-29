@@ -8,15 +8,18 @@ all: kernel tools lib libtools
 
 FMC_BUS ?= fmc-bus
 ZIO ?= zio
+SVEC_SW ?= svec-sw
 
 # Use the absolute path so it can be used by submodule
 # FMC_BUS_ABS and ZIO_ABS has to be absolut path,
 # due to beeing passed to the Kbuild
 FMC_BUS_ABS ?= $(abspath $(FMC_BUS) )
 ZIO_ABS ?= $(abspath $(ZIO) )
+SVEC_SW_ABS ?= $(abspath $(SVEC_SW) )
 
 export FMC_BUS_ABS
 export ZIO_ABS
+export SVEC_SW_ABS
 
 DIRS = $(FMC_BUS_ABS) $(ZIO_ABS) kernel tools lib libtools
 

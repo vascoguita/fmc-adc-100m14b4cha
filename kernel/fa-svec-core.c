@@ -11,8 +11,8 @@
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-
 #include <svec.h>
+
 #include "fmc-adc-100m14b4cha.h"
 #include "fa-svec.h"
 
