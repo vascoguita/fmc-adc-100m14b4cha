@@ -1,6 +1,6 @@
 CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
-SVEC_SW_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(SVEC_SW_ABS)/kernel/Module.symvers.vmebus
+SVEC_SW_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
 KBUILD_EXTRA_SYMBOLS := \
 	$(ZIO_ABS)/Module.symvers \
 	$(FMC_BUS_ABS)/kernel/Module.symvers \
@@ -28,6 +28,7 @@ ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(src)
 
 ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(SVEC_SW_ABS)/kernel
+ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(VMEBUS_ABS)/include
 ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
 ccflags-$(CONFIG_FMC_ADC_SVEC) += -DCONFIG_FMC_ADC_SVEC
 
