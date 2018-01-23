@@ -77,8 +77,6 @@ add wave -noupdate -group Top /main/DUT/aux_leds_o
 #add wave -noupdate -group Top /main/DUT/aux_buttons_i
 add wave -noupdate -group Top /main/DUT/pcb_ver_i
 add wave -noupdate -group Top /main/DUT/carrier_one_wire_b
-add wave -noupdate -group Top /main/DUT/L_CLKp
-add wave -noupdate -group Top /main/DUT/L_CLKn
 add wave -noupdate -group Top /main/DUT/L_RST_N
 add wave -noupdate -group Top /main/DUT/P2L_RDY
 add wave -noupdate -group Top /main/DUT/P2L_CLKn
@@ -86,7 +84,6 @@ add wave -noupdate -group Top /main/DUT/P2L_CLKp
 add wave -noupdate -group Top /main/DUT/P2L_DATA
 add wave -noupdate -group Top /main/DUT/P2L_DFRAME
 add wave -noupdate -group Top /main/DUT/P2L_VALID
-add wave -noupdate -group Top /main/DUT/P_WR_REQ
 add wave -noupdate -group Top /main/DUT/P_WR_RDY
 add wave -noupdate -group Top /main/DUT/RX_ERROR
 add wave -noupdate -group Top /main/DUT/L2P_DATA
@@ -99,7 +96,6 @@ add wave -noupdate -group Top /main/DUT/L2P_RDY
 add wave -noupdate -group Top /main/DUT/L_WR_RDY
 add wave -noupdate -group Top /main/DUT/P_RD_D_RDY
 add wave -noupdate -group Top /main/DUT/TX_ERROR
-add wave -noupdate -group Top /main/DUT/VC_RDY
 add wave -noupdate -group Top /main/DUT/GPIO
 add wave -noupdate -group Top /main/DUT/DDR3_CAS_N
 add wave -noupdate -group Top /main/DUT/DDR3_CK_N
@@ -219,6 +215,9 @@ add wave -noupdate -group Top /main/DUT/led_pwm_val_down
 add wave -noupdate -group Top /main/DUT/led_pwm_cnt
 add wave -noupdate -group Top /main/DUT/led_pwm
 add wave -noupdate -radix hexadecimal -group MEZ /main/DUT/cmp_fmc_adc_mezzanine_0/cnx_*
+add wave -noupdate -radix hexadecimal -group ADC -group SERDES /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/cmp_adc_serdes/*
+add wave -noupdate -radix hexadecimal -group ADC -group CSR /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/csr_regout
+add wave -noupdate -radix hexadecimal -group ADC -group CSR /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_*
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_clk_i
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/sys_rst_n_i
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/wb_csr_adr_i
@@ -283,10 +282,8 @@ add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ext_trig_a
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/ext_trig
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig
-add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_sel
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_thres
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_data
-add wave -noupdate -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_over_thres_d
 add wave -noupdate -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/int_trig_over_thres
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/hw_trig
 add wave -noupdate -radix hexadecimal -group ADC /main/DUT/cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/hw_trig_t
@@ -683,171 +680,172 @@ add wave -noupdate -group DMACtrol /main/DUT/cmp_gn4124_core/cmp_dma_controller/
 add wave -noupdate -group DMACtrol /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_status
 add wave -noupdate -group DMACtrol /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_error_irq
 add wave -noupdate -group DMACtrol /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_done_irq
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/rst_n_a_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/status_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_clk_p_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_clk_n_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_data_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dframe_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_valid_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_rdy_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_wr_req_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_wr_rdy_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/rx_error_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/vc_rdy_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_clk_p_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_clk_n_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_data_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dframe_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_valid_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/tx_error_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_irq_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/irq_p_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/irq_p_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_clk_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_adr_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_dat_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_sel_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_stb_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_we_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_cyc_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_dat_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_ack_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_stall_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_clk_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_adr_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_dat_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_sel_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_stb_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_we_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_cyc_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_dat_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_ack_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_stall_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_err_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_rty_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_int_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_clk_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_adr_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_dat_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_sel_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_stb_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_we_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_cyc_o
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_dat_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ack_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_stall_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_err_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_rty_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_int_i
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/sys_clk
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/io_clk
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/serdes_strobe
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_pll_locked
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/rst_reg
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/rst_n
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/rst
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/des_pd_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/des_pd_dframe
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/des_pd_data
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_wr_rdy
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_rdy_wbm
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_rdy_pdm
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_start
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_length
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_cid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_last
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_stat
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_target_mrd
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_target_mwr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_master_cpld
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_master_cpln
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_d_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_d_last
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_d
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_be
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_addr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_addr_start
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/arb_ser_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/arb_ser_dframe
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/arb_ser_data
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy_t
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy_t2
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy_t
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy_t2
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy_t
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy_t2
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb_t
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb_t2
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/tx_error_t2
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/tx_error_t
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/tx_error
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_dframe
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_data
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_req
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/arb_wbm_gnt
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_req
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/arb_ldm_gnt
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_dframe
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_data
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_dframe
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_data
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_req
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/arb_pdm_gnt
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_carrier_addr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_host_addr_h
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_host_addr_l
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_len
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_start_l2p
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_start_p2l
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_start_next
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_done
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_error
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_l2p_done
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_l2p_error
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_p2l_done
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_p2l_error
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_byte_swap
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_abort
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_carrier_addr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_host_addr_h
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_host_addr_l
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_len
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_next_l
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_next_h
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_attrib
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/next_item_valid
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/dma_irq
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/csr_adr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_adr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_dat_s2m
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_dat_m2s
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_sel
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_cyc
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_stb
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_we
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_ack
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_stall
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_adr
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_dat_s2m
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_dat_m2s
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_sel
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_cyc
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_stb
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_we
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_ack
-add wave -noupdate -expand -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_stall
+add wave -noupdate -group Gennum /main/I_Gennum/ready
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/rst_n_a_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/status_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_clk_p_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_clk_n_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_data_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dframe_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_valid_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_rdy_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_wr_req_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_wr_rdy_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/rx_error_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/vc_rdy_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_clk_p_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_clk_n_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_data_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dframe_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_valid_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/tx_error_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_irq_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/irq_p_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/irq_p_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_clk_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_adr_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_dat_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_sel_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_stb_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_we_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_cyc_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_dat_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_ack_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_reg_stall_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_clk_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_adr_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_dat_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_sel_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_stb_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_we_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_cyc_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_dat_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_ack_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_stall_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_err_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_rty_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_int_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_clk_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_adr_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_dat_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_sel_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_stb_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_we_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_cyc_o
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_dat_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ack_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_stall_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_err_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_rty_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_int_i
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/sys_clk
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/io_clk
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/serdes_strobe
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_pll_locked
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/rst_reg
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/rst_n
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/rst
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/des_pd_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/des_pd_dframe
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/des_pd_data
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_wr_rdy
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_rdy_wbm
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_rdy_pdm
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_start
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_length
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_cid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_last
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_hdr_stat
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_target_mrd
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_target_mwr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_master_cpld
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_master_cpln
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_d_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_d_last
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_d
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_be
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_addr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_addr_start
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/arb_ser_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/arb_ser_dframe
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/arb_ser_data
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy_t
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy_t2
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l_wr_rdy
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy_t
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy_t2
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p_rd_d_rdy
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy_t
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy_t2
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_rdy
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb_t
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_edb_t2
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/tx_error_t2
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/tx_error_t
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/tx_error
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_dframe
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_data
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/wbm_arb_req
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/arb_wbm_gnt
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_req
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/arb_ldm_gnt
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_dframe
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/ldm_arb_data
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_dframe
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_data
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/pdm_arb_req
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/arb_pdm_gnt
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_carrier_addr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_host_addr_h
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_host_addr_l
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_len
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_start_l2p
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_start_p2l
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_start_next
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_done
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_error
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_l2p_done
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_l2p_error
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_p2l_done
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_p2l_error
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_byte_swap
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_ctrl_abort
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_carrier_addr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_host_addr_h
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_host_addr_l
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_len
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_next_l
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_next_h
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_attrib
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/next_item_valid
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/dma_irq
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/csr_adr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_adr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_dat_s2m
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_dat_m2s
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_sel
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_cyc
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_stb
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_we
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_ack
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/l2p_dma_stall
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_adr
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_dat_s2m
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_dat_m2s
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_sel
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_cyc
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_stb
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_we
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_ack
+add wave -noupdate -group Gennum /main/DUT/cmp_gn4124_core/p2l_dma_stall
 TreeUpdate [SetDefaultTree]
 #WaveRestoreCursors {{Cursor 1} {54925075 ps} 0}
 configure wave -namecolwidth 282

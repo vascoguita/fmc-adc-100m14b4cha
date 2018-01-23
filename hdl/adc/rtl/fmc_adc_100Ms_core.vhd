@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2018-01-22
+-- Last update: 2018-01-23
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -240,7 +240,6 @@ architecture rtl of fmc_adc_100Ms_core is
   signal int_trig                   : std_logic;
   signal int_ch_trig                : std_logic_vector(1 to 4);
   signal int_trig_over_thres        : std_logic_vector(1 to 4);
-  signal int_trig_over_thres_d      : std_logic_vector(1 to 4);
   signal int_trig_over_thres_filt   : std_logic_vector(1 to 4);
   signal int_trig_over_thres_filt_d : std_logic_vector(1 to 4);
   signal int_trig_data              : t_fmc_adc_vec16_array(1 to 4);

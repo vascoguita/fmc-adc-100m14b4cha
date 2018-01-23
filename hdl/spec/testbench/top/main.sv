@@ -39,11 +39,16 @@ module main;
        ) DUT (
 	      .clk_125m_pllref_p_i(clk_125m_pllref_p),
 	      .clk_125m_pllref_n_i(clk_125m_pllref_n),
+	      .adc0_ext_trigger_p_i(1'b0),
+	      .adc0_ext_trigger_n_i(1'b1),
 	      .adc0_dco_p_i(adc0_dco),
 	      .adc0_dco_n_i(~adc0_dco),
-	      .adc0_fr_p_i(adc0_fr),
-	      .adc0_fr_n_i(~adc0_fr),
-
+	      .adc0_fr_p_i(~adc0_fr),
+	      .adc0_fr_n_i(adc0_fr),
+	      .adc0_outa_p_i(4'h0),
+	      .adc0_outa_n_i(4'hf),
+	      .adc0_outb_p_i(4'h0),
+	      .adc0_outb_n_i(4'hf),
 	      .DDR3_CAS_N (ddr_cas_n),
 	      .DDR3_CK_N(ddr_ck_n),
 	      .DDR3_CK_P  (ddr_ck_p),
@@ -114,7 +119,7 @@ module main;
 
       acc.set_default_xfer_size(4);
 
-      @(posedge DUT.sys_clk_pll_locked);
+      //@(posedge DUT.sys_clk_pll_locked);
 
       #15us;
 
@@ -124,7 +129,7 @@ module main;
       acc.read('h3304, val); // status
       $display("STATUS: %x", val);
 
-      acc.write('h3308, 'h00000008); // trigger cfg: enable sw trigger
+      acc.write('h3308, 'h00000010); // trigger cfg: enable sw trigger
       acc.write('h3328, 'h00000000); // #pre-samples
       acc.write('h332C, 'h00000010); // #post-samples
       acc.write('h3314, 'h00000001); // #nshots: single-shot acq
