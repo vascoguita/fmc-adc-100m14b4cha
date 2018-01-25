@@ -3,8 +3,10 @@
 `include "gn4124_bfm.svh"
 `include "if_wb_master.svh"
 `include "if_wb_slave.svh"
+`include "fmc_adc_100Ms_csr.v"
 
-
+`define CSR_BASE 'h3000
+`define TAG_BASE 'h3900
 
 module main;
    reg clk_125m_pllref_p = 0;
@@ -12,8 +14,13 @@ module main;
 
    reg rst_n = 0;
    reg adc0_dco = 0;
-   reg adc0_fr = 0;
+   reg adc0_fr = 1'b0;
+   reg ext_trig = 1'b0;
+   reg adc_data_dir = 1'b0;
 
+   reg[3:0] adc0_dat_odd  = 4'h0;
+   reg[3:0] adc0_dat_even = 4'h0;
+   reg signed [13:0] adc0_data = 0;
 
    always #1.25ns adc0_dco <= ~adc0_dco;
    always #4ns clk_125m_pllref_p <= ~clk_125m_pllref_p;
@@ -39,16 +46,16 @@ module main;
        ) DUT (
 	      .clk_125m_pllref_p_i(clk_125m_pllref_p),
 	      .clk_125m_pllref_n_i(clk_125m_pllref_n),
-	      .adc0_ext_trigger_p_i(1'b0),
-	      .adc0_ext_trigger_n_i(1'b1),
+	      .adc0_ext_trigger_p_i(ext_trig),
+	      .adc0_ext_trigger_n_i(~ext_trig),
 	      .adc0_dco_p_i(adc0_dco),
 	      .adc0_dco_n_i(~adc0_dco),
 	      .adc0_fr_p_i(~adc0_fr),
 	      .adc0_fr_n_i(adc0_fr),
-	      .adc0_outa_p_i(4'h0),
-	      .adc0_outa_n_i(4'hf),
-	      .adc0_outb_p_i(4'h0),
-	      .adc0_outb_n_i(4'hf),
+	      .adc0_outa_p_i(adc0_dat_odd),
+	      .adc0_outa_n_i(~adc0_dat_odd),
+	      .adc0_outb_p_i(adc0_dat_even),
+	      .adc0_outb_n_i(~adc0_dat_even),
 	      .DDR3_CAS_N (ddr_cas_n),
 	      .DDR3_CK_N(ddr_ck_n),
 	      .DDR3_CK_P  (ddr_ck_p),
@@ -97,17 +104,55 @@ module main;
 
    int	       adc_div = 0;
 
-   always@(posedge adc0_dco)
-     if(adc_div==1) begin
-	adc0_fr <= ~adc0_fr;
-	adc_div <= 0;
+   always@(negedge adc0_dco)
+     begin
+	#625ps;
+	if(adc_div == 1) begin
+	   adc0_fr <= ~adc0_fr;
+	   adc_div <= 0;
+	end
+	else begin
+	   adc_div <= adc_div + 1;
+	end
      end
-     else begin
-	adc_div <= adc_div + 1;
+
+   always@(posedge adc0_fr)
+     begin
+	if ((adc0_data > 400) || (adc0_data < -400)) begin
+	   adc_data_dir = ~adc_data_dir;
+	end
+	if (adc_data_dir == 0) begin
+	   adc0_data = adc0_data + 8;
+	end
+	else begin
+	   adc0_data = adc0_data - 8;
+	end
+	adc0_dat_odd  = {4{adc0_data[13]}};
+	adc0_dat_even = {4{adc0_data[12]}};
+	#1250ps;
+	adc0_dat_odd  = {4{adc0_data[11]}};
+	adc0_dat_even = {4{adc0_data[10]}};
+	#1250ps;
+	adc0_dat_odd  = {4{adc0_data[9]}};
+	adc0_dat_even = {4{adc0_data[8]}};
+	#1250ps;
+	adc0_dat_odd  = {4{adc0_data[7]}};
+	adc0_dat_even = {4{adc0_data[6]}};
+	#1250ps;
+	adc0_dat_odd  = {4{adc0_data[5]}};
+	adc0_dat_even = {4{adc0_data[4]}};
+	#1250ps;
+	adc0_dat_odd  = {4{adc0_data[3]}};
+	adc0_dat_even = {4{adc0_data[2]}};
+	#1250ps;
+	adc0_dat_odd  = {4{adc0_data[1]}};
+	adc0_dat_even = {4{adc0_data[0]}};
+	#1250ps;
+	adc0_dat_odd  = {4{1'b0}};
+	adc0_dat_even = {4{1'b0}};
      end
 
-
-
+   wire[2:0] acq_fsm_state = DUT.cmp_fmc_adc_mezzanine_0.cmp_fmc_adc_100Ms_core.acq_fsm_state;
 
    initial begin
       CBusAccessor acc;
@@ -121,59 +166,133 @@ module main;
 
       //@(posedge DUT.sys_clk_pll_locked);
 
-      #15us;
+      #5us;
 
       acc.read(0, val);
       $display("ID: %x", val);
 
-      acc.read('h3304, val); // status
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val); // status
       $display("STATUS: %x", val);
 
-      acc.write('h3308, 'h00000010); // trigger cfg: enable sw trigger
-      acc.write('h3328, 'h00000000); // #pre-samples
-      acc.write('h332C, 'h00000010); // #post-samples
-      acc.write('h3314, 'h00000001); // #nshots: single-shot acq
+      // FMC-ADC core general configuration
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000001);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS,        'h00000001);
 
-      acc.read('h3304, val); // status
+      // FMC-ADC core channel configuration
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_GAIN, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_GAIN, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_GAIN, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_GAIN, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_SAT,  'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_SAT,  'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_SAT,  'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_SAT,  'h00007fff);
+
+      // FMC-ADC core trigger configuration
+      val = (16'h100 << `FMC_ADC_100MS_CSR_CH1_TRIG_THRES_HYST_OFFSET) |
+	    (16'h300 << `FMC_ADC_100MS_CSR_CH1_TRIG_THRES_VAL_OFFSET);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_TRIG_THRES, val);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_TRIG_THRES, val);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_TRIG_THRES, val);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_TRIG_THRES, val);
+      val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val);
       $display("STATUS: %x", val);
 
       #5us;
-      acc.write('h3600, 'h00000032); // timetag core seconds high
-      acc.write('h3604, 'h00005a34); // timetag core seconds low
-      acc.write('h3608, 'h00000000); // timetag core ticks
-      
-      
-      acc.write('h3300, 'h00000001); // FSM start
+
+      acc.write(`TAG_BASE + 0, 'h00000032); // timetag core seconds high
+      acc.write(`TAG_BASE + 4, 'h00005a34); // timetag core seconds low
+      acc.write(`TAG_BASE + 8, 'h00000000); // timetag core ticks
+
+      wait (acq_fsm_state == 1);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
       #1us;
 
-      acc.write('h3310, 'hFFFFFFFF); // soft trigger
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFF); // soft trigger
 
-      #2us;
-
-      acc.write('h3314, 'h00000003); // #nshots: 3x multi-shot acq
-
-      acc.write('h3300, 'h00000001); // FSM start
+      wait (acq_fsm_state == 1);
 
       #1us;
 
-      acc.write('h3310, 'hFFFFFFFE); // soft trigger
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h00000003); // #nshots: 3x multi-shot acq
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
       #1us;
 
-      acc.write('h3310, 'hFFFFFFFD); // soft trigger
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFE); // soft trigger
 
       #1us;
 
-      acc.write('h3310, 'hFFFFFFFC); // soft trigger
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFD); // soft trigger
 
-      #2us;
+      #1us;
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFC); // soft trigger
+
+      wait (acq_fsm_state == 1);
+
+      #1us;
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000008);
+
+      // FMC-ADC core trigger configuration
+      val = (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET)  |
+	    (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH1_OFFSET) |
+	    (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH3_OFFSET);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
+
+      #1us;
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFE); // soft trigger
+
+      #1us;
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFD); // soft trigger
+
+      wait (acq_fsm_state == 1);
+
+      #1us;
+
+      // set time trigger
+      acc.write(`TAG_BASE + 'h0c, 'h00000032); // timetag core seconds high
+      acc.write(`TAG_BASE + 'h10, 'h00005a34); // timetag core seconds low
+      acc.write(`TAG_BASE + 'h14, 'h00000e00); // timetag core ticks
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000010);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000080);
+
+      // FMC-ADC core trigger configuration
+      val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_TIME_OFFSET) |
+	    (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_EXT_OFFSET);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000002);
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
+
+      #5us;
+
+      ext_trig <= 1'b1;
+      #100ns;
+      ext_trig <= 1'b0;
+
+      wait (acq_fsm_state == 1);
+
+      #1us;
 
       // DMA transfer
       acc.write('h100C, 'h00001000); // host addr
       acc.write('h1010, 'h00000000);
 
-      acc.write('h1014, 'h00001000); // len
+      acc.write('h1014, 'h00000100); // len
 
       acc.write('h1018, 'h00000000); // next
       acc.write('h101C, 'h00000000);
@@ -184,7 +303,7 @@ module main;
 
       acc.write('h1000, 'h00000001); // xfer start
 
-      acc.read('h3304, val); // status
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val);
       $display("STATUS: %x", val);
 
    end

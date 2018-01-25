@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2012-11-16
--- Last update: 2016-06-15
+-- Last update: 2018-01-24
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Package for FMC ADC 100Ms/s core.
@@ -60,7 +60,7 @@ package fmc_adc_100Ms_core_pkg is
       sys_rst_n_i : in std_logic;
 
       -- CSR wishbone interface
-      wb_csr_adr_i : in  std_logic_vector(5 downto 0);
+      wb_csr_adr_i : in  std_logic_vector(7 downto 0);
       wb_csr_dat_i : in  std_logic_vector(31 downto 0);
       wb_csr_dat_o : out std_logic_vector(31 downto 0);
       wb_csr_cyc_i : in  std_logic;

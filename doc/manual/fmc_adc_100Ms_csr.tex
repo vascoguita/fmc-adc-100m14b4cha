@@ -11,148 +11,156 @@ REG @tab
 Status register
 @item @code{0x8} @tab
 REG @tab
-@code{trig_cfg} @tab
-Trigger configuration
+@code{trig_stat} @tab
+Trigger status
 @item @code{0xc} @tab
+REG @tab
+@code{trig_en} @tab
+Trigger enable
+@item @code{0x10} @tab
+REG @tab
+@code{trig_pol} @tab
+Trigger polarity
+@item @code{0x14} @tab
 REG @tab
 @code{trig_dly} @tab
 Trigger delay
-@item @code{0x10} @tab
+@item @code{0x18} @tab
 REG @tab
 @code{sw_trig} @tab
 Software trigger
-@item @code{0x14} @tab
+@item @code{0x1c} @tab
 REG @tab
 @code{shots} @tab
 Number of shots
-@item @code{0x18} @tab
-REG @tab
-@code{shots_cnt} @tab
-Remaining shots counter
-@item @code{0x1c} @tab
-REG @tab
-@code{trig_pos} @tab
-Trigger address register
 @item @code{0x20} @tab
-REG @tab
-@code{fs_freq} @tab
-Sampling clock frequency
-@item @code{0x24} @tab
-REG @tab
-@code{sr} @tab
-Sample rate
-@item @code{0x28} @tab
-REG @tab
-@code{pre_samples} @tab
-Pre-trigger samples
-@item @code{0x2c} @tab
-REG @tab
-@code{post_samples} @tab
-Post-trigger samples
-@item @code{0x30} @tab
-REG @tab
-@code{samples_cnt} @tab
-Samples counter
-@item @code{0x34} @tab
-REG @tab
-@code{ch1_ctl} @tab
-Channel 1 control register
-@item @code{0x38} @tab
-REG @tab
-@code{ch1_sta} @tab
-Channel 1 status register
-@item @code{0x3c} @tab
-REG @tab
-@code{ch1_gain} @tab
-Channel 1 gain calibration register
-@item @code{0x40} @tab
-REG @tab
-@code{ch1_offset} @tab
-Channel 1 offset calibration register
-@item @code{0x44} @tab
-REG @tab
-@code{ch1_sat} @tab
-Channel 1 saturation register
-@item @code{0x48} @tab
-REG @tab
-@code{ch1_trig} @tab
-Channel 1 trigger configuration register
-@item @code{0x4c} @tab
-REG @tab
-@code{ch2_ctl} @tab
-Channel 2 control register
-@item @code{0x50} @tab
-REG @tab
-@code{ch2_sta} @tab
-Channel 2 status register
-@item @code{0x54} @tab
-REG @tab
-@code{ch2_gain} @tab
-Channel 2 gain calibration register
-@item @code{0x58} @tab
-REG @tab
-@code{ch2_offset} @tab
-Channel 2 offset calibration register
-@item @code{0x5c} @tab
-REG @tab
-@code{ch2_sat} @tab
-Channel 2 saturation register
-@item @code{0x60} @tab
-REG @tab
-@code{ch2_trig} @tab
-Channel 2 trigger configuration register
-@item @code{0x64} @tab
-REG @tab
-@code{ch3_ctl} @tab
-Channel 3 control register
-@item @code{0x68} @tab
-REG @tab
-@code{ch3_sta} @tab
-Channel 3 status register
-@item @code{0x6c} @tab
-REG @tab
-@code{ch3_gain} @tab
-Channel 3 gain calibration register
-@item @code{0x70} @tab
-REG @tab
-@code{ch3_offset} @tab
-Channel 3 offset calibration register
-@item @code{0x74} @tab
-REG @tab
-@code{ch3_sat} @tab
-Channel 3 saturation register
-@item @code{0x78} @tab
-REG @tab
-@code{ch3_trig} @tab
-Channel 3 trigger configuration register
-@item @code{0x7c} @tab
-REG @tab
-@code{ch4_ctl} @tab
-Channel 4 control register
-@item @code{0x80} @tab
-REG @tab
-@code{ch4_sta} @tab
-Channel 4 status register
-@item @code{0x84} @tab
-REG @tab
-@code{ch4_gain} @tab
-Channel 4 gain calibration register
-@item @code{0x88} @tab
-REG @tab
-@code{ch4_offset} @tab
-Channel 4 offset calibration register
-@item @code{0x8c} @tab
-REG @tab
-@code{ch4_sat} @tab
-Channel 4 saturation register
-@item @code{0x90} @tab
-REG @tab
-@code{ch4_trig} @tab
-Channel 4 trigger configuration register
-@item @code{0x94} @tab
 REG @tab
 @code{multi_depth} @tab
 Multi-shot sample depth register
+@item @code{0x24} @tab
+REG @tab
+@code{shots_cnt} @tab
+Remaining shots counter
+@item @code{0x28} @tab
+REG @tab
+@code{trig_pos} @tab
+Trigger address register
+@item @code{0x2c} @tab
+REG @tab
+@code{fs_freq} @tab
+Sampling clock frequency
+@item @code{0x30} @tab
+REG @tab
+@code{sr} @tab
+Sample rate
+@item @code{0x34} @tab
+REG @tab
+@code{pre_samples} @tab
+Pre-trigger samples
+@item @code{0x38} @tab
+REG @tab
+@code{post_samples} @tab
+Post-trigger samples
+@item @code{0x3c} @tab
+REG @tab
+@code{samples_cnt} @tab
+Samples counter
+@item @code{0x80} @tab
+REG @tab
+@code{ch1_ctl} @tab
+Channel 1 control register
+@item @code{0x84} @tab
+REG @tab
+@code{ch1_sta} @tab
+Channel 1 status register
+@item @code{0x88} @tab
+REG @tab
+@code{ch1_gain} @tab
+Channel 1 gain calibration register
+@item @code{0x8c} @tab
+REG @tab
+@code{ch1_offset} @tab
+Channel 1 offset calibration register
+@item @code{0x90} @tab
+REG @tab
+@code{ch1_sat} @tab
+Channel 1 saturation register
+@item @code{0x94} @tab
+REG @tab
+@code{ch1_trig_thres} @tab
+Channel 1 trigger threshold configuration register
+@item @code{0x100} @tab
+REG @tab
+@code{ch2_ctl} @tab
+Channel 2 control register
+@item @code{0x104} @tab
+REG @tab
+@code{ch2_sta} @tab
+Channel 2 status register
+@item @code{0x108} @tab
+REG @tab
+@code{ch2_gain} @tab
+Channel 2 gain calibration register
+@item @code{0x10c} @tab
+REG @tab
+@code{ch2_offset} @tab
+Channel 2 offset calibration register
+@item @code{0x110} @tab
+REG @tab
+@code{ch2_sat} @tab
+Channel 2 saturation register
+@item @code{0x114} @tab
+REG @tab
+@code{ch2_trig_thres} @tab
+Channel 2 trigger threshold configuration register
+@item @code{0x180} @tab
+REG @tab
+@code{ch3_ctl} @tab
+Channel 3 control register
+@item @code{0x184} @tab
+REG @tab
+@code{ch3_sta} @tab
+Channel 3 status register
+@item @code{0x188} @tab
+REG @tab
+@code{ch3_gain} @tab
+Channel 3 gain calibration register
+@item @code{0x18c} @tab
+REG @tab
+@code{ch3_offset} @tab
+Channel 3 offset calibration register
+@item @code{0x190} @tab
+REG @tab
+@code{ch3_sat} @tab
+Channel 3 saturation register
+@item @code{0x194} @tab
+REG @tab
+@code{ch3_trig_thres} @tab
+Channel 3 trigger threshold configuration register
+@item @code{0x200} @tab
+REG @tab
+@code{ch4_ctl} @tab
+Channel 4 control register
+@item @code{0x204} @tab
+REG @tab
+@code{ch4_sta} @tab
+Channel 4 status register
+@item @code{0x208} @tab
+REG @tab
+@code{ch4_gain} @tab
+Channel 4 gain calibration register
+@item @code{0x20c} @tab
+REG @tab
+@code{ch4_offset} @tab
+Channel 4 offset calibration register
+@item @code{0x210} @tab
+REG @tab
+@code{ch4_sat} @tab
+Channel 4 saturation register
+@item @code{0x214} @tab
+REG @tab
+@code{ch4_trig_thres} @tab
+Channel 4 trigger threshold configuration register
 @end multitable 
 @regsection @code{ctl} - Control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -231,42 +239,141 @@ Acquisition configuration status
 @item @code{serdes_synced} @tab 0: bitslip in progress@*1: serdes synchronized
 @item @code{acq_cfg} @tab 0: Unauthorised acquisition configuration (will prevent acquisition to start)@*1: Valid acquisition configuration@*@bullet{}  Shot number > 0@*@bullet{}  Post-trigger sample > 0
 @end multitable
-@regsection @code{trig_cfg} - Trigger configuration
+@regsection @code{trig_stat} - Trigger status
+Shows the source(s) of the last received trigger.
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
-@item @code{1...0}
-@tab R/W @tab
-@code{HW_TRIG_SEL}
-@tab @code{0} @tab 
-Hardware trigger selection
-@item @code{2}
-@tab R/W @tab
-@code{EX_HW_TRIG_POL}
-@tab @code{0} @tab 
-External Hardware trigger polarity
-@item @code{3}
-@tab R/W @tab
-@code{HW_TRIG_EN}
-@tab @code{0} @tab 
-Hardware trigger enable
+@item @code{0}
+@tab R/O @tab
+@code{EXT}
+@tab @code{X} @tab 
+External trigger input
+@item @code{1}
+@tab R/O @tab
+@code{SW}
+@tab @code{X} @tab 
+Software trigger
 @item @code{4}
-@tab R/W @tab
-@code{SW_TRIG_EN}
-@tab @code{0} @tab 
-Software trigger enable
-@item @code{5}
-@tab R/W @tab
-@code{INT_TRIG_TEST_EN}
-@tab @code{0} @tab 
-Enable internal trigger test mode
+@tab R/O @tab
+@code{TIME}
+@tab @code{X} @tab 
+Timetag trigger
+@item @code{8}
+@tab R/O @tab
+@code{CH1}
+@tab @code{X} @tab 
+Channel 1 internal threshold trigger
+@item @code{9}
+@tab R/O @tab
+@code{CH2}
+@tab @code{X} @tab 
+Channel 2 internal threshold trigger
+@item @code{10}
+@tab R/O @tab
+@code{CH3}
+@tab @code{X} @tab 
+Channel 3 internal threshold trigger
+@item @code{11}
+@tab R/O @tab
+@code{CH4}
+@tab @code{X} @tab 
+Channel 4 internal threshold trigger
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{hw_trig_sel} @tab 00: internal (data threshold)@*01: external (front panel trigger input)@*10: trigger from timetag core@*11: reserved (for WR message-based trigger)
-@item @code{ex_hw_trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
-@item @code{hw_trig_en} @tab 0: disable@*1: enable
-@item @code{sw_trig_en} @tab 0: disable@*1: enable
-@item @code{int_trig_test_en} @tab Test mode:@* ch1 = Channel 1 input(analogue)@* ch2 = Channel input over threshold (digital)@* ch3 = Channel input over threshold filtered (digital)@* ch4 = Trigger (digital)
+@item @code{ext} @tab 0: not triggered@*1: triggered
+@item @code{sw} @tab 0: not triggered@*1: triggered
+@item @code{time} @tab 0: not triggered@*1: triggered
+@item @code{ch1} @tab 0: not triggered@*1: triggered
+@item @code{ch2} @tab 0: not triggered@*1: triggered
+@item @code{ch3} @tab 0: not triggered@*1: triggered
+@item @code{ch4} @tab 0: not triggered@*1: triggered
+@end multitable
+@regsection @code{trig_en} - Trigger enable
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{0}
+@tab R/W @tab
+@code{EXT}
+@tab @code{0} @tab 
+External trigger input
+@item @code{1}
+@tab R/W @tab
+@code{SW}
+@tab @code{0} @tab 
+Software trigger
+@item @code{4}
+@tab R/W @tab
+@code{TIME}
+@tab @code{0} @tab 
+Timetag trigger
+@item @code{8}
+@tab R/W @tab
+@code{CH1}
+@tab @code{0} @tab 
+Channel 1 internal threshold trigger
+@item @code{9}
+@tab R/W @tab
+@code{CH2}
+@tab @code{0} @tab 
+Channel 2 internal threshold trigger
+@item @code{10}
+@tab R/W @tab
+@code{CH3}
+@tab @code{0} @tab 
+Channel 3 internal threshold trigger
+@item @code{11}
+@tab R/W @tab
+@code{CH4}
+@tab @code{0} @tab 
+Channel 4 internal threshold trigger
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{ext} @tab 0: disable@*1: enable
+@item @code{sw} @tab 0: disable@*1: enable
+@item @code{time} @tab 0: disable@*1: enable
+@item @code{ch1} @tab 0: disable@*1: enable
+@item @code{ch2} @tab 0: disable@*1: enable
+@item @code{ch3} @tab 0: disable@*1: enable
+@item @code{ch4} @tab 0: disable@*1: enable
+@end multitable
+@regsection @code{trig_pol} - Trigger polarity
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{0}
+@tab R/W @tab
+@code{EXT}
+@tab @code{0} @tab 
+External trigger input
+@item @code{8}
+@tab R/W @tab
+@code{CH1}
+@tab @code{0} @tab 
+Channel 1 internal threshold trigger
+@item @code{9}
+@tab R/W @tab
+@code{CH2}
+@tab @code{0} @tab 
+Channel 2 internal threshold trigger
+@item @code{10}
+@tab R/W @tab
+@code{CH3}
+@tab @code{0} @tab 
+Channel 3 internal threshold trigger
+@item @code{11}
+@tab R/W @tab
+@code{CH4}
+@tab @code{0} @tab 
+Channel 4 internal threshold trigger
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{ext} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{ch1} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{ch2} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{ch3} @tab 0: positive edge/slope@*1: negative edge/slope
+@item @code{ch4} @tab 0: positive edge/slope@*1: negative edge/slope
 @end multitable
 @regsection @code{trig_dly} - Trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -303,6 +410,19 @@ Number of shots
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{nb} @tab Number of shots required in multi-shot mode, set to one for single-shot mode.
+@end multitable
+@regsection @code{multi_depth} - Multi-shot sample depth register
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{31...0}
+@tab R/O @tab
+@code{MULTI_DEPTH}
+@tab @code{X} @tab 
+Multi-shot sample depth
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{multi_depth} @tab Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag
 @end multitable
 @regsection @code{shots_cnt} - Remaining shots counter
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -460,41 +580,24 @@ Saturation value for channel 1
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 @end multitable
-@regsection @code{ch1_trig} - Channel 1 trigger configuration register
+@regsection @code{ch1_trig_thres} - Channel 1 trigger threshold configuration register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
-@item @code{0}
+@item @code{15...0}
 @tab R/W @tab
-@code{TRIG_EN}
+@code{VAL}
 @tab @code{0} @tab 
-Trigger enable for channel 1
-@item @code{1}
-@tab R/W @tab
-@code{TRIG_POL}
-@tab @code{0} @tab 
-Trigger polarity
-@item @code{7...2}
-@tab R/W @tab
-@code{RESERVED}
-@tab @code{0} @tab 
-Reserved
-@item @code{15...8}
-@tab R/W @tab
-@code{INT_TRIG_THRES_FILT}
-@tab @code{0} @tab 
-Internal trigger threshold glitch filter for Channel 1
+Threshold for internal trigger
 @item @code{31...16}
 @tab R/W @tab
-@code{INT_TRIG_THRES}
+@code{HYST}
 @tab @code{0} @tab 
-Threshold for Channel 1 internal trigger
+Internal trigger threshold hysteresis
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
-@item @code{reserved} @tab Ignore on read, write with 0's
-@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
-@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
 @end multitable
 @regsection @code{ch2_ctl} - Channel 2 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -561,41 +664,24 @@ Saturation value for channel 2
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 @end multitable
-@regsection @code{ch2_trig} - Channel 2 trigger configuration register
+@regsection @code{ch2_trig_thres} - Channel 2 trigger threshold configuration register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
-@item @code{0}
+@item @code{15...0}
 @tab R/W @tab
-@code{TRIG_EN}
+@code{VAL}
 @tab @code{0} @tab 
-Trigger enable for channel 2
-@item @code{1}
-@tab R/W @tab
-@code{TRIG_POL}
-@tab @code{0} @tab 
-Trigger polarity
-@item @code{7...2}
-@tab R/W @tab
-@code{RESERVED}
-@tab @code{0} @tab 
-Reserved
-@item @code{15...8}
-@tab R/W @tab
-@code{INT_TRIG_THRES_FILT}
-@tab @code{0} @tab 
-Internal trigger threshold glitch filter for Channel 2
+Threshold for internal trigger
 @item @code{31...16}
 @tab R/W @tab
-@code{INT_TRIG_THRES}
+@code{HYST}
 @tab @code{0} @tab 
-Threshold for Channel 2 internal trigger
+Internal trigger threshold hysteresis
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
-@item @code{reserved} @tab Ignore on read, write with 0's
-@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
-@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
 @end multitable
 @regsection @code{ch3_ctl} - Channel 3 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -662,41 +748,24 @@ Saturation value for channel 3
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 @end multitable
-@regsection @code{ch3_trig} - Channel 3 trigger configuration register
+@regsection @code{ch3_trig_thres} - Channel 3 trigger threshold configuration register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
-@item @code{0}
+@item @code{15...0}
 @tab R/W @tab
-@code{TRIG_EN}
+@code{VAL}
 @tab @code{0} @tab 
-Trigger enable for channel 3
-@item @code{1}
-@tab R/W @tab
-@code{TRIG_POL}
-@tab @code{0} @tab 
-Trigger polarity
-@item @code{7...2}
-@tab R/W @tab
-@code{RESERVED}
-@tab @code{0} @tab 
-Reserved
-@item @code{15...8}
-@tab R/W @tab
-@code{INT_TRIG_THRES_FILT}
-@tab @code{0} @tab 
-Internal trigger threshold glitch filter for Channel 3
+Threshold for internal trigger
 @item @code{31...16}
 @tab R/W @tab
-@code{INT_TRIG_THRES}
+@code{HYST}
 @tab @code{0} @tab 
-Threshold for Channel 3 internal trigger
+Internal trigger threshold hysteresis
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
-@item @code{reserved} @tab Ignore on read, write with 0's
-@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
-@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
 @end multitable
 @regsection @code{ch4_ctl} - Channel 4 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -763,52 +832,22 @@ Saturation value for channel 4
 @headitem Field @tab Description
 @item @code{val} @tab Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 @end multitable
-@regsection @code{ch4_trig} - Channel 4 trigger configuration register
+@regsection @code{ch4_trig_thres} - Channel 4 trigger threshold configuration register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
-@item @code{0}
+@item @code{15...0}
 @tab R/W @tab
-@code{TRIG_EN}
+@code{VAL}
 @tab @code{0} @tab 
-Trigger enable for channel 4
-@item @code{1}
-@tab R/W @tab
-@code{TRIG_POL}
-@tab @code{0} @tab 
-trigger polarity
-@item @code{7...2}
-@tab R/W @tab
-@code{RESERVED}
-@tab @code{0} @tab 
-Reserved
-@item @code{15...8}
-@tab R/W @tab
-@code{INT_TRIG_THRES_FILT}
-@tab @code{0} @tab 
-Internal trigger threshold glitch filter for Channel 4
+Threshold for internal trigger
 @item @code{31...16}
 @tab R/W @tab
-@code{INT_TRIG_THRES}
+@code{HYST}
 @tab @code{0} @tab 
-Threshold for Channel 4 internal trigger
+Internal trigger threshold hysteresis
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{trig_pol} @tab 0: positive edge/slope@*1: negative edge/slope
-@item @code{reserved} @tab Ignore on read, write with 0's
-@item @code{int_trig_thres_filt} @tab Configures the internal trigger threshold glitch filter length.
-@item @code{int_trig_thres} @tab Treated as binary two's complement and compared to raw ADC data.
-@end multitable
-@regsection @code{multi_depth} - Multi-shot sample depth register
-@multitable @columnfractions .10 .10 .15 .10 .55
-@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
-@item @code{31...0}
-@tab R/O @tab
-@code{MULTI_DEPTH}
-@tab @code{X} @tab 
-Multi-shot sample depth
-@end multitable
-@multitable @columnfractions 0.15 0.85
-@headitem Field @tab Description
-@item @code{multi_depth} @tab Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag
+@item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
 @end multitable

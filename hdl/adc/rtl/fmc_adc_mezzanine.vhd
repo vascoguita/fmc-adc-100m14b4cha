@@ -8,7 +8,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-05-07
--- Last update: 2016-06-15
+-- Last update: 2018-01-24
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core
@@ -166,10 +166,10 @@ architecture rtl of fmc_adc_mezzanine is
   constant c_WB_MASTER : integer := 0;
 
   -- Wishbone slave(s)
-  constant c_WB_SLAVE_FMC_SYS_I2C : integer := 0;  -- Mezzanine system I2C interface (EEPROM)
-  constant c_WB_SLAVE_FMC_SPI     : integer := 1;  -- Mezzanine SPI interface
-  constant c_WB_SLAVE_FMC_I2C     : integer := 2;  -- Mezzanine I2C controller
-  constant c_WB_SLAVE_FMC_ADC     : integer := 3;  -- Mezzanine ADC core
+  constant c_WB_SLAVE_FMC_ADC     : integer := 0;  -- Mezzanine ADC core
+  constant c_WB_SLAVE_FMC_SYS_I2C : integer := 1;  -- Mezzanine system I2C interface (EEPROM)
+  constant c_WB_SLAVE_FMC_SPI     : integer := 2;  -- Mezzanine SPI interface
+  constant c_WB_SLAVE_FMC_I2C     : integer := 3;  -- Mezzanine I2C controller
   constant c_WB_SLAVE_FMC_ONEWIRE : integer := 4;  -- Mezzanine onewire interface
   constant c_WB_SLAVE_FMC_EIC     : integer := 5;  -- Mezzanine interrupt controller
   constant c_WB_SLAVE_TIMETAG     : integer := 6;  -- Mezzanine timetag core
@@ -183,7 +183,7 @@ architecture rtl of fmc_adc_mezzanine is
     wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
-      addr_last   => x"00000000000000FF",
+      addr_last   => x"00000000000003FF",
       product     => (
         vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"00000608",
@@ -229,13 +229,13 @@ architecture rtl of fmc_adc_mezzanine is
   -- Wishbone crossbar layout
   constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(6 downto 0) :=
     (
-      0 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001000"),
-      1 => f_sdb_embed_device(c_xwb_spi_sdb, x"00001100"),
-      2 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001200"),
-      3 => f_sdb_embed_device(c_wb_adc_csr_sdb, x"00001300"),
-      4 => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001400"),
-      5 => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001500"),
-      6 => f_sdb_embed_device(c_wb_timetag_sdb, x"00001600")
+      0 => f_sdb_embed_device(c_wb_adc_csr_sdb, x"00001000"),
+      1 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001400"),
+      2 => f_sdb_embed_device(c_xwb_spi_sdb, x"00001500"),
+      3 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001600"),
+      4 => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001700"),
+      5 => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001800"),
+      6 => f_sdb_embed_device(c_wb_timetag_sdb, x"00001900")
       );
 
 
@@ -354,12 +354,12 @@ begin
       slave_o => cnx_master_in(c_WB_SLAVE_FMC_SYS_I2C),
       desc_o  => open,
 
-      scl_pad_i    => sys_scl_in,
-      scl_pad_o    => sys_scl_out,
-      scl_padoen_o => sys_scl_oe_n,
-      sda_pad_i    => sys_sda_in,
-      sda_pad_o    => sys_sda_out,
-      sda_padoen_o => sys_sda_oe_n
+      scl_pad_i(0)    => sys_scl_in,
+      scl_pad_o(0)    => sys_scl_out,
+      scl_padoen_o(0) => sys_scl_oe_n,
+      sda_pad_i(0)    => sys_sda_in,
+      sda_pad_o(0)    => sys_sda_out,
+      sda_padoen_o(0) => sys_sda_oe_n
       );
 
   -- Tri-state buffer for SDA and SCL
@@ -431,12 +431,12 @@ begin
       slave_o => cnx_master_in(c_WB_SLAVE_FMC_I2C),
       desc_o  => open,
 
-      scl_pad_i    => si570_scl_in,
-      scl_pad_o    => si570_scl_out,
-      scl_padoen_o => si570_scl_oe_n,
-      sda_pad_i    => si570_sda_in,
-      sda_pad_o    => si570_sda_out,
-      sda_padoen_o => si570_sda_oe_n
+      scl_pad_i(0)    => si570_scl_in,
+      scl_pad_o(0)    => si570_scl_out,
+      scl_padoen_o(0) => si570_scl_oe_n,
+      sda_pad_i(0)    => si570_sda_in,
+      sda_pad_o(0)    => si570_sda_out,
+      sda_padoen_o(0) => si570_sda_oe_n
       );
 
   -- Tri-state buffer for SDA and SCL
@@ -462,7 +462,7 @@ begin
       sys_clk_i   => sys_clk_i,
       sys_rst_n_i => sys_rst_n_i,
 
-      wb_csr_adr_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).adr(7 downto 2),  -- cnx_master_out.adr is byte address
+      wb_csr_adr_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).adr(9 downto 2),  -- cnx_master_out.adr is byte address
       wb_csr_dat_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).dat,
       wb_csr_dat_o => cnx_master_in(c_WB_SLAVE_FMC_ADC).dat,
       wb_csr_cyc_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).cyc,

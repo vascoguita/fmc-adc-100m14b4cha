@@ -135,25 +135,200 @@ peripheral {
 ]]
   };
 
-  reg {
-    name = "Trigger configuration";
-    prefix = "trig_cfg";
+   reg {
+    name = "Trigger status";
+    prefix = "trig_stat";
+    description = "Shows the source(s) of the last received trigger.";
 
     field {
-      name = "Hardware trigger selection";
-      description = "00: internal (data threshold)\n01: external (front panel trigger input)\n10: trigger from timetag core\n11: reserved (for WR message-based trigger)";
-      prefix = "hw_trig_sel";
-      type = SLV;
-      size = 2;
+      name = "External trigger input";
+      description = "0: not triggered\n1: triggered";
+      prefix = "ext";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+    field {
+      name = "Software trigger";
+      description = "0: not triggered\n1: triggered";
+      prefix = "sw";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+    field {
+      align = 4;
+      name = "Timetag trigger";
+      description = "0: not triggered\n1: triggered";
+      prefix = "time";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+    field {
+      align = 8;
+      name = "Channel 1 internal threshold trigger";
+      description = "0: not triggered\n1: triggered";
+      prefix = "ch1";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+    field {
+      name = "Channel 2 internal threshold trigger";
+      description = "0: not triggered\n1: triggered";
+      prefix = "ch2";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+    field {
+      name = "Channel 3 internal threshold trigger";
+      description = "0: not triggered\n1: triggered";
+      prefix = "ch3";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+    field {
+      name = "Channel 4 internal threshold trigger";
+      description = "0: not triggered\n1: triggered";
+      prefix = "ch4";
+      type = BIT;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
+
+  };
+
+   reg {
+    name = "Trigger enable";
+    prefix = "trig_en";
+
+
+    field {
+      name = "External trigger input";
+      description = "0: disable\n1: enable";
+      prefix = "ext";
+      type = BIT;
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
       clock = "fs_clk_i";
     };
 
     field {
-      name = "External Hardware trigger polarity";
+      name = "Software trigger";
+      description = "0: disable\n1: enable";
+      prefix = "sw";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      align = 4;
+      name = "Timetag trigger";
+      description = "0: disable\n1: enable";
+      prefix = "time";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      align = 8;
+      name = "Channel 1 internal threshold trigger";
+      description = "0: disable\n1: enable";
+      prefix = "ch1";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      name = "Channel 2 internal threshold trigger";
+      description = "0: disable\n1: enable";
+      prefix = "ch2";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      name = "Channel 3 internal threshold trigger";
+      description = "0: disable\n1: enable";
+      prefix = "ch3";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      name = "Channel 4 internal threshold trigger";
+      description = "0: disable\n1: enable";
+      prefix = "ch4";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+  };
+
+   reg {
+    name = "Trigger polarity";
+    prefix = "trig_pol";
+
+
+    field {
+      name = "External trigger input";
       description = "0: positive edge/slope\n1: negative edge/slope";
-      prefix = "ex_hw_trig_pol";
+      prefix = "ext";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    -- Note: does not make sense to have polarity on soft trigger
+    -- field {
+    --   name = "Software trigger";
+    --   description = "0: positive edge/slope\n1: negative edge/slope";
+    --   prefix = "sw";
+    --   type = BIT;
+    --   access_bus = READ_WRITE;
+    --   access_dev = READ_ONLY;
+    --   clock = "fs_clk_i";
+    -- };
+
+    -- Note: does not make sense to have polarity on time trigger
+    -- field {
+    --   align = 4;
+    --   name = "Timetag trigger";
+    --   description = "0: positive edge/slope\n1: negative edge/slope";
+    --   prefix = "time";
+    --   type = BIT;
+    --   access_bus = READ_WRITE;
+    --   access_dev = READ_ONLY;
+    --   clock = "fs_clk_i";
+    -- };
+
+    field {
+      align = 8;
+      name = "Channel 1 internal threshold trigger";
+      description = "0: positive edge/slope\n1: negative edge/slope";
+      prefix = "ch1";
       type = BIT;
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
@@ -161,9 +336,9 @@ peripheral {
     };
 
     field {
-      name = "Hardware trigger enable";
-      description = "0: disable\n1: enable";
-      prefix = "hw_trig_en";
+      name = "Channel 2 internal threshold trigger";
+      description = "0: positive edge/slope\n1: negative edge/slope";
+      prefix = "ch2";
       type = BIT;
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
@@ -171,9 +346,9 @@ peripheral {
     };
 
     field {
-      name = "Software trigger enable";
-      description = "0: disable\n1: enable";
-      prefix = "sw_trig_en";
+      name = "Channel 3 internal threshold trigger";
+      description = "0: positive edge/slope\n1: negative edge/slope";
+      prefix = "ch3";
       type = BIT;
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
@@ -181,27 +356,15 @@ peripheral {
     };
 
     field {
-      name = "Enable internal trigger test mode";
-      description = "Test mode:\n  ch1 = Channel 1 input(analogue)\n ch2 = Channel input over threshold (digital)\n  ch3 = Channel input over threshold filtered (digital)\n  ch4 = Trigger (digital)";
-      prefix = "int_trig_test_en";
+      name = "Channel 4 internal threshold trigger";
+      description = "0: positive edge/slope\n1: negative edge/slope";
+      prefix = "ch4";
       type = BIT;
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
       clock = "fs_clk_i";
     };
 
---[[
-    field {
-      name = "Reserved";
-      description = "Ignore on read, write with 0's";
-      prefix = "reserved";
-      type = SLV;
-      size = 26;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-]]
   };
 
   reg {
@@ -255,6 +418,20 @@ peripheral {
       access_dev = READ_ONLY;
     };
 ]]
+  };
+
+  reg {
+    name = "Multi-shot sample depth register";
+    prefix = "multi_depth";
+
+    field {
+      name = "Multi-shot sample depth";
+      description = "Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag";
+      type = SLV;
+      size = 32;
+      access_bus = READ_ONLY;
+      access_dev = WRITE_ONLY;
+    };
   };
 
   reg {
@@ -373,6 +550,7 @@ peripheral {
   reg {
     name = "Channel 1 control register";
     prefix = "ch1_ctl";
+    align = 0x20;
 
     field {
       name = "Solid state relays control for channel 1";
@@ -502,50 +680,25 @@ peripheral {
   };
 
   reg {
-    name = "Channel 1 trigger configuration register";
-    prefix = "ch1_trig";
+    name = "Channel 1 trigger threshold configuration register";
+    prefix = "ch1_trig_thres";
 
     field {
-      name = "Trigger enable for channel 1";
-      discription = "0: disable\n1: enable, Active only if internal trigger in Trigger Configuration is enabled";
-      prefix = "trig_en";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Trigger polarity";
-      description = "0: positive edge/slope\n1: negative edge/slope";
-      prefix = "trig_pol";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Reserved";
-      description = "Ignore on read, write with 0's";
-      prefix = "reserved";
-      type = SLV;
-      size = 6;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-    };
-    field {
-      name = "Internal trigger threshold glitch filter for Channel 1";
-      description = "Configures the internal trigger threshold glitch filter length.";
-      prefix = "int_trig_thres_filt";
-      type = SLV;
-      size = 8;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Threshold for Channel 1 internal trigger";
+      name = "Threshold for internal trigger";
       description = "Treated as binary two's complement and compared to raw ADC data.";
-      prefix = "int_trig_thres";
+      prefix = "val";
+      type = SLV;
+      size = 16;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      align = 16;
+      name = "Internal trigger threshold hysteresis";
+      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      prefix = "hyst";
       type = SLV;
       size = 16;
       access_bus = READ_WRITE;
@@ -557,6 +710,7 @@ peripheral {
   reg {
     name = "Channel 2 control register";
     prefix = "ch2_ctl";
+    align = 0x20;
 
     field {
       name = "Solid state relays control for channel 2";
@@ -686,50 +840,25 @@ peripheral {
   };
 
   reg {
-    name = "Channel 2 trigger configuration register";
-    prefix = "ch2_trig";
+    name = "Channel 2 trigger threshold configuration register";
+    prefix = "ch2_trig_thres";
 
     field {
-      name = "Trigger enable for channel 2";
-      discription = "0: disable\n1: enable, Active only if internal trigger in Trigger Configuration is enabled";
-      prefix = "trig_en";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Trigger polarity";
-      description = "0: positive edge/slope\n1: negative edge/slope";
-      prefix = "trig_pol";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Reserved";
-      description = "Ignore on read, write with 0's";
-      prefix = "reserved";
-      type = SLV;
-      size = 6;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-    };
-    field {
-      name = "Internal trigger threshold glitch filter for Channel 2";
-      description = "Configures the internal trigger threshold glitch filter length.";
-      prefix = "int_trig_thres_filt";
-      type = SLV;
-      size = 8;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Threshold for Channel 2 internal trigger";
+      name = "Threshold for internal trigger";
       description = "Treated as binary two's complement and compared to raw ADC data.";
-      prefix = "int_trig_thres";
+      prefix = "val";
+      type = SLV;
+      size = 16;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      align = 16;
+      name = "Internal trigger threshold hysteresis";
+      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      prefix = "hyst";
       type = SLV;
       size = 16;
       access_bus = READ_WRITE;
@@ -741,6 +870,7 @@ peripheral {
   reg {
     name = "Channel 3 control register";
     prefix = "ch3_ctl";
+    align = 0x20;
 
     field {
       name = "Solid state relays control for channel 3";
@@ -870,50 +1000,25 @@ peripheral {
   };
 
   reg {
-    name = "Channel 3 trigger configuration register";
-    prefix = "ch3_trig";
+    name = "Channel 3 trigger threshold configuration register";
+    prefix = "ch3_trig_thres";
 
     field {
-      name = "Trigger enable for channel 3";
-      discription = "0: disable\n1: enable, Active only if internal trigger in Trigger Configuration is enabled";
-      prefix = "trig_en";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Trigger polarity";
-      description = "0: positive edge/slope\n1: negative edge/slope";
-      prefix = "trig_pol";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Reserved";
-      description = "Ignore on read, write with 0's";
-      prefix = "reserved";
-      type = SLV;
-      size = 6;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-    };
-    field {
-      name = "Internal trigger threshold glitch filter for Channel 3";
-      description = "Configures the internal trigger threshold glitch filter length.";
-      prefix = "int_trig_thres_filt";
-      type = SLV;
-      size = 8;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Threshold for Channel 3 internal trigger";
+      name = "Threshold for internal trigger";
       description = "Treated as binary two's complement and compared to raw ADC data.";
-      prefix = "int_trig_thres";
+      prefix = "val";
+      type = SLV;
+      size = 16;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
+      align = 16;
+      name = "Internal trigger threshold hysteresis";
+      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      prefix = "hyst";
       type = SLV;
       size = 16;
       access_bus = READ_WRITE;
@@ -925,7 +1030,7 @@ peripheral {
   reg {
     name = "Channel 4 control register";
     prefix = "ch4_ctl";
-
+    align = 0x20;
     field {
       name = "Solid state relays control for channel 4";
       description = "Controls input voltage range, termination and DC offset error calibration\n0x23: 100mV range\n0x11: 1V range\n0x45: 10V range\n0x00: Open input\n0x42: 100mV range calibration\n0x40: 1V range calibration\n0x44: 10V range calibration\nBit3 is indepandant of the others and enables the 50ohms termination.";
@@ -1055,69 +1160,30 @@ peripheral {
 
 
   reg {
-    name = "Channel 4 trigger configuration register";
-    prefix = "ch4_trig";
+    name = "Channel 4 trigger threshold configuration register";
+    prefix = "ch4_trig_thres";
 
     field {
-      name = "Trigger enable for channel 4";
-      discription = "0: disable\n1: enable, Active only if internal trigger in Trigger Configuration is enabled";
-      prefix = "trig_en";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "trigger polarity";
-      description = "0: positive edge/slope\n1: negative edge/slope";
-      prefix = "trig_pol";
-      type = BIT;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Reserved";
-      description = "Ignore on read, write with 0's";
-      prefix = "reserved";
-      type = SLV;
-      size = 6;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-    };
-    field {
-      name = "Internal trigger threshold glitch filter for Channel 4";
-      description = "Configures the internal trigger threshold glitch filter length.";
-      prefix = "int_trig_thres_filt";
-      type = SLV;
-      size = 8;
-      access_bus = READ_WRITE;
-      access_dev = READ_ONLY;
-      clock = "fs_clk_i";
-    };
-    field {
-      name = "Threshold for Channel 4 internal trigger";
+      name = "Threshold for internal trigger";
       description = "Treated as binary two's complement and compared to raw ADC data.";
-      prefix = "int_trig_thres";
+      prefix = "val";
       type = SLV;
       size = 16;
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
       clock = "fs_clk_i";
     };
-  };
-
-  reg {
-    name = "Multi-shot sample depth register";
-    prefix = "multi_depth";
 
     field {
-      name = "Multi-shot sample depth";
-      description = "Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag";
+      align = 16;
+      name = "Internal trigger threshold hysteresis";
+      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      prefix = "hyst";
       type = SLV;
-      size = 32;
-      access_bus = READ_ONLY;
-      access_dev = WRITE_ONLY;
+      size = 16;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
     };
   };
 
