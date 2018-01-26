@@ -39,7 +39,7 @@
 <span style="margin-left: 20px; ">3.3. <A href="#sect_3_3">Trigger status</a></span><br/>
 <span style="margin-left: 20px; ">3.4. <A href="#sect_3_4">Trigger enable</a></span><br/>
 <span style="margin-left: 20px; ">3.5. <A href="#sect_3_5">Trigger polarity</a></span><br/>
-<span style="margin-left: 20px; ">3.6. <A href="#sect_3_6">Trigger delay</a></span><br/>
+<span style="margin-left: 20px; ">3.6. <A href="#sect_3_6">External trigger delay</a></span><br/>
 <span style="margin-left: 20px; ">3.7. <A href="#sect_3_7">Software trigger</a></span><br/>
 <span style="margin-left: 20px; ">3.8. <A href="#sect_3_8">Number of shots</a></span><br/>
 <span style="margin-left: 20px; ">3.9. <A href="#sect_3_9">Multi-shot sample depth register</a></span><br/>
@@ -56,24 +56,28 @@
 <span style="margin-left: 20px; ">3.20. <A href="#sect_3_20">Channel 1 offset calibration register</a></span><br/>
 <span style="margin-left: 20px; ">3.21. <A href="#sect_3_21">Channel 1 saturation register</a></span><br/>
 <span style="margin-left: 20px; ">3.22. <A href="#sect_3_22">Channel 1 trigger threshold configuration register</a></span><br/>
-<span style="margin-left: 20px; ">3.23. <A href="#sect_3_23">Channel 2 control register</a></span><br/>
-<span style="margin-left: 20px; ">3.24. <A href="#sect_3_24">Channel 2 status register</a></span><br/>
-<span style="margin-left: 20px; ">3.25. <A href="#sect_3_25">Channel 2 gain calibration register</a></span><br/>
-<span style="margin-left: 20px; ">3.26. <A href="#sect_3_26">Channel 2 offset calibration register</a></span><br/>
-<span style="margin-left: 20px; ">3.27. <A href="#sect_3_27">Channel 2 saturation register</a></span><br/>
-<span style="margin-left: 20px; ">3.28. <A href="#sect_3_28">Channel 2 trigger threshold configuration register</a></span><br/>
-<span style="margin-left: 20px; ">3.29. <A href="#sect_3_29">Channel 3 control register</a></span><br/>
-<span style="margin-left: 20px; ">3.30. <A href="#sect_3_30">Channel 3 status register</a></span><br/>
-<span style="margin-left: 20px; ">3.31. <A href="#sect_3_31">Channel 3 gain calibration register</a></span><br/>
-<span style="margin-left: 20px; ">3.32. <A href="#sect_3_32">Channel 3 offset calibration register</a></span><br/>
-<span style="margin-left: 20px; ">3.33. <A href="#sect_3_33">Channel 3 saturation register</a></span><br/>
-<span style="margin-left: 20px; ">3.34. <A href="#sect_3_34">Channel 3 trigger threshold configuration register</a></span><br/>
-<span style="margin-left: 20px; ">3.35. <A href="#sect_3_35">Channel 4 control register</a></span><br/>
-<span style="margin-left: 20px; ">3.36. <A href="#sect_3_36">Channel 4 status register</a></span><br/>
-<span style="margin-left: 20px; ">3.37. <A href="#sect_3_37">Channel 4 gain calibration register</a></span><br/>
-<span style="margin-left: 20px; ">3.38. <A href="#sect_3_38">Channel 4 offset calibration register</a></span><br/>
-<span style="margin-left: 20px; ">3.39. <A href="#sect_3_39">Channel 4 saturation register</a></span><br/>
-<span style="margin-left: 20px; ">3.40. <A href="#sect_3_40">Channel 4 trigger threshold configuration register</a></span><br/>
+<span style="margin-left: 20px; ">3.23. <A href="#sect_3_23">Channel 1 trigger delay</a></span><br/>
+<span style="margin-left: 20px; ">3.24. <A href="#sect_3_24">Channel 2 control register</a></span><br/>
+<span style="margin-left: 20px; ">3.25. <A href="#sect_3_25">Channel 2 status register</a></span><br/>
+<span style="margin-left: 20px; ">3.26. <A href="#sect_3_26">Channel 2 gain calibration register</a></span><br/>
+<span style="margin-left: 20px; ">3.27. <A href="#sect_3_27">Channel 2 offset calibration register</a></span><br/>
+<span style="margin-left: 20px; ">3.28. <A href="#sect_3_28">Channel 2 saturation register</a></span><br/>
+<span style="margin-left: 20px; ">3.29. <A href="#sect_3_29">Channel 2 trigger threshold configuration register</a></span><br/>
+<span style="margin-left: 20px; ">3.30. <A href="#sect_3_30">Channel 2 trigger delay</a></span><br/>
+<span style="margin-left: 20px; ">3.31. <A href="#sect_3_31">Channel 3 control register</a></span><br/>
+<span style="margin-left: 20px; ">3.32. <A href="#sect_3_32">Channel 3 status register</a></span><br/>
+<span style="margin-left: 20px; ">3.33. <A href="#sect_3_33">Channel 3 gain calibration register</a></span><br/>
+<span style="margin-left: 20px; ">3.34. <A href="#sect_3_34">Channel 3 offset calibration register</a></span><br/>
+<span style="margin-left: 20px; ">3.35. <A href="#sect_3_35">Channel 3 saturation register</a></span><br/>
+<span style="margin-left: 20px; ">3.36. <A href="#sect_3_36">Channel 3 trigger threshold configuration register</a></span><br/>
+<span style="margin-left: 20px; ">3.37. <A href="#sect_3_37">Channel 3 trigger delay</a></span><br/>
+<span style="margin-left: 20px; ">3.38. <A href="#sect_3_38">Channel 4 control register</a></span><br/>
+<span style="margin-left: 20px; ">3.39. <A href="#sect_3_39">Channel 4 status register</a></span><br/>
+<span style="margin-left: 20px; ">3.40. <A href="#sect_3_40">Channel 4 gain calibration register</a></span><br/>
+<span style="margin-left: 20px; ">3.41. <A href="#sect_3_41">Channel 4 offset calibration register</a></span><br/>
+<span style="margin-left: 20px; ">3.42. <A href="#sect_3_42">Channel 4 saturation register</a></span><br/>
+<span style="margin-left: 20px; ">3.43. <A href="#sect_3_43">Channel 4 trigger threshold configuration register</a></span><br/>
+<span style="margin-left: 20px; ">3.44. <A href="#sect_3_44">Channel 4 trigger delay</a></span><br/>
 <h3><a name="sect_1_0">1. Memory map summary</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
@@ -186,13 +190,13 @@ TRIG_POL
 REG
 </td>
 <td >
-<A href="#TRIG_DLY">Trigger delay</a>
+<A href="#EXT_TRIG_DLY">External trigger delay</a>
 </td>
 <td  class="td_code">
-fmc_adc_100ms_csr_trig_dly
+fmc_adc_100ms_csr_ext_trig_dly
 </td>
 <td  class="td_code">
-TRIG_DLY
+EXT_TRIG_DLY
 </td>
 </tr>
 <tr class="tr_odd">
@@ -469,6 +473,23 @@ CH1_TRIG_THRES
 </tr>
 <tr class="tr_odd">
 <td  class="td_code">
+0x26
+</td>
+<td >
+REG
+</td>
+<td >
+<A href="#CH1_TRIG_DLY">Channel 1 trigger delay</a>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch1_trig_dly
+</td>
+<td  class="td_code">
+CH1_TRIG_DLY
+</td>
+</tr>
+<tr class="tr_even">
+<td  class="td_code">
 0x40
 </td>
 <td >
@@ -484,7 +505,7 @@ fmc_adc_100ms_csr_ch2_ctl
 CH2_CTL
 </td>
 </tr>
-<tr class="tr_even">
+<tr class="tr_odd">
 <td  class="td_code">
 0x41
 </td>
@@ -501,7 +522,7 @@ fmc_adc_100ms_csr_ch2_sta
 CH2_STA
 </td>
 </tr>
-<tr class="tr_odd">
+<tr class="tr_even">
 <td  class="td_code">
 0x42
 </td>
@@ -518,7 +539,7 @@ fmc_adc_100ms_csr_ch2_gain
 CH2_GAIN
 </td>
 </tr>
-<tr class="tr_even">
+<tr class="tr_odd">
 <td  class="td_code">
 0x43
 </td>
@@ -535,7 +556,7 @@ fmc_adc_100ms_csr_ch2_offset
 CH2_OFFSET
 </td>
 </tr>
-<tr class="tr_odd">
+<tr class="tr_even">
 <td  class="td_code">
 0x44
 </td>
@@ -552,7 +573,7 @@ fmc_adc_100ms_csr_ch2_sat
 CH2_SAT
 </td>
 </tr>
-<tr class="tr_even">
+<tr class="tr_odd">
 <td  class="td_code">
 0x45
 </td>
@@ -567,6 +588,23 @@ fmc_adc_100ms_csr_ch2_trig_thres
 </td>
 <td  class="td_code">
 CH2_TRIG_THRES
+</td>
+</tr>
+<tr class="tr_even">
+<td  class="td_code">
+0x46
+</td>
+<td >
+REG
+</td>
+<td >
+<A href="#CH2_TRIG_DLY">Channel 2 trigger delay</a>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch2_trig_dly
+</td>
+<td  class="td_code">
+CH2_TRIG_DLY
 </td>
 </tr>
 <tr class="tr_odd">
@@ -673,6 +711,23 @@ CH3_TRIG_THRES
 </tr>
 <tr class="tr_odd">
 <td  class="td_code">
+0x66
+</td>
+<td >
+REG
+</td>
+<td >
+<A href="#CH3_TRIG_DLY">Channel 3 trigger delay</a>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch3_trig_dly
+</td>
+<td  class="td_code">
+CH3_TRIG_DLY
+</td>
+</tr>
+<tr class="tr_even">
+<td  class="td_code">
 0x80
 </td>
 <td >
@@ -688,7 +743,7 @@ fmc_adc_100ms_csr_ch4_ctl
 CH4_CTL
 </td>
 </tr>
-<tr class="tr_even">
+<tr class="tr_odd">
 <td  class="td_code">
 0x81
 </td>
@@ -705,7 +760,7 @@ fmc_adc_100ms_csr_ch4_sta
 CH4_STA
 </td>
 </tr>
-<tr class="tr_odd">
+<tr class="tr_even">
 <td  class="td_code">
 0x82
 </td>
@@ -722,7 +777,7 @@ fmc_adc_100ms_csr_ch4_gain
 CH4_GAIN
 </td>
 </tr>
-<tr class="tr_even">
+<tr class="tr_odd">
 <td  class="td_code">
 0x83
 </td>
@@ -739,7 +794,7 @@ fmc_adc_100ms_csr_ch4_offset
 CH4_OFFSET
 </td>
 </tr>
-<tr class="tr_odd">
+<tr class="tr_even">
 <td  class="td_code">
 0x84
 </td>
@@ -756,7 +811,7 @@ fmc_adc_100ms_csr_ch4_sat
 CH4_SAT
 </td>
 </tr>
-<tr class="tr_even">
+<tr class="tr_odd">
 <td  class="td_code">
 0x85
 </td>
@@ -771,6 +826,23 @@ fmc_adc_100ms_csr_ch4_trig_thres
 </td>
 <td  class="td_code">
 CH4_TRIG_THRES
+</td>
+</tr>
+<tr class="tr_even">
+<td  class="td_code">
+0x86
+</td>
+<td >
+REG
+</td>
+<td >
+<A href="#CH4_TRIG_DLY">Channel 4 trigger delay</a>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch4_trig_dly
+</td>
+<td  class="td_code">
+CH4_TRIG_DLY
 </td>
 </tr>
 </table>
@@ -1485,7 +1557,7 @@ fmc_adc_100ms_csr_trig_pol_ch4_o
 
 </td>
 <td  class="td_pblock_right">
-<b>Trigger delay:</b>
+<b>External trigger delay:</b>
 </td>
 <td  class="td_arrow_right">
 
@@ -1502,7 +1574,7 @@ fmc_adc_100ms_csr_trig_pol_ch4_o
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_100ms_csr_trig_dly_o[31:0]
+fmc_adc_100ms_csr_ext_trig_dly_o[31:0]
 </td>
 <td  class="td_arrow_right">
 &rArr;
@@ -2386,6 +2458,57 @@ fmc_adc_100ms_csr_ch1_trig_thres_hyst_o[15:0]
 
 </td>
 <td  class="td_pblock_right">
+<b>Channel 1 trigger delay:</b>
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ch1_trig_dly_o[31:0]
+</td>
+<td  class="td_arrow_right">
+&rArr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+&nbsp;
+</td>
+<td  class="td_pblock_right">
+
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
 <b>Channel 2 control register:</b>
 </td>
 <td  class="td_arrow_right">
@@ -2676,6 +2799,57 @@ fmc_adc_100ms_csr_ch2_trig_thres_val_o[15:0]
 </td>
 <td  class="td_pblock_right">
 fmc_adc_100ms_csr_ch2_trig_thres_hyst_o[15:0]
+</td>
+<td  class="td_arrow_right">
+&rArr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+&nbsp;
+</td>
+<td  class="td_pblock_right">
+
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+<b>Channel 2 trigger delay:</b>
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ch2_trig_dly_o[31:0]
 </td>
 <td  class="td_arrow_right">
 &rArr;
@@ -3032,6 +3206,57 @@ fmc_adc_100ms_csr_ch3_trig_thres_hyst_o[15:0]
 
 </td>
 <td  class="td_pblock_right">
+<b>Channel 3 trigger delay:</b>
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ch3_trig_dly_o[31:0]
+</td>
+<td  class="td_arrow_right">
+&rArr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+&nbsp;
+</td>
+<td  class="td_pblock_right">
+
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
 <b>Channel 4 control register:</b>
 </td>
 <td  class="td_arrow_right">
@@ -3322,6 +3547,57 @@ fmc_adc_100ms_csr_ch4_trig_thres_val_o[15:0]
 </td>
 <td  class="td_pblock_right">
 fmc_adc_100ms_csr_ch4_trig_thres_hyst_o[15:0]
+</td>
+<td  class="td_arrow_right">
+&rArr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+&nbsp;
+</td>
+<td  class="td_pblock_right">
+
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+<b>Channel 4 trigger delay:</b>
+</td>
+<td  class="td_arrow_right">
+
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ch4_trig_dly_o[31:0]
 </td>
 <td  class="td_arrow_right">
 &rArr;
@@ -4720,15 +4996,15 @@ CH4
 </b>[<i>read/write</i>]: Channel 4 internal threshold trigger
 <br>0: positive edge/slope<br>1: negative edge/slope
 </ul>
-<a name="TRIG_DLY"></a>
-<h3><a name="sect_3_6">3.6. Trigger delay</a></h3>
+<a name="EXT_TRIG_DLY"></a>
+<h3><a name="sect_3_6">3.6. External trigger delay</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
 <b>HW prefix: </b>
 </td>
 <td  class="td_code">
-fmc_adc_100ms_csr_trig_dly
+fmc_adc_100ms_csr_ext_trig_dly
 </td>
 </tr>
 <tr>
@@ -4744,7 +5020,7 @@ fmc_adc_100ms_csr_trig_dly
 <b>C prefix: </b>
 </td>
 <td  class="td_code">
-TRIG_DLY
+EXT_TRIG_DLY
 </td>
 </tr>
 <tr>
@@ -4785,7 +5061,7 @@ TRIG_DLY
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-TRIG_DLY[31:24]
+EXT_TRIG_DLY[31:24]
 </td>
 <td >
 
@@ -4839,7 +5115,7 @@ TRIG_DLY[31:24]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-TRIG_DLY[23:16]
+EXT_TRIG_DLY[23:16]
 </td>
 <td >
 
@@ -4893,7 +5169,7 @@ TRIG_DLY[23:16]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-TRIG_DLY[15:8]
+EXT_TRIG_DLY[15:8]
 </td>
 <td >
 
@@ -4947,7 +5223,7 @@ TRIG_DLY[15:8]
 </tr>
 <tr>
 <td style="border: solid 1px black;" colspan=8  class="td_field">
-TRIG_DLY[7:0]
+EXT_TRIG_DLY[7:0]
 </td>
 <td >
 
@@ -4974,8 +5250,8 @@ TRIG_DLY[7:0]
 </table>
 <ul>
 <li><b>
-TRIG_DLY
-</b>[<i>read/write</i>]: Trigger delay value
+EXT_TRIG_DLY
+</b>[<i>read/write</i>]: External trigger delay value
 <br>Delay to apply on the trigger in sampling clock period.<br>The default clock frequency is 100MHz (period = 10ns).
 </ul>
 <a name="SW_TRIG"></a>
@@ -9112,8 +9388,266 @@ HYST
 </b>[<i>read/write</i>]: Internal trigger threshold hysteresis
 <br>Configures the internal trigger threshold hysteresis (two's complement).
 </ul>
+<a name="CH1_TRIG_DLY"></a>
+<h3><a name="sect_3_23">3.23. Channel 1 trigger delay</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td >
+<b>HW prefix: </b>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch1_trig_dly
+</td>
+</tr>
+<tr>
+<td >
+<b>HW address: </b>
+</td>
+<td  class="td_code">
+0x26
+</td>
+</tr>
+<tr>
+<td >
+<b>C prefix: </b>
+</td>
+<td  class="td_code">
+CH1_TRIG_DLY
+</td>
+</tr>
+<tr>
+<td >
+<b>C offset: </b>
+</td>
+<td  class="td_code">
+0x98
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+31
+</td>
+<td  class="td_bit">
+30
+</td>
+<td  class="td_bit">
+29
+</td>
+<td  class="td_bit">
+28
+</td>
+<td  class="td_bit">
+27
+</td>
+<td  class="td_bit">
+26
+</td>
+<td  class="td_bit">
+25
+</td>
+<td  class="td_bit">
+24
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH1_TRIG_DLY[31:24]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+23
+</td>
+<td  class="td_bit">
+22
+</td>
+<td  class="td_bit">
+21
+</td>
+<td  class="td_bit">
+20
+</td>
+<td  class="td_bit">
+19
+</td>
+<td  class="td_bit">
+18
+</td>
+<td  class="td_bit">
+17
+</td>
+<td  class="td_bit">
+16
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH1_TRIG_DLY[23:16]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+15
+</td>
+<td  class="td_bit">
+14
+</td>
+<td  class="td_bit">
+13
+</td>
+<td  class="td_bit">
+12
+</td>
+<td  class="td_bit">
+11
+</td>
+<td  class="td_bit">
+10
+</td>
+<td  class="td_bit">
+9
+</td>
+<td  class="td_bit">
+8
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH1_TRIG_DLY[15:8]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+7
+</td>
+<td  class="td_bit">
+6
+</td>
+<td  class="td_bit">
+5
+</td>
+<td  class="td_bit">
+4
+</td>
+<td  class="td_bit">
+3
+</td>
+<td  class="td_bit">
+2
+</td>
+<td  class="td_bit">
+1
+</td>
+<td  class="td_bit">
+0
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH1_TRIG_DLY[7:0]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<ul>
+<li><b>
+CH1_TRIG_DLY
+</b>[<i>read/write</i>]: Channel 1 trigger delay value
+<br>Delay to apply on the trigger in sampling clock period.<br>The default clock frequency is 100MHz (period = 10ns).
+</ul>
 <a name="CH2_CTL"></a>
-<h3><a name="sect_3_23">3.23. Channel 2 control register</a></h3>
+<h3><a name="sect_3_24">3.24. Channel 2 control register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -9371,7 +9905,7 @@ SSR
 <br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
 </ul>
 <a name="CH2_STA"></a>
-<h3><a name="sect_3_24">3.24. Channel 2 status register</a></h3>
+<h3><a name="sect_3_25">3.25. Channel 2 status register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -9629,7 +10163,7 @@ VAL
 <br>Current ADC raw value. The format is binary two's complement.
 </ul>
 <a name="CH2_GAIN"></a>
-<h3><a name="sect_3_25">3.25. Channel 2 gain calibration register</a></h3>
+<h3><a name="sect_3_26">3.26. Channel 2 gain calibration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -9887,7 +10421,7 @@ VAL
 <br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
 </ul>
 <a name="CH2_OFFSET"></a>
-<h3><a name="sect_3_26">3.26. Channel 2 offset calibration register</a></h3>
+<h3><a name="sect_3_27">3.27. Channel 2 offset calibration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -10145,7 +10679,7 @@ VAL
 <br>Offset applied to all data coming from the ADC. The format is binary two's complement.
 </ul>
 <a name="CH2_SAT"></a>
-<h3><a name="sect_3_27">3.27. Channel 2 saturation register</a></h3>
+<h3><a name="sect_3_28">3.28. Channel 2 saturation register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -10403,7 +10937,7 @@ VAL
 <br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 </ul>
 <a name="CH2_TRIG_THRES"></a>
-<h3><a name="sect_3_28">3.28. Channel 2 trigger threshold configuration register</a></h3>
+<h3><a name="sect_3_29">3.29. Channel 2 trigger threshold configuration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -10664,8 +11198,266 @@ HYST
 </b>[<i>read/write</i>]: Internal trigger threshold hysteresis
 <br>Configures the internal trigger threshold hysteresis (two's complement).
 </ul>
+<a name="CH2_TRIG_DLY"></a>
+<h3><a name="sect_3_30">3.30. Channel 2 trigger delay</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td >
+<b>HW prefix: </b>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch2_trig_dly
+</td>
+</tr>
+<tr>
+<td >
+<b>HW address: </b>
+</td>
+<td  class="td_code">
+0x46
+</td>
+</tr>
+<tr>
+<td >
+<b>C prefix: </b>
+</td>
+<td  class="td_code">
+CH2_TRIG_DLY
+</td>
+</tr>
+<tr>
+<td >
+<b>C offset: </b>
+</td>
+<td  class="td_code">
+0x118
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+31
+</td>
+<td  class="td_bit">
+30
+</td>
+<td  class="td_bit">
+29
+</td>
+<td  class="td_bit">
+28
+</td>
+<td  class="td_bit">
+27
+</td>
+<td  class="td_bit">
+26
+</td>
+<td  class="td_bit">
+25
+</td>
+<td  class="td_bit">
+24
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH2_TRIG_DLY[31:24]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+23
+</td>
+<td  class="td_bit">
+22
+</td>
+<td  class="td_bit">
+21
+</td>
+<td  class="td_bit">
+20
+</td>
+<td  class="td_bit">
+19
+</td>
+<td  class="td_bit">
+18
+</td>
+<td  class="td_bit">
+17
+</td>
+<td  class="td_bit">
+16
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH2_TRIG_DLY[23:16]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+15
+</td>
+<td  class="td_bit">
+14
+</td>
+<td  class="td_bit">
+13
+</td>
+<td  class="td_bit">
+12
+</td>
+<td  class="td_bit">
+11
+</td>
+<td  class="td_bit">
+10
+</td>
+<td  class="td_bit">
+9
+</td>
+<td  class="td_bit">
+8
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH2_TRIG_DLY[15:8]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+7
+</td>
+<td  class="td_bit">
+6
+</td>
+<td  class="td_bit">
+5
+</td>
+<td  class="td_bit">
+4
+</td>
+<td  class="td_bit">
+3
+</td>
+<td  class="td_bit">
+2
+</td>
+<td  class="td_bit">
+1
+</td>
+<td  class="td_bit">
+0
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH2_TRIG_DLY[7:0]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<ul>
+<li><b>
+CH2_TRIG_DLY
+</b>[<i>read/write</i>]: Channel 2 trigger delay value
+<br>Delay to apply on the trigger in sampling clock period.<br>The default clock frequency is 100MHz (period = 10ns).
+</ul>
 <a name="CH3_CTL"></a>
-<h3><a name="sect_3_29">3.29. Channel 3 control register</a></h3>
+<h3><a name="sect_3_31">3.31. Channel 3 control register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -10923,7 +11715,7 @@ SSR
 <br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
 </ul>
 <a name="CH3_STA"></a>
-<h3><a name="sect_3_30">3.30. Channel 3 status register</a></h3>
+<h3><a name="sect_3_32">3.32. Channel 3 status register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -11181,7 +11973,7 @@ VAL
 <br>Current ADC raw value. The format is binary two's complement.
 </ul>
 <a name="CH3_GAIN"></a>
-<h3><a name="sect_3_31">3.31. Channel 3 gain calibration register</a></h3>
+<h3><a name="sect_3_33">3.33. Channel 3 gain calibration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -11439,7 +12231,7 @@ VAL
 <br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
 </ul>
 <a name="CH3_OFFSET"></a>
-<h3><a name="sect_3_32">3.32. Channel 3 offset calibration register</a></h3>
+<h3><a name="sect_3_34">3.34. Channel 3 offset calibration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -11697,7 +12489,7 @@ VAL
 <br>Offset applied to all data coming from the ADC. The format is binary two's complement.
 </ul>
 <a name="CH3_SAT"></a>
-<h3><a name="sect_3_33">3.33. Channel 3 saturation register</a></h3>
+<h3><a name="sect_3_35">3.35. Channel 3 saturation register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -11955,7 +12747,7 @@ VAL
 <br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 </ul>
 <a name="CH3_TRIG_THRES"></a>
-<h3><a name="sect_3_34">3.34. Channel 3 trigger threshold configuration register</a></h3>
+<h3><a name="sect_3_36">3.36. Channel 3 trigger threshold configuration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -12216,8 +13008,266 @@ HYST
 </b>[<i>read/write</i>]: Internal trigger threshold hysteresis
 <br>Configures the internal trigger threshold hysteresis (two's complement).
 </ul>
+<a name="CH3_TRIG_DLY"></a>
+<h3><a name="sect_3_37">3.37. Channel 3 trigger delay</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td >
+<b>HW prefix: </b>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch3_trig_dly
+</td>
+</tr>
+<tr>
+<td >
+<b>HW address: </b>
+</td>
+<td  class="td_code">
+0x66
+</td>
+</tr>
+<tr>
+<td >
+<b>C prefix: </b>
+</td>
+<td  class="td_code">
+CH3_TRIG_DLY
+</td>
+</tr>
+<tr>
+<td >
+<b>C offset: </b>
+</td>
+<td  class="td_code">
+0x198
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+31
+</td>
+<td  class="td_bit">
+30
+</td>
+<td  class="td_bit">
+29
+</td>
+<td  class="td_bit">
+28
+</td>
+<td  class="td_bit">
+27
+</td>
+<td  class="td_bit">
+26
+</td>
+<td  class="td_bit">
+25
+</td>
+<td  class="td_bit">
+24
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH3_TRIG_DLY[31:24]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+23
+</td>
+<td  class="td_bit">
+22
+</td>
+<td  class="td_bit">
+21
+</td>
+<td  class="td_bit">
+20
+</td>
+<td  class="td_bit">
+19
+</td>
+<td  class="td_bit">
+18
+</td>
+<td  class="td_bit">
+17
+</td>
+<td  class="td_bit">
+16
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH3_TRIG_DLY[23:16]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+15
+</td>
+<td  class="td_bit">
+14
+</td>
+<td  class="td_bit">
+13
+</td>
+<td  class="td_bit">
+12
+</td>
+<td  class="td_bit">
+11
+</td>
+<td  class="td_bit">
+10
+</td>
+<td  class="td_bit">
+9
+</td>
+<td  class="td_bit">
+8
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH3_TRIG_DLY[15:8]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+7
+</td>
+<td  class="td_bit">
+6
+</td>
+<td  class="td_bit">
+5
+</td>
+<td  class="td_bit">
+4
+</td>
+<td  class="td_bit">
+3
+</td>
+<td  class="td_bit">
+2
+</td>
+<td  class="td_bit">
+1
+</td>
+<td  class="td_bit">
+0
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH3_TRIG_DLY[7:0]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<ul>
+<li><b>
+CH3_TRIG_DLY
+</b>[<i>read/write</i>]: Channel 3 trigger delay value
+<br>Delay to apply on the trigger in sampling clock period.<br>The default clock frequency is 100MHz (period = 10ns).
+</ul>
 <a name="CH4_CTL"></a>
-<h3><a name="sect_3_35">3.35. Channel 4 control register</a></h3>
+<h3><a name="sect_3_38">3.38. Channel 4 control register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -12475,7 +13525,7 @@ SSR
 <br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
 </ul>
 <a name="CH4_STA"></a>
-<h3><a name="sect_3_36">3.36. Channel 4 status register</a></h3>
+<h3><a name="sect_3_39">3.39. Channel 4 status register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -12733,7 +13783,7 @@ VAL
 <br>Current ADC raw value. The format is binary two's complement.
 </ul>
 <a name="CH4_GAIN"></a>
-<h3><a name="sect_3_37">3.37. Channel 4 gain calibration register</a></h3>
+<h3><a name="sect_3_40">3.40. Channel 4 gain calibration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -12991,7 +14041,7 @@ VAL
 <br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
 </ul>
 <a name="CH4_OFFSET"></a>
-<h3><a name="sect_3_38">3.38. Channel 4 offset calibration register</a></h3>
+<h3><a name="sect_3_41">3.41. Channel 4 offset calibration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -13249,7 +14299,7 @@ VAL
 <br>Offset applied to all data coming from the ADC. The format is binary two's complement.
 </ul>
 <a name="CH4_SAT"></a>
-<h3><a name="sect_3_39">3.39. Channel 4 saturation register</a></h3>
+<h3><a name="sect_3_42">3.42. Channel 4 saturation register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -13507,7 +14557,7 @@ VAL
 <br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
 </ul>
 <a name="CH4_TRIG_THRES"></a>
-<h3><a name="sect_3_40">3.40. Channel 4 trigger threshold configuration register</a></h3>
+<h3><a name="sect_3_43">3.43. Channel 4 trigger threshold configuration register</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td >
@@ -13767,6 +14817,264 @@ VAL
 HYST
 </b>[<i>read/write</i>]: Internal trigger threshold hysteresis
 <br>Configures the internal trigger threshold hysteresis (two's complement).
+</ul>
+<a name="CH4_TRIG_DLY"></a>
+<h3><a name="sect_3_44">3.44. Channel 4 trigger delay</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td >
+<b>HW prefix: </b>
+</td>
+<td  class="td_code">
+fmc_adc_100ms_csr_ch4_trig_dly
+</td>
+</tr>
+<tr>
+<td >
+<b>HW address: </b>
+</td>
+<td  class="td_code">
+0x86
+</td>
+</tr>
+<tr>
+<td >
+<b>C prefix: </b>
+</td>
+<td  class="td_code">
+CH4_TRIG_DLY
+</td>
+</tr>
+<tr>
+<td >
+<b>C offset: </b>
+</td>
+<td  class="td_code">
+0x218
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+31
+</td>
+<td  class="td_bit">
+30
+</td>
+<td  class="td_bit">
+29
+</td>
+<td  class="td_bit">
+28
+</td>
+<td  class="td_bit">
+27
+</td>
+<td  class="td_bit">
+26
+</td>
+<td  class="td_bit">
+25
+</td>
+<td  class="td_bit">
+24
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH4_TRIG_DLY[31:24]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+23
+</td>
+<td  class="td_bit">
+22
+</td>
+<td  class="td_bit">
+21
+</td>
+<td  class="td_bit">
+20
+</td>
+<td  class="td_bit">
+19
+</td>
+<td  class="td_bit">
+18
+</td>
+<td  class="td_bit">
+17
+</td>
+<td  class="td_bit">
+16
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH4_TRIG_DLY[23:16]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+15
+</td>
+<td  class="td_bit">
+14
+</td>
+<td  class="td_bit">
+13
+</td>
+<td  class="td_bit">
+12
+</td>
+<td  class="td_bit">
+11
+</td>
+<td  class="td_bit">
+10
+</td>
+<td  class="td_bit">
+9
+</td>
+<td  class="td_bit">
+8
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH4_TRIG_DLY[15:8]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+<td  class="td_bit">
+7
+</td>
+<td  class="td_bit">
+6
+</td>
+<td  class="td_bit">
+5
+</td>
+<td  class="td_bit">
+4
+</td>
+<td  class="td_bit">
+3
+</td>
+<td  class="td_bit">
+2
+</td>
+<td  class="td_bit">
+1
+</td>
+<td  class="td_bit">
+0
+</td>
+</tr>
+<tr>
+<td style="border: solid 1px black;" colspan=8  class="td_field">
+CH4_TRIG_DLY[7:0]
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+<td >
+
+</td>
+</tr>
+</table>
+<ul>
+<li><b>
+CH4_TRIG_DLY
+</b>[<i>read/write</i>]: Channel 4 trigger delay value
+<br>Delay to apply on the trigger in sampling clock period.<br>The default clock frequency is 100MHz (period = 10ns).
 </ul>
 
 

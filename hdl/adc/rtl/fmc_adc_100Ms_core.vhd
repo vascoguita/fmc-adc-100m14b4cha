@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2018-01-25
+-- Last update: 2018-01-26
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -195,6 +195,8 @@ architecture rtl of fmc_adc_100Ms_core is
   ------------------------------------------------------------------------------
   type t_acq_fsm_state is (IDLE, PRE_TRIG, WAIT_TRIG, POST_TRIG, TRIG_TAG, DECR_SHOT);
   type t_fmc_adc_vec16_array is array (positive range<>) of std_logic_vector(15 downto 0);
+  type t_fmc_adc_vec32_array is array (positive range<>) of std_logic_vector(31 downto 0);
+  type t_fmc_adc_uint32_array is array (positive range<>) of unsigned(31 downto 0);
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -233,34 +235,37 @@ architecture rtl of fmc_adc_100Ms_core is
 
   -- Trigger
   signal ext_trig_a, ext_trig       : std_logic;
-  signal ext_trig_p, ext_trig_n     : std_logic;
   signal ext_trig_d                 : std_logic;
-  signal time_trig                  : std_logic;
-  signal time_trig_d                : std_logic;
-  signal int_ch_trig                : std_logic_vector(1 to 4);
+  signal ext_trig_delay             : std_logic_vector(31 downto 0);
+  signal ext_trig_delay_cnt         : unsigned(31 downto 0);
+  signal ext_trig_en                : std_logic;
+  signal ext_trig_fixed_delay       : std_logic_vector(7 downto 0);
+  signal ext_trig_p, ext_trig_n     : std_logic;
+  signal ext_trig_pol               : std_logic;
+  signal int_trig                   : std_logic_vector(1 to 4);
+  signal int_trig_d                 : std_logic_vector(1 to 4);
   signal int_trig_data              : t_fmc_adc_vec16_array(1 to 4);
+  signal int_trig_delay             : t_fmc_adc_vec32_array(1 to 4);
+  signal int_trig_delay_cnt         : t_fmc_adc_uint32_array(1 to 4);
+  signal int_trig_en                : std_logic_vector(1 to 4);
+  signal int_trig_pol               : std_logic_vector(1 to 4);
   signal int_trig_thres             : t_fmc_adc_vec16_array(1 to 4);
   signal int_trig_thres_hyst        : t_fmc_adc_vec16_array(1 to 4);
-  signal ext_trig_pol               : std_logic;
-  signal int_trig_pol               : std_logic_vector(1 to 4);
-  signal ext_trig_en                : std_logic;
-  signal int_trig_en                : std_logic_vector(1 to 4);
-  signal time_trig_en               : std_logic;
   signal sw_trig                    : std_logic;
-  signal sw_trig_d                  : std_logic;
   signal sw_trig_en                 : std_logic;
+  signal sw_trig_fixed_delay        : std_logic_vector(4 downto 0);
+  signal time_trig                  : std_logic;
+  signal time_trig_en               : std_logic;
+  signal time_trig_fixed_delay      : std_logic_vector(4 downto 0);
   signal trig                       : std_logic;
-  signal trig_delay                 : std_logic_vector(31 downto 0);
-  signal trig_delay_cnt             : unsigned(31 downto 0);
-  signal trig_d                     : std_logic;
   signal trig_align                 : std_logic;
-  signal trig_storage               : std_logic_vector(31 downto 0);
-  signal trig_fifo_wr               : std_logic;
-  signal trig_fifo_rd               : std_logic;
-  signal trig_fifo_empty            : std_logic;
-  signal trig_fifo_full             : std_logic;
   signal trig_fifo_din              : std_logic_vector(32 downto 0);
   signal trig_fifo_dout             : std_logic_vector(32 downto 0);
+  signal trig_fifo_empty            : std_logic;
+  signal trig_fifo_full             : std_logic;
+  signal trig_fifo_rd               : std_logic;
+  signal trig_fifo_wr               : std_logic;
+  signal trig_storage               : std_logic_vector(31 downto 0);
 
   -- Under-sampling
   signal undersample_factor : std_logic_vector(31 downto 0);
@@ -679,28 +684,32 @@ begin
   test_data_en           <= csr_regout.ctl_test_data_en_o;
   trig_led_man           <= csr_regout.ctl_trig_led_o;
   acq_led_man            <= csr_regout.ctl_acq_led_o;
+  ext_trig_delay         <= csr_regout.ext_trig_dly_o;
   ext_trig_en            <= csr_regout.trig_en_ext_o;
-  sw_trig_en             <= csr_regout.trig_en_sw_o;
-  time_trig_en           <= csr_regout.trig_en_time_o;
+  ext_trig_pol           <= csr_regout.trig_pol_ext_o;
+  int_trig_delay(1)      <= csr_regout.ch1_trig_dly_o;
+  int_trig_delay(2)      <= csr_regout.ch2_trig_dly_o;
+  int_trig_delay(3)      <= csr_regout.ch3_trig_dly_o;
+  int_trig_delay(4)      <= csr_regout.ch4_trig_dly_o;
   int_trig_en(1)         <= csr_regout.trig_en_ch1_o;
   int_trig_en(2)         <= csr_regout.trig_en_ch2_o;
   int_trig_en(3)         <= csr_regout.trig_en_ch3_o;
   int_trig_en(4)         <= csr_regout.trig_en_ch4_o;
-  ext_trig_pol           <= csr_regout.trig_pol_ext_o;
   int_trig_pol(1)        <= csr_regout.trig_pol_ch1_o;
   int_trig_pol(2)        <= csr_regout.trig_pol_ch2_o;
   int_trig_pol(3)        <= csr_regout.trig_pol_ch3_o;
   int_trig_pol(4)        <= csr_regout.trig_pol_ch4_o;
-  int_trig_thres_hyst(1) <= csr_regout.ch1_trig_thres_hyst_o;
-  int_trig_thres_hyst(2) <= csr_regout.ch2_trig_thres_hyst_o;
-  int_trig_thres_hyst(3) <= csr_regout.ch3_trig_thres_hyst_o;
-  int_trig_thres_hyst(4) <= csr_regout.ch4_trig_thres_hyst_o;
   int_trig_thres(1)      <= csr_regout.ch1_trig_thres_val_o;
   int_trig_thres(2)      <= csr_regout.ch2_trig_thres_val_o;
   int_trig_thres(3)      <= csr_regout.ch3_trig_thres_val_o;
   int_trig_thres(4)      <= csr_regout.ch4_trig_thres_val_o;
-  trig_delay             <= csr_regout.trig_dly_o;
+  int_trig_thres_hyst(1) <= csr_regout.ch1_trig_thres_hyst_o;
+  int_trig_thres_hyst(2) <= csr_regout.ch2_trig_thres_hyst_o;
+  int_trig_thres_hyst(3) <= csr_regout.ch3_trig_thres_hyst_o;
+  int_trig_thres_hyst(4) <= csr_regout.ch4_trig_thres_hyst_o;
   sw_trig                <= csr_regout.sw_trig_wr_o;
+  sw_trig_en             <= csr_regout.trig_en_sw_o;
+  time_trig_en           <= csr_regout.trig_en_time_o;
   shots_value            <= csr_regout.shots_nb_o;
   undersample_factor     <= csr_regout.sr_undersample_o;
   pre_trig_value         <= csr_regout.pre_samples_o;
@@ -766,6 +775,42 @@ begin
     ext_trig_n when '1',
     '0'        when others;
 
+  -- Configurable trigger delay, adds ext_trig_delay+1 clock cycles
+  -- to the trigger signal
+  p_ext_trig_delay_cnt : process(fs_clk, fs_rst_n)
+  begin
+    if fs_rst_n = '0' then
+      ext_trig_delay_cnt <= (others => '0');
+    elsif rising_edge(fs_clk) then
+      if ext_trig = '1' then
+        ext_trig_delay_cnt <= unsigned(ext_trig_delay);
+      elsif ext_trig_delay_cnt /= 0 then
+        ext_trig_delay_cnt <= ext_trig_delay_cnt - 1;
+      end if;
+    end if;
+  end process p_ext_trig_delay_cnt;
+
+  p_ext_trig_delay : process(fs_clk, fs_rst_n)
+  begin
+    if fs_rst_n = '0' then
+      ext_trig_d <= '0';
+    elsif rising_edge(fs_clk) then
+      if ext_trig_delay = X"00000000" then
+        if ext_trig = '1' then
+          ext_trig_d <= '1';
+        else
+          ext_trig_d <= '0';
+        end if;
+      else
+        if ext_trig_delay_cnt = X"00000001" then
+          ext_trig_d <= '1';
+        else
+          ext_trig_d <= '0';
+        end if;
+      end if;
+    end if;
+  end process p_ext_trig_delay;
+
   -- Time trigger synchronization (from 125MHz timetag core)
   cmp_time_trig_sync : gc_sync_ffs
     port map (
@@ -792,78 +837,105 @@ begin
         inn_i     => int_trig_thres(I),
         hys_i     => int_trig_thres_hyst(I),
         out_o     => open,
-        out_p_o   => int_ch_trig(I));
+        out_p_o   => int_trig(I));
+
+    -- Configurable trigger delay, adds int_trig_delay(I)+1 clock cycles
+    -- to the trigger signal
+    p_int_trig_delay_cnt : process(fs_clk, fs_rst_n)
+    begin
+      if fs_rst_n = '0' then
+        int_trig_delay_cnt(I) <= (others => '0');
+      elsif rising_edge(fs_clk) then
+        if int_trig(I) = '1' then
+          int_trig_delay_cnt(I) <= unsigned(int_trig_delay(I));
+        elsif int_trig_delay_cnt(I) /= 0 then
+          int_trig_delay_cnt(I) <= int_trig_delay_cnt(I) - 1;
+        end if;
+      end if;
+    end process p_int_trig_delay_cnt;
+
+    p_int_trig_delay : process(fs_clk, fs_rst_n)
+    begin
+      if fs_rst_n = '0' then
+        int_trig_d(I) <= '0';
+      elsif rising_edge(fs_clk) then
+        if int_trig_delay(I) = X"00000000" then
+          if int_trig(I) = '1' then
+            int_trig_d(I) <= '1';
+          else
+            int_trig_d(I) <= '0';
+          end if;
+        else
+          if int_trig_delay_cnt(I) = X"00000001" then
+            int_trig_d(I) <= '1';
+          else
+            int_trig_d(I) <= '0';
+          end if;
+        end if;
+      end if;
+    end process p_int_trig_delay;
 
   end generate g_int_trig;
 
-  -- Internal triggers take one more cycle to propagate, so delay all other sources
-  -- to properly align everything with the acquired data.
+  -- Due to the comparator, configurable trigger delay and trigger align logic,
+  -- internal threshold triggers are misaligned with respect to the incoming
+  -- data (triggers are late by 3 sampling clock cycles).
+  --
+  -- We solve this by delaying the sampled data by 3 clock cycles on-chip.
+  --
+  -- At the same time, all the other triggers (external, time and soft) are
+  -- also misaligned with respect to the incoming data (triggers arrive earlier
+  -- in these cases) because it takes more time to digitize the analogue signals
+  -- serialize them, transmit them, receive them in the FPGA, de-serialize, etc.
+  --
+  -- We solve this by introducing individual delays to the other triggers. In doing
+  -- so, we always add more to account for the 3 clock cycles data delays mentioned
+  -- before. Thus:
+  -- * EXT triggers are delayed by 8 (5+3) cycles
+  -- * TIME triggers are delayed by 5 (2+3) cycles TODO: confirm
+  -- * SOFT triggers are delayed by 5 (2+3) cycles TODO: confirm
+
+  p_data_shift : process (fs_clk)
+  begin
+    if rising_edge(fs_clk) then
+      data_calibr_out_d1 <= data_calibr_out;
+      data_calibr_out_d2 <= data_calibr_out_d1;
+      data_calibr_out_d3 <= data_calibr_out_d2;
+    end if;
+  end process p_data_shift;
+
   p_trig_shift : process(fs_clk, fs_rst_n)
   begin
     if fs_rst_n = '0' then
-      sw_trig_d   <= '0';
-      ext_trig_d  <= '0';
-      time_trig_d <= '0';
+      sw_trig_fixed_delay   <= (others => '0');
+      ext_trig_fixed_delay  <= (others => '0');
+      time_trig_fixed_delay <= (others => '0');
     elsif rising_edge(fs_clk) then
-      sw_trig_d   <= sw_trig;
-      ext_trig_d  <= ext_trig;
-      time_trig_d <= time_trig;
+      sw_trig_fixed_delay   <= sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH -1 downto 0) & sw_trig;
+      ext_trig_fixed_delay  <= ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH -1 downto 0) & ext_trig_d;
+      time_trig_fixed_delay <= time_trig_fixed_delay(time_trig_fixed_delay'HIGH -1 downto 0) & time_trig;
     end if;
   end process p_trig_shift;
 
   -- Trigger sources ORing
-  trig <= (sw_trig_d and sw_trig_en) or
-          (ext_trig_d and ext_trig_en) or
-          (int_ch_trig(1) and int_trig_en(1)) or
-          (int_ch_trig(2) and int_trig_en(2)) or
-          (int_ch_trig(3) and int_trig_en(3)) or
-          (int_ch_trig(4) and int_trig_en(4)) or
-          (time_trig_d and time_trig_en);
-
-  -- Trigger delay
-  p_trig_delay_cnt : process(fs_clk, fs_rst_n)
-  begin
-    if fs_rst_n = '0' then
-      trig_delay_cnt <= (others => '0');
-    elsif rising_edge(fs_clk) then
-      if trig = '1' then
-        trig_delay_cnt <= unsigned(trig_delay);
-      elsif trig_delay_cnt /= 0 then
-        trig_delay_cnt <= trig_delay_cnt - 1;
-      end if;
-    end if;
-  end process p_trig_delay_cnt;
-
-  p_trig_delay : process(fs_clk, fs_rst_n)
-  begin
-    if fs_rst_n = '0' then
-      trig_d <= '0';
-    elsif rising_edge(fs_clk) then
-      if trig_delay = X"00000000" then
-        if trig = '1' then
-          trig_d <= '1';
-        else
-          trig_d <= '0';
-        end if;
-      else
-        if trig_delay_cnt = X"00000001" then
-          trig_d <= '1';
-        else
-          trig_d <= '0';
-        end if;
-      end if;
-    end if;
-  end process p_trig_delay;
+  trig <= (sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) and sw_trig_en) or
+          (ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH) and ext_trig_en) or
+          (int_trig_d(1) and int_trig_en(1)) or
+          (int_trig_d(2) and int_trig_en(2)) or
+          (int_trig_d(3) and int_trig_en(3)) or
+          (int_trig_d(4) and int_trig_en(4)) or
+          (time_trig_fixed_delay(time_trig_fixed_delay'HIGH) and time_trig_en);
 
   ------------------------------------------------------------------------------
-  -- Trigger storage and synchronisation to system clock domain
+  -- Trigger source storage and synchronisation to system clock domain
   ------------------------------------------------------------------------------
 
   trig_fifo_din <= trig & X"00000" &
-                  int_ch_trig(4) & int_ch_trig(3) &
-                  int_ch_trig(2) & int_ch_trig(1) &
-                  "000" & time_trig_d &
-                  "00" & sw_trig_d & ext_trig_d;
+                   int_trig_d(4) & int_trig_d(3) &
+                   int_trig_d(2) & int_trig_d(1) &
+                   "000" & time_trig_fixed_delay(time_trig_fixed_delay'HIGH) &
+                   "00" & sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) &
+                   ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH);
 
   trig_fifo_wr <= not trig_fifo_full;
 
@@ -946,7 +1018,7 @@ begin
     if fs_rst_n = '0' then
       trig_align <= '0';
     elsif rising_edge(fs_clk) then
-      if trig_d = '1' then
+      if trig = '1' then
         trig_align <= '1';
       elsif undersample_en = '1' then
         trig_align <= '0';
@@ -1007,16 +1079,6 @@ begin
       end if;
     end if;
   end process;
-
-  -- Delay data to compensate for trigger processing
-  p_data_delay : process (fs_clk)
-  begin
-    if rising_edge(fs_clk) then
-      data_calibr_out_d1 <= data_calibr_out;
-      data_calibr_out_d2 <= data_calibr_out_d1;
-      data_calibr_out_d3 <= data_calibr_out_d2;
-    end if;
-  end process p_data_delay;
 
   -- Data to FIFO
   sync_fifo_din(64) <= trig_align;

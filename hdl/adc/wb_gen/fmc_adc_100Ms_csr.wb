@@ -368,11 +368,11 @@ peripheral {
   };
 
   reg {
-    name = "Trigger delay";
-    prefix = "trig_dly";
+    name = "External trigger delay";
+    prefix = "ext_trig_dly";
 
     field {
-      name = "Trigger delay value";
+      name = "External trigger delay value";
       description = "Delay to apply on the trigger in sampling clock period.\nThe default clock frequency is 100MHz (period = 10ns).";
       type = SLV;
       size = 32;
@@ -708,6 +708,20 @@ peripheral {
   };
 
   reg {
+    name = "Channel 1 trigger delay";
+    prefix = "ch1_trig_dly";
+
+    field {
+      name = "Channel 1 trigger delay value";
+      description = "Delay to apply on the trigger in sampling clock period.\nThe default clock frequency is 100MHz (period = 10ns).";
+      type = SLV;
+      size = 32;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+    };
+  };
+
+  reg {
     name = "Channel 2 control register";
     prefix = "ch2_ctl";
     align = 0x20;
@@ -864,6 +878,20 @@ peripheral {
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
       clock = "fs_clk_i";
+    };
+  };
+
+  reg {
+    name = "Channel 2 trigger delay";
+    prefix = "ch2_trig_dly";
+
+    field {
+      name = "Channel 2 trigger delay value";
+      description = "Delay to apply on the trigger in sampling clock period.\nThe default clock frequency is 100MHz (period = 10ns).";
+      type = SLV;
+      size = 32;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
     };
   };
 
@@ -1028,6 +1056,20 @@ peripheral {
   };
 
   reg {
+    name = "Channel 3 trigger delay";
+    prefix = "ch3_trig_dly";
+
+    field {
+      name = "Channel 3 trigger delay value";
+      description = "Delay to apply on the trigger in sampling clock period.\nThe default clock frequency is 100MHz (period = 10ns).";
+      type = SLV;
+      size = 32;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+    };
+  };
+
+  reg {
     name = "Channel 4 control register";
     prefix = "ch4_ctl";
     align = 0x20;
@@ -1184,6 +1226,20 @@ peripheral {
       access_bus = READ_WRITE;
       access_dev = READ_ONLY;
       clock = "fs_clk_i";
+    };
+  };
+
+  reg {
+    name = "Channel 4 trigger delay";
+    prefix = "ch4_trig_dly";
+
+    field {
+      name = "Channel 4 trigger delay value";
+      description = "Delay to apply on the trigger in sampling clock period.\nThe default clock frequency is 100MHz (period = 10ns).";
+      type = SLV;
+      size = 32;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
     };
   };
 

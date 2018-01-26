@@ -23,8 +23,8 @@ REG @tab
 Trigger polarity
 @item @code{0x14} @tab
 REG @tab
-@code{trig_dly} @tab
-Trigger delay
+@code{ext_trig_dly} @tab
+External trigger delay
 @item @code{0x18} @tab
 REG @tab
 @code{sw_trig} @tab
@@ -89,6 +89,10 @@ Channel 1 saturation register
 REG @tab
 @code{ch1_trig_thres} @tab
 Channel 1 trigger threshold configuration register
+@item @code{0x98} @tab
+REG @tab
+@code{ch1_trig_dly} @tab
+Channel 1 trigger delay
 @item @code{0x100} @tab
 REG @tab
 @code{ch2_ctl} @tab
@@ -113,6 +117,10 @@ Channel 2 saturation register
 REG @tab
 @code{ch2_trig_thres} @tab
 Channel 2 trigger threshold configuration register
+@item @code{0x118} @tab
+REG @tab
+@code{ch2_trig_dly} @tab
+Channel 2 trigger delay
 @item @code{0x180} @tab
 REG @tab
 @code{ch3_ctl} @tab
@@ -137,6 +145,10 @@ Channel 3 saturation register
 REG @tab
 @code{ch3_trig_thres} @tab
 Channel 3 trigger threshold configuration register
+@item @code{0x198} @tab
+REG @tab
+@code{ch3_trig_dly} @tab
+Channel 3 trigger delay
 @item @code{0x200} @tab
 REG @tab
 @code{ch4_ctl} @tab
@@ -161,6 +173,10 @@ Channel 4 saturation register
 REG @tab
 @code{ch4_trig_thres} @tab
 Channel 4 trigger threshold configuration register
+@item @code{0x218} @tab
+REG @tab
+@code{ch4_trig_dly} @tab
+Channel 4 trigger delay
 @end multitable 
 @regsection @code{ctl} - Control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -375,18 +391,18 @@ Channel 4 internal threshold trigger
 @item @code{ch3} @tab 0: positive edge/slope@*1: negative edge/slope
 @item @code{ch4} @tab 0: positive edge/slope@*1: negative edge/slope
 @end multitable
-@regsection @code{trig_dly} - Trigger delay
+@regsection @code{ext_trig_dly} - External trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
 @item @code{31...0}
 @tab R/W @tab
-@code{TRIG_DLY}
+@code{EXT_TRIG_DLY}
 @tab @code{0} @tab 
-Trigger delay value
+External trigger delay value
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
-@item @code{trig_dly} @tab Delay to apply on the trigger in sampling clock period.@*The default clock frequency is 100MHz (period = 10ns).
+@item @code{ext_trig_dly} @tab Delay to apply on the trigger in sampling clock period.@*The default clock frequency is 100MHz (period = 10ns).
 @end multitable
 @regsection @code{sw_trig} - Software trigger
 Writing (anything) to this register generates a software trigger.
@@ -599,6 +615,19 @@ Internal trigger threshold hysteresis
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
 @item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
 @end multitable
+@regsection @code{ch1_trig_dly} - Channel 1 trigger delay
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{31...0}
+@tab R/W @tab
+@code{CH1_TRIG_DLY}
+@tab @code{0} @tab 
+Channel 1 trigger delay value
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{ch1_trig_dly} @tab Delay to apply on the trigger in sampling clock period.@*The default clock frequency is 100MHz (period = 10ns).
+@end multitable
 @regsection @code{ch2_ctl} - Channel 2 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
@@ -682,6 +711,19 @@ Internal trigger threshold hysteresis
 @headitem Field @tab Description
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
 @item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
+@end multitable
+@regsection @code{ch2_trig_dly} - Channel 2 trigger delay
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{31...0}
+@tab R/W @tab
+@code{CH2_TRIG_DLY}
+@tab @code{0} @tab 
+Channel 2 trigger delay value
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{ch2_trig_dly} @tab Delay to apply on the trigger in sampling clock period.@*The default clock frequency is 100MHz (period = 10ns).
 @end multitable
 @regsection @code{ch3_ctl} - Channel 3 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -767,6 +809,19 @@ Internal trigger threshold hysteresis
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
 @item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
 @end multitable
+@regsection @code{ch3_trig_dly} - Channel 3 trigger delay
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{31...0}
+@tab R/W @tab
+@code{CH3_TRIG_DLY}
+@tab @code{0} @tab 
+Channel 3 trigger delay value
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{ch3_trig_dly} @tab Delay to apply on the trigger in sampling clock period.@*The default clock frequency is 100MHz (period = 10ns).
+@end multitable
 @regsection @code{ch4_ctl} - Channel 4 control register
 @multitable @columnfractions .10 .10 .15 .10 .55
 @headitem Bits @tab Access @tab Prefix @tab Default @tab Name
@@ -850,4 +905,17 @@ Internal trigger threshold hysteresis
 @headitem Field @tab Description
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
 @item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
+@end multitable
+@regsection @code{ch4_trig_dly} - Channel 4 trigger delay
+@multitable @columnfractions .10 .10 .15 .10 .55
+@headitem Bits @tab Access @tab Prefix @tab Default @tab Name
+@item @code{31...0}
+@tab R/W @tab
+@code{CH4_TRIG_DLY}
+@tab @code{0} @tab 
+Channel 4 trigger delay value
+@end multitable
+@multitable @columnfractions 0.15 0.85
+@headitem Field @tab Description
+@item @code{ch4_trig_dly} @tab Delay to apply on the trigger in sampling clock period.@*The default clock frequency is 100MHz (period = 10ns).
 @end multitable
