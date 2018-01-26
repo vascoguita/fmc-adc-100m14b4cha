@@ -1388,7 +1388,7 @@ begin
   trig_tag_done <= acq_in_trig_tag and acq_in_trig_tag_d;
 
   trig_tag_data <= X"0" & trig_storage & trigger_tag_i.coarse when trig_tag_done = '1' else
-                   trigger_tag_i.seconds(31 downto 0) & X"000000" & trigger_tag_i.seconds(39 downto 32);
+                   X"ACCE55" & trigger_tag_i.seconds;
 
   ------------------------------------------------------------------------------
   -- Dual DPRAM buffers for multi-shots acquisition
