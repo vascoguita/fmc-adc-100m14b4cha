@@ -416,7 +416,6 @@ static int __fa_init(struct fa_dev *fa)
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_SEL],
 			  1);
 		zdev->cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_EXT].value = 1;
-		fa->trig_compensation = FA_CH_TX_DELAY;
 	} else {
 		/* Enable Software trigger*/
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
@@ -424,8 +423,6 @@ static int __fa_init(struct fa_dev *fa)
 		/* Disable Hardware trigger*/
 		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
 			  0);
-		/* Set default trigger delay */
-		fa->trig_compensation = 0;
 	}
 
 	/* Zero offsets and release the DAC clear */
@@ -439,12 +436,7 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
 		  get_seconds());
 
-	/*
-	 * Set Trigger delay in order to compensate
-	 * the channel signal transmission delay
-	 */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY],
-		  fa->trig_compensation);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY], 0);
 
 	/* disable auto_start */
 	fa->enable_auto_start = 0;

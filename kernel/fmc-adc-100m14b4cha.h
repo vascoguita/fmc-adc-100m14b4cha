@@ -372,8 +372,6 @@ struct fa_dev {
 	/* flag  */
 	int enable_auto_start;
 
-	uint32_t trig_compensation;
-
 	struct dentry *reg_dump;
 };
 
