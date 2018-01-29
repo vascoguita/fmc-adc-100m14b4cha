@@ -8,7 +8,7 @@ LINUX ?= /lib/modules/$(shell uname -r)/build
 FMC_BUS ?= ../fmc-bus
 ZIO ?= ../zio
 SVEC_SW ?= ../svec-sw
-VMEBUS ?= $(REPO_PARENT)/vmebridge
+VMEBUS ?= $(REPO_PARENT)/../vmebridge
 
 # FMC_BUS_ABS and ZIO_ABS has to be absolut path,
 # due to beeing passed to the Kbuild
