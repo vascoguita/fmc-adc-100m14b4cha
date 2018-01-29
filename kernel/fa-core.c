@@ -411,19 +411,9 @@ static int __fa_init(struct fa_dev *fa)
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
-	if (zdev->cset->ti->cset->trig == &zfat_type) {
-		/* Select external trigger (index 0) */
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_SEL],
-			  1);
-		zdev->cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_EXT].value = 1;
-	} else {
-		/* Enable Software trigger*/
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
-			  1);
-		/* Disable Hardware trigger*/
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
-			  0);
-	}
+
+	/* No trigger source enabled by default */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
 
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
@@ -436,7 +426,7 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
 		  get_seconds());
 
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY], 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_EXT_DLY], 0);
 
 	/* disable auto_start */
 	fa->enable_auto_start = 0;

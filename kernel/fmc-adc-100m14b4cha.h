@@ -12,6 +12,25 @@
 #define BIT(nr) (1UL << (nr))
 #endif
 
+/* Trigger sources */
+#define FA100M14B4C_TRG_SRC_EXT BIT(0)
+#define FA100M14B4C_TRG_SRC_SW BIT(1)
+#define FA100M14B4C_TRG_SRC_TIM BIT(4)
+#define FA100M14B4C_TRG_SRC_CH1 BIT(8)
+#define FA100M14B4C_TRG_SRC_CH2 BIT(9)
+#define FA100M14B4C_TRG_SRC_CH3 BIT(10)
+#define FA100M14B4C_TRG_SRC_CH4 BIT(11)
+#define FA100M14B4C_TRG_SRC_CHx(_x) (FA100M14B4C_TRG_SRC_CH1 << ((_x) - 1))
+
+/* Trigger Polarity */
+#define FA100M14B4C_TRG_POL_EXT FA100M14B4C_TRG_SRC_EXT
+#define FA100M14B4C_TRG_POL_CH1 FA100M14B4C_TRG_SRC_CH1
+#define FA100M14B4C_TRG_POL_CH2 FA100M14B4C_TRG_SRC_CH2
+#define FA100M14B4C_TRG_POL_CH3 FA100M14B4C_TRG_SRC_CH3
+#define FA100M14B4C_TRG_POL_CH4 FA100M14B4C_TRG_SRC_CH4
+#define FA100M14B4C_TRG_POL_CHx(_x) (FA100M14B4C_TRG_POL_CH1 << ((_x) - 1))
+
+
 /*
  * Trigger Extended Attribute Enumeration
  */
@@ -24,13 +43,24 @@ enum fa100m14b4c_trg_ext_attr {
 	 * The parameters are not exposed to user space by zio_controle, so it
 	 * is not necessary to export to user space the correspondent enum
 	 */
-	FA100M14B4C_TATTR_EXT = 0,
+	FA100M14B4C_TATTR_STA = 0,
+	FA100M14B4C_TATTR_SRC,
 	FA100M14B4C_TATTR_POL,
-	FA100M14B4C_TATTR_INT_CHAN,
-	FA100M14B4C_TATTR_INT_THRES,
-	FA100M14B4C_TATTR_DELAY,
+	FA100M14B4C_TATTR_EXT_DLY,
+	FA100M14B4C_TATTR_CH1_THRES,
+	FA100M14B4C_TATTR_CH2_THRES,
+	FA100M14B4C_TATTR_CH3_THRES,
+	FA100M14B4C_TATTR_CH4_THRES,
+	FA100M14B4C_TATTR_CH1_HYST,
+	FA100M14B4C_TATTR_CH2_HYST,
+	FA100M14B4C_TATTR_CH3_HYST,
+	FA100M14B4C_TATTR_CH4_HYST,
+	FA100M14B4C_TATTR_CH1_DLY,
+	FA100M14B4C_TATTR_CH2_DLY,
+	FA100M14B4C_TATTR_CH3_DLY,
+	FA100M14B4C_TATTR_CH4_DLY,
+
 #ifdef __KERNEL__
-	FA100M14B4C_TATTR_SW_EN,
 	FA100M14B4C_TATTR_SW_FIRE,
 	FA100M14B4C_TATTR_TRG_S,
 	FA100M14B4C_TATTR_TRG_C,
@@ -115,7 +145,7 @@ enum fa100m14b4c_fsm_state {
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
  */
-#define ZFA_CHx_MULT 6
+#define ZFA_CHx_MULT 9
 
 /* Device registers */
 enum zfadc_dregs_enum {
@@ -133,15 +163,11 @@ enum zfadc_dregs_enum {
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
 	/* Configuration register */
-	ZFAT_CFG_HW_SEL,
-	ZFAT_CFG_HW_POL,
-	ZFAT_CFG_HW_EN,
-	ZFAT_CFG_SW_EN,
-	ZFAT_CFG_INT_SEL,
-	ZFAT_CFG_THRES,
-	ZFAT_CFG_THRES_FILT,
+	ZFAT_CFG_STA,
+	ZFAT_CFG_SRC,
+	ZFAT_CFG_POL,
 	/* Delay*/
-	ZFAT_DLY,
+	ZFAT_EXT_DLY,
 	/* Software */
 	ZFAT_SW,
 	/* Number of shots */
@@ -168,6 +194,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH1_GAIN,
 	ZFA_CH1_OFFSET,
 	ZFA_CH1_SAT,
+	ZFA_CH1_THRES,
+	ZFA_CH1_HYST,
+	ZFA_CH1_DLY,
+
 	/* Channel 2 */
 	ZFA_CH2_CTL_RANGE,
 	ZFA_CH2_CTL_TERM,
@@ -175,6 +205,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH2_GAIN,
 	ZFA_CH2_OFFSET,
 	ZFA_CH2_SAT,
+	ZFA_CH2_THRES,
+	ZFA_CH2_HYST,
+	ZFA_CH2_DLY,
+
 	/* Channel 3 */
 	ZFA_CH3_CTL_RANGE,
 	ZFA_CH3_CTL_TERM,
@@ -182,6 +216,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH3_GAIN,
 	ZFA_CH3_OFFSET,
 	ZFA_CH3_SAT,
+	ZFA_CH3_THRES,
+	ZFA_CH3_HYST,
+	ZFA_CH3_DLY,
+
 	/* Channel 4 */
 	ZFA_CH4_CTL_RANGE,
 	ZFA_CH4_CTL_TERM,
@@ -189,6 +227,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH4_GAIN,
 	ZFA_CH4_OFFSET,
 	ZFA_CH4_SAT,
+	ZFA_CH4_THRES,
+	ZFA_CH4_HYST,
+	ZFA_CH4_DLY,
+
 	/*
 	 * CHx__ are specifc ids used by some internal arithmetic
 	 * Be carefull: the arithmetic expects
@@ -202,7 +244,9 @@ enum zfadc_dregs_enum {
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
 	ZFA_CHx_SAT,
-
+	ZFA_CHx_THRES,
+	ZFA_CHx_HYST,
+	ZFA_CHx_DLY,
 	/* Other options */
 	ZFA_MULT_MAX_SAMP,
 	/* end:declaration block requiring some order */
@@ -237,9 +281,11 @@ enum zfadc_dregs_enum {
 	ZFA_HW_PARAM_COMMON_LAST,
 };
 
-/* trigger timestamp block size in bytes */
-/* This block is added after the post trigger samples */
-/* in the DDR and contains the trigger timestamp */
+
+/*
+ * Acquisition metadata. It contains the trigger timestamp and the trigger
+ * source. This block is added after the post-trigger-samples in the DDR.
+ */
 #define FA_TRIG_TIMETAG_BYTES 0x10
 
 /*
