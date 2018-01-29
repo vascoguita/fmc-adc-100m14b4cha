@@ -293,7 +293,6 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	unsigned int size;
 	uint32_t dev_mem_off;
 	int i, err = 0;
-	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
 
 	dev_dbg(fa->msgdev, "Arming trigger\n");
 
