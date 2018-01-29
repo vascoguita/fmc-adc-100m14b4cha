@@ -27,7 +27,6 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFAT_CFG_HW_EN] =		{0x08, 0x00000004, 1},
 	[ZFAT_CFG_SW_EN] =		{0x08, 0x00000008, 1},
 	[ZFAT_CFG_INT_SEL] =		{0x08, 0x00000030, 1},
-	[ZFAT_CFG_TEST_EN] =		{0x08, 0x00000040, 1},
 	[ZFAT_CFG_THRES_FILT] =		{0x08, 0x0000FF00, 1},
 	[ZFAT_CFG_THRES] =		{0x08, 0xFFFF0000, 1},
 		/* Delay */

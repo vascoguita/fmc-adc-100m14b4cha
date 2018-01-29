@@ -133,7 +133,6 @@ enum zfadc_dregs_enum {
 	ZFAT_CFG_SW_EN,
 	ZFAT_CFG_INT_SEL,
 	ZFAT_CFG_THRES,
-	ZFAT_CFG_TEST_EN,
 	ZFAT_CFG_THRES_FILT,
 	/* Delay*/
 	ZFAT_DLY,

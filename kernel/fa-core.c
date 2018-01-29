@@ -22,9 +22,6 @@ FMC_PARAM_GATEWARE(fa_dev_drv);
 static int fa_enable_test_data;
 module_param_named(enable_test_data, fa_enable_test_data, int, 0444);
 
-static int fa_internal_trig_test = 0;
-module_param_named(internal_trig_test, fa_internal_trig_test, int, 0444);
-
 static const int zfad_hw_range[] = {
 	[FA100M14B4C_RANGE_10V]   = 0x45,
 	[FA100M14B4C_RANGE_1V]    = 0x11,
@@ -351,9 +348,6 @@ static int __fa_init(struct fa_dev *fa)
 	/* Set test data register */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
 		  fa_enable_test_data);
-	/* Set internal trigger test mode */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_TEST_EN],
-		  fa_internal_trig_test);
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
