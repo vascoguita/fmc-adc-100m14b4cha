@@ -41,14 +41,13 @@ static int fa_svec_init(struct fa_dev *fa)
 							 0x10006610,
 							fmc->slot_id, NULL);
 
-	if (fmc->slot_id == 0)
-		/* set FMC0 in normal FMC operation */
-		fa_writel(fa, fa->fa_carrier_csr_base,
-			&fa_svec_regfield[FA_CAR_FMC0_RES], 1);
-	else if (fmc->slot_id == 1)
-		/* set FMC1 in normal FMC operation */
-		fa_writel(fa, fa->fa_carrier_csr_base,
-			&fa_svec_regfield[FA_CAR_FMC1_RES], 1);
+	/* Reset the FMC slot*/
+	fa_writel(fa, fa->fa_carrier_csr_base,
+		  &fa_svec_regfield[FA_CAR_FMC0_RES + fmc->slot_id], 1);
+	mdelay(50);
+	fa_writel(fa, fa->fa_carrier_csr_base,
+		  &fa_svec_regfield[FA_CAR_FMC0_RES + fmc->slot_id], 0);
+	mdelay(50);
 
 	/* register carrier data */
 	fa->carrier_data = cdata;
