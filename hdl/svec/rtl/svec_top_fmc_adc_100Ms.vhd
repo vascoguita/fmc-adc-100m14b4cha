@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-04
--- Last update: 2016-06-16
+-- Last update: 2018-01-30
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
@@ -793,12 +793,12 @@ begin
       slave_o => cnx_master_in(c_WB_SLAVE_I2C),
       desc_o  => open,
 
-      scl_pad_i    => carrier_scl_in,
-      scl_pad_o    => carrier_scl_out,
-      scl_padoen_o => carrier_scl_oe_n,
-      sda_pad_i    => carrier_sda_in,
-      sda_pad_o    => carrier_sda_out,
-      sda_padoen_o => carrier_sda_oe_n
+      scl_pad_i(0)    => carrier_scl_in,
+      scl_pad_o(0)    => carrier_scl_out,
+      scl_padoen_o(0) => carrier_scl_oe_n,
+      sda_pad_i(0)    => carrier_sda_in,
+      sda_pad_o(0)    => carrier_sda_out,
+      sda_padoen_o(0) => carrier_sda_oe_n
       );
 
   -- Tri-state buffer for SDA and SCL
