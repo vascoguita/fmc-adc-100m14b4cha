@@ -9,7 +9,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2018-01-26
+-- Last update: 2018-01-30
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
@@ -1387,7 +1387,9 @@ begin
 
   trig_tag_done <= acq_in_trig_tag and acq_in_trig_tag_d;
 
-  trig_tag_data <= X"0" & trig_storage & trigger_tag_i.coarse when trig_tag_done = '1' else
+  -- We first send "ACCE55" followed by trigger tag seconds, and then the trigger status
+  -- followed by trigger tag clock ticks.
+  trig_tag_data <= trig_storage & X"0" & trigger_tag_i.coarse when trig_tag_done = '1' else
                    X"ACCE55" & trigger_tag_i.seconds;
 
   ------------------------------------------------------------------------------
