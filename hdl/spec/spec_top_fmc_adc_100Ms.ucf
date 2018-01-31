@@ -578,7 +578,7 @@ TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
 
 # ADC
 NET "adc0_dco_n_i" TNM_NET = adc_dco_n_i;
-TIMESPEC TS_adc_dco_n_i = PERIOD "adc_dco_n_i" 2 ns HIGH 50%;
+TIMESPEC TS_adc_dco_n_i = PERIOD "adc_dco_n_i" 2.5 ns HIGH 50%;
 
 #===============================================================================
 # False Path

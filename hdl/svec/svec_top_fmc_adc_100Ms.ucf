@@ -912,9 +912,9 @@ TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
 
 # ADC
 NET "adc0_dco_n_i" TNM_NET = adc0_dco_n_i;
-TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2 ns HIGH 50%;
+TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2.5 ns HIGH 50%;
 NET "adc1_dco_n_i" TNM_NET = adc1_dco_n_i;
-TIMESPEC TS_adc1_dco_n_i = PERIOD "adc1_dco_n_i" 2 ns HIGH 50%;
+TIMESPEC TS_adc1_dco_n_i = PERIOD "adc1_dco_n_i" 2.5 ns HIGH 50%;
 
 #===============================================================================
 # IOBs
