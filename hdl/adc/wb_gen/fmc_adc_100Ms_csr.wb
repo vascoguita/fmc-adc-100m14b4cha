@@ -44,7 +44,7 @@ peripheral {
 
     field {
       name = "Enable test data";
-      description = "Write the address counter value instead of ADC data to DDR";
+      description = "Write the DDR RAM address counter value instead of ADC data to DDR.\nNote that no timetags are appended at the end of test data.";
       prefix = "test_data_en";
       type = BIT;
       access_bus = READ_WRITE;
