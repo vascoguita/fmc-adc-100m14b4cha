@@ -8,7 +8,7 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-05-07
--- Last update: 2018-01-24
+-- Last update: 2018-01-30
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core
@@ -168,10 +168,10 @@ architecture rtl of fmc_adc_mezzanine is
   -- Wishbone slave(s)
   constant c_WB_SLAVE_FMC_ADC     : integer := 0;  -- Mezzanine ADC core
   constant c_WB_SLAVE_FMC_SYS_I2C : integer := 1;  -- Mezzanine system I2C interface (EEPROM)
-  constant c_WB_SLAVE_FMC_SPI     : integer := 2;  -- Mezzanine SPI interface
+  constant c_WB_SLAVE_FMC_EIC     : integer := 2;  -- Mezzanine interrupt controller
   constant c_WB_SLAVE_FMC_I2C     : integer := 3;  -- Mezzanine I2C controller
   constant c_WB_SLAVE_FMC_ONEWIRE : integer := 4;  -- Mezzanine onewire interface
-  constant c_WB_SLAVE_FMC_EIC     : integer := 5;  -- Mezzanine interrupt controller
+  constant c_WB_SLAVE_FMC_SPI     : integer := 5;  -- Mezzanine SPI interface
   constant c_WB_SLAVE_TIMETAG     : integer := 6;  -- Mezzanine timetag core
 
   -- Devices sdb description
@@ -231,10 +231,10 @@ architecture rtl of fmc_adc_mezzanine is
     (
       0 => f_sdb_embed_device(c_wb_adc_csr_sdb, x"00001000"),
       1 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001400"),
-      2 => f_sdb_embed_device(c_xwb_spi_sdb, x"00001500"),
+      2 => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001500"),
       3 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001600"),
       4 => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001700"),
-      5 => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001800"),
+      5 => f_sdb_embed_device(c_xwb_spi_sdb, x"00001800"),
       6 => f_sdb_embed_device(c_wb_timetag_sdb, x"00001900")
       );
 
