@@ -8,6 +8,10 @@
 #ifndef FMC_ADC_100M14B4C_H_
 #define FMC_ADC_100M14B4C_H_
 
+#ifndef BIT
+#define BIT(nr) (1UL << (nr))
+#endif
+
 /*
  * Trigger Extended Attribute Enumeration
  */
