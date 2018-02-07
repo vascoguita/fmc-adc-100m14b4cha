@@ -40,7 +40,7 @@ const struct zfa_field_desc zfad_regs[] = {
 		/* Sampling clock frequency */
 	[ZFAT_SAMPLING_HZ] =		{0x20, 0xFFFFFFFF, 0},
 		/* Sample rate */
-	[ZFAT_SR_DECI] =		{0x24, 0xFFFFFFFF, 0},
+	[ZFAT_SR_UNDER] =		{0x24, 0xFFFFFFFF, 0},
 		/* Position address */
 	[ZFAT_POS] =			{0x1C, 0xFFFFFFFF, 0},
 		/* Pre-sample */

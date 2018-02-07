@@ -149,7 +149,7 @@ enum zfadc_dregs_enum {
 	/* Remaining shots counter */
 	ZFAT_SHOTS_REM,
 	/* Sample rate */
-	ZFAT_SR_DECI,
+	ZFAT_SR_UNDER,
 	/* Sampling clock frequency */
 	ZFAT_SAMPLING_HZ,
 	/* Position address */

@@ -41,7 +41,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * acquisition you can decimate samples. 0 is a forbidden value, 1
 	 * for the maximum speed.
 	 */
-	ZIO_ATTR_EXT("sample-decimation", ZIO_RW_PERM, ZFAT_SR_DECI, 1),
+	ZIO_ATTR_EXT("undersample", ZIO_RW_PERM, ZFAT_SR_UNDER, 1),
 
 	ZIO_ATTR_EXT("ch0-offset", ZIO_RW_PERM, ZFA_CH1_OFFSET, 0),
 	ZIO_ATTR_EXT("ch1-offset", ZIO_RW_PERM, ZFA_CH2_OFFSET, 0),
@@ -227,7 +227,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
-	case ZFAT_SR_DECI:
+	case ZFAT_SR_UNDER:
 		if (usr_val == 0)
 			usr_val++;
 		break;

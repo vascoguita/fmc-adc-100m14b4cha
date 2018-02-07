@@ -404,7 +404,7 @@ static int __fa_init(struct fa_dev *fa)
 	/* Enable mezzanine clock */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
 	/* Set decimation to minimum */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_DECI], 1);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
 		  fa_enable_test_data_fpga);
