@@ -24,7 +24,7 @@ ZIO_PARAM_BUFFER(adc_buffer);
  * zio device attributes
  */
 static ZIO_ATTR_DEFINE_STD(ZIO_DEV, zfad_cset_std_zattr) = {
-	ZIO_ATTR(zdev, ZIO_ATTR_NBITS, ZIO_RO_PERM, ZFA_SW_R_NOADDRES_NBIT, 14),
+	ZIO_ATTR(zdev, ZIO_ATTR_NBITS, ZIO_RO_PERM, ZFA_SW_R_NOADDRES_NBIT, FA100M14B4C_NBIT),
 };
 
 /*

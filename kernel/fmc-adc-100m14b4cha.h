@@ -68,6 +68,7 @@ enum fa100m14b4c_dev_ext_attr {
 #define FA100M14B4C_UTC_CLOCK_FREQ 125000000
 #define FA100M14B4C_UTC_CLOCK_NS  8
 #define FA100M14B4C_NCHAN 4 /* We have 4 of them,no way out of it */
+#define FA100M14B4C_NBIT 14
 
 /* ADC DDR memory */
 #define FA100M14B4C_MAX_ACQ_BYTE 0x10000000 /* 256MB */
