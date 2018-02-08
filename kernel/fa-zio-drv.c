@@ -186,6 +186,20 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_SW_R_NOADDERS_AUTO:
 		fa->enable_auto_start = usr_val;
 		return 0;
+	case ZFA_CHx_SAT:
+		/* TODO when TLV */
+		break;
+	/* FIXME temporary until TLV control */
+	case ZFA_CH1_SAT:
+	case ZFA_CH2_SAT:
+	case ZFA_CH3_SAT:
+	case ZFA_CH4_SAT:
+		if (usr_val & ~zfad_regs[reg_index].mask) {
+			dev_err(dev, "invalid saturation value (max: %d)\n",
+				zfad_regs[reg_index].mask);
+			return -EINVAL;
+		}
+		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
