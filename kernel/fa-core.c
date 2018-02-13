@@ -402,6 +402,7 @@ static struct fa_modlist mods[] = {
 	{"spi", fa_spi_init, fa_spi_exit},
 	{"onewire", fa_onewire_init, fa_onewire_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
+	{"debug", fa_debug_init, fa_debug_exit},
 };
 
 /* probe and remove are called by fa-spec.c */

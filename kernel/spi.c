@@ -75,8 +75,7 @@ out:
 
 int fa_spi_init(struct fa_dev *fa)
 {
-	uint32_t tx, rx;
-	int i;
+	uint32_t rx;
 
 	/* Divider must be 100, according to firmware guide */
 	fa_iowrite(fa, 100, fa->fa_spi_base + FA_SPI_DIV);
@@ -88,15 +87,6 @@ int fa_spi_init(struct fa_dev *fa)
 	/* Force 2's complement data output (register 1, bit 5) */
 	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, (1 << 8) | (1 << 5), &rx);
 
-	if (0) {
-		/* Check the current configuration of the ADC chip */
-		for (i = 0; i < 5; i++) {
-			tx = 0x8000 | (i << 8);
-			fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
-			dev_dbg(fa->msgdev, "LTC register %02x: 0x%02x\n",
-				i, rx & 0xff);
-		}
-	}
 	return 0;
 }
 

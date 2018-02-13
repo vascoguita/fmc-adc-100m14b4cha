@@ -99,6 +99,7 @@ enum fa100m14b4c_fsm_state {
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 #include <linux/workqueue.h>
+#include <linux/debugfs.h>
 
 #include <linux/fmc.h>
 #include <linux/fmc-sdb.h>
@@ -372,6 +373,8 @@ struct fa_dev {
 	int enable_auto_start;
 
 	uint32_t trig_compensation;
+
+	struct dentry *reg_dump;
 };
 
 /*
@@ -540,6 +543,11 @@ signed long fmc_find_sdb_device_ext(struct sdb_array *tree,
 
 /* function exporetd by fa-calibration.c */
 extern void fa_read_eeprom_calib(struct fa_dev *fa);
+
+/* functions exported by fa-debug.c */
+extern int fa_debug_init(struct fa_dev *fa);
+extern void fa_debug_exit(struct fa_dev *fa);
+
 
 #endif /* __KERNEL__ */
 #endif /*  FMC_ADC_H_ */
