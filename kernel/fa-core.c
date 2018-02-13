@@ -19,8 +19,13 @@ static struct fmc_driver fa_dev_drv;
 FMC_PARAM_BUSID(fa_dev_drv);
 FMC_PARAM_GATEWARE(fa_dev_drv);
 
-static int fa_enable_test_data;
-module_param_named(enable_test_data, fa_enable_test_data, int, 0444);
+static int fa_enable_test_data_fpga;
+module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
+static int fa_enable_test_data_adc;
+module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
+static int fa_enable_test_data_adc_pattern = 0x555;
+module_param_named(enable_test_data_adc_pattern, fa_enable_test_data_adc_pattern, int, 0664);
+
 
 static const int zfad_hw_range[] = {
 	[FA100M14B4C_RANGE_10V]   = 0x45,
@@ -56,6 +61,37 @@ int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan)
 	offset = ZFA_CHx_MULT  * (FA100M14B4C_NCHAN - chan->index);
 
 	return addr - offset;
+}
+
+
+/**
+ * It enables or disables the pattern data on the ADC
+ * @fa The ADC device instance
+ * @pattern the pattern data to get from the ADC
+ * @enable 0 to disable, 1 to enable
+ */
+int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
+			     unsigned int enable)
+{
+	uint32_t frame_tx;
+	int err;
+
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0400; /* A4 pattern */
+	frame_tx |= pattern & 0xFF; /* LSB pattern */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		return err;
+
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0300; /* A3 pattern + enable */
+	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
+	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		return err;
+
+	return 0;
 }
 
 /*
@@ -142,7 +178,9 @@ void zfad_init_saturation(struct fa_dev *fa)
  * @chan: the channel to calibrate
  * @usr_val: the volt range to set and calibrate
  *
- * When the input range changes, we must write new fixup values
+ * When the input range changes, we must write new fixup values.
+ * Gain ad offsets must be corrected with offset and gain calibration value.
+ * An open input and test data do not need any correction.
  */
 int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 			  int range)
@@ -153,7 +191,13 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == FA100M14B4C_RANGE_OPEN) {
+	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc) {
+		/*
+		 * With OPEN range we do not use calibration values
+		 *
+		 * In test mode we do not apply the gain/offset because
+		 * this compromises the test pattern
+		 */
 		offset = FA_CAL_NO_OFFSET;
 		gain = FA_CAL_NO_GAIN;
 	} else {
@@ -190,6 +234,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
+	int err;
 
 	if (command != FA100M14B4C_CMD_START &&
 	    command != FA100M14B4C_CMD_STOP) {
@@ -254,6 +299,21 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 
 		dev_dbg(fa->msgdev, "FSM START Command, Enable interrupts\n");
 		fa_enable_irqs(fa);
+
+		/*
+		 * Set the test data if necessary. This is unlikely to happen,
+		 * and when this is the case we do not care about performances
+		 */
+		if (unlikely(fa_enable_test_data_adc)) {
+			fa_enable_test_data_adc_pattern &= 0xFFF;
+			err = zfad_pattern_data_enable(fa, fa_enable_test_data_adc_pattern,
+						       fa_enable_test_data_adc);
+			if (err)
+				dev_warn(fa->msgdev,
+					 "Failed to set the ADC test data. Continue without\n");
+			else if (fa_enable_test_data_adc)
+				dev_info(fa->msgdev, "the ADC test data is enabled on all channels\n");
+		}
 	} else {
 		dev_dbg(fa->msgdev, "FSM STOP Command, Disable interrupts\n");
 		fa->enable_auto_start = 0;
@@ -347,7 +407,7 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_DECI], 1);
 	/* Set test data register */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
-		  fa_enable_test_data);
+		  fa_enable_test_data_fpga);
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
