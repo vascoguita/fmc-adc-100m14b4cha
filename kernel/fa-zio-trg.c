@@ -33,7 +33,8 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	[FA100M14B4C_TATTR_STA] = ZIO_ATTR_EXT("source-triggered", ZIO_RW_PERM,
 					       ZFAT_CFG_STA, 0),
 	[FA100M14B4C_TATTR_SRC] = ZIO_ATTR_EXT("source", ZIO_RW_PERM,
-					       ZFAT_CFG_SRC, 0),
+					       ZFAT_CFG_SRC,
+					       FA100M14B4C_TRG_SRC_SW),
 	[FA100M14B4C_TATTR_POL] = ZIO_ATTR_EXT("polarity", ZIO_RW_PERM,
 					       ZFAT_CFG_POL, 0),
 

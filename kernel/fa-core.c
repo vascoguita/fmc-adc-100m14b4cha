@@ -412,8 +412,9 @@ static int __fa_init(struct fa_dev *fa)
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
 
-	/* No trigger source enabled by default */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
+	/* Enable the software trigger by default: there is no arm in this */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
+		  FA100M14B4C_TRG_SRC_SW);
 
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
