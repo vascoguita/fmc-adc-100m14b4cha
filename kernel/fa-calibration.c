@@ -90,5 +90,4 @@ void fa_read_eeprom_calib(struct fa_dev *fa)
 	memcpy(&fa->calib, fa->fmc->eeprom + FA_CAL_OFFSET, sizeof(fa->calib));
 	fa_endian_calib(&fa->calib);
 	fa_verify_calib(&fa->fmc->dev, &fa->calib, &fa_identity_calib);
-	dev_info(fa->msgdev, "%s succeeds.\n", __func__);
 }

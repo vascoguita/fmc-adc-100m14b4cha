@@ -520,7 +520,6 @@ int fa_probe(struct fmc_device *fmc)
 			fwname = ""; /* reprogram will pick from module parameter */
 		else
 			fwname = fa->carrier_op->get_gwname();
-		dev_info(fa->msgdev, "Gateware (%s)\n", fwname);
 
 		/* We first write a new binary (and lm32) within the carrier */
 		err = fmc_reprogram(fmc, &fa_dev_drv, fwname, 0x0);
@@ -529,7 +528,6 @@ int fa_probe(struct fmc_device *fmc)
 				fwname, err);
 			goto out;
 		}
-		dev_info(fa->msgdev, "Gateware successfully loaded\n");
 	} else {
 		dev_info(fa->msgdev,
 			 "Gateware already there. Set the \"gateware\" parameter to overwrite the current gateware\n");

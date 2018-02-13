@@ -233,9 +233,6 @@ int fa_onewire_init(struct fa_dev *fa)
 	if (ds18x_read_serial(fa) < 0)
 		return -EIO;
 
-	/* read the temperature once, to ensure it works, and print it */
-	fa_read_temp(fa, 2);
-
 	return 0;
 }
 
