@@ -81,6 +81,10 @@ int fa_spi_init(struct fa_dev *fa)
 	/* Divider must be 100, according to firmware guide */
 	fa_iowrite(fa, 100, fa->fa_spi_base + FA_SPI_DIV);
 
+	/* software reset the ADC chip (register 0) */
+	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16,  BIT(8), &rx);
+	msleep(5);
+
 	/* Force 2's complement data output (register 1, bit 5) */
 	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, (1 << 8) | (1 << 5), &rx);
 
