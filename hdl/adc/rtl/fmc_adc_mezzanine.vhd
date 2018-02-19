@@ -4,17 +4,14 @@
 -- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
 -------------------------------------------------------------------------------
 -- File       : fmc_adc_mezzanine.vhd
--- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
---              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-05-07
--- Last update: 2018-10-24
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: The FMC ADC mezzanine is wrapper around the fmc-adc-100ms core
 -- and the other wishbone slaves connected to a FMC ADC mezzanine.
 -------------------------------------------------------------------------------
--- Copyright (c) 2013-2016 CERN (BE-CO-HT)
+-- Copyright (c) 2013-2018 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -27,10 +24,6 @@
 -- See the GNU Lesser General Public License for more details. You should have
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
--------------------------------------------------------------------------------
--- Revisions  :
--- Date        Version  Author
--- 2013-05-07  1.0      Matthieu Cattin
 -------------------------------------------------------------------------------
 
 library IEEE;

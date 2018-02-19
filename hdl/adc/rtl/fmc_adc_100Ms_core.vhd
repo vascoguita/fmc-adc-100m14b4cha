@@ -4,17 +4,13 @@
 -- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
 -------------------------------------------------------------------------------
 -- File       : fmc_adc_100Ms_core.vhd
--- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
---              Theodor Stana <t.stana@cern.ch>
---              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-24
--- Last update: 2018-01-30
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
 -------------------------------------------------------------------------------
--- Copyright (c) 2011-2016 CERN (BE-CO-HT)
+-- Copyright (c) 2011-2018 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -27,15 +23,6 @@
 -- See the GNU Lesser General Public License for more details. You should have
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
--------------------------------------------------------------------------------
--- Revisions  :
--- Date        Version  Author
--- 2016-04-20  4.1      Dimitrios Lampridis
--- 2014-04-25  4.0      Matthieu Cattin
--- 2014-01-16  3.0      Matthieu Cattin
--- 2013-07-29  2.0      Matthieu Cattin
--- 2013-03-28  1.1      Matthieu Cattin
--- 2013-03-11  1.0      Matthieu Cattin
 -------------------------------------------------------------------------------
 
 library IEEE;
