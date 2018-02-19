@@ -216,6 +216,11 @@ Manual TRIG LED
 @code{ACQ_LED}
 @tab @code{0} @tab 
 Manual ACQ LED
+@item @code{8}
+@tab W/O @tab
+@code{CLEAR_TRIG_STAT}
+@tab @code{0} @tab 
+Clear trigger status
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
@@ -223,6 +228,7 @@ Manual ACQ LED
 @item @code{test_data_en} @tab Write the DDR RAM address counter value instead of ADC data to DDR.@*Note that no timetags are appended at the end of test data.
 @item @code{trig_led} @tab Manual control of the front panel TRIG LED
 @item @code{acq_led} @tab Manual control of the front panel ACQ LED
+@item @code{clear_trig_stat} @tab Write 1 to clear the last trigger status register. Auto-resets to zero.
 @end multitable
 @regsection @code{sta} - Status register
 @multitable @columnfractions .10 .10 .15 .10 .55

@@ -266,6 +266,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal trig_fifo_rd               : std_logic;
   signal trig_fifo_wr               : std_logic;
   signal trig_storage               : std_logic_vector(31 downto 0);
+  signal trig_storage_clear         : std_logic;
 
   -- Under-sampling
   signal undersample_factor : std_logic_vector(31 downto 0);
@@ -684,6 +685,7 @@ begin
   test_data_en           <= csr_regout.ctl_test_data_en_o;
   trig_led_man           <= csr_regout.ctl_trig_led_o;
   acq_led_man            <= csr_regout.ctl_acq_led_o;
+  trig_storage_clear     <= csr_regout.ctl_clear_trig_stat_o;
   ext_trig_delay         <= csr_regout.ext_trig_dly_o;
   ext_trig_en            <= csr_regout.trig_en_ext_o;
   ext_trig_pol           <= csr_regout.trig_pol_ext_o;
@@ -937,7 +939,7 @@ begin
                    "00" & sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) &
                    ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH);
 
-  trig_fifo_wr <= not trig_fifo_full;
+  trig_fifo_wr <= not trig_fifo_full and acq_in_wait_trig;
 
   cmp_trig_sync_fifo : generic_async_fifo
     generic map (
@@ -979,12 +981,12 @@ begin
 
   trig_fifo_rd <= not trig_fifo_empty;
 
-  p_trig_storage_sys: process (sys_clk_i, sys_rst_n_i) is
+  p_trig_storage_sys: process (sys_clk_i) is
   begin
-    if sys_rst_n_i = '0' then
-      trig_storage <= (others => '0');
-    elsif rising_edge(sys_clk_i) then
-      if trig_fifo_dout(32) = '1' and trig_fifo_empty = '0' then
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' or trig_storage_clear = '1' then
+        trig_storage <= (others => '0');
+      elsif trig_fifo_dout(32) = '1' and trig_fifo_empty = '0' then
         trig_storage <= trig_fifo_dout(31 downto 0);
       end if;
     end if;

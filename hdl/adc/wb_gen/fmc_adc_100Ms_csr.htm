@@ -1010,6 +1010,23 @@ fmc_adc_100ms_csr_ctl_acq_led_o
 wb_ack_o
 </td>
 <td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ctl_clear_trig_stat_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+&larr;
+</td>
+<td  class="td_pblock_left">
+wb_stall_o
+</td>
+<td  class="td_sym_center">
 &nbsp;
 </td>
 <td  class="td_pblock_right">
@@ -1021,10 +1038,10 @@ wb_ack_o
 </tr>
 <tr>
 <td  class="td_arrow_left">
-&larr;
+
 </td>
 <td  class="td_pblock_left">
-wb_stall_o
+
 </td>
 <td  class="td_sym_center">
 
@@ -3799,8 +3816,8 @@ CTL
 <td  class="td_unused">
 -
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+CLEAR_TRIG_STAT
 </td>
 </tr>
 </table>
@@ -3884,6 +3901,10 @@ TRIG_LED
 ACQ_LED
 </b>[<i>read/write</i>]: Manual ACQ LED
 <br>Manual control of the front panel ACQ LED
+<li><b>
+CLEAR_TRIG_STAT
+</b>[<i>write-only</i>]: Clear trigger status
+<br>Write 1 to clear the last trigger status register. Auto-resets to zero.
 </ul>
 <a name="STA"></a>
 <h3><a name="sect_3_2">3.2. Status register</a></h3>
