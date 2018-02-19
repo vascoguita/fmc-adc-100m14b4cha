@@ -13,7 +13,10 @@ files = [
 modules = { "local" :  [ "gn4124_bfm",
                          "../../rtl",
                          "../../../adc/rtl",
+                         "../../../ip_cores/wr-cores/board/common",
+                         "../../../ip_cores/wr-cores",
 			 "../../../ip_cores/general-cores",
+			 "../../../ip_cores/etherbone-core",
 			 "../../../ip_cores/ddr3-sp6-core",
                          "../../../ip_cores/gn4124-core" ]};
 

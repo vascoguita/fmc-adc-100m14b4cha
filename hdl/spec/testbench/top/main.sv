@@ -12,6 +12,11 @@ module main;
    reg clk_125m_pllref_p = 0;
    reg clk_125m_pllref_n = 1;
 
+   reg clk_125m_gtp_p = 0;
+   reg clk_125m_gtp_n = 1;
+
+   reg clk_20m_vcxo = 0;
+
    reg rst_n = 0;
    reg adc0_dco = 0;
    reg adc0_fr = 1'b0;
@@ -25,6 +30,9 @@ module main;
    always #1.25ns adc0_dco <= ~adc0_dco;
    always #4ns clk_125m_pllref_p <= ~clk_125m_pllref_p;
    always #4ns clk_125m_pllref_n <= ~clk_125m_pllref_n;
+   always #4ns clk_125m_gtp_p <= ~clk_125m_gtp_p;
+   always #4ns clk_125m_gtp_n <= ~clk_125m_gtp_n;
+   always #25ns clk_20m_vcxo <= ~clk_20m_vcxo;
 
 
    IGN4124PCIMaster I_Gennum ();
@@ -41,11 +49,16 @@ module main;
 
    spec_top_fmc_adc_100Ms
      #(
-       .g_simulation("TRUE"),
+       .g_simulation(1),
+       .g_wrpc_initf("../../../ip_cores/wr-cores/bin/wrpc/wrc_phy8_sim.bram"),
        .g_calib_soft_ip("FALSE")
        ) DUT (
+	      .button1_n_i(1'b1),
+	      .clk_20m_vcxo_i(clk_20m_vcxo),
 	      .clk_125m_pllref_p_i(clk_125m_pllref_p),
 	      .clk_125m_pllref_n_i(clk_125m_pllref_n),
+	      .clk_125m_gtp_p_i(clk_125m_gtp_p),
+	      .clk_125m_gtp_n_i(clk_125m_gtp_n),
 	      .adc0_ext_trigger_p_i(ext_trig),
 	      .adc0_ext_trigger_n_i(~ext_trig),
 	      .adc0_dco_p_i(adc0_dco),
@@ -166,10 +179,15 @@ module main;
 
       //@(posedge DUT.sys_clk_pll_locked);
 
-      #5us;
+      #15us;
 
       acc.read(0, val);
       $display("ID: %x", val);
+
+      // FMC software reset
+      acc.write('h120c, 'h00000001);
+      #1us;
+      acc.write('h120c, 'h00000000);
 
       acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val); // status
       $display("STATUS: %x", val);
@@ -273,7 +291,7 @@ module main;
       val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_TIME_OFFSET) |
 	    (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_EXT_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
-      
+
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_EXT_TRIG_DLY, 3);
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000002);

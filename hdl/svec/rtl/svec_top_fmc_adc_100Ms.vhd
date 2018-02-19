@@ -58,8 +58,7 @@ use work.wr_xilinx_pkg.all;
 
 entity svec_top_fmc_adc_100Ms is
   generic(
-    g_simulation_int     : integer := 0;          -- used in newer modules such as xwr_core
-    g_SIMULATION         : string  := "FALSE";    -- kept for backwards compatibility
+    g_simulation         : integer := 0;
     g_multishot_ram_size : natural := 8192;
     g_CALIB_SOFT_IP      : string  := "TRUE");
   port
@@ -344,6 +343,9 @@ architecture rtl of svec_top_fmc_adc_100Ms is
       dac_sdata_o   : out std_logic;
       xdone_o       : out std_logic);
   end component;
+
+  -- Conversion of g_simulation to boolean
+  constant c_SIMULATION_BOOL : boolean := f_int2bool(g_simulation);
 
   ------------------------------------------------------------------------------
   -- SDB crossbar constants declaration
@@ -894,7 +896,7 @@ begin
   ---------------------
   U_GTP : wr_gtp_phy_spartan6
     generic map (
-      g_simulation => g_simulation_int,
+      g_simulation => g_simulation,
       g_enable_ch0 => 0,
       g_enable_ch1 => 1)
     port map (
@@ -975,9 +977,8 @@ begin
 
   U_WR_CORE : xwr_core
     generic map (
-      g_simulation  => g_simulation_int,
-      g_dpram_initf => "")
---      g_dpram_initf => "wrc.ram")
+      g_simulation  => g_simulation,
+      g_dpram_initf => "../../ip_cores/wr-cores/bin/wrpc/wrc_phy8.bram")
     port map (
       clk_sys_i  => sys_clk_62_5,
       clk_dmtd_i => clk_dmtd,
@@ -1342,7 +1343,7 @@ begin
     generic map(
       g_BANK_PORT_SELECT   => "SVEC_BANK4_64B_32B",
       g_MEMCLK_PERIOD      => 3000,
-      g_SIMULATION         => g_SIMULATION,
+      g_SIMULATION         => c_SIMULATION_BOOL,
       g_CALIB_SOFT_IP      => g_CALIB_SOFT_IP,
       g_P0_MASK_SIZE       => 8,
       g_P0_DATA_PORT_SIZE  => 64,
@@ -1496,7 +1497,7 @@ begin
     generic map(
       g_BANK_PORT_SELECT   => "SVEC_BANK5_64B_32B",
       g_MEMCLK_PERIOD      => 3000,
-      g_SIMULATION         => g_SIMULATION,
+      g_SIMULATION         => c_SIMULATION_BOOL,
       g_CALIB_SOFT_IP      => g_CALIB_SOFT_IP,
       g_P0_MASK_SIZE       => 8,
       g_P0_DATA_PORT_SIZE  => 64,

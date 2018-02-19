@@ -63,8 +63,9 @@ add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/l2p_dma_stb_t
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_ack_cnt
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/wb_read_cnt
-#add wave -noupdate -group Top /main/DUT/clk20_vcxo_i
+add wave -noupdate -group Top /main/DUT/clk_20m_vcxo_i
 add wave -noupdate -group Top /main/DUT/clk_125m_pllref*
+add wave -noupdate -group Top /main/DUT/clk_125m_gtp*
 add wave -noupdate -group Top /main/DUT/powerup*
 add wave -noupdate -group Top /main/DUT/pll25dac_sync_n_o
 add wave -noupdate -group Top /main/DUT/pll20dac_sync_n_o
@@ -148,10 +149,10 @@ add wave -noupdate -group Top /main/DUT/adc0_one_wire_b
 add wave -noupdate -group Top /main/DUT/fmc0_prsnt_m2c_n_i
 add wave -noupdate -group Top /main/DUT/fmc0_sys_scl_b
 add wave -noupdate -group Top /main/DUT/fmc0_sys_sda_b
-add wave -noupdate -group Top /main/DUT/sys_clk_in
-add wave -noupdate -group Top /main/DUT/sys_clk_125_buf
+add wave -noupdate -group Top /main/DUT/sys_clk_62_5
 add wave -noupdate -group Top /main/DUT/sys_clk_125
-add wave -noupdate -group Top /main/DUT/sys_clk_fb
+add wave -noupdate -group Top /main/DUT/clk_dmtd
+add wave -noupdate -group Top /main/DUT/clk_dmtd_locked
 add wave -noupdate -group Top /main/DUT/sys_clk_pll_locked
 add wave -noupdate -group Top /main/DUT/ddr_clk
 add wave -noupdate -group Top /main/DUT/ddr_clk_buf

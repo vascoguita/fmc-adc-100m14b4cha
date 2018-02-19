@@ -32,8 +32,8 @@ NET "SFP_TXP_O" LOC = B16;
 NET "SFP_TXP_O" IOSTANDARD = "LVCMOS25";
 NET "SFP_MOD_DEF1_B" LOC = C17;
 NET "SFP_MOD_DEF1_B" IOSTANDARD = "LVCMOS25";
-NET "SFP_MOD_DEF0_B" LOC = G15;
-NET "SFP_MOD_DEF0_B" IOSTANDARD = "LVCMOS25";
+NET "SFP_MOD_DEF0_I" LOC = G15;
+NET "SFP_MOD_DEF0_I" IOSTANDARD = "LVCMOS25";
 NET "SFP_MOD_DEF2_B" LOC = G16;
 NET "SFP_MOD_DEF2_B" IOSTANDARD = "LVCMOS25";
 NET "SFP_RATE_SELECT_B" LOC = H14;
@@ -540,6 +540,8 @@ NET "UART_RXD_I" IOSTANDARD = "LVCMOS25";
 #----------------------------------------
 # Buttons and LEDs
 #----------------------------------------
+NET "BUTTON1_N_I" LOC = C22;
+NET "BUTTON1_N_I" IOSTANDARD = "LVCMOS18";
 #NET "AUX_BUTTONS_I[0]" LOC = C22;
 #NET "AUX_BUTTONS_I[0]" IOSTANDARD = "LVCMOS18";
 #NET "AUX_BUTTONS_I[1]" LOC = D21;
@@ -600,10 +602,10 @@ TIMESPEC TS_adc_dco_n_i = PERIOD "adc_dco_n_i" 2.5 ns HIGH 50%;
 #INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
 #TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
-NET "clk_125m_pllref" TNM_NET = clk_125m_pllref;
-NET "sys_clk_62_5"    TNM_NET = sys_clk_62_5;
-TIMESPEC TS_crossdomain_01 = FROM "clk_125m_pllref" TO "sys_clk_62_5"    4ns DATAPATHONLY;
-TIMESPEC TS_crossdomain_02 = FROM "sys_clk_62_5"    TO "clk_125m_pllref" 4ns DATAPATHONLY;
+NET "ddr_clk_buf"  TNM_NET = ddr_clk;
+NET "sys_clk_62_5" TNM_NET = sys_clk_62_5;
+
+TIMESPEC TS_sys_to_drr_cross = FROM "sys_clk_62_5" TO "ddr_clk" 16ns DATAPATHONLY;
 
 #===============================================================================
 # False Path
@@ -625,4 +627,4 @@ NET "cmp_powerup_reset/master_rstn" TIG;
 
 # Async reset inputs to reset synchroniser
 NET "sys_clk_pll_locked" TIG;
-
+NET "button1_n_i" TIG;
