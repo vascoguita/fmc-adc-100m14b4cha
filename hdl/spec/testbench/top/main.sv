@@ -44,9 +44,23 @@ module main;
    wire [13:0] ddr_a;
    wire [2:0]  ddr_ba;
    wire        ddr_zio, ddr_rzq;
+   wire        sfp_txp, sfp_txn, sfp_scl, sfp_sda, sfp_sda_en;
 
    pulldown(ddr_rzq);
 
+   sfp_i2c_adapter 
+     SFP_I2C (
+	      .clk_i(clk_125m_pllref_p),
+	      .rst_n_i(1'b1),
+	      .scl_i(sfp_scl),
+	      .sda_i(sfp_sda),
+	      .sda_en_o(sfp_sda_en),
+	      .sfp_det_valid_i(1'b1),
+	      .sfp_data_i(128'h0123456789ABCDEF0123456789ABCDEF)
+	      );
+
+   assign sfp_sda = (sfp_sda_en) ? 1'b0:1'bz;
+   
    spec_top_fmc_adc_100Ms
      #(
        .g_simulation(1),
@@ -59,6 +73,15 @@ module main;
 	      .clk_125m_pllref_n_i(clk_125m_pllref_n),
 	      .clk_125m_gtp_p_i(clk_125m_gtp_p),
 	      .clk_125m_gtp_n_i(clk_125m_gtp_n),
+	      .sfp_txp_o(sfp_txp),
+	      .sfp_txn_o(sfp_txn),
+	      .sfp_rxp_i(sfp_txp),
+	      .sfp_rxn_i(sfp_txn),
+	      .sfp_los_i(1'b0),
+	      .sfp_tx_fault_i(1'b0),
+	      .sfp_mod_def0_i(1'b0),
+	      .sfp_mod_def1_b(sfp_scl),
+	      .sfp_mod_def2_b(sfp_sda),
 	      .adc0_ext_trigger_p_i(ext_trig),
 	      .adc0_ext_trigger_n_i(~ext_trig),
 	      .adc0_dco_p_i(adc0_dco),

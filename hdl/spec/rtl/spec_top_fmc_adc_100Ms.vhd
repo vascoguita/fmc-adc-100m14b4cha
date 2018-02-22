@@ -139,7 +139,7 @@ entity spec_top_fmc_adc_100Ms is
       sfp_mod_def0_i    : in    std_logic;        -- sfp detect
       sfp_mod_def1_b    : inout std_logic;        -- scl
       sfp_mod_def2_b    : inout std_logic;        -- sda
-      sfp_rate_select_b : inout std_logic;
+      sfp_rate_select_o : out   std_logic;
       sfp_tx_fault_i    : in    std_logic;
       sfp_tx_disable_o  : out   std_logic;
       sfp_los_i         : in    std_logic;
@@ -667,12 +667,12 @@ begin
       sfp_rxp_i             => sfp_rxp_i,
       sfp_tx_fault_i        => sfp_tx_fault_i,
       sfp_los_i             => sfp_los_i,
-      sfp_tx_disable_o      => open,
+      sfp_tx_disable_o      => sfp_tx_disable_o,
       pll_locked_o          => pll_locked,
       phy8_o                => phy8_to_wrc,
       phy8_i                => phy8_from_wrc);
 
-  sfp_tx_disable_o <= '0';
+  sfp_rate_select_o <= '1';
   
   ------------------------------------------------------------------------------
   -- System reset
@@ -920,7 +920,8 @@ begin
       tm_tai_o             => tm_tai,
       tm_cycles_o          => tm_cycles,
       led_act_o            => led_red,
-      led_link_o           => wrabbit_en);
+      led_link_o           => led_green,
+      link_ok_o            => wrabbit_en);
 
   ------------------------------------------------------------------------------
   -- Carrier CSR

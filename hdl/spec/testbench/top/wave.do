@@ -1,5 +1,7 @@
 onerror {resume}
 quietly WaveActivateNextPane {} 0
+add wave -noupdate -group wrpc -group platform /main/DUT/cmp_xwrc_platform_xilinx/*
+add wave -noupdate -group wrpc -group endpoint /main/DUT/cmp_xwrc_board_common/cmp_xwr_core/WRPC/U_Endpoint/U_Wrapped_Endpoint/*
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/clk_i
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_l2p_dma_master/rst_n_i
 add wave -noupdate -group l2p_dma /main/DUT/cmp_gn4124_core/cmp_dma_controller/dma_ctrl_irq_o
@@ -76,7 +78,7 @@ add wave -noupdate -group Top /main/DUT/led_green_o
 add wave -noupdate -group Top /main/DUT/aux_leds_o
 #add wave -noupdate -group Top /main/DUT/aux_buttons_i
 add wave -noupdate -group Top /main/DUT/pcb_ver_i
-add wave -noupdate -group Top /main/DUT/carrier_one_wire_b
+add wave -noupdate -group Top /main/DUT/carrier_onewire_b
 add wave -noupdate -group Top /main/DUT/L_RST_N
 add wave -noupdate -group Top /main/DUT/P2L_RDY
 add wave -noupdate -group Top /main/DUT/P2L_CLKn

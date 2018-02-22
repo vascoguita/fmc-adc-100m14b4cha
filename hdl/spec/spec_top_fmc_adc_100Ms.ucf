@@ -20,24 +20,19 @@ NET "clk_125m_gtp_p_i" IOSTANDARD = "LVDS_25";
 
 #----------------------------------------
 # SFP slot
-# !! SFP_TX_DISABLE and SFP_MOD_DEF1 are swapped in V1.1 schematics for control signals
 #----------------------------------------
 NET "SFP_RXN_I" LOC = C15;
-NET "SFP_RXN_I" IOSTANDARD = "LVCMOS25";
 NET "SFP_RXP_I" LOC = D15;
-NET "SFP_RXP_I" IOSTANDARD = "LVCMOS25";
 NET "SFP_TXN_O" LOC = A16;
-NET "SFP_TXN_O" IOSTANDARD = "LVCMOS25";
 NET "SFP_TXP_O" LOC = B16;
-NET "SFP_TXP_O" IOSTANDARD = "LVCMOS25";
 NET "SFP_MOD_DEF1_B" LOC = C17;
 NET "SFP_MOD_DEF1_B" IOSTANDARD = "LVCMOS25";
 NET "SFP_MOD_DEF0_I" LOC = G15;
 NET "SFP_MOD_DEF0_I" IOSTANDARD = "LVCMOS25";
 NET "SFP_MOD_DEF2_B" LOC = G16;
 NET "SFP_MOD_DEF2_B" IOSTANDARD = "LVCMOS25";
-NET "SFP_RATE_SELECT_B" LOC = H14;
-NET "SFP_RATE_SELECT_B" IOSTANDARD = "LVCMOS25";
+NET "SFP_RATE_SELECT_O" LOC = H14;
+NET "SFP_RATE_SELECT_O" IOSTANDARD = "LVCMOS25";
 NET "SFP_TX_FAULT_I" LOC = B18;
 NET "SFP_TX_FAULT_I" IOSTANDARD = "LVCMOS25";
 NET "SFP_TX_DISABLE_O" LOC = F17;
@@ -583,6 +578,11 @@ NET "DDR3_UDQS_N"  IN_TERM = NONE;
 # Timing constraints
 #===============================================================================
 
+NET "P2L_CLKp" TNM_NET = "p2l_clkp_grp";
+TIMESPEC TS_p2l_clkp = PERIOD "p2l_clkp_grp" 5 ns HIGH 50%;
+NET "P2L_CLKn" TNM_NET = "p2l_clkn_grp";
+TIMESPEC TS_p2l_clkn = PERIOD "p2l_clkn_grp" 5 ns HIGH 50%;
+
 NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_pllref_n_i;
 TIMESPEC TS_clk_125m_pllref_n_i = PERIOD "clk_125m_pllref_n_i" 8 ns HIGH 50%;
 
@@ -592,15 +592,15 @@ TIMESPEC TS_clk_125m_gtp_n_i = PERIOD "clk_125m_gtp_n_i" 8 ns HIGH 50%;
 NET "clk_20m_vcxo_i" TNM_NET = "clk_20m_vcxo_i";
 TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
 
-#NET "U_GTP/ch1_gtp_clkout_int<1>" TNM_NET = U_GTP/ch1_gtp_clkout_int<1>;
-#TIMESPEC TS_U_GTP_ch1_gtp_clkout_int_1_ = PERIOD "U_GTP/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
+NET "cmp_xwrc_platform_xilinx/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" TNM_NET = cmp_xwrc_platform_xilinx/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>;
+TIMESPEC TS_cmp_xwrc_platform_xilinx_gen_phy_spartan6_cmp_gtp_ch1_gtp_clkout_int_1_ = PERIOD "cmp_xwrc_platform_xilinx/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
 
 NET "adc0_dco_n_i" TNM_NET = adc_dco_n_i;
 TIMESPEC TS_adc_dco_n_i = PERIOD "adc_dco_n_i" 2.5 ns HIGH 50%;
 
-#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
-#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
-#TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
+INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
+INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
+TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
 NET "ddr_clk_buf"  TNM_NET = ddr_clk;
 NET "sys_clk_62_5" TNM_NET = sys_clk_62_5;

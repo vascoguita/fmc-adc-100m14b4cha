@@ -7,6 +7,7 @@ syn_device="xc6slx45t"
 include_dirs=["../include","gn4124_bfm", "ddr3"]
 
 files = [
+    "sfp_i2c_adapter.vhd",
     "main.sv",
     "ddr3/ddr3.v"]
 
