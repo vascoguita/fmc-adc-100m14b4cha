@@ -191,7 +191,6 @@ architecture rtl of fmc_adc_100Ms_core is
 
   -- Reset
   signal sys_rst  : std_logic;
-  signal fs_rst   : std_logic;
   signal fs_rst_n : std_logic;
 
   -- Clocks and PLL
@@ -401,7 +400,6 @@ begin
   ------------------------------------------------------------------------------
   sys_rst  <= not(sys_rst_n_i);
   fs_rst_n <= sys_rst_n_i and locked_out;
-  fs_rst   <= not(fs_rst_n);
 
   ------------------------------------------------------------------------------
   -- ADC data clock buffer

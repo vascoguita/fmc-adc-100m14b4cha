@@ -87,7 +87,6 @@ architecture rtl of offset_gain_s is
   -- Signals declaration
   ------------------------------------------------------------------------------
   signal rst         : std_logic                     := '0';
-  signal data_in_d   : std_logic_vector(15 downto 0) := (others => '0');
   signal data_offset : std_logic_vector(17 downto 0) := (others => '0');
   signal gain        : std_logic_vector(17 downto 0) := (others => '0');
   signal product_t   : std_logic_vector(35 downto 0) := (others => '0');
@@ -113,9 +112,7 @@ begin
       if rst_n_i = '0' then
         data_offset <= (others => '0');
         gain        <= (others => '0');
-        data_in_d   <= (others => '0');
       else
-        data_in_d <= data_i;
         -- propagate sign for signed offset_i
         data_offset <= std_logic_vector(signed(data_i(15) & data_i(15) & data_i) +
                                         signed(offset_i(15) & offset_i(15) & offset_i));
