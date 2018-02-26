@@ -158,6 +158,7 @@ enum zfadc_dregs_enum {
 	ZFA_CTL_TEST_DATA_EN,
 	ZFA_CTL_TRIG_LED,
 	ZFA_CTL_ACQ_LED,
+	ZFA_CTL_RST_TRG_STA,
 	/* Status registers */
 	ZFA_STA_FSM,
 	ZFA_STA_SERDES_PLL,

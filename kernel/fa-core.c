@@ -314,6 +314,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 			else if (fa_enable_test_data_adc)
 				dev_info(fa->msgdev, "the ADC test data is enabled on all channels\n");
 		}
+		fa_writel(fa, fa->fa_adc_csr_base,
+			  &zfad_regs[ZFA_CTL_RST_TRG_STA], 1);
 	} else {
 		dev_dbg(fa->msgdev, "FSM STOP Command, Disable interrupts\n");
 		fa->enable_auto_start = 0;

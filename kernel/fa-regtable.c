@@ -16,6 +16,7 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CTL_TEST_DATA_EN] =	{0x00, 0x00000020, 1},
 	[ZFA_CTL_TRIG_LED] =		{0x00, 0x00000040, 1},
 	[ZFA_CTL_ACQ_LED] =		{0x00, 0x00000080, 1},
+	[ZFA_CTL_RST_TRG_STA] =	{0x00, 0x00000100, 1},
 	/* Status registers */
 	[ZFA_STA_FSM] =		{0x04, 0x00000007, 1},
 	[ZFA_STA_SERDES_PLL] =		{0x04, 0x00000008, 1},
