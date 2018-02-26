@@ -602,10 +602,10 @@ INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit
 INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
 TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
-NET "ddr_clk_buf"  TNM_NET = ddr_clk;
-NET "sys_clk_62_5" TNM_NET = sys_clk_62_5;
+#NET "ddr_clk_buf"  TNM_NET = ddr_clk;
+#NET "sys_clk_62_5" TNM_NET = sys_clk_62_5;
 
-TIMESPEC TS_sys_to_drr_cross = FROM "sys_clk_62_5" TO "ddr_clk" 16ns DATAPATHONLY;
+#TIMESPEC TS_sys_to_drr_cross = FROM "sys_clk_62_5" TO "ddr_clk" 16ns DATAPATHONLY;
 
 #===============================================================================
 # False Path

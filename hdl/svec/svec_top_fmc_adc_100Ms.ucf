@@ -24,14 +24,14 @@ NET "vme_berr_o" LOC = R3;
 NET "vme_as_n_i" LOC = P6;
 NET "vme_addr_oe_n_o" LOC = N4;
 NET "vme_addr_dir_o" LOC = N5;
-NET "vme_irq_n_o[7]" LOC = R7;
-NET "vme_irq_n_o[6]" LOC = AH2;
-NET "vme_irq_n_o[5]" LOC = AF2;
-NET "vme_irq_n_o[4]" LOC = N9;
-NET "vme_irq_n_o[3]" LOC = N10;
-NET "vme_irq_n_o[2]" LOC = AH4;
-NET "vme_irq_n_o[1]" LOC = AG4;
-NET "vme_ga_i[5]" LOC = M6;
+NET "vme_irq_o[7]" LOC = R7;
+NET "vme_irq_o[6]" LOC = AH2;
+NET "vme_irq_o[5]" LOC = AF2;
+NET "vme_irq_o[4]" LOC = N9;
+NET "vme_irq_o[3]" LOC = N10;
+NET "vme_irq_o[2]" LOC = AH4;
+NET "vme_irq_o[1]" LOC = AG4;
+NET "vme_gap_i"   LOC = M6;
 NET "vme_ga_i[4]" LOC = V9;
 NET "vme_ga_i[3]" LOC = V10;
 NET "vme_ga_i[2]" LOC = AJ1;
@@ -125,14 +125,14 @@ NET "vme_berr_o" IOSTANDARD = "LVCMOS33";
 NET "vme_as_n_i" IOSTANDARD = "LVCMOS33";
 NET "vme_addr_oe_n_o" IOSTANDARD = "LVCMOS33";
 NET "vme_addr_dir_o" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[7]" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[6]" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[5]" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[4]" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[3]" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[2]" IOSTANDARD = "LVCMOS33";
-NET "vme_irq_n_o[1]" IOSTANDARD = "LVCMOS33";
-NET "vme_ga_i[5]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[7]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[6]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[5]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[4]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[3]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[2]" IOSTANDARD = "LVCMOS33";
+NET "vme_irq_o[1]" IOSTANDARD = "LVCMOS33";
+NET "vme_gap_i" IOSTANDARD = "LVCMOS33";
 NET "vme_ga_i[4]" IOSTANDARD = "LVCMOS33";
 NET "vme_ga_i[3]" IOSTANDARD = "LVCMOS33";
 NET "vme_ga_i[2]" IOSTANDARD = "LVCMOS33";
@@ -429,6 +429,12 @@ NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS33";
 NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
 NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
 
+NET "clk_125m_gtp_p_i" LOC = B19;
+NET "clk_125m_gtp_n_i" LOC = A19;
+
+NET "clk_125m_gtp_p_i" IOSTANDARD = "LVDS_25";
+NET "clk_125m_gtp_n_i" IOSTANDARD = "LVDS_25";
+
 #----------------------------------------
 # SFP slot
 #----------------------------------------
@@ -437,21 +443,18 @@ NET "sfp_txn_o" LOC = A23;
 NET "sfp_rxp_i" LOC = D22;
 NET "sfp_rxn_i" LOC = C22;
 
-NET "clk_125m_gtp_p_i" LOC = B19;
-NET "clk_125m_gtp_n_i" LOC = A19;
-
 NET "sfp_los_i" LOC = W25;
-NET "sfp_mod_def0_b" LOC = Y26;
+NET "sfp_mod_def0_i" LOC = Y26;
 NET "sfp_mod_def1_b" LOC = Y27;
 NET "sfp_mod_def2_b" LOC = AA24;
-NET "sfp_rate_select_b" LOC = W24;
+NET "sfp_rate_select_o" LOC = W24;
 NET "sfp_tx_disable_o" LOC = AA25;
 NET "sfp_tx_fault_i" LOC = AA27;
 NET "sfp_los_i" IOSTANDARD = "LVCMOS33";
-NET "sfp_mod_def0_b" IOSTANDARD = "LVCMOS33";
+NET "sfp_mod_def0_i" IOSTANDARD = "LVCMOS33";
 NET "sfp_mod_def1_b" IOSTANDARD = "LVCMOS33";
 NET "sfp_mod_def2_b" IOSTANDARD = "LVCMOS33";
-NET "sfp_rate_select_b" IOSTANDARD = "LVCMOS33";
+NET "sfp_rate_select_o" IOSTANDARD = "LVCMOS33";
 NET "sfp_tx_disable_o" IOSTANDARD = "LVCMOS33";
 NET "sfp_tx_fault_i" IOSTANDARD = "LVCMOS33";
 
@@ -948,24 +951,26 @@ TIMESPEC TS_clk_125m_gtp_n_i = PERIOD "clk_125m_gtp_n_i" 8 ns HIGH 50%;
 NET "clk_20m_vcxo_i" TNM_NET = "clk_20m_vcxo_i";
 TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo_i" 50 ns HIGH 50%;
 
-#NET "U_GTP/ch1_gtp_clkout_int<1>" TNM_NET = U_GTP/ch1_gtp_clkout_int<1>;
-#TIMESPEC TS_U_GTP_ch1_gtp_clkout_int_1_ = PERIOD "U_GTP/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
+NET "cmp_xwrc_board_svec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" TNM_NET = cmp_xwrc_board_svec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>;
+TIMESPEC TS_cmp_xwrc_board_svec_cmp_xwrc_platform_gen_phy_spartan6_cmp_gtp_ch1_gtp_clkout_int_1_ = PERIOD "cmp_xwrc_board_svec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
 
-# ADC
 NET "adc0_dco_n_i" TNM_NET = adc0_dco_n_i;
-TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2 ns HIGH 50%;
-NET "adc1_dco_n_i" TNM_NET = adc1_dco_n_i;
-TIMESPEC TS_adc1_dco_n_i = PERIOD "adc1_dco_n_i" 2 ns HIGH 50%;
+TIMESPEC TS_adc0_dco_n_i = PERIOD "adc0_dco_n_i" 2.5 ns HIGH 50%;
 
-#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
-#INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
-#TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
+INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
+INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
+TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
-NET "clk_125m_pllref" TNM_NET = clk_125m_pllref;
-NET "sys_clk_62_5"    TNM_NET = sys_clk_62_5;
-TIMESPEC TS_crossdomain_01 = FROM "clk_125m_pllref" TO "sys_clk_62_5"    4ns DATAPATHONLY;
-TIMESPEC TS_crossdomain_02 = FROM "sys_clk_62_5"    TO "clk_125m_pllref" 4ns DATAPATHONLY;
+# external 10MHz clock input
+NET "fp_gpio3_i" TNM_NET = fp_gpio3_i;
+TIMESPEC TS_fp_gpio3_i = PERIOD "fp_gpio3_i" 100 ns HIGH 50%;
 
+NET "clk_ddr_333m_buf" TNM_NET = clk_ddr_333m;
+NET "clk_sys_62m5" TNM_NET = clk_sys_62m5;
+TIMESPEC TS_crossdomain_01 = FROM "clk_sys_62m5" TO "clk_ddr_333m" 4ns DATAPATHONLY;
+
+# Force PPS output to always be placed as IOB register
+INST "cmp_xwrc_board_svec/cmp_board_common/cmp_xwr_core/wrpc/pps_gen/wrapped_ppsgen/pps_out_o" IOB = FORCE;
 
 #===============================================================================
 # False Path
@@ -990,5 +995,5 @@ NET "cmp_powerup_reset/master_rstn" TIG;
 
 # Async reset inputs to reset synchroniser
 NET "rst_n_i" TIG;
-NET "sys_clk_pll_locked" TIG;
+#NET "sys_clk_pll_locked" TIG;
 NET "vme_sysreset_n_i" TIG;
