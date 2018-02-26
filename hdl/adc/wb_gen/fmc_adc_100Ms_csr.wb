@@ -604,7 +604,7 @@ peripheral {
     field {
       align = 16;
       name = "Internal trigger threshold hysteresis";
-      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      description = "Configures the internal trigger threshold hysteresis.\nThe value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.";
       prefix = "hyst";
       type = SLV;
       size = 16;
@@ -723,7 +723,7 @@ peripheral {
     field {
       align = 16;
       name = "Internal trigger threshold hysteresis";
-      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      description = "Configures the internal trigger threshold hysteresis.\nThe value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.";
       prefix = "hyst";
       type = SLV;
       size = 16;
@@ -842,7 +842,7 @@ peripheral {
     field {
       align = 16;
       name = "Internal trigger threshold hysteresis";
-      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      description = "Configures the internal trigger threshold hysteresis.\nThe value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.";
       prefix = "hyst";
       type = SLV;
       size = 16;
@@ -961,7 +961,7 @@ peripheral {
     field {
       align = 16;
       name = "Internal trigger threshold hysteresis";
-      description = "Configures the internal trigger threshold hysteresis (two's complement).";
+      description = "Configures the internal trigger threshold hysteresis.\nThe value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.";
       prefix = "hyst";
       type = SLV;
       size = 16;

@@ -619,7 +619,7 @@ Internal trigger threshold hysteresis
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
-@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis.@*The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
 @end multitable
 @regsection @code{ch1_trig_dly} - Channel 1 trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -716,7 +716,7 @@ Internal trigger threshold hysteresis
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
-@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis.@*The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
 @end multitable
 @regsection @code{ch2_trig_dly} - Channel 2 trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -813,7 +813,7 @@ Internal trigger threshold hysteresis
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
-@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis.@*The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
 @end multitable
 @regsection @code{ch3_trig_dly} - Channel 3 trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
@@ -910,7 +910,7 @@ Internal trigger threshold hysteresis
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
 @item @code{val} @tab Treated as binary two's complement and compared to raw ADC data.
-@item @code{hyst} @tab Configures the internal trigger threshold hysteresis (two's complement).
+@item @code{hyst} @tab Configures the internal trigger threshold hysteresis.@*The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
 @end multitable
 @regsection @code{ch4_trig_dly} - Channel 4 trigger delay
 @multitable @columnfractions .10 .10 .15 .10 .55
