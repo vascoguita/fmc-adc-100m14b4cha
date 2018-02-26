@@ -211,7 +211,6 @@ NET "vme_addr_b[1]" IOSTANDARD = "LVCMOS33";
 #----------------------------------------
 # DDR0 (bank 4)
 #----------------------------------------
-NET "ddr0_zio_b" LOC = J6;
 NET "ddr0_rzq_b" LOC = L7;
 NET "ddr0_we_n_o" LOC = F4;
 NET "ddr0_udqs_p_b" LOC = K2;
@@ -261,7 +260,6 @@ NET "ddr0_a_o[3]" LOC = E5;
 NET "ddr0_a_o[2]" LOC = A3;
 NET "ddr0_a_o[1]" LOC = D3;
 NET "ddr0_a_o[0]" LOC = D4;
-NET "ddr0_zio_b" IOSTANDARD = "SSTL15_II";
 NET "ddr0_rzq_b" IOSTANDARD = "SSTL15_II";
 NET "ddr0_we_n_o" IOSTANDARD = "SSTL15_II";
 NET "ddr0_udqs_p_b" IOSTANDARD = "DIFF_SSTL15_II";
@@ -315,7 +313,6 @@ NET "ddr0_a_o[0]" IOSTANDARD = "SSTL15_II";
 #----------------------------------------
 # DDR1 (bank 5)
 #----------------------------------------
-NET "ddr1_zio_b" LOC = L24;
 NET "ddr1_rzq_b" LOC = G25;
 NET "ddr1_we_n_o" LOC = E26;
 NET "ddr1_udqs_p_b" LOC = K28;
@@ -365,7 +362,6 @@ NET "ddr1_a_o[3]" LOC = E29;
 NET "ddr1_a_o[2]" LOC = C30;
 NET "ddr1_a_o[1]" LOC = D30;
 NET "ddr1_a_o[0]" LOC = D28;
-NET "ddr1_zio_b" IOSTANDARD = "SSTL15_II";
 NET "ddr1_rzq_b" IOSTANDARD = "SSTL15_II";
 NET "ddr1_we_n_o" IOSTANDARD = "SSTL15_II";
 NET "ddr1_udqs_p_b" IOSTANDARD = "DIFF_SSTL15_II";

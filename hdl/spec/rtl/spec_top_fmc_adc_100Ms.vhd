@@ -128,7 +128,6 @@ entity spec_top_fmc_adc_100Ms is
       DDR3_DQ      : inout std_logic_vector(15 downto 0);
       DDR3_A       : out   std_logic_vector(13 downto 0);
       DDR3_BA      : out   std_logic_vector(2 downto 0);
-      DDR3_ZIO     : inout std_logic;
       DDR3_RZQ     : inout std_logic;
 
       -- SFP
@@ -1160,7 +1159,6 @@ begin
       ddr3_clk_p_o  => DDR3_CK_P,
       ddr3_clk_n_o  => DDR3_CK_N,
       ddr3_rzq_b    => DDR3_RZQ,
-      ddr3_zio_b    => DDR3_ZIO,
 
       wb0_rst_n_i => sys_rst_125_n,
       wb0_clk_i   => sys_clk_125,

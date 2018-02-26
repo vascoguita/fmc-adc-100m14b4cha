@@ -43,7 +43,7 @@ module main;
    wire [15:0] ddr_dq;
    wire [13:0] ddr_a;
    wire [2:0]  ddr_ba;
-   wire        ddr_zio, ddr_rzq;
+   wire        ddr_rzq;
    wire        sfp_txp, sfp_txn, sfp_scl, sfp_sda, sfp_sda_en;
 
    pulldown(ddr_rzq);
@@ -109,7 +109,6 @@ module main;
 	      .DDR3_DQ     (ddr_dq),
 	      .DDR3_A       (ddr_a),
 	      .DDR3_BA      (ddr_ba),
-	      .DDR3_ZIO     (ddr_zio),
 	      .DDR3_RZQ     (ddr_rzq),
 
 

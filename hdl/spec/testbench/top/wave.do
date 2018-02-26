@@ -116,7 +116,6 @@ add wave -noupdate -group Top /main/DUT/DDR3_WE_N
 add wave -noupdate -group Top /main/DUT/DDR3_DQ
 add wave -noupdate -group Top /main/DUT/DDR3_A
 add wave -noupdate -group Top /main/DUT/DDR3_BA
-add wave -noupdate -group Top /main/DUT/DDR3_ZIO
 add wave -noupdate -group Top /main/DUT/DDR3_RZQ
 add wave -noupdate -group Top /main/DUT/adc0_ext_trigger_p_i
 add wave -noupdate -group Top /main/DUT/adc0_ext_trigger_n_i
@@ -379,7 +378,6 @@ add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/ddr3_udqs_n_b
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/ddr3_clk_p_o
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/ddr3_clk_n_o
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/ddr3_rzq_b
-add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/ddr3_zio_b
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/wb0_clk_i
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/wb0_sel_i
 add wave -noupdate -group DDRC /main/DUT/cmp_ddr_ctrl/wb0_cyc_i

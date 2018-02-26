@@ -169,7 +169,6 @@ entity svec_top_fmc_adc_100Ms is
       ddr0_dq_b      : inout std_logic_vector(15 downto 0);
       ddr0_ba_o      : out   std_logic_vector(2 downto 0);
       ddr0_a_o       : out   std_logic_vector(13 downto 0);
-      ddr0_zio_b     : inout std_logic;
       ddr0_rzq_b     : inout std_logic;
 
       ------------------------------------------
@@ -192,7 +191,6 @@ entity svec_top_fmc_adc_100Ms is
       ddr1_dq_b      : inout std_logic_vector(15 downto 0);
       ddr1_ba_o      : out   std_logic_vector(2 downto 0);
       ddr1_a_o       : out   std_logic_vector(13 downto 0);
-      ddr1_zio_b     : inout std_logic;
       ddr1_rzq_b     : inout std_logic;
 
       ------------------------------------------
@@ -1191,7 +1189,6 @@ begin
       ddr3_clk_p_o  => ddr0_ck_p_o,
       ddr3_clk_n_o  => ddr0_ck_n_o,
       ddr3_rzq_b    => ddr0_rzq_b,
-      ddr3_zio_b    => ddr0_zio_b,
 
       wb0_rst_n_i => rst_ref_125m_n,
       wb0_clk_i   => clk_ref_125m,
@@ -1348,7 +1345,6 @@ begin
       ddr3_clk_p_o  => ddr1_ck_p_o,
       ddr3_clk_n_o  => ddr1_ck_n_o,
       ddr3_rzq_b    => ddr1_rzq_b,
-      ddr3_zio_b    => ddr1_zio_b,
 
       wb0_rst_n_i => rst_ref_125m_n,
       wb0_clk_i   => clk_ref_125m,
