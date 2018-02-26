@@ -324,6 +324,14 @@ module main;
       #5us;
 
       ext_trig <= 1'b1;
+      #10ns;
+      ext_trig <= 1'b0;
+      #10ns;
+      ext_trig <= 1'b1;
+      #10ns;
+      ext_trig <= 1'b0;
+      #10ns;
+      ext_trig <= 1'b1;
       #100ns;
       ext_trig <= 1'b0;
 

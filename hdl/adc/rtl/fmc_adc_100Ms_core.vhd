@@ -224,6 +224,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal ext_trig_d                 : std_logic;
   signal ext_trig_delay             : std_logic_vector(31 downto 0);
   signal ext_trig_delay_cnt         : unsigned(31 downto 0);
+  signal ext_trig_delay_bsy         : std_logic;
   signal ext_trig_en                : std_logic;
   signal ext_trig_fixed_delay       : std_logic_vector(7 downto 0);
   signal ext_trig_p, ext_trig_n     : std_logic;
@@ -233,6 +234,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal int_trig_data              : t_fmc_adc_vec16_array(1 to 4);
   signal int_trig_delay             : t_fmc_adc_vec32_array(1 to 4);
   signal int_trig_delay_cnt         : t_fmc_adc_uint32_array(1 to 4);
+  signal int_trig_delay_bsy         : std_logic_vector(1 to 4);
   signal int_trig_en                : std_logic_vector(1 to 4);
   signal int_trig_pol               : std_logic_vector(1 to 4);
   signal int_trig_thres             : t_fmc_adc_vec16_array(1 to 4);
@@ -768,11 +770,16 @@ begin
   begin
     if fs_rst_n = '0' then
       ext_trig_delay_cnt <= (others => '0');
+      ext_trig_delay_bsy <= '0';
     elsif rising_edge(fs_clk) then
-      if ext_trig = '1' then
+      if ext_trig = '1' and ext_trig_delay_bsy = '0' then
         ext_trig_delay_cnt <= unsigned(ext_trig_delay);
+        ext_trig_delay_bsy <= '1';
       elsif ext_trig_delay_cnt /= 0 then
         ext_trig_delay_cnt <= ext_trig_delay_cnt - 1;
+      else
+        -- when counter reaches zero
+        ext_trig_delay_bsy <= '0';
       end if;
     end if;
   end process p_ext_trig_delay_cnt;
@@ -832,11 +839,16 @@ begin
     begin
       if fs_rst_n = '0' then
         int_trig_delay_cnt(I) <= (others => '0');
+        int_trig_delay_bsy(I) <= '0';
       elsif rising_edge(fs_clk) then
-        if int_trig(I) = '1' then
+        if int_trig(I) = '1' and int_trig_delay_bsy(I) = '0' then
           int_trig_delay_cnt(I) <= unsigned(int_trig_delay(I));
+          int_trig_delay_bsy(I) <= '1';
         elsif int_trig_delay_cnt(I) /= 0 then
           int_trig_delay_cnt(I) <= int_trig_delay_cnt(I) - 1;
+        else
+          -- when counter reaches zero
+          int_trig_delay_bsy(I) <= '0';
         end if;
       end if;
     end process p_int_trig_delay_cnt;
