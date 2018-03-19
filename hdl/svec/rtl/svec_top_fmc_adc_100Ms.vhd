@@ -674,6 +674,8 @@ begin
 
   sys_clk_pll_locked <= '1';
 
+  ddr_clk_pll_rst <= sys_clk_pll_locked;
+
   -- logic AND of all async reset sources for DDR (active low)
   ddr_arst_n <= sys_clk_pll_locked and ddr_clk_pll_locked;
 
@@ -758,8 +760,9 @@ begin
       wb_i.err        => cnx_slave_out(c_WB_MASTER_VME).err,
       wb_i.rty        => cnx_slave_out(c_WB_MASTER_VME).rty,
       wb_i.stall      => cnx_slave_out(c_WB_MASTER_VME).stall,
-      wb_i.int        => irq_to_vme,
-      wb_i.dat        => cnx_slave_out(c_WB_MASTER_VME).dat);
+      wb_i.dat        => cnx_slave_out(c_WB_MASTER_VME).dat,
+      int_i           => irq_to_vme);
+
 
   vme_ga     <= vme_gap_i & vme_ga_i;
   vme_berr_o <= not vme_berr_n;
@@ -912,7 +915,6 @@ begin
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).err   <= '0';
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_SVEC_CSR).stall <= '0';
-  cnx_master_in(c_WB_SLAVE_SVEC_CSR).int   <= '0';
 
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)
@@ -1039,7 +1041,6 @@ begin
   -- Unused wishbone signals
   cnx_fmc0_sync_master_in.err <= '0';
   cnx_fmc0_sync_master_in.rty <= '0';
-  cnx_fmc0_sync_master_in.int <= '0';
 
   ------------------------------------------------------------------------------
   -- Slot 2 : FMC ADC mezzanine (wb bridge with cross-clocking)
@@ -1148,7 +1149,6 @@ begin
   -- Unused wishbone signals
   cnx_fmc1_sync_master_in.err <= '0';
   cnx_fmc1_sync_master_in.rty <= '0';
-  cnx_fmc1_sync_master_in.int <= '0';
 
   ------------------------------------------------------------------------------
   -- DDR0 controller (bank 4)
@@ -1300,11 +1300,9 @@ begin
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).err   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).int   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).err   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).stall <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).int   <= '0';
 
   ------------------------------------------------------------------------------
   -- DDR1 controller (bank 5)
@@ -1456,11 +1454,9 @@ begin
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).err   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).int   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).err   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).stall <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).int   <= '0';
 
   ------------------------------------------------------------------------------
   -- Carrier front panel LEDs and LEMOs

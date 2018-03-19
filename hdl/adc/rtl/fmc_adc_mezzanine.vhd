@@ -512,7 +512,6 @@ begin
   cnx_master_in(c_WB_SLAVE_FMC_ADC).err   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC_ADC).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_FMC_ADC).stall <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).int   <= '0';
 
   ------------------------------------------------------------------------------
   -- Mezzanine 1-wire master
@@ -566,7 +565,6 @@ begin
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_FMC_EIC).err <= '0';
   cnx_master_in(c_WB_SLAVE_FMC_EIC).rty <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_EIC).int <= '0';
 
   -- Detects end of adc core writing to ddr
   p_ddr_wr_fifo_empty : process (sys_clk_i)
@@ -633,6 +631,5 @@ begin
   cnx_master_in(c_WB_SLAVE_TIMETAG).err   <= '0';
   cnx_master_in(c_WB_SLAVE_TIMETAG).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_TIMETAG).stall <= '0';
-  cnx_master_in(c_WB_SLAVE_TIMETAG).int   <= '0';
 
 end rtl;

@@ -787,7 +787,6 @@ begin
       csr_stall_i     => cnx_slave_out(c_MASTER_GENNUM).stall,
       csr_err_i       => cnx_slave_out(c_MASTER_GENNUM).err,
       csr_rty_i       => cnx_slave_out(c_MASTER_GENNUM).rty,
-      csr_int_i       => cnx_slave_out(c_MASTER_GENNUM).int,
       -- DMA wishbone interface (pipelined)
       dma_clk_i       => sys_clk_62_5,
       dma_adr_o       => wb_dma_adr,
@@ -815,7 +814,6 @@ begin
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_DMA).err <= '0';
   cnx_master_in(c_WB_SLAVE_DMA).rty <= '0';
-  cnx_master_in(c_WB_SLAVE_DMA).int <= '0';
 
   ------------------------------------------------------------------------------
   -- CSR wishbone crossbar
@@ -959,7 +957,6 @@ begin
   cnx_master_in(c_WB_SLAVE_SPEC_CSR).err   <= '0';
   cnx_master_in(c_WB_SLAVE_SPEC_CSR).rty   <= '0';
   cnx_master_in(c_WB_SLAVE_SPEC_CSR).stall <= '0';
-  cnx_master_in(c_WB_SLAVE_SPEC_CSR).int   <= '0';
 
   -- SPEC front panel leds
   led_red_o   <= led_red or csr_regout.ctrl_led_red_o;
@@ -1007,7 +1004,6 @@ begin
   -- Unused wishbone signals
   cnx_master_in(c_WB_SLAVE_DMA_EIC).err <= '0';
   cnx_master_in(c_WB_SLAVE_DMA_EIC).rty <= '0';
-  cnx_master_in(c_WB_SLAVE_DMA_EIC).int <= '0';
 
   ------------------------------------------------------------------------------
   -- FMC ADC mezzanine (wb bridge with cross-clocking)
@@ -1117,7 +1113,6 @@ begin
   -- Unused wishbone signals
   cnx_fmc0_sync_master_in.err <= '0';
   cnx_fmc0_sync_master_in.rty <= '0';
-  cnx_fmc0_sync_master_in.int <= '0';
 
   ------------------------------------------------------------------------------
   -- DMA wishbone bus slaves
