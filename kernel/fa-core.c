@@ -21,11 +21,8 @@ FMC_PARAM_GATEWARE(fa_dev_drv);
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
-static int fa_enable_test_data_adc;
+int fa_enable_test_data_adc = 0;
 module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
-static int fa_enable_test_data_adc_pattern = 0x555;
-module_param_named(enable_test_data_adc_pattern, fa_enable_test_data_adc_pattern, int, 0664);
-
 
 static const int zfad_hw_range[] = {
 	[FA100M14B4C_RANGE_10V]   = 0x45,
@@ -121,7 +118,7 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (range < 0)
 		return range;
 
-	if (range == FA100M14B4C_RANGE_OPEN) {
+	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc) {
 		offset = FA_CAL_NO_OFFSET;
 		gain = FA_CAL_NO_GAIN;
 	} else {
@@ -234,7 +231,6 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
-	int err;
 
 	if (command != FA100M14B4C_CMD_START &&
 	    command != FA100M14B4C_CMD_STOP) {
@@ -300,20 +296,6 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		dev_dbg(fa->msgdev, "FSM START Command, Enable interrupts\n");
 		fa_enable_irqs(fa);
 
-		/*
-		 * Set the test data if necessary. This is unlikely to happen,
-		 * and when this is the case we do not care about performances
-		 */
-		if (unlikely(fa_enable_test_data_adc)) {
-			fa_enable_test_data_adc_pattern &= 0xFFF;
-			err = zfad_pattern_data_enable(fa, fa_enable_test_data_adc_pattern,
-						       fa_enable_test_data_adc);
-			if (err)
-				dev_warn(fa->msgdev,
-					 "Failed to set the ADC test data. Continue without\n");
-			else if (fa_enable_test_data_adc)
-				dev_info(fa->msgdev, "the ADC test data is enabled on all channels\n");
-		}
 		fa_writel(fa, fa->fa_adc_csr_base,
 			  &zfad_regs[ZFA_CTL_RST_TRG_STA], 1);
 	} else {

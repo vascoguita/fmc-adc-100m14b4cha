@@ -19,7 +19,6 @@
 
 ZIO_PARAM_BUFFER(adc_buffer);
 
-
 /*
  * zio device attributes
  */
@@ -120,6 +119,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 	ZIO_PARAM_EXT("max-sample-mshot", ZIO_RO_PERM, ZFA_MULT_MAX_SAMP, 0),
 	ZIO_PARAM_EXT("sample-counter", ZIO_RO_PERM, ZFAT_CNT, 0),
+	ZIO_PARAM_EXT("test-data-pattern", ZIO_RW_PERM, ZFAT_ADC_TST_PATTERN, 0),
 };
 
 #if 0 /* FIXME Unused until TLV control will be available */
@@ -167,7 +167,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	unsigned int baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
-	int i, range, err, reg_index;
+	int i, range, err = 0, reg_index;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
@@ -274,6 +274,24 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFA_CTL_FMS_CMD:
 		return zfad_fsm_command(fa, usr_val);
+	case ZFAT_ADC_TST_PATTERN:
+		if (unlikely(fa_enable_test_data_adc)) {
+			usr_val &= 0xFFF;
+			err = zfad_pattern_data_enable(fa, usr_val,
+						       fa_enable_test_data_adc);
+			if (err)
+				dev_warn(fa->msgdev,
+					 "Failed to set the ADC test data. Continue without\n");
+			else if (fa_enable_test_data_adc)
+				dev_info(fa->msgdev,
+					 "the ADC test data (0x%x) is enabled on all channels\n",
+					 usr_val);
+			return err;
+		} else {
+			dev_err(fa->msgdev,
+				"Cannot set the ADC test data. The driver is not in test mode\n");
+			return -EPERM;
+		}
 	}
 
 	fa_writel(fa, baseoff, &zfad_regs[reg_index], usr_val);
@@ -313,7 +331,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_OFFSET:
 		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
 		return 0;
-
+	case ZFAT_ADC_TST_PATTERN:
 	case ZFA_SW_R_NOADDRES_NBIT:
 	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
@@ -491,10 +509,15 @@ static void zfad_stop_cset(struct zio_cset *cset)
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
+	int err;
 
 	dev_dbg(fa->msgdev, "%s:%d\n", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
+
+	err = zfad_pattern_data_enable(fa, 0, fa_enable_test_data_adc);
+	if (err)
+		return err;
 
 	/* We don't have csets at this point, so don't do anything more */
 	return 0;

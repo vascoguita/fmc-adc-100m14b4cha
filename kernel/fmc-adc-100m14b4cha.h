@@ -141,6 +141,8 @@ enum fa100m14b4c_fsm_state {
 
 #include "field-desc.h"
 
+extern int fa_enable_test_data_adc;
+
 /*
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
@@ -187,6 +189,8 @@ enum zfadc_dregs_enum {
 	ZFAT_POST,
 	/* Sample counter */
 	ZFAT_CNT,
+	/* Pattern data for the ADC chip */
+	ZFAT_ADC_TST_PATTERN,
 	/* start:declaration block requiring some order */
 	/* Channel 1 */
 	ZFA_CH1_CTL_RANGE,
