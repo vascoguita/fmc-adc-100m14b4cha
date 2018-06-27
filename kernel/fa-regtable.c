@@ -56,8 +56,8 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CH1_GAIN] =		{0x88, 0x0000FFFF, 0},
 	[ZFA_CH1_OFFSET] =		{0x8C, 0x0000FFFF, 0},
 	[ZFA_CH1_SAT] =		{0x90, 0x00007FFF, 0},
-	[ZFA_CH1_THRES] =		{0x94, 0xFFFF0000, 1},
-	[ZFA_CH1_HYST] =		{0x94, 0x0000FFFF, 1},
+	[ZFA_CH1_HYST] =		{0x94, 0xFFFF0000, 1},
+	[ZFA_CH1_THRES] =		{0x94, 0x0000FFFF, 1},
 	[ZFA_CH1_DLY] =		{0x98, 0xFFFFFFFF, 0},
 
 	/* Channel 2 */
@@ -67,8 +67,8 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CH2_GAIN] =		{0x108, 0x0000FFFF, 0},
 	[ZFA_CH2_OFFSET] =		{0x10C, 0x0000FFFF, 0},
 	[ZFA_CH2_SAT] =		{0x110, 0x00007FFF, 0},
-	[ZFA_CH2_THRES] =		{0x114, 0xFFFF0000, 1},
-	[ZFA_CH2_HYST] =		{0x114, 0x0000FFFF, 1},
+	[ZFA_CH2_HYST] =		{0x114, 0xFFFF0000, 1},
+	[ZFA_CH2_THRES] =		{0x114, 0x0000FFFF, 1},
 	[ZFA_CH2_DLY] =		{0x118, 0xFFFFFFFF, 0},
 
 	/* Channel 3 */
@@ -78,8 +78,8 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CH3_GAIN] =		{0x188, 0x0000FFFF, 0},
 	[ZFA_CH3_OFFSET] =		{0x18C, 0x0000FFFF, 0},
 	[ZFA_CH3_SAT] =		{0x190, 0x00007FFF, 0},
-	[ZFA_CH3_THRES] =		{0x194, 0xFFFF0000, 1},
-	[ZFA_CH3_HYST] =		{0x194, 0x0000FFFF, 1},
+	[ZFA_CH3_HYST] =		{0x194, 0xFFFF0000, 1},
+	[ZFA_CH3_THRES] =		{0x194, 0x0000FFFF, 1},
 	[ZFA_CH3_DLY] =		{0x198, 0xFFFFFFFF, 0},
 
 	/* Channel 4 */
@@ -89,8 +89,8 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CH4_GAIN] =		{0x208, 0x0000FFFF, 0},
 	[ZFA_CH4_OFFSET] =		{0x20C, 0x0000FFFF, 0},
 	[ZFA_CH4_SAT] =		{0x210, 0x00007FFF, 0},
-	[ZFA_CH4_THRES] =		{0x214, 0xFFFF0000, 1},
-	[ZFA_CH4_HYST] =		{0x214, 0x0000FFFF, 1},
+	[ZFA_CH4_HYST] =		{0x214, 0xFFFF0000, 1},
+	[ZFA_CH4_THRES] =		{0x214, 0x0000FFFF, 1},
 	[ZFA_CH4_DLY] =		{0x218, 0xFFFFFFFF, 0},
 
 	/* IRQ */
