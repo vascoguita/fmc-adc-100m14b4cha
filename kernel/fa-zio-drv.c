@@ -261,9 +261,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return range;
 		return zfad_set_range(fa, to_zio_chan(dev), range);
 
-	case ZFA_CHx_STA:
-		reg_index = zfad_get_chx_index(reg_index, to_zio_chan(dev));
-		break;
 	case ZFA_UTC_COARSE:
 		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {
 			dev_err(fa->msgdev,
@@ -349,14 +346,13 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_CTL_RANGE:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		break;
-
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		*usr_val = fa_readl(fa, fa->fa_adc_csr_base,
 				    &zfad_regs[reg_index]);
 		i = (int16_t)(*usr_val); /* now signed integer */
 		*usr_val = i;
-		break;
+		return 0;
 	default:
 		reg_index = zattr->id;
 	}
