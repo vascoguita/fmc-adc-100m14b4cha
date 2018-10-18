@@ -119,12 +119,11 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 		return range;
 
 	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc) {
-		offset = FA_CAL_NO_OFFSET;
-		gain = FA_CAL_NO_GAIN;
-	} else {
-		offset = fa->calib.dac[range].offset[chan->index];
-		gain = fa->calib.dac[range].gain[chan->index];
+		range = FA100M14B4C_RANGE_1V;
 	}
+
+	offset = fa->calib.dac[range].offset[chan->index];
+	gain = fa->calib.dac[range].gain[chan->index];
 
 	hwval = uval * 0x8000 / 5000;
 	if (hwval == 0x8000)

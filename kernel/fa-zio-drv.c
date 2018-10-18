@@ -218,7 +218,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev),
-			err = zfad_apply_user_offset(fa, chan, usr_val);
+		err = zfad_apply_user_offset(fa, chan, usr_val);
 		if (err)
 			return err;
 		fa->user_offset[chan->index] = usr_val;
