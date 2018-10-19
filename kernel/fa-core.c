@@ -105,6 +105,30 @@ static int zfad_dac_set(struct zio_channel *chan, uint32_t val)
 	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, val, NULL);
 }
 
+static int zfad_offset_to_dac(struct zio_channel *chan,
+			      int32_t uval,
+			      enum fa100m14b4c_input_range range)
+{
+	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
+	int offset, gain, hwval;
+
+	hwval = uval * 0x8000 / 5000;
+	if (hwval == 0x8000)
+		hwval = 0x7fff; /* -32768 .. 32767 */
+
+	offset = fa->calib.dac[range].offset[chan->index];
+	gain = fa->calib.dac[range].gain[chan->index];
+
+	hwval = ((hwval + offset) * gain) >> 15; /* signed */
+	hwval += 0x8000; /* offset binary */
+	if (hwval < 0)
+		hwval = 0;
+	if (hwval > 0xffff)
+		hwval = 0xffff;
+
+	return hwval;
+}
+
 /*
  * zfad_apply_user_offset
  * @fa: the fmc-adc descriptor
@@ -132,24 +156,10 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (range < 0)
 		return range;
 
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc) {
+	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
 		range = FA100M14B4C_RANGE_1V;
-	}
 
-	offset = fa->calib.dac[range].offset[chan->index];
-	gain = fa->calib.dac[range].gain[chan->index];
-
-	hwval = uval * 0x8000 / 5000;
-	if (hwval == 0x8000)
-		hwval = 0x7fff; /* -32768 .. 32767 */
-
-	hwval = ((hwval + offset) * gain) >> 15; /* signed */
-	hwval += 0x8000; /* offset binary */
-	if (hwval < 0)
-		hwval = 0;
-	if (hwval > 0xffff)
-		hwval = 0xffff;
-
+	hwval = zfad_offset_to_dac(chan, usr_val, range);
 	return zfad_dac_set(chan, hwval);
 }
 
