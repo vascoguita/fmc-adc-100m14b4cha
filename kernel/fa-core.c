@@ -91,6 +91,20 @@ int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
 	return 0;
 }
 
+/**
+ * It sets the DAC voltage to apply an offset on the input channel
+ * @chan
+ * @val DAC values (-5V: 0x0000, 0V: 0x8000, +5V: 0x7FFF)
+ *
+ * Return: 0 on success, otherwise a negative error number
+ */
+static int zfad_dac_set(struct zio_channel *chan, uint32_t val)
+{
+	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
+
+	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, val, NULL);
+}
+
 /*
  * zfad_apply_user_offset
  * @fa: the fmc-adc descriptor
@@ -136,8 +150,7 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (hwval > 0xffff)
 		hwval = 0xffff;
 
-	/* Apply calibrated offset to DAC */
-	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, hwval, NULL);
+	return zfad_dac_set(chan, hwval);
 }
 
 /*
