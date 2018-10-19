@@ -112,7 +112,7 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
 	int offset, gain, hwval;
 
-	hwval = uval * 0x8000 / 5000;
+	hwval = uval * 0x8000 / 5000000;
 	if (hwval == 0x8000)
 		hwval = 0x7fff; /* -32768 .. 32767 */
 
@@ -144,9 +144,9 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 {
 	uint32_t range_reg;
 	int32_t uval =  (int32_t)usr_val;
-	int offset, gain, hwval, i, range;
+	int hwval, i, range;
 
-	if (uval < -5000 || uval > 5000)
+	if (uval < -5000000 || uval > 5000000)
 		return -EINVAL;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
