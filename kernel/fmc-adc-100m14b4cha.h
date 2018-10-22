@@ -107,7 +107,10 @@ enum fa100m14b4c_input_range {
 	FA100M14B4C_RANGE_10V = 0x0,
 	FA100M14B4C_RANGE_1V,
 	FA100M14B4C_RANGE_100mV,
-	FA100M14B4C_RANGE_OPEN,		/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_OPEN,	/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_10V_CAL,	/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_1V_CAL,	/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_100mV_CAL,	/* Channel disconnected from ADC */
 };
 
 enum fa100m14b4c_fsm_cmd {

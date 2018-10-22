@@ -25,10 +25,13 @@ int fa_enable_test_data_adc = 0;
 module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
 
 static const int zfad_hw_range[] = {
-	[FA100M14B4C_RANGE_10V]   = 0x45,
-	[FA100M14B4C_RANGE_1V]    = 0x11,
-	[FA100M14B4C_RANGE_100mV] = 0x23,
-	[FA100M14B4C_RANGE_OPEN]  = 0x00,
+	[FA100M14B4C_RANGE_10V_CAL]   = 0x44,
+	[FA100M14B4C_RANGE_1V_CAL]    = 0x40,
+	[FA100M14B4C_RANGE_100mV_CAL] = 0x42,
+	[FA100M14B4C_RANGE_10V]       = 0x45,
+	[FA100M14B4C_RANGE_1V]        = 0x11,
+	[FA100M14B4C_RANGE_100mV]     = 0x23,
+	[FA100M14B4C_RANGE_OPEN]      = 0x00,
 };
 
 /* fmc-adc specific workqueue */
@@ -159,6 +162,8 @@ int zfad_apply_offset(struct zio_channel *chan)
 
 	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
 		range = FA100M14B4C_RANGE_1V;
+	else if (range >= FA100M14B4C_RANGE_10V_CAL)
+		range -= FA100M14B4C_RANGE_10V_CAL;
 
 	hwval = zfad_offset_to_dac(chan, off_uv, range);
 	return zfad_dac_set(chan, hwval);
@@ -216,6 +221,8 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 
 	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
 		range = FA100M14B4C_RANGE_1V;
+	else if (range >= FA100M14B4C_RANGE_10V_CAL)
+		range -= FA100M14B4C_RANGE_10V_CAL;
 
 	if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
 		dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
