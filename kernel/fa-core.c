@@ -131,22 +131,23 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 
 /*
  * zfad_apply_user_offset
- * @fa: the fmc-adc descriptor
  * @chan: the channel where apply offset
- * @usr_val: the offset value to apply, expressed as millivolts (-5000..5000)
  *
  * Apply user offset to the channel input. Before apply the user offset it must
- * be corrected with offset and gain calibration value. An open input does not
- * need any correction.
+ * be corrected with offset and gain calibration value.
+ *
+ * Offset values are taken from `struct fa_dev`, so they must be there before
+ * calling this function
  */
-int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
-				  uint32_t usr_val)
+int zfad_apply_offset(struct zio_channel *chan)
 {
+	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
 	uint32_t range_reg;
-	int32_t uval =  (int32_t)usr_val;
+	int32_t off_uv;
 	int hwval, i, range;
 
-	if (uval < -5000000 || uval > 5000000)
+	off_uv = fa->user_offset[chan->index] + fa->zero_offset[chan->index];
+	if (off_uv < -5000000 || off_uv > 5000000)
 		return -EINVAL;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
@@ -159,7 +160,7 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
 		range = FA100M14B4C_RANGE_1V;
 
-	hwval = zfad_offset_to_dac(chan, usr_val, range);
+	hwval = zfad_offset_to_dac(chan, off_uv, range);
 	return zfad_dac_set(chan, hwval);
 }
 
@@ -173,8 +174,11 @@ void zfad_reset_offset(struct fa_dev *fa)
 {
 	int i;
 
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
-		zfad_apply_user_offset(fa, &fa->zdev->cset->chan[i], 0);
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
+		fa->user_offset[i] = 0;
+		fa->zero_offset[i] = 0;
+		zfad_apply_offset(&fa->zdev->cset->chan[i]);
+	}
 }
 
 /*
@@ -210,24 +214,17 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc) {
-		/*
-		 * With OPEN range we do not use calibration values
-		 *
-		 * In test mode we do not apply the gain/offset because
-		 * this compromises the test pattern
-		 */
-		offset = FA_CAL_NO_OFFSET;
-		gain = FA_CAL_NO_GAIN;
-	} else {
-		if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
-			dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
-				 range, chan->index);
-			return -EINVAL;
-		}
-		offset = fa->calib.adc[range].offset[chan->index];
-		gain = fa->calib.adc[range].gain[chan->index];
+	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
+		range = FA100M14B4C_RANGE_1V;
+
+	if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
+		dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
+			 range, chan->index);
+		return -EINVAL;
 	}
+
+	offset = fa->calib.adc[range].offset[chan->index];
+	gain = fa->calib.adc[range].gain[chan->index];
 
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
@@ -236,7 +233,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
 
 	/* recalculate user offset for the new range */
-	zfad_apply_user_offset(fa, chan, fa->user_offset[chan->index]);
+	zfad_apply_offset(chan);
 
 	return 0;
 }

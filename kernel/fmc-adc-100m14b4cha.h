@@ -303,6 +303,10 @@ enum fa_sw_param_id {
 
 	ZFA_SW_R_NOADDRES_TEMP,
 	ZFA_SW_R_NOADDERS_AUTO,
+	ZFA_SW_CH1_OFFSET_ZERO,
+	ZFA_SW_CH2_OFFSET_ZERO,
+	ZFA_SW_CH3_OFFSET_ZERO,
+	ZFA_SW_CH4_OFFSET_ZERO,
 	ZFA_SW_PARAM_COMMON_LAST,
 };
 
@@ -366,7 +370,8 @@ struct fa_calib {
  * @n_fires: number of trigger fire occurred within an acquisition
  *
  * @n_dma_err: number of errors
- *
+ * @user_offset: user offset (micro-Volts)
+ * @zero_offset: necessary offset to push the channel to zero (micro-Volts)
  */
 struct fa_dev {
 	struct device *msgdev; /**< device used to print messages */
@@ -410,8 +415,8 @@ struct fa_dev {
 	unsigned int		n_dma_err;
 
 	/* Configuration */
-	int			user_offset[4]; /* one per channel */
-
+	int32_t		user_offset[4]; /* one per channel */
+	int32_t		zero_offset[FA100M14B4C_NCHAN];
 	/* one-wire */
 	uint8_t ds18_id[8];
 	unsigned long		next_t;
@@ -545,8 +550,7 @@ extern const struct zfa_field_desc zfad_regs[];
 
 /* Functions exported by fa-core.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
-extern int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
-				  uint32_t usr_val);
+extern int zfad_apply_offset(struct zio_channel *chan);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,

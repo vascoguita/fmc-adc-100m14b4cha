@@ -47,6 +47,11 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("ch2-offset", ZIO_RW_PERM, ZFA_CH3_OFFSET, 0),
 	ZIO_ATTR_EXT("ch3-offset", ZIO_RW_PERM, ZFA_CH4_OFFSET, 0),
 
+	ZIO_ATTR_EXT("ch0-offset-zero", ZIO_RW_PERM, ZFA_SW_CH1_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch1-offset-zero", ZIO_RW_PERM, ZFA_SW_CH2_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch2-offset-zero", ZIO_RW_PERM, ZFA_SW_CH3_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch3-offset-zero", ZIO_RW_PERM, ZFA_SW_CH4_OFFSET_ZERO, 0),
+
 	ZIO_ATTR_EXT("ch0-vref", ZIO_RW_PERM, ZFA_CH1_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch1-vref", ZIO_RW_PERM, ZFA_CH2_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch2-vref", ZIO_RW_PERM, ZFA_CH3_CTL_RANGE, 0),
@@ -168,6 +173,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	unsigned int baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
 	int i, range, err = 0, reg_index;
+	uint32_t off;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
@@ -186,6 +192,21 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_SW_R_NOADDERS_AUTO:
 		fa->enable_auto_start = usr_val;
 		return 0;
+	case ZFA_SW_CH1_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH2_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH3_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH4_OFFSET_ZERO:
+		i--;
+
+		chan = to_zio_cset(dev)->chan + i;
+		fa->zero_offset[i] = usr_val;
+		err = zfad_apply_offset(chan);
+		if (err == -EIO)
+			fa->zero_offset[chan->index] = 0;
+		return err;
 	case ZFA_CHx_SAT:
 		/* TODO when TLV */
 		break;
@@ -209,21 +230,20 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 	case ZFA_CH4_OFFSET:
 		i--;
-		chan = to_zio_cset(dev)->chan + i;
-		err = zfad_apply_user_offset(fa, chan, usr_val);
-		if (err)
-			return err;
-		fa->user_offset[chan->index] = usr_val;
-		return 0;
 
+		chan = to_zio_cset(dev)->chan + i;
+		fa->user_offset[chan->index] = usr_val;
+		err = zfad_apply_offset(chan);
+		if (err == -EIO)
+			fa->user_offset[chan->index] = 0;
+		return err;
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev),
-		err = zfad_apply_user_offset(fa, chan, usr_val);
-		if (err)
-			return err;
 		fa->user_offset[chan->index] = usr_val;
-		return 0;
-
+		err = zfad_apply_offset(chan);
+		if (err == -EIO)
+			fa->user_offset[chan->index] = 0;
+		return err;
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
@@ -340,6 +360,16 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		 */
 		*usr_val = fa_read_temp(fa, 0);
 		*usr_val = (*usr_val * 1000 + 8) / 16;
+		return 0;
+	case ZFA_SW_CH1_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH2_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH3_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH4_OFFSET_ZERO:
+		i--;
+		*usr_val = fa->zero_offset[i];
 		return 0;
 	case ZFA_CHx_SAT:
 	case ZFA_CHx_CTL_TERM:
