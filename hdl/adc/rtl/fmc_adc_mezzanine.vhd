@@ -253,24 +253,24 @@ architecture rtl of fmc_adc_mezzanine is
   signal xreg_slave_in  : t_wishbone_slave_in;
 
   -- Mezzanine system I2C for EEPROM
-  signal sys_scl_in   : std_logic_vector(0 downto 0);
-  signal sys_scl_out  : std_logic_vector(0 downto 0);
-  signal sys_scl_oe_n : std_logic_vector(0 downto 0);
-  signal sys_sda_in   : std_logic_vector(0 downto 0);
-  signal sys_sda_out  : std_logic_vector(0 downto 0);
-  signal sys_sda_oe_n : std_logic_vector(0 downto 0);
+  signal sys_scl_in   : std_logic;
+  signal sys_scl_out  : std_logic;
+  signal sys_scl_oe_n : std_logic;
+  signal sys_sda_in   : std_logic;
+  signal sys_sda_out  : std_logic;
+  signal sys_sda_oe_n : std_logic;
 
   -- Mezzanine SPI
   signal spi_din_t : std_logic_vector(3 downto 0);
   signal spi_ss_t  : std_logic_vector(7 downto 0);
 
   -- Mezzanine I2C for Si570
-  signal si570_scl_in   : std_logic_vector(0 downto 0);
-  signal si570_scl_out  : std_logic_vector(0 downto 0);
-  signal si570_scl_oe_n : std_logic_vector(0 downto 0);
-  signal si570_sda_in   : std_logic_vector(0 downto 0);
-  signal si570_sda_out  : std_logic_vector(0 downto 0);
-  signal si570_sda_oe_n : std_logic_vector(0 downto 0);
+  signal si570_scl_in   : std_logic;
+  signal si570_scl_out  : std_logic;
+  signal si570_scl_oe_n : std_logic;
+  signal si570_sda_in   : std_logic;
+  signal si570_sda_out  : std_logic;
+  signal si570_sda_oe_n : std_logic;
 
   -- Mezzanine 1-wire
   signal mezz_owr_en : std_logic_vector(0 downto 0);
@@ -360,11 +360,11 @@ begin
       );
 
   -- Tri-state buffer for SDA and SCL
-  sys_scl_b     <= sys_scl_out(0) when sys_scl_oe_n(0) = '0' else 'Z';
-  sys_scl_in(0) <= sys_scl_b;
+  sys_scl_b  <= sys_scl_out when sys_scl_oe_n = '0' else 'Z';
+  sys_scl_in <= sys_scl_b;
 
-  sys_sda_b     <= sys_sda_out(0) when sys_sda_oe_n(0) = '0' else 'Z';
-  sys_sda_in(0) <= sys_sda_b;
+  sys_sda_b  <= sys_sda_out when sys_sda_oe_n = '0' else 'Z';
+  sys_sda_in <= sys_sda_b;
 
   ------------------------------------------------------------------------------
   -- Mezzanine SPI master
@@ -437,11 +437,11 @@ begin
       );
 
   -- Tri-state buffer for SDA and SCL
-  si570_scl_b     <= si570_scl_out(0) when si570_scl_oe_n(0) = '0' else 'Z';
-  si570_scl_in(0) <= si570_scl_b;
+  si570_scl_b  <= si570_scl_out when si570_scl_oe_n = '0' else 'Z';
+  si570_scl_in <= si570_scl_b;
 
-  si570_sda_b     <= si570_sda_out(0) when si570_sda_oe_n(0) = '0' else 'Z';
-  si570_sda_in(0) <= si570_sda_b;
+  si570_sda_b  <= si570_sda_out when si570_sda_oe_n = '0' else 'Z';
+  si570_sda_in <= si570_sda_b;
 
   ------------------------------------------------------------------------------
   -- ADC core
