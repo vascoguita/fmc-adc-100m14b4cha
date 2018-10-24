@@ -10,6 +10,7 @@ syn_tool = "ise"
 
 files = [
     "../spec_top_fmc_adc_100Ms.ucf",
+]
 
 modules = {
     "local" : [
