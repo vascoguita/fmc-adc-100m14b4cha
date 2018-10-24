@@ -13,6 +13,3 @@
 [submodule "hdl/ip_cores/wr-cores"]
 	path = hdl/ip_cores/wr-cores
 	url = git://ohwr.org/hdl-core-lib/wr-cores.git
-[submodule "hdl/ip_cores/etherbone-core"]
-	path = hdl/ip_cores/etherbone-core
-	url = git://ohwr.org/hdl-core-lib/etherbone-core.git

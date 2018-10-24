@@ -23,7 +23,6 @@ modules = {
         "git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git",
         "git://ohwr.org/hdl-core-lib/vme64x-core.git",
         "git://ohwr.org/hdl-core-lib/wr-cores.git",
-        "git://ohwr.org/hdl-core-lib/etherbone-core.git",
     ],
 }
 
