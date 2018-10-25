@@ -39,7 +39,7 @@ use work.ddr3_ctrl_pkg.all;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
-use work.sdb_meta_pkg.all;
+use work.synthesis_descriptor.all;
 use work.timetag_core_pkg.all;
 use work.carrier_csr_wbgen2_pkg.all;
 use work.wrcore_pkg.all;
@@ -262,9 +262,9 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   constant c_WB_SLAVE_WR_CORE  : integer := 5;    -- WR PTP core
 
   -- SDB meta info
-  constant c_SDB_REPO_URL  : integer := c_NUM_WB_MASTERS;
-  constant c_SDB_SYNTHESIS : integer := c_NUM_WB_MASTERS + 1;
-  constant c_SDB_INTEGRATE : integer := c_NUM_WB_MASTERS + 2;
+  constant c_SDB_GIT_REPO_URL : integer := c_NUM_WB_MASTERS;
+  constant c_SDB_SYNTHESIS    : integer := c_NUM_WB_MASTERS + 1;
+  constant c_SDB_INTEGRATE    : integer := c_NUM_WB_MASTERS + 2;
 
   -- Devices sdb description
   constant c_wb_dma_ctrl_sdb : t_sdb_device := (
@@ -323,6 +323,15 @@ architecture rtl of spec_top_fmc_adc_100Ms is
   -- sdb header address
   constant c_SDB_ADDRESS : t_wishbone_address := x"00000000";
 
+  -- sdb integration record
+  constant c_integration_sdb : t_sdb_integration := (
+    product     => (
+      vendor_id => x"000000000000CE42",  -- CERN
+      device_id => x"47c786a2",          -- echo "spec_fmc-adc-100m14b4cha" | md5sum | cut -c1-8
+      version   => x"00050000",          -- bcd encoded, [31:16] = major, [15:0] = minor
+      date      => x"20181025",          -- yyyymmdd
+      name      => "spec_fmcadc100m14b "));
+
   -- Wishbone crossbar layout
   constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_MASTERS + 2 downto 0) :=
     (
@@ -332,8 +341,8 @@ architecture rtl of spec_top_fmc_adc_100Ms is
       c_WB_SLAVE_DMA_EIC  => f_sdb_embed_device(c_wb_dma_eic_sdb, x"00001400"),
       c_WB_SLAVE_FMC_ADC  => f_sdb_embed_bridge(c_fmc0_bridge_sdb, x"00002000"),
       c_WB_SLAVE_WR_CORE  => f_sdb_embed_bridge(c_wr_core_bridge_sdb, x"00040000"),
-      c_SDB_REPO_URL      => f_sdb_embed_repo_url(c_repo_url_sdb),
-      c_SDB_SYNTHESIS     => f_sdb_embed_synthesis(c_synthesis_sdb),
+      c_SDB_GIT_REPO_URL  => f_sdb_embed_repo_url(c_sdb_repo_url),
+      c_SDB_SYNTHESIS     => f_sdb_embed_synthesis(c_sdb_synthesis_info),
       c_SDB_INTEGRATE     => f_sdb_embed_integration(c_integration_sdb)
       );
 

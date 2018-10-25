@@ -3,4 +3,4 @@ files = [
     "carrier_csr.vhd",
     "carrier_csr_wbgen2_pkg.vhd",
     "dma_eic.vhd",
-    "sdb_meta_pkg.vhd"]
+]
