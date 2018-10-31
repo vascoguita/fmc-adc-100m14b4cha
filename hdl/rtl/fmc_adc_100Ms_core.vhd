@@ -200,6 +200,9 @@ architecture rtl of fmc_adc_100Ms_core is
   signal fs_freq_t     : std_logic_vector(31 downto 0);
   signal fs_freq_valid : std_logic;
 
+  attribute keep           : string;
+  attribute keep of fs_clk : signal is "TRUE";
+
   -- SerDes
   signal serdes_in_p         : std_logic_vector(8 downto 0);
   signal serdes_in_n         : std_logic_vector(8 downto 0);

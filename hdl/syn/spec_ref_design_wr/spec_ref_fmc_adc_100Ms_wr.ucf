@@ -573,7 +573,7 @@ NET "DDR3_UDQS_N"  IN_TERM = NONE;
 
 
 #===============================================================================
-# Timing constraints
+# Timing constraints and exceptions
 #===============================================================================
 
 NET "P2L_CLKp" TNM_NET = "p2l_clkp_grp";
@@ -600,10 +600,39 @@ INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit
 INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
 TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
-#NET "ddr_clk_buf"  TNM_NET = ddr_clk;
-#NET "sys_clk_62_5" TNM_NET = sys_clk_62_5;
+# relax all paths through syncrhonisers:
+# 1. define groups for each clock domain
+# 2. define group for all sync chains
+# 3. create sync chain groups that exclude one clock domain each
+# 4. relax path from each clock domain to respective sync chain group
 
-#TIMESPEC TS_sys_to_drr_cross = FROM "sys_clk_62_5" TO "ddr_clk" 16ns DATAPATHONLY;
+NET "sys_clk_62_5"       TNM_NET = sys_clk_62_5;
+NET "sys_clk_125"        TNM_NET = sys_clk_125;
+NET "clk_dmtd"           TNM_NET = clk_dmtd;
+NET "ddr_clk"            TNM_NET = ddr_clk;
+NET "clk_125m_pllref"    TNM_NET = clk_125m_pllref;
+NET "phy8_to_wrc_rx_clk" TNM_NET = phy_rx_rbclk;
+NET "cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs_clk;
+
+NET "*/gc_sync_ffs_in" TNM_NET = "sync_ffs";
+NET "*/gc_sync_register_in[*]" TNM_NET = "sync_reg";
+TIMEGRP "synchronizers" = "sync_ffs" "sync_reg";
+
+TIMEGRP "sys_62_5_sync" = "synchronizers" EXCEPT "sys_clk_62_5";
+TIMEGRP "sys_125_sync"  = "synchronizers" EXCEPT "sys_clk_125";
+TIMEGRP "dmtd_sync"     = "synchronizers" EXCEPT "clk_dmtd";
+TIMEGRP "ddr_sync"      = "synchronizers" EXCEPT "ddr_clk";
+TIMEGRP "ref_sync"      = "synchronizers" EXCEPT "clk_125m_pllref";
+TIMEGRP "phy_sync"      = "synchronizers" EXCEPT "phy_rx_rbclk";
+TIMEGRP "adc_sync"      = "synchronizers" EXCEPT "fs_clk";
+
+TIMESPEC TS_sys_62_5_sync = FROM sys_clk_62_5 TO "sys_62_5_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_sys_125_sync  = FROM sys_clk_125 TO "sys_125_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_dmtd_sync     = FROM clk_dmtd TO "dmtd_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_ddr_sync      = FROM ddr_clk TO "ddr_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_ref_sync      = FROM clk_125m_pllref TO "ref_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_phy_sync      = FROM phy_rx_rbclk TO "phy_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_adc_sync      = FROM fs_clk TO "adc_sync" 20ns DATAPATHONLY;
 
 #===============================================================================
 # False Path

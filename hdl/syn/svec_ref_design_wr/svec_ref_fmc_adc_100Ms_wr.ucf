@@ -957,13 +957,39 @@ INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit
 INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in" TNM = skew_limit;
 TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
-# external 10MHz clock input
-NET "fp_gpio3_i" TNM_NET = fp_gpio3_i;
-TIMESPEC TS_fp_gpio3_i = PERIOD "fp_gpio3_i" 100 ns HIGH 50%;
+# relax all paths through syncrhonisers:
+# 1. define groups for each clock domain
+# 2. define group for all sync chains
+# 3. create sync chain groups that exclude one clock domain each
+# 4. relax path from each clock domain to respective sync chain group
 
-NET "clk_ddr_333m_buf" TNM_NET = clk_ddr_333m;
-NET "clk_sys_62m5" TNM_NET = clk_sys_62m5;
-TIMESPEC TS_crossdomain_01 = FROM "clk_sys_62m5" TO "clk_ddr_333m" 4ns DATAPATHONLY;
+NET "clk_sys_62m5" TNM_NET = sys_clk_62_5;
+NET "clk_ddr_333m" TNM_NET = ddr_clk;
+NET "clk_ref_125m" TNM_NET = clk_125m_pllref;
+NET "cmp_xwrc_board_svec/clk_pll_dmtd"       TNM_NET = clk_dmtd;
+NET "cmp_xwrc_board_svec/phy8_to_wrc_rx_clk" TNM_NET = phy_rx_rbclk;
+NET "cmp_fmc_adc_mezzanine_0/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs0_clk;
+NET "cmp_fmc_adc_mezzanine_1/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs1_clk;
+
+NET "*/gc_sync_ffs_in" TNM_NET = "sync_ffs";
+NET "*/gc_sync_register_in[*]" TNM_NET = "sync_reg";
+TIMEGRP "synchronizers" = "sync_ffs" "sync_reg";
+
+TIMEGRP "sys_62_5_sync" = "synchronizers" EXCEPT "sys_clk_62_5";
+TIMEGRP "dmtd_sync"     = "synchronizers" EXCEPT "clk_dmtd";
+TIMEGRP "ddr_sync"      = "synchronizers" EXCEPT "ddr_clk";
+TIMEGRP "ref_sync"      = "synchronizers" EXCEPT "clk_125m_pllref";
+TIMEGRP "phy_sync"      = "synchronizers" EXCEPT "phy_rx_rbclk";
+TIMEGRP "adc0_sync"     = "synchronizers" EXCEPT "fs0_clk";
+TIMEGRP "adc1_sync"     = "synchronizers" EXCEPT "fs1_clk";
+
+TIMESPEC TS_sys_62_5_sync = FROM sys_clk_62_5 TO "sys_62_5_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_dmtd_sync     = FROM clk_dmtd TO "dmtd_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_ddr_sync      = FROM ddr_clk TO "ddr_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_ref_sync      = FROM clk_125m_pllref TO "ref_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_phy_sync      = FROM phy_rx_rbclk TO "phy_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_adc0_sync     = FROM fs0_clk TO "adc0_sync" 20ns DATAPATHONLY;
+TIMESPEC TS_adc1_sync     = FROM fs1_clk TO "adc1_sync" 20ns DATAPATHONLY;
 
 # Force PPS output to always be placed as IOB register
 INST "cmp_xwrc_board_svec/cmp_board_common/cmp_xwr_core/wrpc/pps_gen/wrapped_ppsgen/pps_out_o" IOB = FORCE;

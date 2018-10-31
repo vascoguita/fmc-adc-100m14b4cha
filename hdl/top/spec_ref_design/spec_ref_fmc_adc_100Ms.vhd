@@ -352,6 +352,13 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal ddr_clk     : std_logic;
   signal ddr_clk_buf : std_logic;
 
+  attribute keep                    : string;
+  attribute keep of sys_clk_62_5    : signal is "TRUE";
+  attribute keep of sys_clk_125     : signal is "TRUE";
+  attribute keep of clk_dmtd        : signal is "TRUE";
+  attribute keep of ddr_clk         : signal is "TRUE";
+  attribute keep of clk_125m_pllref : signal is "TRUE";
+
   -- Reset
   signal powerup_arst_n   : std_logic := '0';
   signal powerup_clk_in   : std_logic_vector(2 downto 0);

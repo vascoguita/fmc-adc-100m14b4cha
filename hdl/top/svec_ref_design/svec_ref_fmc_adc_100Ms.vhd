@@ -453,6 +453,11 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal ddr0_rst_n         : std_logic;
   signal ddr1_rst_n         : std_logic;
 
+  attribute keep                 : string;
+  attribute keep of clk_sys_62m5 : signal is "TRUE";
+  attribute keep of clk_ref_125m : signal is "TRUE";
+  attribute keep of clk_ddr_333m : signal is "TRUE";
+
   -- VME
   signal vme_data_b_out    : std_logic_vector(31 downto 0);
   signal vme_addr_b_out    : std_logic_vector(31 downto 1);
