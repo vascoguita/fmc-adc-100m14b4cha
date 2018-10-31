@@ -107,16 +107,16 @@ entity svec_ref_fmc_adc_100Ms is
       spi_ncs_o  : out std_logic;
       spi_mosi_o : out std_logic;
       spi_miso_i : in  std_logic := 'L';
-      
+
       -- UART
       uart_rxd_i : in  std_logic;
       uart_txd_o : out std_logic;
 
       -- GPIO
       fp_gpio1_o      : out std_logic;  -- PPS output
-      fp_gpio2_o      : out std_logic;  -- Ref clock div2 output
-      fp_gpio3_i      : in  std_logic;  -- ext 10MHz clock input
-      fp_gpio4_i      : in  std_logic;  -- ext PPS intput
+      fp_gpio2_o      : out std_logic;  -- not used
+      fp_gpio3_o      : out std_logic;  -- not used
+      fp_gpio4_o      : out std_logic;  -- not used
       fp_term_en_o    : out std_logic_vector(4 downto 1);
       fp_gpio1_a2b_o  : out std_logic;
       fp_gpio2_a2b_o  : out std_logic;
@@ -432,9 +432,7 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   -- Clocks and resets
   signal clk_sys_62m5       : std_logic;
   signal clk_ref_125m       : std_logic;
-  signal clk_ref_div2       : std_logic;
   signal sys_clk_pll_locked : std_logic;
-  signal clk_ext_ref        : std_logic;
   signal clk_ddr_333m_buf   : std_logic;
   signal clk_ddr_333m       : std_logic;
   signal clk_fb_buf         : std_logic;
@@ -542,7 +540,6 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal wrc_sda_in  : std_logic;
   signal pps         : std_logic;
   signal pps_led     : std_logic;
-  signal pps_ext_in  : std_logic;
   signal wr_led_act  : std_logic;
   signal wr_led_link : std_logic;
 
@@ -750,7 +747,7 @@ begin
   cmp_xwrc_board_svec : xwrc_board_svec
     generic map (
       g_simulation                => g_simulation,
-      g_with_external_clock_input => TRUE,
+      g_with_external_clock_input => FALSE,
       g_dpram_initf               => g_wrpc_initf,
       g_fabric_iface              => PLAIN)
     port map (
@@ -759,7 +756,6 @@ begin
       clk_125m_pllref_n_i => clk_125m_pllref_n_i,
       clk_125m_gtp_n_i    => clk_125m_gtp_n_i,
       clk_125m_gtp_p_i    => clk_125m_gtp_p_i,
-      clk_10m_ext_i       => clk_ext_ref,
       areset_n_i          => areset_n,
       clk_sys_62m5_o      => clk_sys_62m5,
       clk_ref_125m_o      => clk_ref_125m,
@@ -802,7 +798,6 @@ begin
       tm_time_valid_o     => tm_time_valid,
       tm_tai_o            => tm_tai,
       tm_cycles_o         => tm_cycles,
-      pps_ext_i           => pps_ext_in,
       pps_p_o             => pps,
       pps_led_o           => pps_led,
       led_link_o          => wr_led_link,
@@ -1445,23 +1440,15 @@ begin
   -- LED 8 :
   led_state(15 downto 14) <= c_led_red_green when fmc_acq_end_irq_led(1) = '1' else c_led_off;
 
-  -- Div by 2 reference clock to LEMO connector
-  process(clk_ref_125m)
-  begin
-    if rising_edge(clk_ref_125m) then
-      clk_ref_div2 <= not clk_ref_div2;
-    end if;
-  end process;
-
   -- Front panel IO configuration
   fp_gpio1_o      <= pps;
-  fp_gpio2_o      <= clk_ref_div2;
-  clk_ext_ref     <= fp_gpio3_i;
-  pps_ext_in      <= fp_gpio4_i;
+  fp_gpio2_o      <= '0';
+  fp_gpio3_o      <= '0';
+  fp_gpio4_o      <= '0';
   fp_term_en_o    <= (others => '0');
   fp_gpio1_a2b_o  <= '1';
   fp_gpio2_a2b_o  <= '1';
-  fp_gpio34_a2b_o <= '0';
+  fp_gpio34_a2b_o <= '1';
 
   ------------------------------------------------------------------------------
   -- FPGA loaded led (heart beat)

@@ -519,28 +519,28 @@ NET "fp_led_column_o[3]" IOSTANDARD="LVCMOS33";
 #----------------------------------------
 # Front panel IOs
 #----------------------------------------
-#NET "fp_gpio_b[1]" LOC = R30;
-#NET "fp_gpio_b[2]" LOC = T28;
-#NET "fp_gpio_b[3]" LOC = U29;
-#NET "fp_gpio_b[4]" LOC = V27;
-#NET "fpgpio1_a2b_o" LOC = R29;
-#NET "fpgpio2_a2b_o" LOC = T30;
-#NET "fpgpio34_a2b_o" LOC = V28;
-#NET "term_en_o[1]" LOC = AB1;
-#NET "term_en_o[2]" LOC = W5;
-#NET "term_en_o[3]" LOC = W4;
-#NET "term_en_o[4]" LOC = V4;
-#NET "fp_gpio_b[1]" IOSTANDARD = "LVCMOS33";
-#NET "fp_gpio_b[2]" IOSTANDARD = "LVCMOS33";
-#NET "fp_gpio_b[3]" IOSTANDARD = "LVCMOS33";
-#NET "fp_gpio_b[4]" IOSTANDARD = "LVCMOS33";
-#NET "fpgpio1_a2b_o" IOSTANDARD = "LVCMOS33";
-#NET "fpgpio2_a2b_o" IOSTANDARD = "LVCMOS33";
-#NET "fpgpio34_a2b_o" IOSTANDARD = "LVCMOS33";
-#NET "term_en_o[1]" IOSTANDARD = "LVCMOS33";
-#NET "term_en_o[2]" IOSTANDARD = "LVCMOS33";
-#NET "term_en_o[3]" IOSTANDARD = "LVCMOS33";
-#NET "term_en_o[4]" IOSTANDARD = "LVCMOS33";
+NET "fp_gpio1_o"      LOC = R30;
+NET "fp_gpio2_o"      LOC = T28;
+NET "fp_gpio3_o"      LOC = U29;
+NET "fp_gpio4_o"      LOC = V27;
+NET "fp_gpio1_a2b_o"  LOC = R29;
+NET "fp_gpio2_a2b_o"  LOC = T30;
+NET "fp_gpio34_a2b_o" LOC = V28;
+NET "fp_term_en_o[1]" LOC = AB1;
+NET "fp_term_en_o[2]" LOC = W5;
+NET "fp_term_en_o[3]" LOC = W4;
+NET "fp_term_en_o[4]" LOC = V4;
+NET "fp_gpio1_o"      IOSTANDARD = "LVCMOS33";
+NET "fp_gpio2_o"      IOSTANDARD = "LVCMOS33";
+NET "fp_gpio3_o"      IOSTANDARD = "LVCMOS33";
+NET "fp_gpio4_o"      IOSTANDARD = "LVCMOS33";
+NET "fp_gpio1_a2b_o"  IOSTANDARD = "LVCMOS33";
+NET "fp_gpio2_a2b_o"  IOSTANDARD = "LVCMOS33";
+NET "fp_gpio34_a2b_o" IOSTANDARD = "LVCMOS33";
+NET "fp_term_en_o[1]" IOSTANDARD = "LVCMOS33";
+NET "fp_term_en_o[2]" IOSTANDARD = "LVCMOS33";
+NET "fp_term_en_o[3]" IOSTANDARD = "LVCMOS33";
+NET "fp_term_en_o[4]" IOSTANDARD = "LVCMOS33";
 
 #----------------------------------------
 # Debug LEDs
