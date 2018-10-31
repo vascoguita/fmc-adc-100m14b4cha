@@ -634,14 +634,14 @@ begin
   cmp_ddr0_sw_reset_sync : gc_sync_ffs
     port map (
       clk_i    => clk_ddr_333m,
-      rst_n_i  => rst_ddr_333m_n,
+      rst_n_i  => '1',
       data_i   => sw_rst_fmc0,
       synced_o => sw_rst_ddr0_sync);
 
   cmp_ddr1_sw_reset_sync : gc_sync_ffs
     port map (
       clk_i    => clk_ddr_333m,
-      rst_n_i  => rst_ddr_333m_n,
+      rst_n_i  => '1',
       data_i   => sw_rst_fmc1,
       synced_o => sw_rst_ddr1_sync);
 

@@ -184,6 +184,8 @@ architecture rtl of fmc_adc_100Ms_core is
   signal sys_rst  : std_logic;
   signal fs_rst_n : std_logic;
 
+  signal sys_rst_n_fs_resync : std_logic;
+
   -- Clocks and PLL
   signal dco_clk       : std_logic;
   signal dco_clk_buf   : std_logic;
@@ -414,8 +416,16 @@ begin
   ------------------------------------------------------------------------------
   -- Resets
   ------------------------------------------------------------------------------
-  sys_rst  <= not(sys_rst_n_i);
-  fs_rst_n <= sys_rst_n_i and locked_out;
+  sys_rst <= not(sys_rst_n_i);
+
+  cmp_sys_rst_fs_resync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => '1',
+      data_i   => sys_rst_n_i,
+      synced_o => sys_rst_n_fs_resync);
+
+  fs_rst_n <= sys_rst_n_fs_resync and locked_out;
 
   ------------------------------------------------------------------------------
   -- ADC data clock buffer
@@ -512,13 +522,15 @@ begin
       freq_valid_o => fs_freq_valid
       );
 
-  p_fs_freq : process (fs_clk, fs_rst_n)
+  p_fs_freq : process (fs_clk)
   begin
-    if fs_rst_n = '0' then
-      fs_freq <= (others => '0');
-    elsif rising_edge(fs_clk) then
-      if fs_freq_valid = '1' then
-        fs_freq <= fs_freq_t;
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
+        fs_freq <= (others => '0');
+      else
+        if fs_freq_valid = '1' then
+          fs_freq <= fs_freq_t;
+        end if;
       end if;
     end if;
   end process p_fs_freq;
@@ -591,32 +603,33 @@ begin
 
 
   -- serdes bitslip generation
-  p_auto_bitslip : process (fs_clk, sys_rst_n_i)
+  p_auto_bitslip : process (fs_clk)
   begin
-    if sys_rst_n_i = '0' then
-      bitslip_sreg        <= std_logic_vector(to_unsigned(1, bitslip_sreg'length));
-      serdes_auto_bitslip <= '0';
-      serdes_synced       <= '0';
-    elsif rising_edge(fs_clk) then
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
+        bitslip_sreg        <= std_logic_vector(to_unsigned(1, bitslip_sreg'length));
+        serdes_auto_bitslip <= '0';
+        serdes_synced       <= '0';
+      else
+        -- Shift register to generate bitslip enable (serdes_clk/8)
+        bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
 
-      -- Shift register to generate bitslip enable (serdes_clk/8)
-      bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
-
-      -- Generate bitslip and synced signal
-      if(bitslip_sreg(bitslip_sreg'LEFT) = '1') then
-        if(serdes_out_fr /= "00001111") then  -- use fr_n pattern (fr_p and fr_n are swapped on the adc mezzanine)
-          serdes_auto_bitslip <= '1';
-          serdes_synced       <= '0';
+        -- Generate bitslip and synced signal
+        if(bitslip_sreg(bitslip_sreg'LEFT) = '1') then
+          -- use fr_n pattern (fr_p and fr_n are swapped on the adc mezzanine)
+          if(serdes_out_fr /= "00001111") then
+            serdes_auto_bitslip <= '1';
+            serdes_synced       <= '0';
+          else
+            serdes_auto_bitslip <= '0';
+            serdes_synced       <= '1';
+          end if;
         else
           serdes_auto_bitslip <= '0';
-          serdes_synced       <= '1';
         end if;
-      else
-        serdes_auto_bitslip <= '0';
       end if;
-
     end if;
-  end process;
+  end process p_auto_bitslip;
 
   serdes_bitslip <= serdes_auto_bitslip or serdes_man_bitslip;
 
@@ -748,7 +761,7 @@ begin
   cmp_ext_trig_sync : gc_sync_ffs
     port map (
       clk_i    => fs_clk,
-      rst_n_i  => fs_rst_n,
+      rst_n_i  => '1',
       data_i   => ext_trig_a,
       synced_o => open,
       npulse_o => ext_trig_n,
@@ -763,40 +776,44 @@ begin
 
   -- Configurable trigger delay, adds ext_trig_delay+1 clock cycles
   -- to the trigger signal
-  p_ext_trig_delay_cnt : process(fs_clk, fs_rst_n)
+  p_ext_trig_delay_cnt : process(fs_clk)
   begin
-    if fs_rst_n = '0' then
-      ext_trig_delay_cnt <= (others => '0');
-      ext_trig_delay_bsy <= '0';
-    elsif rising_edge(fs_clk) then
-      if ext_trig = '1' and ext_trig_delay_bsy = '0' then
-        ext_trig_delay_cnt <= unsigned(ext_trig_delay);
-        ext_trig_delay_bsy <= '1';
-      elsif ext_trig_delay_cnt /= 0 then
-        ext_trig_delay_cnt <= ext_trig_delay_cnt - 1;
-      else
-        -- when counter reaches zero
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
+        ext_trig_delay_cnt <= (others => '0');
         ext_trig_delay_bsy <= '0';
+      else
+        if ext_trig = '1' and ext_trig_delay_bsy = '0' then
+          ext_trig_delay_cnt <= unsigned(ext_trig_delay);
+          ext_trig_delay_bsy <= '1';
+        elsif ext_trig_delay_cnt /= 0 then
+          ext_trig_delay_cnt <= ext_trig_delay_cnt - 1;
+        else
+          -- when counter reaches zero
+          ext_trig_delay_bsy <= '0';
+        end if;
       end if;
     end if;
   end process p_ext_trig_delay_cnt;
 
-  p_ext_trig_delay : process(fs_clk, fs_rst_n)
+  p_ext_trig_delay : process(fs_clk)
   begin
-    if fs_rst_n = '0' then
-      ext_trig_d <= '0';
-    elsif rising_edge(fs_clk) then
-      if ext_trig_delay = X"00000000" then
-        if ext_trig = '1' then
-          ext_trig_d <= '1';
-        else
-          ext_trig_d <= '0';
-        end if;
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
+        ext_trig_d <= '0';
       else
-        if ext_trig_delay_cnt = X"00000001" then
-          ext_trig_d <= '1';
+        if ext_trig_delay = X"00000000" then
+          if ext_trig = '1' then
+            ext_trig_d <= '1';
+          else
+            ext_trig_d <= '0';
+          end if;
         else
-          ext_trig_d <= '0';
+          if ext_trig_delay_cnt = X"00000001" then
+            ext_trig_d <= '1';
+          else
+            ext_trig_d <= '0';
+          end if;
         end if;
       end if;
     end if;
@@ -806,7 +823,7 @@ begin
   cmp_time_trig_sync : gc_sync_ffs
     port map (
       clk_i    => fs_clk,
-      rst_n_i  => fs_rst_n,
+      rst_n_i  => '1',
       data_i   => time_trig_i,
       synced_o => open,
       npulse_o => open,
@@ -832,40 +849,44 @@ begin
 
     -- Configurable trigger delay, adds int_trig_delay(I)+1 clock cycles
     -- to the trigger signal
-    p_int_trig_delay_cnt : process(fs_clk, fs_rst_n)
+    p_int_trig_delay_cnt : process(fs_clk)
     begin
-      if fs_rst_n = '0' then
-        int_trig_delay_cnt(I) <= (others => '0');
-        int_trig_delay_bsy(I) <= '0';
-      elsif rising_edge(fs_clk) then
-        if int_trig(I) = '1' and int_trig_delay_bsy(I) = '0' then
-          int_trig_delay_cnt(I) <= unsigned(int_trig_delay(I));
-          int_trig_delay_bsy(I) <= '1';
-        elsif int_trig_delay_cnt(I) /= 0 then
-          int_trig_delay_cnt(I) <= int_trig_delay_cnt(I) - 1;
-        else
-          -- when counter reaches zero
+      if rising_edge(fs_clk) then
+        if fs_rst_n = '0' then
+          int_trig_delay_cnt(I) <= (others => '0');
           int_trig_delay_bsy(I) <= '0';
+        else
+          if int_trig(I) = '1' and int_trig_delay_bsy(I) = '0' then
+            int_trig_delay_cnt(I) <= unsigned(int_trig_delay(I));
+            int_trig_delay_bsy(I) <= '1';
+          elsif int_trig_delay_cnt(I) /= 0 then
+            int_trig_delay_cnt(I) <= int_trig_delay_cnt(I) - 1;
+          else
+          -- when counter reaches zero
+            int_trig_delay_bsy(I) <= '0';
+          end if;
         end if;
       end if;
     end process p_int_trig_delay_cnt;
 
-    p_int_trig_delay : process(fs_clk, fs_rst_n)
+    p_int_trig_delay : process(fs_clk)
     begin
-      if fs_rst_n = '0' then
-        int_trig_d(I) <= '0';
-      elsif rising_edge(fs_clk) then
-        if int_trig_delay(I) = X"00000000" then
-          if int_trig(I) = '1' then
-            int_trig_d(I) <= '1';
-          else
-            int_trig_d(I) <= '0';
-          end if;
+      if rising_edge(fs_clk) then
+        if fs_rst_n = '0' then
+          int_trig_d(I) <= '0';
         else
-          if int_trig_delay_cnt(I) = X"00000001" then
-            int_trig_d(I) <= '1';
+          if int_trig_delay(I) = X"00000000" then
+            if int_trig(I) = '1' then
+              int_trig_d(I) <= '1';
+            else
+              int_trig_d(I) <= '0';
+            end if;
           else
-            int_trig_d(I) <= '0';
+            if int_trig_delay_cnt(I) = X"00000001" then
+              int_trig_d(I) <= '1';
+            else
+              int_trig_d(I) <= '0';
+            end if;
           end if;
         end if;
       end if;
@@ -900,16 +921,18 @@ begin
     end if;
   end process p_data_shift;
 
-  p_trig_shift : process(fs_clk, fs_rst_n)
+  p_trig_shift : process(fs_clk)
   begin
-    if fs_rst_n = '0' then
-      sw_trig_fixed_delay   <= (others => '0');
-      ext_trig_fixed_delay  <= (others => '0');
-      time_trig_fixed_delay <= (others => '0');
-    elsif rising_edge(fs_clk) then
-      sw_trig_fixed_delay   <= sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH -1 downto 0) & sw_trig;
-      ext_trig_fixed_delay  <= ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH -1 downto 0) & ext_trig_d;
-      time_trig_fixed_delay <= time_trig_fixed_delay(time_trig_fixed_delay'HIGH -1 downto 0) & time_trig;
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
+        sw_trig_fixed_delay   <= (others => '0');
+        ext_trig_fixed_delay  <= (others => '0');
+        time_trig_fixed_delay <= (others => '0');
+      else
+        sw_trig_fixed_delay   <= sw_trig_fixed_delay(sw_trig_fixed_delay'high -1 downto 0) & sw_trig;
+        ext_trig_fixed_delay  <= ext_trig_fixed_delay(ext_trig_fixed_delay'high -1 downto 0) & ext_trig_d;
+        time_trig_fixed_delay <= time_trig_fixed_delay(time_trig_fixed_delay'high -1 downto 0) & time_trig;
+      end if;
     end if;
   end process p_trig_shift;
 
@@ -991,33 +1014,37 @@ begin
   --    When under-sampling is enabled, if the trigger occurs between two
   --    samples it will be realigned to the next sample
   ------------------------------------------------------------------------------
-  p_undersample_cnt : process (fs_clk, fs_rst_n)
+  p_undersample_cnt : process (fs_clk)
   begin
-    if fs_rst_n = '0' then
-      undersample_cnt <= to_unsigned(1, undersample_cnt'length);
-      undersample_en  <= '0';
-    elsif rising_edge(fs_clk) then
-      if undersample_cnt = to_unsigned(0, undersample_cnt'length) then
-        if undersample_factor /= X"00000000" then
-          undersample_cnt <= unsigned(undersample_factor) - 1;
-        end if;
-        undersample_en <= '1';
-      else
-        undersample_cnt <= undersample_cnt - 1;
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
+        undersample_cnt <= to_unsigned(1, undersample_cnt'length);
         undersample_en  <= '0';
+      else
+        if undersample_cnt = to_unsigned(0, undersample_cnt'length) then
+          if undersample_factor /= X"00000000" then
+            undersample_cnt <= unsigned(undersample_factor) - 1;
+          end if;
+          undersample_en <= '1';
+        else
+          undersample_cnt <= undersample_cnt - 1;
+          undersample_en  <= '0';
+        end if;
       end if;
     end if;
   end process p_undersample_cnt;
 
-  p_trig_align : process (fs_clk, fs_rst_n)
+  p_trig_align : process (fs_clk)
   begin
-    if fs_rst_n = '0' then
-      trig_align <= '0';
-    elsif rising_edge(fs_clk) then
-      if trig = '1' then
-        trig_align <= '1';
-      elsif undersample_en = '1' then
+    if rising_edge(fs_clk) then
+      if fs_rst_n = '0' then
         trig_align <= '0';
+      else
+        if trig = '1' then
+          trig_align <= '1';
+        elsif undersample_en = '1' then
+          trig_align <= '0';
+        end if;
       end if;
     end if;
   end process p_trig_align;
@@ -1074,7 +1101,7 @@ begin
         sync_fifo_valid <= '0';
       end if;
     end if;
-  end process;
+  end process p_sync_fifo_valid;
 
   -- Data to FIFO
   sync_fifo_din(64) <= trig_align;
@@ -1092,21 +1119,23 @@ begin
   ------------------------------------------------------------------------------
   -- Shots counter
   ------------------------------------------------------------------------------
-  p_shots_cnt : process (sys_clk_i, sys_rst_n_i)
+  p_shots_cnt : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      shots_cnt   <= to_unsigned(0, shots_cnt'length);
-      single_shot <= '0';
-    elsif rising_edge(sys_clk_i) then
-      if acq_start = '1' then
-        shots_cnt <= unsigned(shots_value);
-      elsif shots_decr = '1' then
-        shots_cnt <= shots_cnt - 1;
-      end if;
-      if shots_value = std_logic_vector(to_unsigned(1, shots_value'length)) then
-        single_shot <= '1';
-      else
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        shots_cnt   <= to_unsigned(0, shots_cnt'length);
         single_shot <= '0';
+      else
+        if acq_start = '1' then
+          shots_cnt <= unsigned(shots_value);
+        elsif shots_decr = '1' then
+          shots_cnt <= shots_cnt - 1;
+        end if;
+        if shots_value = std_logic_vector(to_unsigned(1, shots_value'length)) then
+          single_shot <= '1';
+        else
+          single_shot <= '0';
+        end if;
       end if;
     end if;
   end process p_shots_cnt;
@@ -1118,19 +1147,21 @@ begin
   ------------------------------------------------------------------------------
   -- Pre-trigger counter
   ------------------------------------------------------------------------------
-  p_pre_trig_cnt : process (sys_clk_i, sys_rst_n_i)
+  p_pre_trig_cnt : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      pre_trig_cnt <= to_unsigned(1, pre_trig_cnt'length);
-    elsif rising_edge(sys_clk_i) then
-      if (acq_start = '1' or pre_trig_done = '1') then
-        if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
-          pre_trig_cnt <= (others => '0');
-        else
-          pre_trig_cnt <= unsigned(pre_trig_value) - 1;
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        pre_trig_cnt <= to_unsigned(1, pre_trig_cnt'length);
+      else
+        if (acq_start = '1' or pre_trig_done = '1') then
+          if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
+            pre_trig_cnt <= (others => '0');
+          else
+            pre_trig_cnt <= unsigned(pre_trig_value) - 1;
+          end if;
+        elsif (acq_in_pre_trig = '1' and sync_fifo_valid = '1') then
+          pre_trig_cnt <= pre_trig_cnt - 1;
         end if;
-      elsif (acq_in_pre_trig = '1' and sync_fifo_valid = '1') then
-        pre_trig_cnt <= pre_trig_cnt - 1;
       end if;
     end if;
   end process p_pre_trig_cnt;
@@ -1142,15 +1173,17 @@ begin
   ------------------------------------------------------------------------------
   -- Post-trigger counter
   ------------------------------------------------------------------------------
-  p_post_trig_cnt : process (sys_clk_i, sys_rst_n_i)
+  p_post_trig_cnt : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      post_trig_cnt <= to_unsigned(1, post_trig_cnt'length);
-    elsif rising_edge(sys_clk_i) then
-      if (acq_start = '1' or post_trig_done = '1') then
-        post_trig_cnt <= unsigned(post_trig_value) - 1;
-      elsif (acq_in_post_trig = '1' and sync_fifo_valid = '1') then
-        post_trig_cnt <= post_trig_cnt - 1;
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        post_trig_cnt <= to_unsigned(1, post_trig_cnt'length);
+      else
+        if (acq_start = '1' or post_trig_done = '1') then
+          post_trig_cnt <= unsigned(post_trig_value) - 1;
+        elsif (acq_in_post_trig = '1' and sync_fifo_valid = '1') then
+          post_trig_cnt <= post_trig_cnt - 1;
+        end if;
       end if;
     end if;
   end process p_post_trig_cnt;
@@ -1161,15 +1194,17 @@ begin
   ------------------------------------------------------------------------------
   -- Samples counter
   ------------------------------------------------------------------------------
-  p_samples_cnt : process (sys_clk_i, sys_rst_n_i)
+  p_samples_cnt : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      samples_cnt <= (others => '0');
-    elsif rising_edge(sys_clk_i) then
-      if (acq_start = '1') then
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
         samples_cnt <= (others => '0');
-      elsif ((acq_in_pre_trig = '1' or acq_in_post_trig = '1') and sync_fifo_valid = '1') then
-        samples_cnt <= samples_cnt + 1;
+      else
+        if (acq_start = '1') then
+          samples_cnt <= (others => '0');
+        elsif ((acq_in_pre_trig = '1' or acq_in_post_trig = '1') and sync_fifo_valid = '1') then
+          samples_cnt <= samples_cnt + 1;
+        end if;
       end if;
     end if;
   end process p_samples_cnt;
@@ -1230,70 +1265,71 @@ begin
   end process p_acq_cfg_ok;
 
   -- FSM transitions
-  p_acq_fsm_transitions : process(sys_clk_i, sys_rst_n_i)
+  p_acq_fsm_transitions : process(sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      acq_fsm_current_state <= IDLE;
-    elsif rising_edge(sys_clk_i) then
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        acq_fsm_current_state <= IDLE;
+      else
+        case acq_fsm_current_state is
 
-      case acq_fsm_current_state is
-
-        when IDLE =>
-          if acq_start = '1' and acq_config_ok = '1' then
-            if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
-              acq_fsm_current_state <= WAIT_TRIG;
-            else
-              acq_fsm_current_state <= PRE_TRIG;
-            end if;
-          end if;
-
-        when PRE_TRIG =>
-          if acq_stop = '1' then
-            acq_fsm_current_state <= IDLE;
-          elsif pre_trig_done = '1' then
-            acq_fsm_current_state <= WAIT_TRIG;
-          end if;
-
-        when WAIT_TRIG =>
-          if acq_stop = '1' then
-            acq_fsm_current_state <= IDLE;
-          elsif acq_trig = '1' then
-            acq_fsm_current_state <= POST_TRIG;
-          end if;
-
-        when POST_TRIG =>
-          if acq_stop = '1' then
-            acq_fsm_current_state <= IDLE;
-          elsif post_trig_done = '1' then
-            acq_fsm_current_state <= TRIG_TAG;
-          end if;
-
-        when TRIG_TAG =>
-          if acq_stop = '1' then
-            acq_fsm_current_state <= IDLE;
-          elsif trig_tag_done = '1' then
-            acq_fsm_current_state <= DECR_SHOT;
-          end if;
-
-        when DECR_SHOT =>
-          if acq_stop = '1' then
-            acq_fsm_current_state <= IDLE;
-          else
-            if shots_done = '1' then
-              acq_fsm_current_state <= IDLE;
-            else
+          when IDLE =>
+            if acq_start = '1' and acq_config_ok = '1' then
               if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
                 acq_fsm_current_state <= WAIT_TRIG;
               else
                 acq_fsm_current_state <= PRE_TRIG;
               end if;
             end if;
-          end if;
 
-        when others =>
-          acq_fsm_current_state <= IDLE;
+          when PRE_TRIG =>
+            if acq_stop = '1' then
+              acq_fsm_current_state <= IDLE;
+            elsif pre_trig_done = '1' then
+              acq_fsm_current_state <= WAIT_TRIG;
+            end if;
 
-      end case;
+          when WAIT_TRIG =>
+            if acq_stop = '1' then
+              acq_fsm_current_state <= IDLE;
+            elsif acq_trig = '1' then
+              acq_fsm_current_state <= POST_TRIG;
+            end if;
+
+          when POST_TRIG =>
+            if acq_stop = '1' then
+              acq_fsm_current_state <= IDLE;
+            elsif post_trig_done = '1' then
+              acq_fsm_current_state <= TRIG_TAG;
+            end if;
+
+          when TRIG_TAG =>
+            if acq_stop = '1' then
+              acq_fsm_current_state <= IDLE;
+            elsif trig_tag_done = '1' then
+              acq_fsm_current_state <= DECR_SHOT;
+            end if;
+
+          when DECR_SHOT =>
+            if acq_stop = '1' then
+              acq_fsm_current_state <= IDLE;
+            else
+              if shots_done = '1' then
+                acq_fsm_current_state <= IDLE;
+              else
+                if unsigned(pre_trig_value) = to_unsigned(0, pre_trig_value'length) then
+                  acq_fsm_current_state <= WAIT_TRIG;
+                else
+                  acq_fsm_current_state <= PRE_TRIG;
+                end if;
+              end if;
+            end if;
+
+          when others =>
+            acq_fsm_current_state <= IDLE;
+
+        end case;
+      end if;
     end if;
   end process p_acq_fsm_transitions;
 
@@ -1372,12 +1408,14 @@ begin
   ------------------------------------------------------------------------------
   -- Inserting trigger information after post_trigger samples
   ------------------------------------------------------------------------------
-  p_trig_tag_done : process (sys_clk_i, sys_rst_n_i)
+  p_trig_tag_done : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      acq_in_trig_tag_d <= '0';
-    elsif rising_edge(sys_clk_i) then
-      acq_in_trig_tag_d <= acq_in_trig_tag;
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        acq_in_trig_tag_d <= '0';
+      else
+        acq_in_trig_tag_d <= acq_in_trig_tag;
+      end if;
     end if;
   end process p_trig_tag_done;
 
@@ -1393,23 +1431,25 @@ begin
   ------------------------------------------------------------------------------
 
   -- DPRAM input address counter
-  p_dpram_addra_cnt : process (sys_clk_i, sys_rst_n_i)
+  p_dpram_addra_cnt : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      dpram_addra_cnt       <= (others => '0');
-      dpram_addra_trig      <= (others => '0');
-      dpram_addra_post_done <= (others => '0');
-    elsif rising_edge(sys_clk_i) then
-      if shots_decr = '1' then
-        dpram_addra_cnt <= to_unsigned(0, dpram_addra_cnt'length);
-      elsif (samples_wr_en = '1' and sync_fifo_valid = '1') or (acq_in_trig_tag = '1') then
-        dpram_addra_cnt <= dpram_addra_cnt + 1;
-      end if;
-      if acq_trig = '1' then
-        dpram_addra_trig <= dpram_addra_cnt;
-      end if;
-      if post_trig_done = '1' then
-        dpram_addra_post_done <= dpram_addra_cnt;
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        dpram_addra_cnt       <= (others => '0');
+        dpram_addra_trig      <= (others => '0');
+        dpram_addra_post_done <= (others => '0');
+      else
+        if shots_decr = '1' then
+          dpram_addra_cnt <= to_unsigned(0, dpram_addra_cnt'length);
+        elsif (samples_wr_en = '1' and sync_fifo_valid = '1') or (acq_in_trig_tag = '1') then
+          dpram_addra_cnt <= dpram_addra_cnt + 1;
+        end if;
+        if acq_trig = '1' then
+          dpram_addra_trig <= dpram_addra_cnt;
+        end if;
+        if post_trig_done = '1' then
+          dpram_addra_post_done <= dpram_addra_cnt;
+        end if;
       end if;
     end if;
   end process p_dpram_addra_cnt;
@@ -1478,22 +1518,24 @@ begin
       );
 
   -- DPRAM output address counter
-  p_dpram_addrb_cnt : process (sys_clk_i, sys_rst_n_i)
+  p_dpram_addrb_cnt : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      dpram_addrb_cnt <= (others => '0');
-      dpram_valid_t   <= '0';
-      dpram_valid     <= '0';
-    elsif rising_edge(sys_clk_i) then
-      if trig_tag_done = '1' then
-        dpram_addrb_cnt <= dpram_addra_trig - unsigned(pre_trig_value(c_dpram_depth-1 downto 0));
-        dpram_valid_t   <= '1';
-      elsif (dpram_addrb_cnt = dpram_addra_post_done + 2) then  -- reads 2 extra addresses -> trigger time-tag
-        dpram_valid_t <= '0';
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        dpram_addrb_cnt <= (others => '0');
+        dpram_valid_t   <= '0';
+        dpram_valid     <= '0';
       else
-        dpram_addrb_cnt <= dpram_addrb_cnt + 1;
+        if trig_tag_done = '1' then
+          dpram_addrb_cnt <= dpram_addra_trig - unsigned(pre_trig_value(c_dpram_depth-1 downto 0));
+          dpram_valid_t   <= '1';
+        elsif (dpram_addrb_cnt = dpram_addra_post_done + 2) then  -- reads 2 extra addresses -> trigger time-tag
+          dpram_valid_t <= '0';
+        else
+          dpram_addrb_cnt <= dpram_addrb_cnt + 1;
+        end if;
+        dpram_valid <= dpram_valid_t;
       end if;
-      dpram_valid <= dpram_valid_t;
     end if;
   end process p_dpram_addrb_cnt;
 
@@ -1545,23 +1587,25 @@ begin
     end if;
   end process;
 
-  p_wb_ddr_fifo_input : process (sys_clk_i, sys_rst_n_i)
+  p_wb_ddr_fifo_input : process (sys_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      wb_ddr_fifo_din   <= (others => '0');
-      wb_ddr_fifo_wr_en <= '0';
-    elsif rising_edge(sys_clk_i) then
-      if single_shot = '1' then
-        if acq_in_trig_tag = '1' then
-          wb_ddr_fifo_din   <= '0' & trig_tag_data;
-          wb_ddr_fifo_wr_en <= acq_in_trig_tag;
-        else
-          wb_ddr_fifo_din   <= acq_trig & sync_fifo_dout(63 downto 0);  -- trigger + data
-          wb_ddr_fifo_wr_en <= samples_wr_en and sync_fifo_valid;
-        end if;
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        wb_ddr_fifo_din   <= (others => '0');
+        wb_ddr_fifo_wr_en <= '0';
       else
-        wb_ddr_fifo_din   <= '0' & dpram_dout;
-        wb_ddr_fifo_wr_en <= dpram_valid;
+        if single_shot = '1' then
+          if acq_in_trig_tag = '1' then
+            wb_ddr_fifo_din   <= '0' & trig_tag_data;
+            wb_ddr_fifo_wr_en <= acq_in_trig_tag;
+          else
+            wb_ddr_fifo_din   <= acq_trig & sync_fifo_dout(63 downto 0);  -- trigger + data
+            wb_ddr_fifo_wr_en <= samples_wr_en and sync_fifo_valid;
+          end if;
+        else
+          wb_ddr_fifo_din   <= '0' & dpram_dout;
+          wb_ddr_fifo_wr_en <= dpram_valid;
+        end if;
       end if;
     end if;
   end process p_wb_ddr_fifo_input;
@@ -1574,15 +1618,17 @@ begin
   ------------------------------------------------------------------------------
   -- RAM address counter (32-bit word address)
   ------------------------------------------------------------------------------
-  p_ram_addr_cnt : process (wb_ddr_clk_i, sys_rst_n_i)
+  p_ram_addr_cnt : process (wb_ddr_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      ram_addr_cnt <= (others => '0');
-    elsif rising_edge(wb_ddr_clk_i) then
-      if acq_start = '1' then
+    if rising_edge(wb_ddr_clk_i) then
+      if wb_ddr_rst_n_i = '0' then
         ram_addr_cnt <= (others => '0');
-      elsif wb_ddr_fifo_valid = '1' then
-        ram_addr_cnt <= ram_addr_cnt + 1;
+      else
+        if acq_start = '1' then
+          ram_addr_cnt <= (others => '0');
+        elsif wb_ddr_fifo_valid = '1' then
+          ram_addr_cnt <= ram_addr_cnt + 1;
+        end if;
       end if;
     end if;
   end process p_ram_addr_cnt;
@@ -1590,13 +1636,15 @@ begin
   ------------------------------------------------------------------------------
   -- Store trigger DDR address (byte address)
   ------------------------------------------------------------------------------
-  p_trig_addr : process (wb_ddr_clk_i, sys_rst_n_i)
+  p_trig_addr : process (wb_ddr_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      trig_addr <= (others => '0');
-    elsif rising_edge(wb_ddr_clk_i) then
-      if wb_ddr_fifo_dout(64) = '1' and wb_ddr_fifo_valid = '1' then
-        trig_addr <= "0000" & std_logic_vector(ram_addr_cnt) & "000";
+    if rising_edge(wb_ddr_clk_i) then
+      if wb_ddr_rst_n_i = '0' then
+        trig_addr <= (others => '0');
+      else
+        if wb_ddr_fifo_dout(64) = '1' and wb_ddr_fifo_valid = '1' then
+          trig_addr <= "0000" & std_logic_vector(ram_addr_cnt) & "000";
+        end if;
       end if;
     end if;
   end process p_trig_addr;

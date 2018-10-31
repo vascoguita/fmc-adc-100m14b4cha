@@ -683,7 +683,7 @@ begin
   cmp_ddr_sw_reset_sync : gc_sync_ffs
     port map (
       clk_i    => ddr_clk,
-      rst_n_i  => ddr_rst_n,
+      rst_n_i  => '1',
       data_i   => sw_rst_fmc0,
       synced_o => sw_rst_ddr_sync);
 
