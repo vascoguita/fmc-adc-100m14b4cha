@@ -397,14 +397,8 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal wb_dma_rty   : std_logic;
 
   -- FMC ADC core to DDR wishbone bus
-  signal wb_ddr_adr   : std_logic_vector(31 downto 0);
-  signal wb_ddr_dat_o : std_logic_vector(63 downto 0);
-  signal wb_ddr_sel   : std_logic_vector(7 downto 0);
-  signal wb_ddr_cyc   : std_logic;
-  signal wb_ddr_stb   : std_logic;
-  signal wb_ddr_we    : std_logic;
-  signal wb_ddr_ack   : std_logic;
-  signal wb_ddr_stall : std_logic;
+  signal wb_ddr0_in  : t_wishbone_master_data64_in;
+  signal wb_ddr0_out : t_wishbone_master_data64_out;
 
   -- Interrupts stuff
   signal dma_irq           : std_logic_vector(1 downto 0);
@@ -1005,25 +999,13 @@ begin
       sys_clk_i   => sys_clk_125,
       sys_rst_n_i => fmc0_rst_n,
 
-      wb_csr_adr_i   => cnx_fmc0_sync_master_out.adr,
-      wb_csr_dat_i   => cnx_fmc0_sync_master_out.dat,
-      wb_csr_dat_o   => cnx_fmc0_sync_master_in.dat,
-      wb_csr_cyc_i   => cnx_fmc0_sync_master_out.cyc,
-      wb_csr_sel_i   => cnx_fmc0_sync_master_out.sel,
-      wb_csr_stb_i   => cnx_fmc0_sync_master_out.stb,
-      wb_csr_we_i    => cnx_fmc0_sync_master_out.we,
-      wb_csr_ack_o   => cnx_fmc0_sync_master_in.ack,
-      wb_csr_stall_o => cnx_fmc0_sync_master_in.stall,
+      wb_csr_slave_i => cnx_fmc0_sync_master_out,
+      wb_csr_slave_o => cnx_fmc0_sync_master_in,
 
-      wb_ddr_clk_i   => sys_clk_125,
-      wb_ddr_adr_o   => wb_ddr_adr,
-      wb_ddr_dat_o   => wb_ddr_dat_o,
-      wb_ddr_sel_o   => wb_ddr_sel,
-      wb_ddr_stb_o   => wb_ddr_stb,
-      wb_ddr_we_o    => wb_ddr_we,
-      wb_ddr_cyc_o   => wb_ddr_cyc,
-      wb_ddr_ack_i   => wb_ddr_ack,
-      wb_ddr_stall_i => wb_ddr_stall,
+      wb_ddr_clk_i    => sys_clk_125,
+      wb_ddr_rst_n_i  => fmc0_rst_n,
+      wb_ddr_master_i => wb_ddr0_in,
+      wb_ddr_master_o => wb_ddr0_out,
 
       ddr_wr_fifo_empty_i => ddr_wr_fifo_empty,
       trig_irq_o          => trig_irq_p,
@@ -1075,10 +1057,6 @@ begin
       wr_enable_i        => wrabbit_en
       );
 
-  -- Unused wishbone signals
-  cnx_fmc0_sync_master_in.err <= '0';
-  cnx_fmc0_sync_master_in.rty <= '0';
-
   ------------------------------------------------------------------------------
   -- DMA wishbone bus slaves
   --  -> DDR3 controller
@@ -1122,15 +1100,15 @@ begin
 
       wb0_rst_n_i => sys_rst_125_n,
       wb0_clk_i   => sys_clk_125,
-      wb0_sel_i   => wb_ddr_sel,
-      wb0_cyc_i   => wb_ddr_cyc,
-      wb0_stb_i   => wb_ddr_stb,
-      wb0_we_i    => wb_ddr_we,
-      wb0_addr_i  => wb_ddr_adr,
-      wb0_data_i  => wb_ddr_dat_o,
-      wb0_data_o  => open,
-      wb0_ack_o   => wb_ddr_ack,
-      wb0_stall_o => wb_ddr_stall,
+      wb0_sel_i   => wb_ddr0_out.sel,
+      wb0_cyc_i   => wb_ddr0_out.cyc,
+      wb0_stb_i   => wb_ddr0_out.stb,
+      wb0_we_i    => wb_ddr0_out.we,
+      wb0_addr_i  => wb_ddr0_out.adr,
+      wb0_data_i  => wb_ddr0_out.dat,
+      wb0_data_o  => wb_ddr0_in.dat,
+      wb0_ack_o   => wb_ddr0_in.ack,
+      wb0_stall_o => wb_ddr0_in.stall,
 
       p0_cmd_empty_o   => open,
       p0_cmd_full_o    => open,
@@ -1177,6 +1155,9 @@ begin
   -- unused Wishbone signals
   wb_dma_err <= '0';
   wb_dma_rty <= '0';
+
+  wb_ddr0_in.err <= '0';
+  wb_ddr0_in.rty <= '0';
 
   ------------------------------------------------------------------------------
   -- Assign unused outputs

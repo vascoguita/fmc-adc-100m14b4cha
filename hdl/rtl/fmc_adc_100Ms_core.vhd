@@ -36,11 +36,14 @@ library work;
 use work.timetag_core_pkg.all;
 use work.genram_pkg.all;
 use work.gencores_pkg.all;
+use work.wishbone_pkg.all;
 use work.fmc_adc_100Ms_csr_wbgen2_pkg.all;
 
 entity fmc_adc_100Ms_core is
   generic(
-    g_multishot_ram_size : natural := 2048
+    g_MULTISHOT_RAM_SIZE : natural                        := 2048;
+    g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
+    g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE
     );
   port (
     -- Clock, reset
@@ -48,25 +51,14 @@ entity fmc_adc_100Ms_core is
     sys_rst_n_i : in std_logic;
 
     -- CSR wishbone interface
-    wb_csr_adr_i : in  std_logic_vector(7 downto 0);
-    wb_csr_dat_i : in  std_logic_vector(31 downto 0);
-    wb_csr_dat_o : out std_logic_vector(31 downto 0);
-    wb_csr_cyc_i : in  std_logic;
-    wb_csr_sel_i : in  std_logic_vector(3 downto 0);
-    wb_csr_stb_i : in  std_logic;
-    wb_csr_we_i  : in  std_logic;
-    wb_csr_ack_o : out std_logic;
+    wb_csr_slave_i : in  t_wishbone_slave_in;
+    wb_csr_slave_o : out t_wishbone_slave_out;
 
     -- DDR wishbone interface
-    wb_ddr_clk_i   : in  std_logic;
-    wb_ddr_adr_o   : out std_logic_vector(31 downto 0);
-    wb_ddr_dat_o   : out std_logic_vector(63 downto 0);
-    wb_ddr_sel_o   : out std_logic_vector(7 downto 0);
-    wb_ddr_stb_o   : out std_logic;
-    wb_ddr_we_o    : out std_logic;
-    wb_ddr_cyc_o   : out std_logic;
-    wb_ddr_ack_i   : in  std_logic;
-    wb_ddr_stall_i : in  std_logic;
+    wb_ddr_clk_i    : in  std_logic;
+    wb_ddr_rst_n_i  : in  std_logic;
+    wb_ddr_master_i : in  t_wishbone_master_data64_in;
+    wb_ddr_master_o : out t_wishbone_master_data64_out;
 
     -- Events output pulses
     trigger_p_o   : out std_logic;
@@ -368,8 +360,31 @@ architecture rtl of fmc_adc_100Ms_core is
   signal acq_led      : std_logic;
   signal acq_led_man  : std_logic;
 
+  -- from/to wb slave adapters
+  signal wb_csr_in  : t_wishbone_slave_in;
+  signal wb_csr_out : t_wishbone_slave_out;
+
 begin
 
+  ------------------------------------------------------------------------------
+  -- WB slave adapters to/from the outside
+  ------------------------------------------------------------------------------
+
+  cmp_csr_wb_slave_adapter : wb_slave_adapter
+    generic map (
+      g_master_use_struct  => TRUE,
+      g_master_mode        => CLASSIC,
+      g_master_granularity => WORD,
+      g_slave_use_struct   => TRUE,
+      g_slave_mode         => g_WB_CSR_MODE,
+      g_slave_granularity  => g_WB_CSR_GRANULARITY)
+    port map (
+      clk_sys_i => sys_clk_i,
+      rst_n_i   => sys_rst_n_i,
+      slave_i   => wb_csr_slave_i,
+      slave_o   => wb_csr_slave_o,
+      master_i  => wb_csr_out,
+      master_o  => wb_csr_in);
 
   ------------------------------------------------------------------------------
   -- LEDs
@@ -612,15 +627,15 @@ begin
     port map(
       rst_n_i    => sys_rst_n_i,
       clk_sys_i  => sys_clk_i,
-      wb_adr_i   => wb_csr_adr_i,
-      wb_dat_i   => wb_csr_dat_i,
-      wb_dat_o   => wb_csr_dat_o,
-      wb_cyc_i   => wb_csr_cyc_i,
-      wb_sel_i   => wb_csr_sel_i,
-      wb_stb_i   => wb_csr_stb_i,
-      wb_we_i    => wb_csr_we_i,
-      wb_ack_o   => wb_csr_ack_o,
-      wb_stall_o => open,
+      wb_adr_i   => wb_csr_in.adr(7 downto 0),
+      wb_dat_i   => wb_csr_in.dat,
+      wb_dat_o   => wb_csr_out.dat,
+      wb_cyc_i   => wb_csr_in.cyc,
+      wb_sel_i   => wb_csr_in.sel,
+      wb_stb_i   => wb_csr_in.stb,
+      wb_we_i    => wb_csr_in.we,
+      wb_ack_o   => wb_csr_out.ack,
+      wb_stall_o => wb_csr_out.stall,
       fs_clk_i   => fs_clk,
       regs_i     => csr_regin,
       regs_o     => csr_regout);
@@ -1589,43 +1604,43 @@ begin
   ------------------------------------------------------------------------------
   -- Wishbone master (to DDR)
   ------------------------------------------------------------------------------
-  p_wb_master : process (wb_ddr_clk_i, sys_rst_n_i)
+  p_wb_master : process (wb_ddr_clk_i)
   begin
-    if sys_rst_n_i = '0' then
-      wb_ddr_cyc_o   <= '0';
-      wb_ddr_we_o    <= '0';
-      wb_ddr_stb_o   <= '0';
-      wb_ddr_adr_o   <= (others => '0');
-      wb_ddr_dat_o   <= (others => '0');
-      wb_ddr_stall_t <= '0';
-    elsif rising_edge(wb_ddr_clk_i) then
-
-      if wb_ddr_fifo_valid = '1' then  --if (wb_ddr_fifo_valid = '1') and (wb_ddr_stall_i = '0') then
-        wb_ddr_stb_o <= '1';
-        wb_ddr_adr_o <= "0000000" & std_logic_vector(ram_addr_cnt);
-        if test_data_en = '1' then
-          wb_ddr_dat_o <= x"00000000" & "0000000" & std_logic_vector(ram_addr_cnt);
-        else
-          wb_ddr_dat_o <= wb_ddr_fifo_dout(63 downto 0);
-        end if;
+    if rising_edge(wb_ddr_clk_i) then
+      if wb_ddr_rst_n_i = '0' then
+        wb_ddr_master_o.cyc <= '0';
+        wb_ddr_master_o.we  <= '0';
+        wb_ddr_master_o.stb <= '0';
+        wb_ddr_master_o.adr <= (others => '0');
+        wb_ddr_master_o.dat <= (others => '0');
+        wb_ddr_stall_t      <= '0';
       else
-        wb_ddr_stb_o <= '0';
+        if wb_ddr_fifo_valid = '1' then
+          wb_ddr_master_o.stb <= '1';
+          wb_ddr_master_o.adr <= "0000000" & std_logic_vector(ram_addr_cnt);
+          if test_data_en = '1' then
+            wb_ddr_master_o.dat <= x"00000000" & "0000000" & std_logic_vector(ram_addr_cnt);
+          else
+            wb_ddr_master_o.dat <= wb_ddr_fifo_dout(63 downto 0);
+          end if;
+        else
+          wb_ddr_master_o.stb <= '0';
+        end if;
+
+        if wb_ddr_fifo_valid = '1' then
+          wb_ddr_master_o.cyc <= '1';
+          wb_ddr_master_o.we  <= '1';
+        elsif (wb_ddr_fifo_empty = '1') and (acq_fsm_state = "001") then
+          wb_ddr_master_o.cyc <= '0';
+          wb_ddr_master_o.we  <= '0';
+        end if;
+
+        wb_ddr_stall_t <= wb_ddr_master_i.stall;
+
       end if;
-
-      if wb_ddr_fifo_valid = '1' then
-        wb_ddr_cyc_o <= '1';
-        wb_ddr_we_o  <= '1';
-      --elsif (wb_ddr_fifo_empty = '1') and (acq_end = '1') then
-      elsif (wb_ddr_fifo_empty = '1') and (acq_fsm_state = "001") then
-        wb_ddr_cyc_o <= '0';
-        wb_ddr_we_o  <= '0';
-      end if;
-
-      wb_ddr_stall_t <= wb_ddr_stall_i;
-
     end if;
   end process p_wb_master;
 
-  wb_ddr_sel_o <= X"FF";
+  wb_ddr_master_o.sel <= X"FF";
 
 end rtl;

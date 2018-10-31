@@ -8,12 +8,11 @@
 --              Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-03
--- Last update: 2018-10-26
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Package for FMC ADC mezzanine
 -------------------------------------------------------------------------------
--- Copyright (c) 2013-2016 CERN (BE-CO-HT)
+-- Copyright (c) 2013-2018 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -36,21 +35,16 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 use work.timetag_core_pkg.all;
-
+use work.wishbone_pkg.all;
 
 package fmc_adc_mezzanine_pkg is
-
-  ------------------------------------------------------------------------------
-  -- Constants declaration
-  ------------------------------------------------------------------------------
-
 
   ------------------------------------------------------------------------------
   -- Components declaration
   ------------------------------------------------------------------------------
   component fmc_adc_mezzanine
     generic(
-      g_multishot_ram_size : natural := 2048
+      g_MULTISHOT_RAM_SIZE : natural := 2048
     );
     port (
       -- Clock, reset
@@ -58,26 +52,14 @@ package fmc_adc_mezzanine_pkg is
       sys_rst_n_i : in std_logic;
 
       -- CSR wishbone interface
-      wb_csr_adr_i   : in  std_logic_vector(31 downto 0);
-      wb_csr_dat_i   : in  std_logic_vector(31 downto 0);
-      wb_csr_dat_o   : out std_logic_vector(31 downto 0);
-      wb_csr_cyc_i   : in  std_logic;
-      wb_csr_sel_i   : in  std_logic_vector(3 downto 0);
-      wb_csr_stb_i   : in  std_logic;
-      wb_csr_we_i    : in  std_logic;
-      wb_csr_ack_o   : out std_logic;
-      wb_csr_stall_o : out std_logic;
+      wb_csr_slave_i : in  t_wishbone_slave_in;
+      wb_csr_slave_o : out t_wishbone_slave_out;
 
       -- DDR wishbone interface
-      wb_ddr_clk_i   : in  std_logic;
-      wb_ddr_adr_o   : out std_logic_vector(31 downto 0);
-      wb_ddr_dat_o   : out std_logic_vector(63 downto 0);
-      wb_ddr_sel_o   : out std_logic_vector(7 downto 0);
-      wb_ddr_stb_o   : out std_logic;
-      wb_ddr_we_o    : out std_logic;
-      wb_ddr_cyc_o   : out std_logic;
-      wb_ddr_ack_i   : in  std_logic;
-      wb_ddr_stall_i : in  std_logic;
+      wb_ddr_clk_i    : in  std_logic;
+      wb_ddr_rst_n_i  : in  std_logic;
+      wb_ddr_master_i : in  t_wishbone_master_data64_in;
+      wb_ddr_master_o : out t_wishbone_master_data64_out;
 
       -- Interrupt
       ddr_wr_fifo_empty_i : in  std_logic;

@@ -39,7 +39,7 @@ use work.timetag_core_pkg.all;
 
 entity fmc_adc_mezzanine is
   generic(
-    g_multishot_ram_size : natural := 2048
+    g_MULTISHOT_RAM_SIZE : natural := 2048
     );
   port (
     -- Clock, reset
@@ -47,26 +47,14 @@ entity fmc_adc_mezzanine is
     sys_rst_n_i : in std_logic;
 
     -- CSR wishbone interface
-    wb_csr_adr_i   : in  std_logic_vector(31 downto 0);
-    wb_csr_dat_i   : in  std_logic_vector(31 downto 0);
-    wb_csr_dat_o   : out std_logic_vector(31 downto 0);
-    wb_csr_cyc_i   : in  std_logic;
-    wb_csr_sel_i   : in  std_logic_vector(3 downto 0);
-    wb_csr_stb_i   : in  std_logic;
-    wb_csr_we_i    : in  std_logic;
-    wb_csr_ack_o   : out std_logic;
-    wb_csr_stall_o : out std_logic;
+    wb_csr_slave_i : in  t_wishbone_slave_in;
+    wb_csr_slave_o : out t_wishbone_slave_out;
 
     -- DDR wishbone interface
-    wb_ddr_clk_i   : in  std_logic;
-    wb_ddr_adr_o   : out std_logic_vector(31 downto 0);
-    wb_ddr_dat_o   : out std_logic_vector(63 downto 0);
-    wb_ddr_sel_o   : out std_logic_vector(7 downto 0);
-    wb_ddr_stb_o   : out std_logic;
-    wb_ddr_we_o    : out std_logic;
-    wb_ddr_cyc_o   : out std_logic;
-    wb_ddr_ack_i   : in  std_logic;
-    wb_ddr_stall_i : in  std_logic;
+    wb_ddr_clk_i    : in  std_logic;
+    wb_ddr_rst_n_i  : in  std_logic;
+    wb_ddr_master_i : in  t_wishbone_master_data64_in;
+    wb_ddr_master_o : out t_wishbone_master_data64_out;
 
     -- Interrupts
     ddr_wr_fifo_empty_i : in  std_logic;
@@ -148,8 +136,6 @@ architecture rtl of fmc_adc_mezzanine is
 
   ------------------------------------------------------------------------------
   -- SDB crossbar constants declaration
-  --
-  -- WARNING: All address in sdb and crossbar are BYTE addresses!
   ------------------------------------------------------------------------------
 
   -- Number of master port(s) on the wishbone crossbar
@@ -247,10 +233,6 @@ architecture rtl of fmc_adc_mezzanine is
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
-  -- Wishbone bus from additional registers
-  signal xreg_slave_out : t_wishbone_slave_out;
-  signal xreg_slave_in  : t_wishbone_slave_in;
-
   -- Mezzanine system I2C for EEPROM
   signal sys_scl_in   : std_logic;
   signal sys_scl_out  : std_logic;
@@ -300,8 +282,8 @@ begin
     port map(
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
-      slave_i   => xreg_slave_in,
-      slave_o   => xreg_slave_out,
+      slave_i   => wb_csr_slave_i,
+      slave_o   => wb_csr_slave_o,
       master_i  => cnx_slave_out(c_WB_MASTER),
       master_o  => cnx_slave_in(c_WB_MASTER));
 
@@ -320,18 +302,6 @@ begin
       slave_o   => cnx_slave_out,
       master_i  => cnx_master_in,
       master_o  => cnx_master_out);
-
-  -- Connect crossbar slave port to entity port
-  xreg_slave_in.adr <= wb_csr_adr_i;
-  xreg_slave_in.dat <= wb_csr_dat_i;
-  xreg_slave_in.sel <= wb_csr_sel_i;
-  xreg_slave_in.stb <= wb_csr_stb_i;
-  xreg_slave_in.we  <= wb_csr_we_i;
-  xreg_slave_in.cyc <= wb_csr_cyc_i;
-
-  wb_csr_dat_o   <= xreg_slave_out.dat;
-  wb_csr_ack_o   <= xreg_slave_out.ack;
-  wb_csr_stall_o <= xreg_slave_out.stall;
 
   ------------------------------------------------------------------------------
   -- Mezzanine system managment I2C master
@@ -451,30 +421,19 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_adc_100Ms_core : fmc_adc_100Ms_core
     generic map (
-      g_multishot_ram_size => g_multishot_ram_size
-    )
+      g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
+      )
     port map(
       sys_clk_i   => sys_clk_i,
       sys_rst_n_i => sys_rst_n_i,
 
-      wb_csr_adr_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).adr(9 downto 2),  -- cnx_master_out.adr is byte address
-      wb_csr_dat_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).dat,
-      wb_csr_dat_o => cnx_master_in(c_WB_SLAVE_FMC_ADC).dat,
-      wb_csr_cyc_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).cyc,
-      wb_csr_sel_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).sel,
-      wb_csr_stb_i => cnx_master_out(c_WB_SLAVE_FMC_ADC).stb,
-      wb_csr_we_i  => cnx_master_out(c_WB_SLAVE_FMC_ADC).we,
-      wb_csr_ack_o => cnx_master_in(c_WB_SLAVE_FMC_ADC).ack,
+      wb_csr_slave_i => cnx_master_out(c_WB_SLAVE_FMC_ADC),
+      wb_csr_slave_o => cnx_master_in(c_WB_SLAVE_FMC_ADC),
 
-      wb_ddr_clk_i   => sys_clk_i,
-      wb_ddr_adr_o   => wb_ddr_adr_o,
-      wb_ddr_dat_o   => wb_ddr_dat_o,
-      wb_ddr_sel_o   => wb_ddr_sel_o,
-      wb_ddr_stb_o   => wb_ddr_stb_o,
-      wb_ddr_we_o    => wb_ddr_we_o,
-      wb_ddr_cyc_o   => wb_ddr_cyc_o,
-      wb_ddr_ack_i   => wb_ddr_ack_i,
-      wb_ddr_stall_i => wb_ddr_stall_i,
+      wb_ddr_clk_i    => wb_ddr_clk_i,
+      wb_ddr_rst_n_i  => wb_ddr_rst_n_i,
+      wb_ddr_master_o => wb_ddr_master_o,
+      wb_ddr_master_i => wb_ddr_master_i,
 
       trigger_p_o   => trigger_p,
       acq_start_p_o => acq_start_p,
@@ -505,11 +464,6 @@ begin
       gpio_ssr_ch4_o   => gpio_ssr_ch4_o,
       gpio_si570_oe_o  => gpio_si570_oe_o
       );
-
-  -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_ADC).stall <= '0';
 
   ------------------------------------------------------------------------------
   -- Mezzanine 1-wire master

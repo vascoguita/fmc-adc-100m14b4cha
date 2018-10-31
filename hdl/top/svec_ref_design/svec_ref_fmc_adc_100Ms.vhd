@@ -483,23 +483,10 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal cnx_fmc1_sync_master_in  : t_wishbone_master_in;
 
   -- Wishbone buses from FMC ADC cores to DDR controller
-  signal wb_ddr0_adc_adr   : std_logic_vector(31 downto 0);
-  signal wb_ddr0_adc_dat_o : std_logic_vector(63 downto 0);
-  signal wb_ddr0_adc_sel   : std_logic_vector(7 downto 0);
-  signal wb_ddr0_adc_cyc   : std_logic;
-  signal wb_ddr0_adc_stb   : std_logic;
-  signal wb_ddr0_adc_we    : std_logic;
-  signal wb_ddr0_adc_ack   : std_logic;
-  signal wb_ddr0_adc_stall : std_logic;
-
-  signal wb_ddr1_adc_adr   : std_logic_vector(31 downto 0);
-  signal wb_ddr1_adc_dat_o : std_logic_vector(63 downto 0);
-  signal wb_ddr1_adc_sel   : std_logic_vector(7 downto 0);
-  signal wb_ddr1_adc_cyc   : std_logic;
-  signal wb_ddr1_adc_stb   : std_logic;
-  signal wb_ddr1_adc_we    : std_logic;
-  signal wb_ddr1_adc_ack   : std_logic;
-  signal wb_ddr1_adc_stall : std_logic;
+  signal wb_ddr0_in  : t_wishbone_master_data64_in;
+  signal wb_ddr0_out : t_wishbone_master_data64_out;
+  signal wb_ddr1_in  : t_wishbone_master_data64_in;
+  signal wb_ddr1_out : t_wishbone_master_data64_out;
 
   -- Interrupts
   signal ddr_wr_fifo_empty   : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
@@ -706,11 +693,7 @@ begin
       vme_o.addr_dir  => vme_addr_dir_int,
       vme_o.addr_oe_n => vme_addr_oe_n_o,
       wb_o            => cnx_slave_in(c_WB_MASTER_VME),
-      wb_i.ack        => cnx_slave_out(c_WB_MASTER_VME).ack,
-      wb_i.err        => cnx_slave_out(c_WB_MASTER_VME).err,
-      wb_i.rty        => cnx_slave_out(c_WB_MASTER_VME).rty,
-      wb_i.stall      => cnx_slave_out(c_WB_MASTER_VME).stall,
-      wb_i.dat        => cnx_slave_out(c_WB_MASTER_VME).dat,
+      wb_i            => cnx_slave_out(c_WB_MASTER_VME),
       int_i           => irq_to_vme);
 
 
@@ -910,31 +893,19 @@ begin
 
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
-      g_multishot_ram_size => g_multishot_ram_size
+      g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
       )
     port map(
       sys_clk_i   => clk_ref_125m,
       sys_rst_n_i => fmc0_rst_n,
 
-      wb_csr_adr_i   => cnx_fmc0_sync_master_out.adr,
-      wb_csr_dat_i   => cnx_fmc0_sync_master_out.dat,
-      wb_csr_dat_o   => cnx_fmc0_sync_master_in.dat,
-      wb_csr_cyc_i   => cnx_fmc0_sync_master_out.cyc,
-      wb_csr_sel_i   => cnx_fmc0_sync_master_out.sel,
-      wb_csr_stb_i   => cnx_fmc0_sync_master_out.stb,
-      wb_csr_we_i    => cnx_fmc0_sync_master_out.we,
-      wb_csr_ack_o   => cnx_fmc0_sync_master_in.ack,
-      wb_csr_stall_o => cnx_fmc0_sync_master_in.stall,
+      wb_csr_slave_i => cnx_fmc0_sync_master_out,
+      wb_csr_slave_o => cnx_fmc0_sync_master_in,
 
-      wb_ddr_clk_i   => clk_ref_125m,
-      wb_ddr_adr_o   => wb_ddr0_adc_adr,
-      wb_ddr_dat_o   => wb_ddr0_adc_dat_o,
-      wb_ddr_sel_o   => wb_ddr0_adc_sel,
-      wb_ddr_stb_o   => wb_ddr0_adc_stb,
-      wb_ddr_we_o    => wb_ddr0_adc_we,
-      wb_ddr_cyc_o   => wb_ddr0_adc_cyc,
-      wb_ddr_ack_i   => wb_ddr0_adc_ack,
-      wb_ddr_stall_i => wb_ddr0_adc_stall,
+      wb_ddr_clk_i    => clk_ref_125m,
+      wb_ddr_rst_n_i  => fmc0_rst_n,
+      wb_ddr_master_i => wb_ddr0_in,
+      wb_ddr_master_o => wb_ddr0_out,
 
       ddr_wr_fifo_empty_i => ddr_wr_fifo_empty(0),
       trig_irq_o          => trig_irq_p(0),
@@ -987,10 +958,6 @@ begin
 
       );
 
-  -- Unused wishbone signals
-  cnx_fmc0_sync_master_in.err <= '0';
-  cnx_fmc0_sync_master_in.rty <= '0';
-
   ------------------------------------------------------------------------------
   -- Slot 2 : FMC ADC mezzanine (wb bridge with cross-clocking)
   --    Mezzanine system managment I2C master
@@ -1017,31 +984,19 @@ begin
 
   cmp_fmc_adc_mezzanine_1 : fmc_adc_mezzanine
     generic map(
-      g_multishot_ram_size => g_multishot_ram_size
+      g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
       )
     port map(
       sys_clk_i   => clk_ref_125m,
       sys_rst_n_i => fmc1_rst_n,
 
-      wb_csr_adr_i   => cnx_fmc1_sync_master_out.adr,
-      wb_csr_dat_i   => cnx_fmc1_sync_master_out.dat,
-      wb_csr_dat_o   => cnx_fmc1_sync_master_in.dat,
-      wb_csr_cyc_i   => cnx_fmc1_sync_master_out.cyc,
-      wb_csr_sel_i   => cnx_fmc1_sync_master_out.sel,
-      wb_csr_stb_i   => cnx_fmc1_sync_master_out.stb,
-      wb_csr_we_i    => cnx_fmc1_sync_master_out.we,
-      wb_csr_ack_o   => cnx_fmc1_sync_master_in.ack,
-      wb_csr_stall_o => cnx_fmc1_sync_master_in.stall,
+      wb_csr_slave_i => cnx_fmc1_sync_master_out,
+      wb_csr_slave_o => cnx_fmc1_sync_master_in,
 
-      wb_ddr_clk_i   => clk_ref_125m,
-      wb_ddr_adr_o   => wb_ddr1_adc_adr,
-      wb_ddr_dat_o   => wb_ddr1_adc_dat_o,
-      wb_ddr_sel_o   => wb_ddr1_adc_sel,
-      wb_ddr_stb_o   => wb_ddr1_adc_stb,
-      wb_ddr_we_o    => wb_ddr1_adc_we,
-      wb_ddr_cyc_o   => wb_ddr1_adc_cyc,
-      wb_ddr_ack_i   => wb_ddr1_adc_ack,
-      wb_ddr_stall_i => wb_ddr1_adc_stall,
+      wb_ddr_clk_i    => clk_ref_125m,
+      wb_ddr_rst_n_i  => fmc1_rst_n,
+      wb_ddr_master_i => wb_ddr1_in,
+      wb_ddr_master_o => wb_ddr1_out,
 
       ddr_wr_fifo_empty_i => ddr_wr_fifo_empty(1),
       trig_irq_o          => trig_irq_p(1),
@@ -1094,10 +1049,6 @@ begin
 
       );
 
-  -- Unused wishbone signals
-  cnx_fmc1_sync_master_in.err <= '0';
-  cnx_fmc1_sync_master_in.rty <= '0';
-
   ------------------------------------------------------------------------------
   -- DDR0 controller (bank 4)
   ------------------------------------------------------------------------------
@@ -1140,15 +1091,15 @@ begin
 
       wb0_rst_n_i => rst_ref_125m_n,
       wb0_clk_i   => clk_ref_125m,
-      wb0_sel_i   => wb_ddr0_adc_sel,
-      wb0_cyc_i   => wb_ddr0_adc_cyc,
-      wb0_stb_i   => wb_ddr0_adc_stb,
-      wb0_we_i    => wb_ddr0_adc_we,
-      wb0_addr_i  => wb_ddr0_adc_adr,
-      wb0_data_i  => wb_ddr0_adc_dat_o,
-      wb0_data_o  => open,
-      wb0_ack_o   => wb_ddr0_adc_ack,
-      wb0_stall_o => wb_ddr0_adc_stall,
+      wb0_sel_i   => wb_ddr0_out.sel,
+      wb0_cyc_i   => wb_ddr0_out.cyc,
+      wb0_stb_i   => wb_ddr0_out.stb,
+      wb0_we_i    => wb_ddr0_out.we,
+      wb0_addr_i  => wb_ddr0_out.adr,
+      wb0_data_i  => wb_ddr0_out.dat,
+      wb0_data_o  => wb_ddr0_in.dat,
+      wb0_ack_o   => wb_ddr0_in.ack,
+      wb0_stall_o => wb_ddr0_in.stall,
 
       p0_cmd_empty_o   => open,
       p0_cmd_full_o    => open,
@@ -1189,6 +1140,9 @@ begin
       p1_wr_error_o    => open
 
       );
+
+  wb_ddr0_in.err <= '0';
+  wb_ddr0_in.rty <= '0';
 
   ddr0_calib_done <= ddr0_status(0);
 
@@ -1294,15 +1248,15 @@ begin
 
       wb0_rst_n_i => rst_ref_125m_n,
       wb0_clk_i   => clk_ref_125m,
-      wb0_sel_i   => wb_ddr1_adc_sel,
-      wb0_cyc_i   => wb_ddr1_adc_cyc,
-      wb0_stb_i   => wb_ddr1_adc_stb,
-      wb0_we_i    => wb_ddr1_adc_we,
-      wb0_addr_i  => wb_ddr1_adc_adr,
-      wb0_data_i  => wb_ddr1_adc_dat_o,
-      wb0_data_o  => open,
-      wb0_ack_o   => wb_ddr1_adc_ack,
-      wb0_stall_o => wb_ddr1_adc_stall,
+      wb0_sel_i   => wb_ddr1_out.sel,
+      wb0_cyc_i   => wb_ddr1_out.cyc,
+      wb0_stb_i   => wb_ddr1_out.stb,
+      wb0_we_i    => wb_ddr1_out.we,
+      wb0_addr_i  => wb_ddr1_out.adr,
+      wb0_data_i  => wb_ddr1_out.dat,
+      wb0_data_o  => wb_ddr1_in.dat,
+      wb0_ack_o   => wb_ddr1_in.ack,
+      wb0_stall_o => wb_ddr1_in.stall,
 
       p0_cmd_empty_o   => open,
       p0_cmd_full_o    => open,
@@ -1343,6 +1297,9 @@ begin
       p1_wr_error_o    => open
 
       );
+
+  wb_ddr1_in.err <= '0';
+  wb_ddr1_in.rty <= '0';
 
   ddr1_calib_done <= ddr1_status(0);
 
