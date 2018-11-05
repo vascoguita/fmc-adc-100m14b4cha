@@ -326,7 +326,7 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
       return "TRUE ";
     end if;
   end;
-  
+
   constant c_SIMULATION_STR : string := f_int2string(g_simulation);
 
   ------------------------------------------------------------------------------
@@ -407,9 +407,8 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal wb_ddr0_in  : t_wishbone_master_data64_in;
   signal wb_ddr0_out : t_wishbone_master_data64_out;
 
-  -- Interrupts stuff
+  -- Interrupts
   signal dma_irq           : std_logic_vector(1 downto 0);
-  signal dma_irq_p         : std_logic_vector(1 downto 0);
   signal trig_irq_p        : std_logic;
   signal acq_end_irq_p     : std_logic;
   signal irq_sources       : std_logic_vector(3 downto 0);
@@ -418,6 +417,13 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal ddr_wr_fifo_empty : std_logic;
   signal dma_eic_irq       : std_logic;
   signal fmc0_eic_irq      : std_logic;
+
+  -- Resync interrupts to sys domain
+  signal dma_irq_sync           : std_logic_vector(1 downto 0);
+  signal ddr_wr_fifo_empty_sync : std_logic;
+  signal acq_end_irq_sync_p     : std_logic;
+  signal trig_irq_sync_p        : std_logic;
+  signal fmc0_eic_irq_sync      : std_logic;
 
   -- LED control from carrier CSR register
   signal led_red   : std_logic;
@@ -640,7 +646,7 @@ begin
       phy8_i                => phy8_from_wrc);
 
   sfp_rate_select_o <= '1';
-  
+
   ------------------------------------------------------------------------------
   -- System reset
   ------------------------------------------------------------------------------
@@ -932,6 +938,14 @@ begin
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)
   ------------------------------------------------------------------------------
+
+  cmp_fmc_irq_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_62_5,
+      rst_n_i  => '1',
+      data_i   => fmc0_eic_irq,
+      synced_o => fmc0_eic_irq_sync);
+
   cmp_vic : xwb_vic
     generic map (
       g_interface_mode      => PIPELINED,
@@ -941,15 +955,27 @@ begin
     port map (
       clk_sys_i    => sys_clk_62_5,
       rst_n_i      => sys_rst_62_5_n,
-      irqs_i(0)    => fmc0_eic_irq,
       slave_i      => cnx_slave_in(c_WB_SLAVE_VIC),
       slave_o      => cnx_slave_out(c_WB_SLAVE_VIC),
+      irqs_i(0)    => fmc0_eic_irq_sync,
       irqs_i(1)    => dma_eic_irq,
       irq_master_o => irq_to_gn4124);
 
   ------------------------------------------------------------------------------
   -- GN4124 DMA interrupt controller
   ------------------------------------------------------------------------------
+
+  gen_dma_irq : for I in 0 to 1 generate
+
+    cmp_dma_irq_sync : gc_sync_ffs
+      port map (
+        clk_i    => sys_clk_62_5,
+        rst_n_i  => '1',
+        data_i   => dma_irq(I),
+        synced_o => dma_irq_sync(I));
+
+  end generate gen_dma_irq;
+
   cmp_dma_eic : entity work.dma_eic
     port map(
       rst_n_i         => sys_rst_62_5_n,
@@ -964,8 +990,8 @@ begin
       wb_ack_o        => cnx_slave_out(c_WB_SLAVE_DMA_EIC).ack,
       wb_stall_o      => cnx_slave_out(c_WB_SLAVE_DMA_EIC).stall,
       wb_int_o        => dma_eic_irq,
-      irq_dma_done_i  => dma_irq(0),
-      irq_dma_error_i => dma_irq(1)
+      irq_dma_done_i  => dma_irq_sync(0),
+      irq_dma_error_i => dma_irq_sync(1)
       );
 
   -- Unused wishbone signals
@@ -997,6 +1023,13 @@ begin
       master_i       => cnx_fmc0_sync_master_in,
       master_o       => cnx_fmc0_sync_master_out
       );
+
+  cmp_fmc_ddr_wr_fifo_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_125,
+      rst_n_i  => '1',
+      data_i   => ddr_wr_fifo_empty,
+      synced_o => ddr_wr_fifo_empty_sync);
 
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
@@ -1238,14 +1271,28 @@ begin
 
   aux_leds_o(0) <= led_pwm;
 
+  cmp_fmc_trig_irq_led_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_62_5,
+      rst_n_i  => '1',
+      data_i   => trig_irq_p,
+      synced_o => trig_irq_sync_p);
+
+  cmp_fmc_acq_end_irq_led_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_62_5,
+      rst_n_i  => '1',
+      data_i   => acq_end_irq_p,
+      synced_o => acq_end_irq_sync_p);
+
   -- IRQ LEDs
   --   0    -> End of DMA transfer
   --   1    -> DMA transfer error
   --   2    -> Trigger
   --   3    -> End of acquisition (data written to DDR)
-  irq_sources(1 downto 0) <= dma_irq;
-  irq_sources(2)          <= trig_irq_p;
-  irq_sources(3)          <= acq_end_irq_p;
+  irq_sources(1 downto 0) <= dma_irq_sync;
+  irq_sources(2)          <= trig_irq_sync_p;
+  irq_sources(3)          <= acq_end_irq_sync_p;
 
   gen_irq_led : for I in 0 to irq_sources'length-1 generate
     cmp_irq_led : gc_extend_pulse

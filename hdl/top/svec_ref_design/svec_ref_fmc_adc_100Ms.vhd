@@ -445,6 +445,8 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal rst_ddr_333m_n     : std_logic;
   signal sw_rst_fmc0        : std_logic := '1';
   signal sw_rst_fmc1        : std_logic := '1';
+  signal sw_rst_fmc0_sync   : std_logic;
+  signal sw_rst_fmc1_sync   : std_logic;
   signal sw_rst_ddr0_sync   : std_logic;
   signal sw_rst_ddr1_sync   : std_logic;
   signal fmc0_rst_n         : std_logic;
@@ -499,6 +501,12 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal fmc_acq_end_irq_led : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
   signal irq_to_vme          : std_logic;
   signal fmc_irq             : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
+
+  -- Resync interrupts to sys domain
+  signal ddr_wr_fifo_empty_sync : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
+  signal acq_end_irq_sync_p     : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
+  signal trig_irq_sync_p        : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
+  signal fmc_irq_sync           : std_logic_vector(c_NB_FMC_SLOTS-1 downto 0);
 
   -- Front panel LED control
   signal svec_led      : std_logic_vector(15 downto 0);
@@ -630,9 +638,23 @@ begin
       rstn_o(0)  => rst_ddr_333m_n);
 
   -- reset for mezzanines
-  -- (including soft reset, no need to re-sync from 62.5MHz domain)
-  fmc0_rst_n <= rst_ref_125m_n and (not sw_rst_fmc0);
-  fmc1_rst_n <= rst_ref_125m_n and (not sw_rst_fmc1);
+  -- (including soft reset, with re-sync from 62.5MHz domain)
+  cmp_fmc0_sw_reset_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_ref_125m,
+      rst_n_i  => '1',
+      data_i   => sw_rst_fmc0,
+      synced_o => sw_rst_fmc0_sync);
+
+  cmp_fmc1_sw_reset_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_ref_125m,
+      rst_n_i  => '1',
+      data_i   => sw_rst_fmc1,
+      synced_o => sw_rst_fmc1_sync);
+
+  fmc0_rst_n <= rst_ref_125m_n and (not sw_rst_fmc0_sync);
+  fmc1_rst_n <= rst_ref_125m_n and (not sw_rst_fmc1_sync);
 
   -- reset for DDR
   -- (including soft reset, with re-sync from 62.5MHz domain)
@@ -852,6 +874,18 @@ begin
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)
   ------------------------------------------------------------------------------
+
+  gen_fmc_irq : for I in 0 to c_NB_FMC_SLOTS - 1 generate
+
+    cmp_fmc_irq_sync : gc_sync_ffs
+      port map (
+        clk_i    => clk_sys_62m5,
+        rst_n_i  => '1',
+        data_i   => fmc_irq(I),
+        synced_o => fmc_irq_sync(I));
+
+  end generate gen_fmc_irq;
+
   cmp_vic : xwb_vic
     generic map (
       g_interface_mode      => PIPELINED,
@@ -861,10 +895,10 @@ begin
     port map (
       clk_sys_i    => clk_sys_62m5,
       rst_n_i      => rst_sys_62m5_n,
-      irqs_i(0)    => fmc_irq(0),
-      irqs_i(1)    => fmc_irq(1),
       slave_i      => cnx_slave_in(c_WB_SLAVE_VIC),
       slave_o      => cnx_slave_out(c_WB_SLAVE_VIC),
+      irqs_i(0)    => fmc_irq_sync(0),
+      irqs_i(1)    => fmc_irq_sync(1),
       irq_master_o => irq_to_vme);
 
   ------------------------------------------------------------------------------
@@ -891,6 +925,13 @@ begin
       master_o       => cnx_fmc0_sync_master_out
       );
 
+  cmp_fmc0_ddr_wr_fifo_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_ref_125m,
+      rst_n_i  => '1',
+      data_i   => ddr_wr_fifo_empty(0),
+      synced_o => ddr_wr_fifo_empty_sync(0));
+
   cmp_fmc_adc_mezzanine_0 : fmc_adc_mezzanine
     generic map(
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
@@ -907,7 +948,7 @@ begin
       wb_ddr_master_i => wb_ddr0_in,
       wb_ddr_master_o => wb_ddr0_out,
 
-      ddr_wr_fifo_empty_i => ddr_wr_fifo_empty(0),
+      ddr_wr_fifo_empty_i => ddr_wr_fifo_empty_sync(0),
       trig_irq_o          => trig_irq_p(0),
       acq_end_irq_o       => acq_end_irq_p(0),
       eic_irq_o           => fmc_irq(0),
@@ -982,6 +1023,13 @@ begin
       master_o       => cnx_fmc1_sync_master_out
       );
 
+  cmp_fmc1_ddr_wr_fifo_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_ref_125m,
+      rst_n_i  => '1',
+      data_i   => ddr_wr_fifo_empty(1),
+      synced_o => ddr_wr_fifo_empty_sync(1));
+
   cmp_fmc_adc_mezzanine_1 : fmc_adc_mezzanine
     generic map(
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
@@ -998,7 +1046,7 @@ begin
       wb_ddr_master_i => wb_ddr1_in,
       wb_ddr_master_o => wb_ddr1_out,
 
-      ddr_wr_fifo_empty_i => ddr_wr_fifo_empty(1),
+      ddr_wr_fifo_empty_i => ddr_wr_fifo_empty_sync(1),
       trig_irq_o          => trig_irq_p(1),
       acq_end_irq_o       => acq_end_irq_p(1),
       eic_irq_o           => fmc_irq(1),
@@ -1397,15 +1445,30 @@ begin
       );
 
   gen_fmc_irq_led : for I in 0 to c_NB_FMC_SLOTS - 1 generate
+
+    cmp_fmc_trig_irq_led_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_sys_62m5,
+      rst_n_i  => '1',
+      data_i   => trig_irq_p(I),
+      synced_o => trig_irq_sync_p(I));
+
     cmp_fmc_trig_irq_led : gc_extend_pulse
       generic map (
         g_width => 2500000)
       port map (
         clk_i      => clk_sys_62m5,
         rst_n_i    => rst_sys_62m5_n,
-        pulse_i    => trig_irq_p(I),
+        pulse_i    => trig_irq_sync_p(I),
         extended_o => fmc_trig_irq_led(I)
         );
+
+    cmp_fmc_acq_end_irq_led_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_sys_62m5,
+      rst_n_i  => '1',
+      data_i   => acq_end_irq_p(I),
+      synced_o => acq_end_irq_sync_p(I));
 
     cmp_fmc_acq_end_irq_led : gc_extend_pulse
       generic map (
@@ -1413,9 +1476,10 @@ begin
       port map (
         clk_i      => clk_sys_62m5,
         rst_n_i    => rst_sys_62m5_n,
-        pulse_i    => acq_end_irq_p(0),
+        pulse_i    => acq_end_irq_sync_p(I),
         extended_o => fmc_acq_end_irq_led(I)
         );
+
   end generate gen_fmc_irq_led;
 
   -- Logic OR of signals and CSR register for LED control
