@@ -1101,7 +1101,7 @@ begin
   -- DMA wishbone bus slaves
   --  -> DDR3 controller
   ------------------------------------------------------------------------------
-  cmp_ddr_ctrl : ddr3_ctrl
+  cmp_ddr_ctrl_bank3 : ddr3_ctrl
     generic map(
       g_BANK_PORT_SELECT   => "SPEC_BANK3_64B_32B",
       g_MEMCLK_PERIOD      => 3000,
