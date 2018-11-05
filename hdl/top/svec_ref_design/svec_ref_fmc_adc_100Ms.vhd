@@ -673,7 +673,7 @@ begin
       synced_o => sw_rst_ddr1_sync);
 
   ddr0_rst_n <= rst_ddr_333m_n and (not sw_rst_ddr0_sync);
-  ddr1_rst_n <= rst_ddr_333m_n and (not sw_rst_ddr0_sync);
+  ddr1_rst_n <= rst_ddr_333m_n and (not sw_rst_ddr1_sync);
 
   ------------------------------------------------------------------------------
   -- VME interface
