@@ -2,3 +2,4 @@
 !.gitignore
 !Manifest.py
 !svec_ref_fmc_adc_100Ms_wr.ucf
+!syn_extra_steps.tcl
