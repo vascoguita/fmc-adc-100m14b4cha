@@ -289,11 +289,11 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   -- SDB crossbar constants declaration
   ------------------------------------------------------------------------------
 
-  -- Number of master port(s) on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 9;
+  -- Number of masters on the wishbone crossbar
+  constant c_NUM_WB_MASTERS : integer := 1;
 
-  -- Number of slave port(s) on the wishbone crossbar
-  constant c_NUM_WB_SLAVES : integer := 1;
+  -- Number of slaves on the wishbone crossbar
+  constant c_NUM_WB_SLAVES : integer := 9;
 
   -- Wishbone master(s)
   constant c_WB_MASTER_VME : integer := 0;
@@ -310,9 +310,9 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   constant c_WB_SLAVE_WR_CORE      : integer := 8;  -- WR PTP core
 
   -- SDB meta info
-  constant c_SDB_GIT_REPO_URL : integer := c_NUM_WB_MASTERS;
-  constant c_SDB_SYNTHESIS    : integer := c_NUM_WB_MASTERS + 1;
-  constant c_SDB_INTEGRATE    : integer := c_NUM_WB_MASTERS + 2;
+  constant c_SDB_GIT_REPO_URL : integer := c_NUM_WB_SLAVES;
+  constant c_SDB_SYNTHESIS    : integer := c_NUM_WB_SLAVES + 1;
+  constant c_SDB_INTEGRATE    : integer := c_NUM_WB_SLAVES + 2;
 
   -- Devices sdb description
   constant c_wb_svec_csr_sdb : t_sdb_device := (
@@ -382,7 +382,7 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
       name      => "svec_fmcadc100m14b "));
 
   -- Wishbone crossbar layout
-  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_MASTERS + 2 downto 0) :=
+  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_SLAVES + 2 downto 0) :=
     (
       c_WB_SLAVE_SVEC_CSR     => f_sdb_embed_device(c_wb_svec_csr_sdb, x"00001200"),
       c_WB_SLAVE_VIC          => f_sdb_embed_device(c_xwb_vic_sdb, x"00001300"),
@@ -469,11 +469,11 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal vme_irq_n         : std_logic_vector(7 downto 1);
   signal vme_access        : std_logic;
 
-  -- Wishbone buse(s) from crossbar master port(s)
+  -- Wishbone buse(s) from master(s) to crossbar slave port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
   signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
 
-  -- Wishbone buse(s) to crossbar slave port(s)
+  -- Wishbone buse(s) from crossbar master port(s) to slave(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
@@ -694,8 +694,8 @@ begin
       vme_o.data_oe_n => vme_data_oe_n_o,
       vme_o.addr_dir  => vme_addr_dir_int,
       vme_o.addr_oe_n => vme_addr_oe_n_o,
-      wb_o            => cnx_slave_in(c_WB_MASTER_VME),
-      wb_i            => cnx_slave_out(c_WB_MASTER_VME),
+      wb_o            => cnx_master_out(c_WB_MASTER_VME),
+      wb_i            => cnx_master_in(c_WB_MASTER_VME),
       int_i           => irq_to_vme);
 
 
@@ -716,8 +716,8 @@ begin
   ------------------------------------------------------------------------------
   cmp_sdb_crossbar : xwb_sdb_crossbar
     generic map (
-      g_num_masters => c_NUM_WB_SLAVES,
-      g_num_slaves  => c_NUM_WB_MASTERS,
+      g_num_masters => c_NUM_WB_MASTERS,
+      g_num_slaves  => c_NUM_WB_SLAVES,
       g_registered  => TRUE,
       g_wraparound  => TRUE,
       g_layout      => c_INTERCONNECT_LAYOUT,
@@ -725,10 +725,10 @@ begin
     port map (
       clk_sys_i => clk_sys_62m5,
       rst_n_i   => rst_sys_62m5_n,
-      slave_i   => cnx_slave_in,
-      slave_o   => cnx_slave_out,
-      master_i  => cnx_master_in,
-      master_o  => cnx_master_out);
+      slave_i   => cnx_master_out,
+      slave_o   => cnx_master_in,
+      master_i  => cnx_slave_out,
+      master_o  => cnx_slave_in);
 
   -------------------------------------------------------------------------------
   -- White Rabbit Core (SVEC board package)
@@ -797,8 +797,8 @@ begin
       spi_ncs_o           => spi_ncs_o,
       spi_mosi_o          => spi_mosi_o,
       spi_miso_i          => spi_miso_i,
-      wb_slave_o          => cnx_master_in(c_WB_SLAVE_WR_CORE),
-      wb_slave_i          => cnx_master_out(c_WB_SLAVE_WR_CORE),
+      wb_slave_o          => cnx_slave_out(c_WB_SLAVE_WR_CORE),
+      wb_slave_i          => cnx_slave_in(c_WB_SLAVE_WR_CORE),
       tm_link_up_o        => tm_link_up,
       tm_time_valid_o     => tm_time_valid,
       tm_tai_o            => tm_tai,
@@ -819,14 +819,14 @@ begin
     port map(
       rst_n_i    => rst_sys_62m5_n,
       clk_sys_i  => clk_sys_62m5,
-      wb_adr_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
-      wb_dat_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).dat,
-      wb_dat_o   => cnx_master_in(c_WB_SLAVE_SVEC_CSR).dat,
-      wb_cyc_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).cyc,
-      wb_sel_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).sel,
-      wb_stb_i   => cnx_master_out(c_WB_SLAVE_SVEC_CSR).stb,
-      wb_we_i    => cnx_master_out(c_WB_SLAVE_SVEC_CSR).we,
-      wb_ack_o   => cnx_master_in(c_WB_SLAVE_SVEC_CSR).ack,
+      wb_adr_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).adr(3 downto 2),  -- cnx_slave_in.adr is byte address
+      wb_dat_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).dat,
+      wb_dat_o   => cnx_slave_out(c_WB_SLAVE_SVEC_CSR).dat,
+      wb_cyc_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).cyc,
+      wb_sel_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).sel,
+      wb_stb_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).stb,
+      wb_we_i    => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).we,
+      wb_ack_o   => cnx_slave_out(c_WB_SLAVE_SVEC_CSR).ack,
       wb_stall_o => open,
       regs_i     => csr_regin,
       regs_o     => csr_regout);
@@ -845,9 +845,9 @@ begin
   sw_rst_fmc1   <= csr_regout.rst_fmc1_o;
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_SVEC_CSR).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_SVEC_CSR).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_SVEC_CSR).stall <= '0';
+  cnx_slave_out(c_WB_SLAVE_SVEC_CSR).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_SVEC_CSR).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_SVEC_CSR).stall <= '0';
 
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)
@@ -861,10 +861,10 @@ begin
     port map (
       clk_sys_i    => clk_sys_62m5,
       rst_n_i      => rst_sys_62m5_n,
-      slave_i      => cnx_master_out(c_WB_SLAVE_VIC),
-      slave_o      => cnx_master_in(c_WB_SLAVE_VIC),
       irqs_i(0)    => fmc_irq(0),
       irqs_i(1)    => fmc_irq(1),
+      slave_i      => cnx_slave_in(c_WB_SLAVE_VIC),
+      slave_o      => cnx_slave_out(c_WB_SLAVE_VIC),
       irq_master_o => irq_to_vme);
 
   ------------------------------------------------------------------------------
@@ -883,8 +883,8 @@ begin
     port map(
       slave_clk_i    => clk_sys_62m5,
       slave_rst_n_i  => rst_sys_62m5_n,
-      slave_i        => cnx_master_out(c_WB_SLAVE_FMC0_ADC),
-      slave_o        => cnx_master_in(c_WB_SLAVE_FMC0_ADC),
+      slave_i        => cnx_slave_in(c_WB_SLAVE_FMC0_ADC),
+      slave_o        => cnx_slave_out(c_WB_SLAVE_FMC0_ADC),
       master_clk_i   => clk_ref_125m,
       master_rst_n_i => fmc0_rst_n,
       master_i       => cnx_fmc0_sync_master_in,
@@ -974,8 +974,8 @@ begin
     port map(
       slave_clk_i    => clk_sys_62m5,
       slave_rst_n_i  => rst_sys_62m5_n,
-      slave_i        => cnx_master_out(c_WB_SLAVE_FMC1_ADC),
-      slave_o        => cnx_master_in(c_WB_SLAVE_FMC1_ADC),
+      slave_i        => cnx_slave_in(c_WB_SLAVE_FMC1_ADC),
+      slave_o        => cnx_slave_out(c_WB_SLAVE_FMC1_ADC),
       master_clk_i   => clk_ref_125m,
       master_rst_n_i => fmc1_rst_n,
       master_i       => cnx_fmc1_sync_master_in,
@@ -1116,15 +1116,15 @@ begin
 
       wb1_rst_n_i => rst_sys_62m5_n,
       wb1_clk_i   => clk_sys_62m5,
-      wb1_sel_i   => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).sel,
-      wb1_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).cyc,
-      wb1_stb_i   => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).stb,
-      wb1_we_i    => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).we,
+      wb1_sel_i   => cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).sel,
+      wb1_cyc_i   => cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).cyc,
+      wb1_stb_i   => cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).stb,
+      wb1_we_i    => cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).we,
       wb1_addr_i  => std_logic_vector(ddr0_addr_cnt),
-      wb1_data_i  => cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).dat,
-      wb1_data_o  => cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).dat,
-      wb1_ack_o   => cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).ack,
-      wb1_stall_o => cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).stall,
+      wb1_data_i  => cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).dat,
+      wb1_data_o  => cnx_slave_out(c_WB_SLAVE_FMC0_DDR_DAT).dat,
+      wb1_ack_o   => cnx_slave_out(c_WB_SLAVE_FMC0_DDR_DAT).ack,
+      wb1_stall_o => cnx_slave_out(c_WB_SLAVE_FMC0_DDR_DAT).stall,
 
       p1_cmd_empty_o   => open,
       p1_cmd_full_o    => open,
@@ -1158,12 +1158,12 @@ begin
       if (rst_sys_62m5_n = '0' or sw_rst_fmc0 = '1') then
         ddr0_dat_cyc_d <= '0';
       else
-        ddr0_dat_cyc_d <= cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).cyc;
+        ddr0_dat_cyc_d <= cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).cyc;
       end if;
     end if;
   end process p_ddr0_dat_cyc;
 
-  ddr0_addr_cnt_en <= not(cnx_master_out(c_WB_SLAVE_FMC0_DDR_DAT).cyc) and ddr0_dat_cyc_d;
+  ddr0_addr_cnt_en <= not(cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT).cyc) and ddr0_dat_cyc_d;
 
   -- address counter
   p_ddr0_addr_cnt : process (clk_sys_62m5)
@@ -1171,10 +1171,10 @@ begin
     if rising_edge(clk_sys_62m5) then
       if (rst_sys_62m5_n = '0' or sw_rst_fmc0 = '1') then
         ddr0_addr_cnt <= (others => '0');
-      elsif (cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).we = '1' and
-             cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).stb = '1' and
-             cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).cyc = '1') then
-        ddr0_addr_cnt <= unsigned(cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).dat);
+      elsif (cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR).we = '1' and
+             cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR).stb = '1' and
+             cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR).cyc = '1') then
+        ddr0_addr_cnt <= unsigned(cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR).dat);
       elsif (ddr0_addr_cnt_en = '1') then
         ddr0_addr_cnt <= ddr0_addr_cnt + 1;
       end if;
@@ -1186,25 +1186,25 @@ begin
   begin
     if rising_edge(clk_sys_62m5) then
       if (rst_sys_62m5_n = '0' or sw_rst_fmc0 = '1') then
-        cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '0';
-      elsif (cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).stb = '1' and
-             cnx_master_out(c_WB_SLAVE_FMC0_DDR_ADR).cyc = '1') then
-        cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '1';
+        cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '0';
+      elsif (cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR).stb = '1' and
+             cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR).cyc = '1') then
+        cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '1';
       else
-        cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '0';
+        cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).ack <= '0';
       end if;
     end if;
   end process p_ddr0_addr_ack;
 
   -- Address counter read back
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).dat <= std_logic_vector(ddr0_addr_cnt);
+  cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).dat <= std_logic_vector(ddr0_addr_cnt);
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_DAT).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC0_DDR_ADR).stall <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC0_DDR_DAT).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC0_DDR_DAT).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR).stall <= '0';
 
   ------------------------------------------------------------------------------
   -- DDR1 controller (bank 5)
@@ -1273,15 +1273,15 @@ begin
 
       wb1_rst_n_i => rst_sys_62m5_n,
       wb1_clk_i   => clk_sys_62m5,
-      wb1_sel_i   => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).sel,
-      wb1_cyc_i   => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).cyc,
-      wb1_stb_i   => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).stb,
-      wb1_we_i    => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).we,
+      wb1_sel_i   => cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).sel,
+      wb1_cyc_i   => cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).cyc,
+      wb1_stb_i   => cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).stb,
+      wb1_we_i    => cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).we,
       wb1_addr_i  => std_logic_vector(ddr1_addr_cnt),
-      wb1_data_i  => cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).dat,
-      wb1_data_o  => cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).dat,
-      wb1_ack_o   => cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).ack,
-      wb1_stall_o => cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).stall,
+      wb1_data_i  => cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).dat,
+      wb1_data_o  => cnx_slave_out(c_WB_SLAVE_FMC1_DDR_DAT).dat,
+      wb1_ack_o   => cnx_slave_out(c_WB_SLAVE_FMC1_DDR_DAT).ack,
+      wb1_stall_o => cnx_slave_out(c_WB_SLAVE_FMC1_DDR_DAT).stall,
 
       p1_cmd_empty_o   => open,
       p1_cmd_full_o    => open,
@@ -1315,12 +1315,12 @@ begin
       if (rst_sys_62m5_n = '0' or sw_rst_fmc1 = '1') then
         ddr1_dat_cyc_d <= '0';
       else
-        ddr1_dat_cyc_d <= cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).cyc;
+        ddr1_dat_cyc_d <= cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).cyc;
       end if;
     end if;
   end process p_ddr1_dat_cyc;
 
-  ddr1_addr_cnt_en <= not(cnx_master_out(c_WB_SLAVE_FMC1_DDR_DAT).cyc) and ddr1_dat_cyc_d;
+  ddr1_addr_cnt_en <= not(cnx_slave_in(c_WB_SLAVE_FMC1_DDR_DAT).cyc) and ddr1_dat_cyc_d;
 
   -- address counter
   p_ddr1_addr_cnt : process (clk_sys_62m5)
@@ -1328,10 +1328,10 @@ begin
     if rising_edge(clk_sys_62m5) then
       if (rst_sys_62m5_n = '0' or sw_rst_fmc1 = '1') then
         ddr1_addr_cnt <= (others => '0');
-      elsif (cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).we = '1' and
-             cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).stb = '1' and
-             cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).cyc = '1') then
-        ddr1_addr_cnt <= unsigned(cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).dat);
+      elsif (cnx_slave_in(c_WB_SLAVE_FMC1_DDR_ADR).we = '1' and
+             cnx_slave_in(c_WB_SLAVE_FMC1_DDR_ADR).stb = '1' and
+             cnx_slave_in(c_WB_SLAVE_FMC1_DDR_ADR).cyc = '1') then
+        ddr1_addr_cnt <= unsigned(cnx_slave_in(c_WB_SLAVE_FMC1_DDR_ADR).dat);
       elsif (ddr1_addr_cnt_en = '1') then
         ddr1_addr_cnt <= ddr1_addr_cnt + 1;
       end if;
@@ -1343,25 +1343,25 @@ begin
   begin
     if rising_edge(clk_sys_62m5) then
       if (rst_sys_62m5_n = '0' or sw_rst_fmc1 = '1') then
-        cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '0';
-      elsif (cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).stb = '1' and
-             cnx_master_out(c_WB_SLAVE_FMC1_DDR_ADR).cyc = '1') then
-        cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '1';
+        cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '0';
+      elsif (cnx_slave_in(c_WB_SLAVE_FMC1_DDR_ADR).stb = '1' and
+             cnx_slave_in(c_WB_SLAVE_FMC1_DDR_ADR).cyc = '1') then
+        cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '1';
       else
-        cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '0';
+        cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).ack <= '0';
       end if;
     end if;
   end process p_ddr1_addr_ack;
 
   -- Address counter read back
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).dat <= std_logic_vector(ddr1_addr_cnt);
+  cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).dat <= std_logic_vector(ddr1_addr_cnt);
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_DAT).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC1_DDR_ADR).stall <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC1_DDR_DAT).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC1_DDR_DAT).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC1_DDR_ADR).stall <= '0';
 
   ------------------------------------------------------------------------------
   -- Carrier front panel LEDs and LEMOs

@@ -203,11 +203,11 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   -- SDB crossbar constants declaration
   ------------------------------------------------------------------------------
 
-  -- Number of master port(s) on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 6;
+  -- Number of masters on the wishbone crossbar
+  constant c_NUM_WB_MASTERS : integer := 1;
 
-  -- Number of slave port(s) on the wishbone crossbar
-  constant c_NUM_WB_SLAVES : integer := 1;
+  -- Number of slaves on the wishbone crossbar
+  constant c_NUM_WB_SLAVES : integer := 6;
 
   -- Wishbone master(s)
   constant c_MASTER_GENNUM : integer := 0;
@@ -221,9 +221,9 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   constant c_WB_SLAVE_WR_CORE  : integer := 5;    -- WR PTP core
 
   -- SDB meta info
-  constant c_SDB_GIT_REPO_URL : integer := c_NUM_WB_MASTERS;
-  constant c_SDB_SYNTHESIS    : integer := c_NUM_WB_MASTERS + 1;
-  constant c_SDB_INTEGRATE    : integer := c_NUM_WB_MASTERS + 2;
+  constant c_SDB_GIT_REPO_URL : integer := c_NUM_WB_SLAVES;
+  constant c_SDB_SYNTHESIS    : integer := c_NUM_WB_SLAVES + 1;
+  constant c_SDB_INTEGRATE    : integer := c_NUM_WB_SLAVES + 2;
 
   -- Devices sdb description
   constant c_wb_dma_ctrl_sdb : t_sdb_device := (
@@ -292,7 +292,7 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
       name      => "spec_fmcadc100m14b "));
 
   -- Wishbone crossbar layout
-  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_MASTERS + 2 downto 0) :=
+  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_SLAVES + 2 downto 0) :=
     (
       c_WB_SLAVE_DMA      => f_sdb_embed_device(c_wb_dma_ctrl_sdb, x"00001000"),
       c_WB_SLAVE_SPEC_CSR => f_sdb_embed_device(c_wb_spec_csr_sdb, x"00001200"),
@@ -372,11 +372,11 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal pll_arst         : std_logic;
   signal arst_edge_ppulse : std_logic;
 
-  -- Wishbone buse(s) from crossbar master port(s)
+  -- Wishbone buse(s) from master(s) to crossbar slave port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
   signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
 
-  -- Wishbone buse(s) to crossbar slave port(s)
+  -- Wishbone buse(s) from crossbar master port(s) to slave(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
@@ -734,27 +734,27 @@ begin
       -- DMA registers wishbone interface (slave classic)
       dma_reg_clk_i   => sys_clk_62_5,
       dma_reg_adr_i   => dma_ctrl_wb_adr,
-      dma_reg_dat_i   => cnx_master_out(c_WB_SLAVE_DMA).dat,
-      dma_reg_sel_i   => cnx_master_out(c_WB_SLAVE_DMA).sel,
-      dma_reg_stb_i   => cnx_master_out(c_WB_SLAVE_DMA).stb,
-      dma_reg_we_i    => cnx_master_out(c_WB_SLAVE_DMA).we,
-      dma_reg_cyc_i   => cnx_master_out(c_WB_SLAVE_DMA).cyc,
-      dma_reg_dat_o   => cnx_master_in(c_WB_SLAVE_DMA).dat,
-      dma_reg_ack_o   => cnx_master_in(c_WB_SLAVE_DMA).ack,
-      dma_reg_stall_o => cnx_master_in(c_WB_SLAVE_DMA).stall,
+      dma_reg_dat_i   => cnx_slave_in(c_WB_SLAVE_DMA).dat,
+      dma_reg_sel_i   => cnx_slave_in(c_WB_SLAVE_DMA).sel,
+      dma_reg_stb_i   => cnx_slave_in(c_WB_SLAVE_DMA).stb,
+      dma_reg_we_i    => cnx_slave_in(c_WB_SLAVE_DMA).we,
+      dma_reg_cyc_i   => cnx_slave_in(c_WB_SLAVE_DMA).cyc,
+      dma_reg_dat_o   => cnx_slave_out(c_WB_SLAVE_DMA).dat,
+      dma_reg_ack_o   => cnx_slave_out(c_WB_SLAVE_DMA).ack,
+      dma_reg_stall_o => cnx_slave_out(c_WB_SLAVE_DMA).stall,
       -- CSR wishbone interface (master pipelined)
       csr_clk_i       => sys_clk_62_5,
       csr_adr_o       => gn_wb_adr,
-      csr_dat_o       => cnx_slave_in(c_MASTER_GENNUM).dat,
-      csr_sel_o       => cnx_slave_in(c_MASTER_GENNUM).sel,
-      csr_stb_o       => cnx_slave_in(c_MASTER_GENNUM).stb,
-      csr_we_o        => cnx_slave_in(c_MASTER_GENNUM).we,
-      csr_cyc_o       => cnx_slave_in(c_MASTER_GENNUM).cyc,
-      csr_dat_i       => cnx_slave_out(c_MASTER_GENNUM).dat,
-      csr_ack_i       => cnx_slave_out(c_MASTER_GENNUM).ack,
-      csr_stall_i     => cnx_slave_out(c_MASTER_GENNUM).stall,
-      csr_err_i       => cnx_slave_out(c_MASTER_GENNUM).err,
-      csr_rty_i       => cnx_slave_out(c_MASTER_GENNUM).rty,
+      csr_dat_o       => cnx_master_out(c_MASTER_GENNUM).dat,
+      csr_sel_o       => cnx_master_out(c_MASTER_GENNUM).sel,
+      csr_stb_o       => cnx_master_out(c_MASTER_GENNUM).stb,
+      csr_we_o        => cnx_master_out(c_MASTER_GENNUM).we,
+      csr_cyc_o       => cnx_master_out(c_MASTER_GENNUM).cyc,
+      csr_dat_i       => cnx_master_in(c_MASTER_GENNUM).dat,
+      csr_ack_i       => cnx_master_in(c_MASTER_GENNUM).ack,
+      csr_stall_i     => cnx_master_in(c_MASTER_GENNUM).stall,
+      csr_err_i       => cnx_master_in(c_MASTER_GENNUM).err,
+      csr_rty_i       => cnx_master_in(c_MASTER_GENNUM).rty,
       -- DMA wishbone interface (pipelined)
       dma_clk_i       => sys_clk_62_5,
       dma_adr_o       => wb_dma_adr,
@@ -773,14 +773,14 @@ begin
   p2l_pll_locked <= gn4124_status(0);
 
   -- Convert 32-bit word address into byte address for crossbar
-  cnx_slave_in(c_MASTER_GENNUM).adr <= gn_wb_adr(29 downto 0) & "00";
+  cnx_master_out(c_MASTER_GENNUM).adr <= gn_wb_adr(29 downto 0) & "00";
 
   -- Convert 32-bit byte address into word address for DMA controller
-  dma_ctrl_wb_adr <= "00" & cnx_master_out(c_WB_SLAVE_DMA).adr(31 downto 2);
+  dma_ctrl_wb_adr <= "00" & cnx_slave_in(c_WB_SLAVE_DMA).adr(31 downto 2);
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_DMA).err <= '0';
-  cnx_master_in(c_WB_SLAVE_DMA).rty <= '0';
+  cnx_slave_out(c_WB_SLAVE_DMA).err <= '0';
+  cnx_slave_out(c_WB_SLAVE_DMA).rty <= '0';
 
   ------------------------------------------------------------------------------
   -- CSR wishbone crossbar
@@ -788,8 +788,8 @@ begin
 
   cmp_sdb_crossbar : xwb_sdb_crossbar
     generic map (
-      g_num_masters => c_NUM_WB_SLAVES,
-      g_num_slaves  => c_NUM_WB_MASTERS,
+      g_num_masters => c_NUM_WB_MASTERS,
+      g_num_slaves  => c_NUM_WB_SLAVES,
       g_registered  => TRUE,
       g_wraparound  => TRUE,
       g_layout      => c_INTERCONNECT_LAYOUT,
@@ -797,10 +797,10 @@ begin
     port map (
       clk_sys_i => sys_clk_62_5,
       rst_n_i   => sys_rst_62_5_n,
-      slave_i   => cnx_slave_in,
-      slave_o   => cnx_slave_out,
-      master_i  => cnx_master_in,
-      master_o  => cnx_master_out);
+      slave_i   => cnx_master_out,
+      slave_o   => cnx_master_in,
+      master_i  => cnx_slave_out,
+      master_o  => cnx_slave_in);
 
   -----------------------------------------------------------------------------
   -- 2x SPI DAC
@@ -877,8 +877,8 @@ begin
       uart_txd_o           => uart_txd_o,
       owr_en_o             => wrc_owr_en,
       owr_i                => wrc_owr_in,
-      wb_slave_i           => cnx_master_out(c_WB_SLAVE_WR_CORE),
-      wb_slave_o           => cnx_master_in(c_WB_SLAVE_WR_CORE),
+      wb_slave_i           => cnx_slave_in(c_WB_SLAVE_WR_CORE),
+      wb_slave_o           => cnx_slave_out(c_WB_SLAVE_WR_CORE),
       tm_link_up_o         => tm_link_up,
       tm_time_valid_o      => tm_time_valid,
       tm_tai_o             => tm_tai,
@@ -898,14 +898,14 @@ begin
     port map(
       rst_n_i    => sys_rst_62_5_n,
       clk_sys_i  => sys_clk_62_5,
-      wb_adr_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_master_out.adr is byte address
-      wb_dat_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).dat,
-      wb_dat_o   => cnx_master_in(c_WB_SLAVE_SPEC_CSR).dat,
-      wb_cyc_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).cyc,
-      wb_sel_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).sel,
-      wb_stb_i   => cnx_master_out(c_WB_SLAVE_SPEC_CSR).stb,
-      wb_we_i    => cnx_master_out(c_WB_SLAVE_SPEC_CSR).we,
-      wb_ack_o   => cnx_master_in(c_WB_SLAVE_SPEC_CSR).ack,
+      wb_adr_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_slave_in.adr is byte address
+      wb_dat_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).dat,
+      wb_dat_o   => cnx_slave_out(c_WB_SLAVE_SPEC_CSR).dat,
+      wb_cyc_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).cyc,
+      wb_sel_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).sel,
+      wb_stb_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).stb,
+      wb_we_i    => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).we,
+      wb_ack_o   => cnx_slave_out(c_WB_SLAVE_SPEC_CSR).ack,
       wb_stall_o => open,
       regs_i     => csr_regin,
       regs_o     => csr_regout);
@@ -921,9 +921,9 @@ begin
   sw_rst_fmc0 <= csr_regout.rst_fmc0_o;
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_SPEC_CSR).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_SPEC_CSR).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_SPEC_CSR).stall <= '0';
+  cnx_slave_out(c_WB_SLAVE_SPEC_CSR).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_SPEC_CSR).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_SPEC_CSR).stall <= '0';
 
   -- SPEC front panel leds
   led_red_o   <= led_red or csr_regout.ctrl_led_red_o;
@@ -941,9 +941,9 @@ begin
     port map (
       clk_sys_i    => sys_clk_62_5,
       rst_n_i      => sys_rst_62_5_n,
-      slave_i      => cnx_master_out(c_WB_SLAVE_VIC),
-      slave_o      => cnx_master_in(c_WB_SLAVE_VIC),
       irqs_i(0)    => fmc0_eic_irq,
+      slave_i      => cnx_slave_in(c_WB_SLAVE_VIC),
+      slave_o      => cnx_slave_out(c_WB_SLAVE_VIC),
       irqs_i(1)    => dma_eic_irq,
       irq_master_o => irq_to_gn4124);
 
@@ -954,23 +954,23 @@ begin
     port map(
       rst_n_i         => sys_rst_62_5_n,
       clk_sys_i       => sys_clk_62_5,
-      wb_adr_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).adr(3 downto 2),  -- cnx_master_out.adr is byte address
-      wb_dat_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).dat,
-      wb_dat_o        => cnx_master_in(c_WB_SLAVE_DMA_EIC).dat,
-      wb_cyc_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).cyc,
-      wb_sel_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).sel,
-      wb_stb_i        => cnx_master_out(c_WB_SLAVE_DMA_EIC).stb,
-      wb_we_i         => cnx_master_out(c_WB_SLAVE_DMA_EIC).we,
-      wb_ack_o        => cnx_master_in(c_WB_SLAVE_DMA_EIC).ack,
-      wb_stall_o      => cnx_master_in(c_WB_SLAVE_DMA_EIC).stall,
+      wb_adr_i        => cnx_slave_in(c_WB_SLAVE_DMA_EIC).adr(3 downto 2),  -- cnx_slave_in.adr is byte address
+      wb_dat_i        => cnx_slave_in(c_WB_SLAVE_DMA_EIC).dat,
+      wb_dat_o        => cnx_slave_out(c_WB_SLAVE_DMA_EIC).dat,
+      wb_cyc_i        => cnx_slave_in(c_WB_SLAVE_DMA_EIC).cyc,
+      wb_sel_i        => cnx_slave_in(c_WB_SLAVE_DMA_EIC).sel,
+      wb_stb_i        => cnx_slave_in(c_WB_SLAVE_DMA_EIC).stb,
+      wb_we_i         => cnx_slave_in(c_WB_SLAVE_DMA_EIC).we,
+      wb_ack_o        => cnx_slave_out(c_WB_SLAVE_DMA_EIC).ack,
+      wb_stall_o      => cnx_slave_out(c_WB_SLAVE_DMA_EIC).stall,
       wb_int_o        => dma_eic_irq,
       irq_dma_done_i  => dma_irq(0),
       irq_dma_error_i => dma_irq(1)
       );
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_DMA_EIC).err <= '0';
-  cnx_master_in(c_WB_SLAVE_DMA_EIC).rty <= '0';
+  cnx_slave_out(c_WB_SLAVE_DMA_EIC).err <= '0';
+  cnx_slave_out(c_WB_SLAVE_DMA_EIC).rty <= '0';
 
   ------------------------------------------------------------------------------
   -- FMC ADC mezzanine (wb bridge with cross-clocking)
@@ -990,8 +990,8 @@ begin
     port map(
       slave_clk_i    => sys_clk_62_5,
       slave_rst_n_i  => sys_rst_62_5_n,
-      slave_i        => cnx_master_out(c_WB_SLAVE_FMC_ADC),
-      slave_o        => cnx_master_in(c_WB_SLAVE_FMC_ADC),
+      slave_i        => cnx_slave_in(c_WB_SLAVE_FMC_ADC),
+      slave_o        => cnx_slave_out(c_WB_SLAVE_FMC_ADC),
       master_clk_i   => sys_clk_125,
       master_rst_n_i => sys_rst_125_n,
       master_i       => cnx_fmc0_sync_master_in,

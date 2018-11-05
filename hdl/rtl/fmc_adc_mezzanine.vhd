@@ -138,11 +138,11 @@ architecture rtl of fmc_adc_mezzanine is
   -- SDB crossbar constants declaration
   ------------------------------------------------------------------------------
 
-  -- Number of master port(s) on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 7;
+  -- Number of masters on the wishbone crossbar
+  constant c_NUM_WB_MASTERS : integer := 1;
 
-  -- Number of slave port(s) on the wishbone crossbar
-  constant c_NUM_WB_SLAVES : integer := 1;
+  -- Number of slaves on the wishbone crossbar
+  constant c_NUM_WB_SLAVES : integer := 7;
 
   -- Wishbone master(s)
   constant c_WB_MASTER : integer := 0;
@@ -209,15 +209,15 @@ architecture rtl of fmc_adc_mezzanine is
   constant c_SDB_ADDRESS : t_wishbone_address := x"00000000";
 
   -- Wishbone crossbar layout
-  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(6 downto 0) :=
+  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_SLAVES - 1 downto 0) :=
     (
-      0 => f_sdb_embed_device(c_wb_adc_csr_sdb, x"00001000"),
-      1 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001400"),
-      2 => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001500"),
-      3 => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001600"),
-      4 => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001700"),
-      5 => f_sdb_embed_device(c_xwb_spi_sdb, x"00001800"),
-      6 => f_sdb_embed_device(c_wb_timetag_sdb, x"00001900")
+      c_WB_SLAVE_FMC_ADC     => f_sdb_embed_device(c_wb_adc_csr_sdb, x"00001000"),
+      c_WB_SLAVE_FMC_SYS_I2C => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001400"),
+      c_WB_SLAVE_FMC_EIC     => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001500"),
+      c_WB_SLAVE_FMC_I2C     => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001600"),
+      c_WB_SLAVE_FMC_ONEWIRE => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001700"),
+      c_WB_SLAVE_FMC_SPI     => f_sdb_embed_device(c_xwb_spi_sdb, x"00001800"),
+      c_WB_SLAVE_TIMETAG     => f_sdb_embed_device(c_wb_timetag_sdb, x"00001900")
       );
 
 
@@ -225,11 +225,11 @@ architecture rtl of fmc_adc_mezzanine is
   -- Signals declaration
   ------------------------------------------------------------------------------
 
-  -- Wishbone buse(s) from crossbar master port(s)
+  -- Wishbone buse(s) from master(s) to crossbar slave port(s)
   signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
   signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
 
-  -- Wishbone buse(s) to crossbar slave port(s)
+  -- Wishbone buse(s) from crossbar master port(s) to slave(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
@@ -274,7 +274,7 @@ architecture rtl of fmc_adc_mezzanine is
 begin
 
   ------------------------------------------------------------------------------
-  -- CSR wishbone crossbar
+  -- Main wishbone crossbar for mezzanine
   ------------------------------------------------------------------------------
 
   -- Additional register to help timing
@@ -284,13 +284,13 @@ begin
       rst_n_i   => sys_rst_n_i,
       slave_i   => wb_csr_slave_i,
       slave_o   => wb_csr_slave_o,
-      master_i  => cnx_slave_out(c_WB_MASTER),
-      master_o  => cnx_slave_in(c_WB_MASTER));
+      master_i  => cnx_master_in(c_WB_MASTER),
+      master_o  => cnx_master_out(c_WB_MASTER));
 
   cmp_sdb_crossbar : xwb_sdb_crossbar
     generic map (
-      g_num_masters => c_NUM_WB_SLAVES,
-      g_num_slaves  => c_NUM_WB_MASTERS,
+      g_num_masters => c_NUM_WB_MASTERS,
+      g_num_slaves  => c_NUM_WB_SLAVES,
       g_registered  => TRUE,
       g_wraparound  => TRUE,
       g_layout      => c_INTERCONNECT_LAYOUT,
@@ -298,10 +298,10 @@ begin
     port map (
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
-      slave_i   => cnx_slave_in,
-      slave_o   => cnx_slave_out,
-      master_i  => cnx_master_in,
-      master_o  => cnx_master_out);
+      slave_i   => cnx_master_out,
+      slave_o   => cnx_master_in,
+      master_i  => cnx_slave_out,
+      master_o  => cnx_slave_in);
 
   ------------------------------------------------------------------------------
   -- Mezzanine system managment I2C master
@@ -316,8 +316,8 @@ begin
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
 
-      slave_i => cnx_master_out(c_WB_SLAVE_FMC_SYS_I2C),
-      slave_o => cnx_master_in(c_WB_SLAVE_FMC_SYS_I2C),
+      slave_i => cnx_slave_in(c_WB_SLAVE_FMC_SYS_I2C),
+      slave_o => cnx_slave_out(c_WB_SLAVE_FMC_SYS_I2C),
       desc_o  => open,
 
       scl_pad_i(0)    => sys_scl_in,
@@ -349,8 +349,8 @@ begin
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
 
-      slave_i => cnx_master_out(c_WB_SLAVE_FMC_SPI),
-      slave_o => cnx_master_in(c_WB_SLAVE_FMC_SPI),
+      slave_i => cnx_slave_in(c_WB_SLAVE_FMC_SPI),
+      slave_o => cnx_slave_out(c_WB_SLAVE_FMC_SPI),
       desc_o  => open,
 
       pad_cs_o   => spi_ss_t,
@@ -393,8 +393,8 @@ begin
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
 
-      slave_i => cnx_master_out(c_WB_SLAVE_FMC_I2C),
-      slave_o => cnx_master_in(c_WB_SLAVE_FMC_I2C),
+      slave_i => cnx_slave_in(c_WB_SLAVE_FMC_I2C),
+      slave_o => cnx_slave_out(c_WB_SLAVE_FMC_I2C),
       desc_o  => open,
 
       scl_pad_i(0)    => si570_scl_in,
@@ -427,8 +427,8 @@ begin
       sys_clk_i   => sys_clk_i,
       sys_rst_n_i => sys_rst_n_i,
 
-      wb_csr_slave_i => cnx_master_out(c_WB_SLAVE_FMC_ADC),
-      wb_csr_slave_o => cnx_master_in(c_WB_SLAVE_FMC_ADC),
+      wb_csr_slave_i => cnx_slave_in(c_WB_SLAVE_FMC_ADC),
+      wb_csr_slave_o => cnx_slave_out(c_WB_SLAVE_FMC_ADC),
 
       wb_ddr_clk_i    => wb_ddr_clk_i,
       wb_ddr_rst_n_i  => wb_ddr_rst_n_i,
@@ -481,8 +481,8 @@ begin
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
 
-      slave_i => cnx_master_out(c_WB_SLAVE_FMC_ONEWIRE),
-      slave_o => cnx_master_in(c_WB_SLAVE_FMC_ONEWIRE),
+      slave_i => cnx_slave_in(c_WB_SLAVE_FMC_ONEWIRE),
+      slave_o => cnx_slave_out(c_WB_SLAVE_FMC_ONEWIRE),
       desc_o  => open,
 
       owr_pwren_o => open,
@@ -500,23 +500,23 @@ begin
     port map(
       rst_n_i       => sys_rst_n_i,
       clk_sys_i     => sys_clk_i,
-      wb_adr_i      => cnx_master_out(c_WB_SLAVE_FMC_EIC).adr(3 downto 2),  -- cnx_master_out.adr is byte address
-      wb_dat_i      => cnx_master_out(c_WB_SLAVE_FMC_EIC).dat,
-      wb_dat_o      => cnx_master_in(c_WB_SLAVE_FMC_EIC).dat,
-      wb_cyc_i      => cnx_master_out(c_WB_SLAVE_FMC_EIC).cyc,
-      wb_sel_i      => cnx_master_out(c_WB_SLAVE_FMC_EIC).sel,
-      wb_stb_i      => cnx_master_out(c_WB_SLAVE_FMC_EIC).stb,
-      wb_we_i       => cnx_master_out(c_WB_SLAVE_FMC_EIC).we,
-      wb_ack_o      => cnx_master_in(c_WB_SLAVE_FMC_EIC).ack,
-      wb_stall_o    => cnx_master_in(c_WB_SLAVE_FMC_EIC).stall,
+      wb_adr_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).adr(3 downto 2),  -- cnx_slave_in.adr is byte address
+      wb_dat_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).dat,
+      wb_dat_o      => cnx_slave_out(c_WB_SLAVE_FMC_EIC).dat,
+      wb_cyc_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).cyc,
+      wb_sel_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).sel,
+      wb_stb_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).stb,
+      wb_we_i       => cnx_slave_in(c_WB_SLAVE_FMC_EIC).we,
+      wb_ack_o      => cnx_slave_out(c_WB_SLAVE_FMC_EIC).ack,
+      wb_stall_o    => cnx_slave_out(c_WB_SLAVE_FMC_EIC).stall,
       wb_int_o      => eic_irq_o,
       irq_trig_i    => trigger_p,
       irq_acq_end_i => acq_end_irq_p
       );
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_FMC_EIC).err <= '0';
-  cnx_master_in(c_WB_SLAVE_FMC_EIC).rty <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC_EIC).err <= '0';
+  cnx_slave_out(c_WB_SLAVE_FMC_EIC).rty <= '0';
 
   -- Detects end of adc core writing to ddr
   p_ddr_wr_fifo_empty : process (sys_clk_i)
@@ -569,19 +569,19 @@ begin
       trig_tag_o  => trigger_tag,
       time_trig_o => time_trigger,
 
-      wb_adr_i => cnx_master_out(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_master_out.adr is byte address
-      wb_dat_i => cnx_master_out(c_WB_SLAVE_TIMETAG).dat,
-      wb_dat_o => cnx_master_in(c_WB_SLAVE_TIMETAG).dat,
-      wb_cyc_i => cnx_master_out(c_WB_SLAVE_TIMETAG).cyc,
-      wb_sel_i => cnx_master_out(c_WB_SLAVE_TIMETAG).sel,
-      wb_stb_i => cnx_master_out(c_WB_SLAVE_TIMETAG).stb,
-      wb_we_i  => cnx_master_out(c_WB_SLAVE_TIMETAG).we,
-      wb_ack_o => cnx_master_in(c_WB_SLAVE_TIMETAG).ack
+      wb_adr_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_slave_in.adr is byte address
+      wb_dat_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).dat,
+      wb_dat_o => cnx_slave_out(c_WB_SLAVE_TIMETAG).dat,
+      wb_cyc_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).cyc,
+      wb_sel_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).sel,
+      wb_stb_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).stb,
+      wb_we_i  => cnx_slave_in(c_WB_SLAVE_TIMETAG).we,
+      wb_ack_o => cnx_slave_out(c_WB_SLAVE_TIMETAG).ack
       );
 
   -- Unused wishbone signals
-  cnx_master_in(c_WB_SLAVE_TIMETAG).err   <= '0';
-  cnx_master_in(c_WB_SLAVE_TIMETAG).rty   <= '0';
-  cnx_master_in(c_WB_SLAVE_TIMETAG).stall <= '0';
+  cnx_slave_out(c_WB_SLAVE_TIMETAG).err   <= '0';
+  cnx_slave_out(c_WB_SLAVE_TIMETAG).rty   <= '0';
+  cnx_slave_out(c_WB_SLAVE_TIMETAG).stall <= '0';
 
 end rtl;
