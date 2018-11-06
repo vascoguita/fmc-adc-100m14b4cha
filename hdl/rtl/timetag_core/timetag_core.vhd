@@ -110,6 +110,9 @@ architecture rtl of timetag_core is
   signal acq_stop_tag  : t_timetag;
   signal acq_end_tag   : t_timetag;
 
+  signal time_trig     : std_logic;
+  signal time_trig_d   : std_logic;
+
   signal local_pps : std_logic;
 
   signal wr_enabled : std_logic := '0';
@@ -209,10 +212,21 @@ begin
   ------------------------------------------------------------------------------
   -- Time trigger signal generation (stretched to two 125MHz cycles)
   ------------------------------------------------------------------------------
-  time_trig_o <= '1' when ((time_trigger = current_time) or
-                           ((time_trigger.seconds = current_time.seconds) and
-                            (unsigned(time_trigger.coarse) + 1 = unsigned(current_time.coarse))))
-                 else '0';
+
+  time_trig <= '1' when (time_trigger = current_time) else '0';
+
+  process (clk_i)
+  begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        time_trig_d <= '0';
+      else
+        time_trig_d <= time_trig;
+      end if;
+    end if;
+  end process;
+
+  time_trig_o <= time_trig or time_trig_d;
 
   ------------------------------------------------------------------------------
   -- Last trigger event time-tag
