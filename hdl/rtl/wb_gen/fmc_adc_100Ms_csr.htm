@@ -851,10 +851,10 @@ CH4_TRIG_DLY
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
 <td  class="td_arrow_left">
-&rarr;
+&rArr;
 </td>
 <td  class="td_pblock_left">
-rst_n_i
+wb_adr_i[7:0]
 </td>
 <td  class="td_sym_center">
 
@@ -868,10 +868,10 @@ rst_n_i
 </tr>
 <tr>
 <td  class="td_arrow_left">
-&rarr;
+&rArr;
 </td>
 <td  class="td_pblock_left">
-clk_sys_i
+wb_dat_i[31:0]
 </td>
 <td  class="td_sym_center">
 
@@ -885,40 +885,6 @@ fmc_adc_100ms_csr_ctl_fsm_cmd_o[1:0]
 </tr>
 <tr>
 <td  class="td_arrow_left">
-&rArr;
-</td>
-<td  class="td_pblock_left">
-wb_adr_i[7:0]
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_fsm_cmd_wr_o
-</td>
-<td  class="td_arrow_right">
-&rarr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
-&rArr;
-</td>
-<td  class="td_pblock_left">
-wb_dat_i[31:0]
-</td>
-<td  class="td_sym_center">
-
-</td>
-<td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_fmc_clk_oe_o
-</td>
-<td  class="td_arrow_right">
-&rarr;
-</td>
-</tr>
-<tr>
-<td  class="td_arrow_left">
 &lArr;
 </td>
 <td  class="td_pblock_left">
@@ -928,7 +894,7 @@ wb_dat_o[31:0]
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_offset_dac_clr_n_o
+fmc_adc_100ms_csr_ctl_fsm_cmd_wr_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -945,7 +911,7 @@ wb_cyc_i
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_man_bitslip_o
+fmc_adc_100ms_csr_ctl_fmc_clk_oe_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -962,7 +928,7 @@ wb_sel_i[3:0]
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_test_data_en_o
+fmc_adc_100ms_csr_ctl_offset_dac_clr_n_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -979,7 +945,7 @@ wb_stb_i
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_trig_led_o
+fmc_adc_100ms_csr_ctl_man_bitslip_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -996,7 +962,7 @@ wb_we_i
 
 </td>
 <td  class="td_pblock_right">
-fmc_adc_100ms_csr_ctl_acq_led_o
+fmc_adc_100ms_csr_ctl_test_data_en_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -1008,6 +974,40 @@ fmc_adc_100ms_csr_ctl_acq_led_o
 </td>
 <td  class="td_pblock_left">
 wb_ack_o
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ctl_trig_led_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+&larr;
+</td>
+<td  class="td_pblock_left">
+wb_err_o
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_ctl_acq_led_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+&larr;
+</td>
+<td  class="td_pblock_left">
+wb_rty_o
 </td>
 <td  class="td_sym_center">
 
@@ -1354,6 +1354,23 @@ fmc_adc_100ms_csr_trig_en_sw_o
 </td>
 <td  class="td_pblock_right">
 fmc_adc_100ms_csr_trig_en_time_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_trig_en_alt_time_o
 </td>
 <td  class="td_arrow_right">
 &rarr;
@@ -4693,8 +4710,8 @@ CH1
 <td  class="td_unused">
 -
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+ALT_TIME
 </td>
 <td style="border: solid 1px black;" colspan=1  class="td_field">
 TIME
@@ -4725,6 +4742,10 @@ SW
 <li><b>
 TIME
 </b>[<i>read/write</i>]: Timetag trigger
+<br>0: disable<br>1: enable
+<li><b>
+ALT_TIME
+</b>[<i>read/write</i>]: Alternate timetag trigger
 <br>0: disable<br>1: enable
 <li><b>
 CH1

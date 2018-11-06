@@ -33,6 +33,7 @@ module main;
    end
 
    IVHDWishboneMaster Host ( clk_sys, rst_n );
+   IVHDWishboneMaster Trigin ( clk_sys, rst_n );
 
    wire t_wishbone_slave_data64_out dummy_wb64_out =
         '{ack: 1'b1, err: 1'b0, rty: 1'b0, stall: 1'b0, dat: 64'bx};
@@ -54,6 +55,8 @@ module main;
 	      .acq_end_irq_o       (),
 	      .eic_irq_o           (),
 	      .acq_cfg_ok_o        (),
+              .wb_trigin_slave_i   (Trigin.out),
+              .wb_trigin_slave_o   (Trigin.in),
 	      .ext_trigger_p_i     (ext_trig),
 	      .ext_trigger_n_i     (~ext_trig),
 	      .adc_dco_p_i         (adc0_dco),

@@ -78,8 +78,9 @@ package fmc_adc_100Ms_core_pkg is
       acq_end_p_o   : out std_logic;
 
       -- Trigger time-tag input
-      trigger_tag_i : in t_timetag;
-      time_trig_i   : in std_logic;
+      trigger_tag_i   : in t_timetag;
+      time_trig_i     : in std_logic;
+      alt_time_trig_i : in std_logic;
 
       -- FMC interface
       ext_trigger_p_i : in std_logic;             -- External trigger

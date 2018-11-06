@@ -69,8 +69,9 @@ entity fmc_adc_100Ms_core is
     acq_end_p_o   : out std_logic;
 
     -- Trigger time-tag inputs
-    trigger_tag_i : in t_timetag;
-    time_trig_i   : in std_logic;
+    trigger_tag_i   : in t_timetag;
+    time_trig_i     : in std_logic;
+    alt_time_trig_i : in std_logic;
 
     -- FMC interface
     ext_trigger_p_i : in std_logic;               -- External trigger
@@ -241,6 +242,9 @@ architecture rtl of fmc_adc_100Ms_core is
   signal time_trig                  : std_logic;
   signal time_trig_en               : std_logic;
   signal time_trig_fixed_delay      : std_logic_vector(4 downto 0);
+  signal alt_time_trig              : std_logic;
+  signal alt_time_trig_en           : std_logic;
+  signal alt_time_trig_fixed_delay  : std_logic_vector(4 downto 0);
   signal trig                       : std_logic;
   signal trig_align                 : std_logic;
   signal trig_fifo_din              : std_logic_vector(32 downto 0);
@@ -716,6 +720,7 @@ begin
   sw_trig                <= csr_regout.sw_trig_wr_o;
   sw_trig_en             <= csr_regout.trig_en_sw_o;
   time_trig_en           <= csr_regout.trig_en_time_o;
+  alt_time_trig_en       <= csr_regout.trig_en_alt_time_o;
   shots_value            <= csr_regout.shots_nb_o;
   undersample_factor     <= csr_regout.sr_undersample_o;
   pre_trig_value         <= csr_regout.pre_samples_o;
@@ -836,6 +841,15 @@ begin
       npulse_o => open,
       ppulse_o => time_trig);
 
+  cmp_alt_time_trig_sync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => '1',
+      data_i   => alt_time_trig_i,
+      synced_o => open,
+      npulse_o => open,
+      ppulse_o => alt_time_trig);
+
   -- Internal hardware trigger
   g_int_trig : for I in 1 to 4 generate
     int_trig_data(I) <= data_calibr_out(16*I-1 downto 16*I-16);
@@ -932,13 +946,15 @@ begin
   begin
     if rising_edge(fs_clk) then
       if fs_rst_n = '0' then
-        sw_trig_fixed_delay   <= (others => '0');
-        ext_trig_fixed_delay  <= (others => '0');
-        time_trig_fixed_delay <= (others => '0');
+        sw_trig_fixed_delay       <= (others => '0');
+        ext_trig_fixed_delay      <= (others => '0');
+        time_trig_fixed_delay     <= (others => '0');
+        alt_time_trig_fixed_delay <= (others => '0');
       else
         sw_trig_fixed_delay   <= sw_trig_fixed_delay(sw_trig_fixed_delay'high -1 downto 0) & sw_trig;
         ext_trig_fixed_delay  <= ext_trig_fixed_delay(ext_trig_fixed_delay'high -1 downto 0) & ext_trig_d;
         time_trig_fixed_delay <= time_trig_fixed_delay(time_trig_fixed_delay'high -1 downto 0) & time_trig;
+        alt_time_trig_fixed_delay <= alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'high -1 downto 0) & alt_time_trig;
       end if;
     end if;
   end process p_trig_shift;
@@ -950,7 +966,10 @@ begin
           (int_trig_d(2) and int_trig_en(2)) or
           (int_trig_d(3) and int_trig_en(3)) or
           (int_trig_d(4) and int_trig_en(4)) or
-          (time_trig_fixed_delay(time_trig_fixed_delay'HIGH) and time_trig_en);
+          (time_trig_fixed_delay(time_trig_fixed_delay'HIGH)
+           and time_trig_en) or
+          (alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'HIGH)
+           and alt_time_trig_en);
 
   ------------------------------------------------------------------------------
   -- Trigger source storage and synchronisation to system clock domain
@@ -959,7 +978,9 @@ begin
   trig_fifo_din <= trig & X"00000" &
                    int_trig_d(4) & int_trig_d(3) &
                    int_trig_d(2) & int_trig_d(1) &
-                   "000" & time_trig_fixed_delay(time_trig_fixed_delay'HIGH) &
+                   "00" &
+                   alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'HIGH) &
+                   time_trig_fixed_delay(time_trig_fixed_delay'HIGH) &
                    "00" & sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) &
                    ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH);
 

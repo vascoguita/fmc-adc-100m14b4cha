@@ -1,4 +1,5 @@
 WBGEN2=$(shell which wbgen2)
+CHEBY=cheby
 RTL=../
 SIM=../../testbench/include/
 TEX=../../../doc/manual/
@@ -12,3 +13,10 @@ fmc_adc_100Ms_csr:
 fmc_adc_eic:
 	$(WBGEN2) -l vhdl -V $(RTL)$@.vhd -f html -D $@.htm -C $@.h $@.wb
 	$(WBGEN2) -f texinfo -D $(TEX)$@.tex $@.wb
+
+fmc_adc_alt_trigin:
+	$(CHEBY) --gen-hdl=$(RTL)/$@.vhd -i $@.cheby
+
+fmc_adc_alt_trigout:
+	$(CHEBY) --gen-hdl=$(RTL)/$@.vhd -i $@.cheby
+

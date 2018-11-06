@@ -228,6 +228,16 @@ peripheral {
     };
 
     field {
+      name = "Alternate timetag trigger";
+      description = "0: disable\n1: enable";
+      prefix = "alt_time";
+      type = BIT;
+      access_bus = READ_WRITE;
+      access_dev = READ_ONLY;
+      clock = "fs_clk_i";
+    };
+
+    field {
       align = 8;
       name = "Channel 1 internal threshold trigger";
       description = "0: disable\n1: enable";

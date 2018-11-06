@@ -64,6 +64,10 @@ entity fmc_adc_mezzanine is
     eic_irq_o           : out std_logic;
     acq_cfg_ok_o        : out std_logic;
 
+    -- Alternate trigger input wishbone interface
+    wb_trigin_slave_i : in  t_wishbone_slave_in;
+    wb_trigin_slave_o : out t_wishbone_slave_out;
+
     -- FMC interface
     ext_trigger_p_i : in std_logic;               -- External trigger
     ext_trigger_n_i : in std_logic;
@@ -253,6 +257,14 @@ architecture rtl of fmc_adc_mezzanine is
   signal trigger_tag  : t_timetag;
   signal time_trigger : std_logic;
 
+  -- Alternative time trigger
+  signal alt_trigin_enable_in  : std_logic;
+  signal alt_trigin_enable_out : std_logic;
+  signal alt_trigin_enable_wr  : std_logic;
+  signal alt_trigin_tag        : t_timetag;
+  signal alt_time_trigger      : std_logic;
+  signal alt_trigin_secs       : std_logic_vector(63 downto 0);
+  signal alt_trigin_cycs       : std_logic_vector(31 downto 0);
 begin
 
   ------------------------------------------------------------------------------
@@ -448,8 +460,9 @@ begin
       acq_stop_p_o  => acq_stop_p,
       acq_end_p_o   => acq_end_p,
 
-      trigger_tag_i => trigger_tag,
-      time_trig_i   => time_trigger,
+      trigger_tag_i   => trigger_tag,
+      time_trig_i     => time_trigger,
+      alt_time_trig_i => alt_time_trigger,
 
       ext_trigger_p_i => ext_trigger_p_i,
       ext_trigger_n_i => ext_trigger_n_i,
@@ -577,6 +590,12 @@ begin
       trig_tag_o  => trigger_tag,
       time_trig_o => time_trigger,
 
+      alt_trigin_enable_o    => alt_trigin_enable_in,
+      alt_trigin_enable_i    => alt_trigin_enable_out,
+      alt_trigin_enable_wr_i => alt_trigin_enable_wr,
+      alt_trigin_tag_i       => alt_trigin_tag,
+      alt_trigin_o           => alt_time_trigger,
+
       wb_adr_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_slave_in.adr is byte address
       wb_dat_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).dat,
       wb_dat_o => cnx_slave_out(c_WB_SLAVE_TIMETAG).dat,
@@ -586,6 +605,26 @@ begin
       wb_we_i  => cnx_slave_in(c_WB_SLAVE_TIMETAG).we,
       wb_ack_o => cnx_slave_out(c_WB_SLAVE_TIMETAG).ack
       );
+
+  cmp_alt_trigin : entity work.alt_trigin
+    port map (
+      rst_n_i    => sys_rst_n_i,
+      clk_i      => sys_clk_i,
+      wb_i       => wb_trigin_slave_i,
+      wb_o       => wb_trigin_slave_o,
+
+      ctrl_enable_i  => alt_trigin_enable_in,
+      ctrl_enable_o  => alt_trigin_enable_out,
+      ctrl_wr_o      => alt_trigin_enable_wr,
+
+      seconds_i      => alt_trigin_secs,
+      cycles_i       => alt_trigin_cycs
+      );
+
+  alt_trigin_secs(39 downto 0)  <= alt_trigin_tag.seconds;
+  alt_trigin_secs(63 downto 40) <= (others => '0');
+  alt_trigin_cycs(27 downto 0)  <= alt_trigin_tag.coarse;
+  alt_trigin_cycs(31 downto 28) <= (others => '0');
 
   -- Unused wishbone signals
   cnx_slave_out(c_WB_SLAVE_TIMETAG).err   <= '0';

@@ -8,7 +8,7 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
--- Last update: 2016-06-22
+-- Last update: 2018-11-06
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Implements a UTC seconds counter and a 125MHz system clock
@@ -62,6 +62,13 @@ entity timetag_core is
     -- Trigger time-tag output
     trig_tag_o  : out t_timetag;
     time_trig_o : out std_logic;
+
+    --  Alternative trigger in time
+    alt_trigin_enable_o    : out std_logic;
+    alt_trigin_enable_i    : in  std_logic;
+    alt_trigin_enable_wr_i : in  std_logic;
+    alt_trigin_tag_i       : in  t_timetag;
+    alt_trigin_o           : out std_logic;
 
     -- Wishbone interface
     wb_adr_i : in  std_logic_vector(4 downto 0);
@@ -119,6 +126,10 @@ architecture rtl of timetag_core is
 
   signal regin  : t_timetag_core_in_registers;
   signal regout : t_timetag_core_out_registers;
+
+  signal alt_trigin        : std_logic;
+  signal alt_trigin_d      : std_logic;
+  signal alt_trigin_enable : std_logic;
 
 begin
 
@@ -227,6 +238,41 @@ begin
   end process;
 
   time_trig_o <= time_trig or time_trig_d;
+
+  --  Alternative time trigger generation (also stretched).
+  alt_trigin <= alt_trigin_enable when alt_trigin_tag_i = current_time else '0';
+
+  process (clk_i)
+  begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        alt_trigin_enable <= '0';
+      else
+        if alt_trigin_enable_wr_i = '1' then
+          --  User write.
+          alt_trigin_enable <= alt_trigin_enable_i;
+        elsif alt_trigin = '1' then
+          --  Auto clear after trigger.
+          alt_trigin_enable <= '0';
+        end if;
+      end if;
+    end if;
+  end process;
+
+  alt_trigin_enable_o <= alt_trigin_enable;
+
+  process (clk_i)
+  begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        alt_trigin_d <= '0';
+      else
+        alt_trigin_d <= alt_trigin;
+      end if;
+    end if;
+  end process;
+
+  alt_trigin_o <= alt_trigin or alt_trigin_d;
 
   ------------------------------------------------------------------------------
   -- Last trigger event time-tag
