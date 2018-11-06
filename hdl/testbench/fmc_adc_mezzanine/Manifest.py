@@ -12,6 +12,7 @@ fetchto = "../../ip_cores"
 include_dirs = [
     "../include",
     fetchto + "/general-cores/sim/",
+    fetchto + "/general-cores/modules/wishbone/wb_spi/"
 ]
 
 files = [

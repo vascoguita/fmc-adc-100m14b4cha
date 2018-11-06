@@ -21,8 +21,10 @@ module main;
    reg[3:0] adc0_dat_even = 4'h0;
    reg signed [13:0] adc0_data = 0;
 
+   // 400Mhz
    always #1.25ns adc0_dco <= ~adc0_dco;
 
+   // 125Mhz
    always #4ns clk_sys <= ~clk_sys;
 
    initial begin
@@ -32,30 +34,21 @@ module main;
 
    IVHDWishboneMaster Host ( clk_sys, rst_n );
 
+   wire t_wishbone_slave_data64_out dummy_wb64_out =
+        '{ack: 1'b1, err: 1'b0, rty: 1'b0, stall: 1'b0, dat: 64'bx};
+
    fmc_adc_mezzanine
      #(
        .g_multishot_ram_size(2048)
        ) DUT (
 	      .sys_clk_i           (clk_sys),
 	      .sys_rst_n_i         (rst_n),
-	      .wb_csr_adr_i        (Host.out.adr),
-	      .wb_csr_dat_i        (Host.out.dat),
-	      .wb_csr_dat_o        (Host.in.dat),
-	      .wb_csr_cyc_i        (Host.out.cyc),
-	      .wb_csr_sel_i        (Host.out.sel),
-	      .wb_csr_stb_i        (Host.out.stb),
-	      .wb_csr_we_i         (Host.out.we),
-	      .wb_csr_ack_o        (Host.in.ack),
-	      .wb_csr_stall_o      (Host.in.stall),
+	      .wb_csr_slave_i      (Host.out),
+	      .wb_csr_slave_o      (Host.in),
 	      .wb_ddr_clk_i        (clk_sys),
-	      .wb_ddr_adr_o        (),
-	      .wb_ddr_dat_o        (),
-	      .wb_ddr_sel_o        (),
-	      .wb_ddr_stb_o        (),
-	      .wb_ddr_we_o         (),
-	      .wb_ddr_cyc_o        (),
-	      .wb_ddr_ack_i        (1'b1),
-	      .wb_ddr_stall_i      (1'b0),
+              .wb_ddr_rst_n_i      (rst_n),
+	      .wb_ddr_master_i     (dummy_wb64_out),
+              .wb_ddr_master_o     (),
 	      .ddr_wr_fifo_empty_i (),
 	      .trig_irq_o          (),
 	      .acq_end_irq_o       (),
@@ -111,6 +104,7 @@ module main;
 	end
      end
 
+   //  Generate a triangular waveform on all channels.
    always@(posedge adc0_fr)
      begin
 	if ((adc0_data > 400) || (adc0_data < -400)) begin

@@ -52,9 +52,7 @@ package fmc_adc_100Ms_core_pkg is
     generic(
       g_MULTISHOT_RAM_SIZE : natural                        := 2048;
       g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
-      g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE;
-      g_WB_DDR_MODE        : t_wishbone_interface_mode      := PIPELINED;
-      g_WB_DDR_GRANULARITY : t_wishbone_address_granularity := BYTE
+      g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE
       );
     port (
       -- Clock, reset
