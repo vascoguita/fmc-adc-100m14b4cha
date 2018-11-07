@@ -113,28 +113,6 @@ end fmc_adc_mezzanine;
 architecture rtl of fmc_adc_mezzanine is
 
   ------------------------------------------------------------------------------
-  -- Components declaration
-  ------------------------------------------------------------------------------
-  component fmc_adc_eic
-    port (
-      rst_n_i       : in  std_logic;
-      clk_sys_i     : in  std_logic;
-      wb_adr_i      : in  std_logic_vector(1 downto 0);
-      wb_dat_i      : in  std_logic_vector(31 downto 0);
-      wb_dat_o      : out std_logic_vector(31 downto 0);
-      wb_cyc_i      : in  std_logic;
-      wb_sel_i      : in  std_logic_vector(3 downto 0);
-      wb_stb_i      : in  std_logic;
-      wb_we_i       : in  std_logic;
-      wb_ack_o      : out std_logic;
-      wb_stall_o    : out std_logic;
-      wb_int_o      : out std_logic;
-      irq_trig_i    : in  std_logic;
-      irq_acq_end_i : in  std_logic
-      );
-  end component fmc_adc_eic;
-
-  ------------------------------------------------------------------------------
   -- SDB crossbar constants declaration
   ------------------------------------------------------------------------------
 
@@ -496,7 +474,7 @@ begin
   ------------------------------------------------------------------------------
   -- FMC0 interrupt controller
   ------------------------------------------------------------------------------
-  cmp_fmc0_eic : fmc_adc_eic
+  cmp_fmc0_eic : entity work.fmc_adc_eic
     port map(
       rst_n_i       => sys_rst_n_i,
       clk_sys_i     => sys_clk_i,
