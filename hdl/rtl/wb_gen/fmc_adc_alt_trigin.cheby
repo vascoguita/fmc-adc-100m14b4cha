@@ -13,7 +13,7 @@ memory-map:
        - field:
           name: enable
           description: Enable trigger, cleared when triggered
-          range: 1
+          range: 0
           x-hdl:
             type: wire
      x-hdl:
@@ -23,10 +23,10 @@ memory-map:
      description: Time (seconds) to trigger
      width: 64
      type: unsigned
-     access: ro
+     access: rw
   - reg:
      name: cycles
      description: Time (cycles) to trigger
      width: 32
      type: unsigned
-     access: ro
+     access: rw

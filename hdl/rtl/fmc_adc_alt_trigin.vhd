@@ -18,10 +18,10 @@ entity alt_trigin is
     ctrl_wr_o            : out   std_logic;
 
     -- Time (seconds) to trigger
-    seconds_i            : in    std_logic_vector(63 downto 0);
+    seconds_o            : out   std_logic_vector(63 downto 0);
 
     -- Time (cycles) to trigger
-    cycles_i             : in    std_logic_vector(31 downto 0)
+    cycles_o             : out   std_logic_vector(31 downto 0)
   );
 end alt_trigin;
 
@@ -32,6 +32,8 @@ architecture syn of alt_trigin is
   signal ack_int                        : std_logic;
   signal rd_ack_int                     : std_logic;
   signal wr_ack_int                     : std_logic;
+  signal seconds_reg                    : std_logic_vector(63 downto 0);
+  signal cycles_reg                     : std_logic_vector(31 downto 0);
   signal wr_ack_done_int                : std_logic;
   signal reg_rdat_int                   : std_logic_vector(31 downto 0);
   signal rd_ack1_int                    : std_logic;
@@ -48,6 +50,8 @@ begin
   wb_o.err <= '0';
 
   -- Assign outputs
+  seconds_o <= seconds_reg;
+  cycles_o <= cycles_reg;
 
   -- Process for write requests.
   process (clk_i, rst_n_i) begin
@@ -55,6 +59,9 @@ begin
       wr_ack_int <= '0';
       wr_ack_done_int <= '0';
       ctrl_wr_o <= '0';
+      seconds_reg <= "0000000000000000000000000000000000000000000000000000000000000000";
+      seconds_reg <= "0000000000000000000000000000000000000000000000000000000000000000";
+      cycles_reg <= "00000000000000000000000000000000";
     elsif rising_edge(clk_i) then
       ctrl_wr_o <= '0';
       if wr_int = '1' then
@@ -66,7 +73,7 @@ begin
           when "0" => 
             -- Register ctrl
             ctrl_wr_o <= '1';
-            ctrl_enable_o <= wb_i.dat(1);
+            ctrl_enable_o <= wb_i.dat(0);
             wr_ack_int <= not wr_ack_done_int;
           when others =>
             wr_ack_int <= not wr_ack_done_int;
@@ -75,9 +82,11 @@ begin
           case wb_i.adr(2 downto 2) is
           when "0" => 
             -- Register seconds
+            seconds_reg(63 downto 32) <= wb_i.dat;
             wr_ack_int <= not wr_ack_done_int;
           when "1" => 
             -- Register seconds
+            seconds_reg(31 downto 0) <= wb_i.dat;
             wr_ack_int <= not wr_ack_done_int;
           when others =>
             wr_ack_int <= not wr_ack_done_int;
@@ -86,6 +95,7 @@ begin
           case wb_i.adr(2 downto 2) is
           when "0" => 
             -- Register cycles
+            cycles_reg <= wb_i.dat;
             wr_ack_int <= not wr_ack_done_int;
           when others =>
             wr_ack_int <= not wr_ack_done_int;
@@ -107,28 +117,30 @@ begin
     elsif rising_edge(clk_i) then
       if rd_int = '1' and rd_ack1_int = '0' then
         rd_ack1_int <= '1';
+        reg_rdat_int <= (others => '0');
         case wb_i.adr(4 downto 3) is
         when "00" => 
           case wb_i.adr(2 downto 2) is
           when "0" => 
             -- ctrl
+            reg_rdat_int(0) <= ctrl_enable_i;
           when others =>
           end case;
         when "01" => 
           case wb_i.adr(2 downto 2) is
           when "0" => 
             -- seconds
-            reg_rdat_int <= seconds_i(63 downto 32);
+            reg_rdat_int <= seconds_reg(63 downto 32);
           when "1" => 
             -- seconds
-            reg_rdat_int <= seconds_i(31 downto 0);
+            reg_rdat_int <= seconds_reg(31 downto 0);
           when others =>
           end case;
         when "10" => 
           case wb_i.adr(2 downto 2) is
           when "0" => 
             -- cycles
-            reg_rdat_int <= cycles_i;
+            reg_rdat_int <= cycles_reg;
           when others =>
           end case;
         when others =>

@@ -3,6 +3,7 @@
 `include "vhd_wishbone_master.svh"
 `include "fmc_adc_100Ms_csr.v"
 `include "timetag_core_regs.v"
+`include "fmc_adc_alt_trigin.v"
 
 `define SDB_ADDR 'h0000
 `define CSR_BASE 'h1000
@@ -161,7 +162,7 @@ module main;
 
    initial begin
 
-      CWishboneAccessor acc;
+      CWishboneAccessor acc, trigin_acc;
       uint64_t val, expected;
 
       $timeformat (-6, 3, "us", 10);
@@ -169,7 +170,7 @@ module main;
       acc = Host.get_accessor();
       acc.set_mode(PIPELINED);
 
-      acc.set_mode(PIPELINED);
+      trigin_acc = Trigin.get_accessor();
 
       #1us;
 
@@ -208,6 +209,7 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_TRIG_THRES, val);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_TRIG_THRES, val);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_TRIG_THRES, val);
+      // Enable only software trigger.
       val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
@@ -226,7 +228,7 @@ module main;
       acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_COARSE, 'h00000000); // timetag core ticks
 
       wait (acq_fsm_state == 1);
-      $display("<%t> START ACQ 1/4", $realtime);
+      $display("<%t> START ACQ 1", $realtime);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
       #200ns;
@@ -234,13 +236,13 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFF); // soft trigger
 
       wait (acq_fsm_state == 1);
-      $display("<%t> END ACQ 1/4", $realtime);
+      $display("<%t> END ACQ 1", $realtime);
 
       #200ns;
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h00000003); // #nshots: 3x multi-shot acq
 
-      $display("<%t> START ACQ 2/4", $realtime);
+      $display("<%t> START ACQ 2", $realtime);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
       #500ns;
@@ -256,7 +258,7 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFC); // soft trigger
 
       wait (acq_fsm_state == 1);
-      $display("<%t> END ACQ 2/4", $realtime);
+      $display("<%t> END ACQ 2", $realtime);
 
       #1us;
 
@@ -268,7 +270,7 @@ module main;
 	    (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH3_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
-      $display("<%t> START ACQ 3/4", $realtime);
+      $display("<%t> START ACQ 3", $realtime);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
       #1us;
@@ -304,7 +306,7 @@ module main;
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000002);
 
-      $display("<%t> START ACQ 4/4", $realtime);
+      $display("<%t> START ACQ 4", $realtime);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
       #1us;
@@ -322,7 +324,49 @@ module main;
       ext_trig <= 1'b0;
 
       wait (acq_fsm_state == 1);
-      $display("<%t> END ACQ 4/4", $realtime);
+      $display("<%t> END ACQ 4", $realtime);
+
+      #1us;
+
+      // set time trigger
+      trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 0, 'h00000032);
+      trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 4, 'h00005a34);
+      trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES + 0, 'h00001000);
+      trigin_acc.write(`ADDR_ALT_TRIGIN_CTRL, `ALT_TRIGIN_CTRL_ENABLE);
+
+      trigin_acc.read(`ADDR_ALT_TRIGIN_CTRL, val);
+      expected = `ALT_TRIGIN_CTRL_ENABLE;
+      if (val != expected)
+	begin
+	   $fatal (1, "trigin ctrl error (got 0x%8x, expected 0x%8x).",
+                   val, expected);
+	end
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000001);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000008);
+
+      // FMC-ADC core trigger configuration
+      val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_ALT_TIME_OFFSET);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000001);
+
+      $display("<%t> START ACQ 5", $realtime);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
+
+      #1us;
+
+      wait (acq_fsm_state == 1);
+
+      trigin_acc.read(`ADDR_ALT_TRIGIN_CTRL, val);
+      expected = 0;
+      if (val != expected)
+	begin
+	   $fatal (1, "trigin ctrl error (got 0x%8x, expected 0x%8x).",
+                   val, expected);
+	end
+
+      $display("<%t> END ACQ 5", $realtime);
 
       #1us;
 

@@ -617,14 +617,12 @@ begin
       ctrl_enable_o  => alt_trigin_enable_out,
       ctrl_wr_o      => alt_trigin_enable_wr,
 
-      seconds_i      => alt_trigin_secs,
-      cycles_i       => alt_trigin_cycs
+      seconds_o      => alt_trigin_secs,
+      cycles_o       => alt_trigin_cycs
       );
 
-  alt_trigin_secs(39 downto 0)  <= alt_trigin_tag.seconds;
-  alt_trigin_secs(63 downto 40) <= (others => '0');
-  alt_trigin_cycs(27 downto 0)  <= alt_trigin_tag.coarse;
-  alt_trigin_cycs(31 downto 28) <= (others => '0');
+  alt_trigin_tag <= (seconds => alt_trigin_secs(39 downto 0),
+                     coarse => alt_trigin_cycs(27 downto 0));
 
   -- Unused wishbone signals
   cnx_slave_out(c_WB_SLAVE_TIMETAG).err   <= '0';
