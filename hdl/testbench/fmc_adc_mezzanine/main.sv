@@ -2,6 +2,7 @@
 
 `include "vhd_wishbone_master.svh"
 `include "fmc_adc_100Ms_csr.v"
+`include "timetag_core_regs.v"
 
 `define SDB_ADDR 'h0000
 `define CSR_BASE 'h1000
@@ -220,9 +221,9 @@ module main;
 
       #1us;
 
-      acc.write(`TAG_BASE + 0, 'h00000032); // timetag core seconds high
-      acc.write(`TAG_BASE + 4, 'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + 8, 'h00000000); // timetag core ticks
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_SECONDS_UPPER, 'h00000032); // timetag core seconds high
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_SECONDS_LOWER, 'h00005a34); // timetag core seconds low
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_COARSE, 'h00000000); // timetag core ticks
 
       wait (acq_fsm_state == 1);
       $display("<%t> START ACQ 1/4", $realtime);
@@ -279,14 +280,17 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFD); // soft trigger
 
       wait (acq_fsm_state == 1);
-      $display("<%t> END ACQ 3/4", $realtime);
+      $display("<%t> END ACQ 3", $realtime);
 
       #1us;
 
       // set time trigger
-      acc.write(`TAG_BASE + 'h0c, 'h00000032); // timetag core seconds high
-      acc.write(`TAG_BASE + 'h10, 'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + 'h14, 'h00000e00); // timetag core ticks
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_UPPER,
+                'h00000032); // timetag core seconds high
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_LOWER,
+                'h00005a34); // timetag core seconds low
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE,
+                'h00000e00); // timetag core ticks
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000010);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000080);
