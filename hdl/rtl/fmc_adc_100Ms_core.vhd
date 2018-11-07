@@ -897,12 +897,10 @@ begin
           int_trig_d(I) <= '0';
         else
           if int_trig_delay(I) = X"00000000" then
-            if int_trig(I) = '1' then
-              int_trig_d(I) <= '1';
-            else
-              int_trig_d(I) <= '0';
-            end if;
+            --  No delay: direct assignment.
+            int_trig_d(I) <= int_trig(I);
           else
+            --  Delay set by the counter.
             if int_trig_delay_cnt(I) = X"00000001" then
               int_trig_d(I) <= '1';
             else
