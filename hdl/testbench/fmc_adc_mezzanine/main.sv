@@ -166,6 +166,7 @@ module main;
       $timeformat (-6, 3, "us", 10);
 
       acc = Host.get_accessor();
+      acc.set_mode(PIPELINED);
 
       acc.set_mode(PIPELINED);
 
