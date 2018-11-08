@@ -39,48 +39,12 @@ use IEEE.NUMERIC_STD.all;
 package timetag_core_pkg is
 
   ------------------------------------------------------------------------------
-  -- Constants declaration
-  ------------------------------------------------------------------------------
-
-  ------------------------------------------------------------------------------
   -- Types declaration
   ------------------------------------------------------------------------------
   type t_timetag is record
     seconds : std_logic_vector(39 downto 0);
     coarse  : std_logic_vector(27 downto 0);
   end record t_timetag;
-
-  ------------------------------------------------------------------------------
-  -- Components declaration
-  ------------------------------------------------------------------------------
-  component timetag_core is
-    port (
-      clk_i                  : in  std_logic;
-      rst_n_i                : in  std_logic;
-      trigger_p_i            : in  std_logic;
-      acq_start_p_i          : in  std_logic;
-      acq_stop_p_i           : in  std_logic;
-      acq_end_p_i            : in  std_logic;
-      wr_enabled_i           : in  std_logic;
-      wr_tm_time_valid_i     : in  std_logic;
-      wr_tm_tai_i            : in  std_logic_vector(39 downto 0);
-      wr_tm_cycles_i         : in  std_logic_vector(27 downto 0);
-      trig_tag_o             : out t_timetag;
-      time_trig_o            : out std_logic;
-      alt_trigin_enable_o    : out std_logic;
-      alt_trigin_enable_i    : in  std_logic;
-      alt_trigin_enable_wr_i : in  std_logic;
-      alt_trigin_tag_i       : in  t_timetag;
-      alt_trigin_o           : out std_logic;
-      wb_adr_i               : in  std_logic_vector(4 downto 0);
-      wb_dat_i               : in  std_logic_vector(31 downto 0);
-      wb_dat_o               : out std_logic_vector(31 downto 0);
-      wb_cyc_i               : in  std_logic;
-      wb_sel_i               : in  std_logic_vector(3 downto 0);
-      wb_stb_i               : in  std_logic;
-      wb_we_i                : in  std_logic;
-      wb_ack_o               : out std_logic);
-  end component timetag_core;
 
 end timetag_core_pkg;
 

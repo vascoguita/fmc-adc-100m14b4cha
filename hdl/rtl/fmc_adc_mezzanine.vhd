@@ -68,6 +68,10 @@ entity fmc_adc_mezzanine is
     wb_trigin_slave_i : in  t_wishbone_slave_in;
     wb_trigin_slave_o : out t_wishbone_slave_out;
 
+    -- Trigout wishbone interface
+    wb_trigout_slave_i : in  t_wishbone_slave_in;
+    wb_trigout_slave_o : out t_wishbone_slave_out;
+
     -- FMC interface
     ext_trigger_p_i : in std_logic;               -- External trigger
     ext_trigger_n_i : in std_logic;
@@ -256,6 +260,8 @@ architecture rtl of fmc_adc_mezzanine is
   signal acq_end_p    : std_logic;
   signal trigger_tag  : t_timetag;
   signal time_trigger : std_logic;
+
+  signal current_time : t_timetag;
 
   -- Alternative time trigger
   signal alt_trigin_enable_in  : std_logic;
@@ -455,6 +461,9 @@ begin
 
       acq_cfg_ok_o => acq_cfg_ok_o,
 
+      wb_trigout_slave_i => wb_trigout_slave_i,
+      wb_trigout_slave_o => wb_trigout_slave_o,
+
       trigger_p_o   => trigger_p,
       acq_start_p_o => acq_start_p,
       acq_stop_p_o  => acq_stop_p,
@@ -463,6 +472,12 @@ begin
       trigger_tag_i   => trigger_tag,
       time_trig_i     => time_trigger,
       alt_time_trig_i => alt_time_trigger,
+
+      wr_tm_link_up_i    => wr_tm_link_up_i,
+      wr_tm_time_valid_i => wr_tm_time_valid_i,
+      wr_enable_i        => wr_enable_i,
+
+      current_time_i     => current_time,
 
       ext_trigger_p_i => ext_trigger_p_i,
       ext_trigger_n_i => ext_trigger_n_i,
@@ -571,7 +586,7 @@ begin
   ------------------------------------------------------------------------------
   -- Time-tagging core
   ------------------------------------------------------------------------------
-  cmp_timetag_core : timetag_core
+  cmp_timetag_core : entity work.timetag_core
     port map(
       clk_i   => sys_clk_i,
       rst_n_i => sys_rst_n_i,
@@ -595,6 +610,8 @@ begin
       alt_trigin_enable_wr_i => alt_trigin_enable_wr,
       alt_trigin_tag_i       => alt_trigin_tag,
       alt_trigin_o           => alt_time_trigger,
+
+      current_time_o         => current_time,
 
       wb_adr_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_slave_in.adr is byte address
       wb_dat_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).dat,

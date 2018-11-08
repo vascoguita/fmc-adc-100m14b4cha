@@ -70,6 +70,8 @@ entity timetag_core is
     alt_trigin_tag_i       : in  t_timetag;
     alt_trigin_o           : out std_logic;
 
+    current_time_o         : out t_timetag;
+
     -- Wishbone interface
     wb_adr_i : in  std_logic_vector(4 downto 0);
     wb_dat_i : in  std_logic_vector(31 downto 0);
@@ -219,6 +221,8 @@ begin
   end process p_timetag_coarse_cnt;
 
   current_time.coarse <= wr_tm_cycles_i when wr_enabled = '1' else time_counter.coarse;
+
+  current_time_o <= current_time;
 
   ------------------------------------------------------------------------------
   -- Time trigger signal generation (stretched to two 125MHz cycles)

@@ -71,6 +71,10 @@ package fmc_adc_100Ms_core_pkg is
       -- Acquisition configuration status flag
       acq_cfg_ok_o : out std_logic;
 
+      -- Trigout wishbone interface
+      wb_trigout_slave_i : in  t_wishbone_slave_in;
+      wb_trigout_slave_o : out t_wishbone_slave_out;
+
       -- Events output pulses
       trigger_p_o   : out std_logic;
       acq_start_p_o : out std_logic;
@@ -81,6 +85,13 @@ package fmc_adc_100Ms_core_pkg is
       trigger_tag_i   : in t_timetag;
       time_trig_i     : in std_logic;
       alt_time_trig_i : in std_logic;
+
+      -- WR status (for trigout).
+      wr_tm_link_up_i    : in std_logic;
+      wr_tm_time_valid_i : in std_logic;
+      wr_enable_i        : in std_logic;
+
+      current_time_i     : in t_timetag;
 
       -- FMC interface
       ext_trigger_p_i : in std_logic;             -- External trigger
