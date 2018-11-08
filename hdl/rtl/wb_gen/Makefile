@@ -18,4 +18,4 @@ fmc_adc_alt_trigin:
 	$(CHEBY) --gen-hdl=$(RTL)/$@.vhd --gen-consts=$(SIM)/$@.v -i $@.cheby
 
 fmc_adc_alt_trigout:
-	$(CHEBY) --gen-hdl=$(RTL)/$@.vhd -i $@.cheby
+	$(CHEBY) --gen-hdl=$(RTL)/$@.vhd --gen-consts=$(SIM)/$@.v -i $@.cheby

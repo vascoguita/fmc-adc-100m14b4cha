@@ -4,6 +4,7 @@
 `include "fmc_adc_100Ms_csr.v"
 `include "timetag_core_regs.v"
 `include "fmc_adc_alt_trigin.v"
+`include "fmc_adc_alt_trigout.v"
 
 `define SDB_ADDR 'h0000
 `define CSR_BASE 'h1000
@@ -36,6 +37,7 @@ module main;
 
    IVHDWishboneMaster Host ( clk_sys, rst_n );
    IVHDWishboneMaster Trigin ( clk_sys, rst_n );
+   IVHDWishboneMaster Trigout ( clk_sys, rst_n );
 
    wire t_wishbone_slave_data64_out dummy_wb64_out =
         '{ack: 1'b1, err: 1'b0, rty: 1'b0, stall: 1'b0, dat: 64'bx};
@@ -59,6 +61,8 @@ module main;
 	      .acq_cfg_ok_o        (),
               .wb_trigin_slave_i   (Trigin.out),
               .wb_trigin_slave_o   (Trigin.in),
+              .wb_trigout_slave_i  (Trigout.out),
+              .wb_trigout_slave_o  (Trigout.in),
 	      .ext_trigger_p_i     (ext_trig),
 	      .ext_trigger_n_i     (~ext_trig),
 	      .adc_dco_p_i         (adc0_dco),
@@ -162,7 +166,7 @@ module main;
 
    initial begin
 
-      CWishboneAccessor acc, trigin_acc;
+      CWishboneAccessor acc, trigin_acc, trigout_acc;
       uint64_t val, expected;
 
       $timeformat (-6, 3, "us", 10);
@@ -172,13 +176,17 @@ module main;
 
       trigin_acc = Trigin.get_accessor();
 
+      trigout_acc = Trigout.get_accessor();
+
       #1us;
 
+      //  Check SDB
       expected = 'h5344422d;
       acc.read(`SDB_ADDR, val);
       if (val != expected)
 	$fatal (1, "Unable to detect SDB header at offset 0x%8x.", `SDB_ADDR);
 
+      //  Check status after reset
       expected = 'h19;
       acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val);
       if (val != expected)
@@ -220,6 +228,21 @@ module main;
 	   adc_status_print(val);
 	   $fatal (1, "ADC status error (got 0x%8x, expected 0x%8x).", val, expected);
 	end
+
+      // Check trigout status
+      trigout_acc.read(`ADDR_ALT_TRIGOUT_STATUS, val);
+      val &= `ALT_TRIGOUT_TS_PRESENT;
+      expected = 0;
+      if (val != expected)
+	$fatal (1, "trigout status error (got 0x%8x, expected 0x%8x).",
+                val, expected);
+
+      //  Save all triggers in trigout fifo.
+      trigout_acc.write(`ADDR_ALT_TRIGOUT_CTRL, (  `ALT_TRIGOUT_CH1_ENABLE
+                                                 | `ALT_TRIGOUT_CH2_ENABLE
+                                                 | `ALT_TRIGOUT_CH3_ENABLE
+                                                 | `ALT_TRIGOUT_CH4_ENABLE
+                                                 | `ALT_TRIGOUT_EXT_ENABLE));
 
       #1us;
 
@@ -331,7 +354,7 @@ module main;
       // set time trigger
       trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 0, 'h00000032);
       trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 4, 'h00005a34);
-      trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES + 0, 'h00001000);
+      trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES, 'h00001000);
       trigin_acc.write(`ADDR_ALT_TRIGIN_CTRL, `ALT_TRIGIN_CTRL_ENABLE);
 
       trigin_acc.read(`ADDR_ALT_TRIGIN_CTRL, val);
@@ -367,6 +390,23 @@ module main;
 	end
 
       $display("<%t> END ACQ 5", $realtime);
+
+      $display("<%t> read trigout fifo", $realtime);
+
+      while (1) begin
+         uint64_t sec_hi, sec_lo, cycs;
+
+         trigout_acc.read(`ADDR_ALT_TRIGOUT_STATUS, val);
+         if (!(val & `ALT_TRIGOUT_TS_PRESENT))
+           break;
+
+         trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 0, sec_hi);
+         trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 4, sec_lo);
+         trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_CYCLES, cycs);
+
+         $display("trigout TS: 0x%16x 0x%8x",
+                  ((sec_hi << 32) | sec_lo), cycs);
+      end;
 
       #1us;
 

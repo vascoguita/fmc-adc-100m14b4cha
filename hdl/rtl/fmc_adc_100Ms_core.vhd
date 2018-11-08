@@ -1794,7 +1794,7 @@ begin
     gen_trigout_sync : for i in trigout_triggers'range generate
       cmp_trigout_sync : gc_sync_ffs
         port map (
-          clk_i    => fs_clk,
+          clk_i    => sys_clk_i,
           rst_n_i  => '1',
           data_i   => trigout_fs_triggers(i),
           synced_o => open,
@@ -1810,7 +1810,7 @@ begin
       generic map (
         g_data_width             => t_trigout_data'length,
         g_size                   => 16,
-        g_show_ahead             => FALSE,
+        g_show_ahead             => TRUE,
         g_with_empty             => TRUE,
         g_with_full              => TRUE,
         g_with_almost_empty      => FALSE,
