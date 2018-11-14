@@ -56,11 +56,12 @@ entity fmc_adc_mezzanine is
     wb_ddr_master_i : in  t_wishbone_master_data64_in;
     wb_ddr_master_o : out t_wishbone_master_data64_out;
 
-    -- Interrupts
+    -- Interrupts and status
     ddr_wr_fifo_empty_i : in  std_logic;
     trig_irq_o          : out std_logic;
     acq_end_irq_o       : out std_logic;
     eic_irq_o           : out std_logic;
+    acq_cfg_ok_o        : out std_logic;
 
     -- FMC interface
     ext_trigger_p_i : in std_logic;               -- External trigger
@@ -412,6 +413,8 @@ begin
       wb_ddr_rst_n_i  => wb_ddr_rst_n_i,
       wb_ddr_master_o => wb_ddr_master_o,
       wb_ddr_master_i => wb_ddr_master_i,
+
+      acq_cfg_ok_o => acq_cfg_ok_o,
 
       trigger_p_o   => trigger_p,
       acq_start_p_o => acq_start_p,

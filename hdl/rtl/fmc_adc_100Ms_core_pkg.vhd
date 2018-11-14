@@ -69,6 +69,9 @@ package fmc_adc_100Ms_core_pkg is
       wb_ddr_master_i : in  t_wishbone_master_data64_in;
       wb_ddr_master_o : out t_wishbone_master_data64_out;
 
+      -- Acquisition configuration status flag
+      acq_cfg_ok_o : out std_logic;
+
       -- Events output pulses
       trigger_p_o   : out std_logic;
       acq_start_p_o : out std_logic;

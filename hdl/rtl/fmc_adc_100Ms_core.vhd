@@ -60,6 +60,9 @@ entity fmc_adc_100Ms_core is
     wb_ddr_master_i : in  t_wishbone_master_data64_in;
     wb_ddr_master_o : out t_wishbone_master_data64_out;
 
+    -- Acquisition configuration status flag
+    acq_cfg_ok_o : out std_logic;
+
     -- Events output pulses
     trigger_p_o   : out std_logic;
     acq_start_p_o : out std_logic;
@@ -1266,6 +1269,8 @@ begin
       end if;
     end if;
   end process p_acq_cfg_ok;
+
+  acq_cfg_ok_o <= acq_config_ok;
 
   -- FSM transitions
   p_acq_fsm_transitions : process(sys_clk_i)
