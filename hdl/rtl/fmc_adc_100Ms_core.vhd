@@ -40,11 +40,10 @@ use work.wishbone_pkg.all;
 use work.fmc_adc_100Ms_csr_wbgen2_pkg.all;
 
 entity fmc_adc_100Ms_core is
-  generic(
+  generic (
     g_MULTISHOT_RAM_SIZE : natural                        := 2048;
     g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
-    g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE
-    );
+    g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);
   port (
     -- Clock, reset
     sys_clk_i   : in std_logic;
@@ -93,13 +92,11 @@ entity fmc_adc_100Ms_core is
     gpio_ssr_ch2_o   : out std_logic_vector(6 downto 0);  -- Channel 2 solid state relays control
     gpio_ssr_ch3_o   : out std_logic_vector(6 downto 0);  -- Channel 3 solid state relays control
     gpio_ssr_ch4_o   : out std_logic_vector(6 downto 0);  -- Channel 4 solid state relays control
-    gpio_si570_oe_o  : out std_logic              -- Si570 (programmable oscillator) output enable
-    );
+    gpio_si570_oe_o  : out std_logic);            -- Si570 (programmable oscillator) output enable
+
 end fmc_adc_100Ms_core;
 
-
 architecture rtl of fmc_adc_100Ms_core is
-
 
   ------------------------------------------------------------------------------
   -- Components declaration
@@ -658,6 +655,10 @@ begin
       fs_clk_i   => fs_clk,
       regs_i     => csr_regin,
       regs_o     => csr_regout);
+
+  -- drive unused wb outputs
+  wb_csr_out.err <= '0';
+  wb_csr_out.rty <= '0';
 
   csr_regin.sta_fsm_i           <= acq_fsm_state;
   csr_regin.sta_serdes_pll_i    <= locked_out;
