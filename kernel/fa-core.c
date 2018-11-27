@@ -21,17 +21,17 @@ FMC_PARAM_GATEWARE(fa_dev_drv);
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
-static int fa_enable_test_data_adc;
+int fa_enable_test_data_adc = 0;
 module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
-static int fa_enable_test_data_adc_pattern = 0x555;
-module_param_named(enable_test_data_adc_pattern, fa_enable_test_data_adc_pattern, int, 0664);
-
 
 static const int zfad_hw_range[] = {
-	[FA100M14B4C_RANGE_10V]   = 0x45,
-	[FA100M14B4C_RANGE_1V]    = 0x11,
-	[FA100M14B4C_RANGE_100mV] = 0x23,
-	[FA100M14B4C_RANGE_OPEN]  = 0x00,
+	[FA100M14B4C_RANGE_10V_CAL]   = 0x44,
+	[FA100M14B4C_RANGE_1V_CAL]    = 0x40,
+	[FA100M14B4C_RANGE_100mV_CAL] = 0x42,
+	[FA100M14B4C_RANGE_10V]       = 0x45,
+	[FA100M14B4C_RANGE_1V]        = 0x11,
+	[FA100M14B4C_RANGE_100mV]     = 0x23,
+	[FA100M14B4C_RANGE_OPEN]      = 0x00,
 };
 
 /* fmc-adc specific workqueue */
@@ -94,24 +94,63 @@ int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
 	return 0;
 }
 
+/**
+ * It sets the DAC voltage to apply an offset on the input channel
+ * @chan
+ * @val DAC values (-5V: 0x0000, 0V: 0x8000, +5V: 0x7FFF)
+ *
+ * Return: 0 on success, otherwise a negative error number
+ */
+static int zfad_dac_set(struct zio_channel *chan, uint32_t val)
+{
+	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
+
+	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, val, NULL);
+}
+
+static int zfad_offset_to_dac(struct zio_channel *chan,
+			      int32_t uval,
+			      enum fa100m14b4c_input_range range)
+{
+	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
+	int offset, gain, hwval;
+
+	hwval = uval * 0x8000 / 5000000;
+	if (hwval == 0x8000)
+		hwval = 0x7fff; /* -32768 .. 32767 */
+
+	offset = fa->calib.dac[range].offset[chan->index];
+	gain = fa->calib.dac[range].gain[chan->index];
+
+	hwval = ((hwval + offset) * gain) >> 15; /* signed */
+	hwval += 0x8000; /* offset binary */
+	if (hwval < 0)
+		hwval = 0;
+	if (hwval > 0xffff)
+		hwval = 0xffff;
+
+	return hwval;
+}
+
 /*
  * zfad_apply_user_offset
- * @fa: the fmc-adc descriptor
  * @chan: the channel where apply offset
- * @usr_val: the offset value to apply, expressed as millivolts (-5000..5000)
  *
  * Apply user offset to the channel input. Before apply the user offset it must
- * be corrected with offset and gain calibration value. An open input does not
- * need any correction.
+ * be corrected with offset and gain calibration value.
+ *
+ * Offset values are taken from `struct fa_dev`, so they must be there before
+ * calling this function
  */
-int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
-				  uint32_t usr_val)
+int zfad_apply_offset(struct zio_channel *chan)
 {
+	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
 	uint32_t range_reg;
-	int32_t uval =  (int32_t)usr_val;
-	int offset, gain, hwval, i, range;
+	int32_t off_uv;
+	int hwval, i, range;
 
-	if (uval < -5000 || uval > 5000)
+	off_uv = fa->user_offset[chan->index] + fa->zero_offset[chan->index];
+	if (off_uv < -5000000 || off_uv > 5000000)
 		return -EINVAL;
 
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
@@ -121,27 +160,13 @@ int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
 	if (range < 0)
 		return range;
 
-	if (range == FA100M14B4C_RANGE_OPEN) {
-		offset = FA_CAL_NO_OFFSET;
-		gain = FA_CAL_NO_GAIN;
-	} else {
-		offset = fa->calib.dac[range].offset[chan->index];
-		gain = fa->calib.dac[range].gain[chan->index];
-	}
+	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
+		range = FA100M14B4C_RANGE_1V;
+	else if (range >= FA100M14B4C_RANGE_10V_CAL)
+		range -= FA100M14B4C_RANGE_10V_CAL;
 
-	hwval = uval * 0x8000 / 5000;
-	if (hwval == 0x8000)
-		hwval = 0x7fff; /* -32768 .. 32767 */
-
-	hwval = ((hwval + offset) * gain) >> 15; /* signed */
-	hwval += 0x8000; /* offset binary */
-	if (hwval < 0)
-		hwval = 0;
-	if (hwval > 0xffff)
-		hwval = 0xffff;
-
-	/* Apply calibrated offset to DAC */
-	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, hwval, NULL);
+	hwval = zfad_offset_to_dac(chan, off_uv, range);
+	return zfad_dac_set(chan, hwval);
 }
 
 /*
@@ -154,8 +179,11 @@ void zfad_reset_offset(struct fa_dev *fa)
 {
 	int i;
 
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
-		zfad_apply_user_offset(fa, &fa->zdev->cset->chan[i], 0);
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
+		fa->user_offset[i] = 0;
+		fa->zero_offset[i] = 0;
+		zfad_apply_offset(&fa->zdev->cset->chan[i]);
+	}
 }
 
 /*
@@ -191,24 +219,19 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc) {
-		/*
-		 * With OPEN range we do not use calibration values
-		 *
-		 * In test mode we do not apply the gain/offset because
-		 * this compromises the test pattern
-		 */
-		offset = FA_CAL_NO_OFFSET;
-		gain = FA_CAL_NO_GAIN;
-	} else {
-		if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
-			dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
-				 range, chan->index);
-			return -EINVAL;
-		}
-		offset = fa->calib.adc[range].offset[chan->index];
-		gain = fa->calib.adc[range].gain[chan->index];
+	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
+		range = FA100M14B4C_RANGE_1V;
+	else if (range >= FA100M14B4C_RANGE_10V_CAL)
+		range -= FA100M14B4C_RANGE_10V_CAL;
+
+	if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
+		dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
+			 range, chan->index);
+		return -EINVAL;
 	}
+
+	offset = fa->calib.adc[range].offset[chan->index];
+	gain = fa->calib.adc[range].gain[chan->index];
 
 	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
@@ -217,7 +240,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
 
 	/* recalculate user offset for the new range */
-	zfad_apply_user_offset(fa, chan, fa->user_offset[chan->index]);
+	zfad_apply_offset(chan);
 
 	return 0;
 }
@@ -234,7 +257,6 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t val;
-	int err;
 
 	if (command != FA100M14B4C_CMD_START &&
 	    command != FA100M14B4C_CMD_STOP) {
@@ -300,20 +322,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		dev_dbg(fa->msgdev, "FSM START Command, Enable interrupts\n");
 		fa_enable_irqs(fa);
 
-		/*
-		 * Set the test data if necessary. This is unlikely to happen,
-		 * and when this is the case we do not care about performances
-		 */
-		if (unlikely(fa_enable_test_data_adc)) {
-			fa_enable_test_data_adc_pattern &= 0xFFF;
-			err = zfad_pattern_data_enable(fa, fa_enable_test_data_adc_pattern,
-						       fa_enable_test_data_adc);
-			if (err)
-				dev_warn(fa->msgdev,
-					 "Failed to set the ADC test data. Continue without\n");
-			else if (fa_enable_test_data_adc)
-				dev_info(fa->msgdev, "the ADC test data is enabled on all channels\n");
-		}
+		fa_writel(fa, fa->fa_adc_csr_base,
+			  &zfad_regs[ZFA_CTL_RST_TRG_STA], 1);
 	} else {
 		dev_dbg(fa->msgdev, "FSM STOP Command, Disable interrupts\n");
 		fa->enable_auto_start = 0;
@@ -404,29 +414,17 @@ static int __fa_init(struct fa_dev *fa)
 	/* Enable mezzanine clock */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
 	/* Set decimation to minimum */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_DECI], 1);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
 		  fa_enable_test_data_fpga);
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
-	if (zdev->cset->ti->cset->trig == &zfat_type) {
-		/* Select external trigger (index 0) */
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_SEL],
-			  1);
-		zdev->cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_EXT].value = 1;
-		fa->trig_compensation = FA_CH_TX_DELAY;
-	} else {
-		/* Enable Software trigger*/
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
-			  1);
-		/* Disable Hardware trigger*/
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
-			  0);
-		/* Set default trigger delay */
-		fa->trig_compensation = 0;
-	}
+
+	/* Enable the software trigger by default: there is no arm in this */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
+		  FA100M14B4C_TRG_SRC_SW);
 
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
@@ -439,12 +437,7 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
 		  get_seconds());
 
-	/*
-	 * Set Trigger delay in order to compensate
-	 * the channel signal transmission delay
-	 */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY],
-		  fa->trig_compensation);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_EXT_DLY], 0);
 
 	/* disable auto_start */
 	fa->enable_auto_start = 0;

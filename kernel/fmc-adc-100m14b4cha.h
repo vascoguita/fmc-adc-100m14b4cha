@@ -12,6 +12,25 @@
 #define BIT(nr) (1UL << (nr))
 #endif
 
+/* Trigger sources */
+#define FA100M14B4C_TRG_SRC_EXT BIT(0)
+#define FA100M14B4C_TRG_SRC_SW BIT(1)
+#define FA100M14B4C_TRG_SRC_TIM BIT(4)
+#define FA100M14B4C_TRG_SRC_CH1 BIT(8)
+#define FA100M14B4C_TRG_SRC_CH2 BIT(9)
+#define FA100M14B4C_TRG_SRC_CH3 BIT(10)
+#define FA100M14B4C_TRG_SRC_CH4 BIT(11)
+#define FA100M14B4C_TRG_SRC_CHx(_x) (FA100M14B4C_TRG_SRC_CH1 << ((_x) - 1))
+
+/* Trigger Polarity */
+#define FA100M14B4C_TRG_POL_EXT FA100M14B4C_TRG_SRC_EXT
+#define FA100M14B4C_TRG_POL_CH1 FA100M14B4C_TRG_SRC_CH1
+#define FA100M14B4C_TRG_POL_CH2 FA100M14B4C_TRG_SRC_CH2
+#define FA100M14B4C_TRG_POL_CH3 FA100M14B4C_TRG_SRC_CH3
+#define FA100M14B4C_TRG_POL_CH4 FA100M14B4C_TRG_SRC_CH4
+#define FA100M14B4C_TRG_POL_CHx(_x) (FA100M14B4C_TRG_POL_CH1 << ((_x) - 1))
+
+
 /*
  * Trigger Extended Attribute Enumeration
  */
@@ -24,13 +43,24 @@ enum fa100m14b4c_trg_ext_attr {
 	 * The parameters are not exposed to user space by zio_controle, so it
 	 * is not necessary to export to user space the correspondent enum
 	 */
-	FA100M14B4C_TATTR_EXT = 0,
+	FA100M14B4C_TATTR_STA = 0,
+	FA100M14B4C_TATTR_SRC,
 	FA100M14B4C_TATTR_POL,
-	FA100M14B4C_TATTR_INT_CHAN,
-	FA100M14B4C_TATTR_INT_THRES,
-	FA100M14B4C_TATTR_DELAY,
+	FA100M14B4C_TATTR_EXT_DLY,
+	FA100M14B4C_TATTR_CH1_THRES,
+	FA100M14B4C_TATTR_CH2_THRES,
+	FA100M14B4C_TATTR_CH3_THRES,
+	FA100M14B4C_TATTR_CH4_THRES,
+	FA100M14B4C_TATTR_CH1_HYST,
+	FA100M14B4C_TATTR_CH2_HYST,
+	FA100M14B4C_TATTR_CH3_HYST,
+	FA100M14B4C_TATTR_CH4_HYST,
+	FA100M14B4C_TATTR_CH1_DLY,
+	FA100M14B4C_TATTR_CH2_DLY,
+	FA100M14B4C_TATTR_CH3_DLY,
+	FA100M14B4C_TATTR_CH4_DLY,
+
 #ifdef __KERNEL__
-	FA100M14B4C_TATTR_SW_EN,
 	FA100M14B4C_TATTR_SW_FIRE,
 	FA100M14B4C_TATTR_TRG_S,
 	FA100M14B4C_TATTR_TRG_C,
@@ -77,7 +107,10 @@ enum fa100m14b4c_input_range {
 	FA100M14B4C_RANGE_10V = 0x0,
 	FA100M14B4C_RANGE_1V,
 	FA100M14B4C_RANGE_100mV,
-	FA100M14B4C_RANGE_OPEN,		/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_OPEN,	/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_10V_CAL,	/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_1V_CAL,	/* Channel disconnected from ADC */
+	FA100M14B4C_RANGE_100mV_CAL,	/* Channel disconnected from ADC */
 };
 
 enum fa100m14b4c_fsm_cmd {
@@ -111,11 +144,13 @@ enum fa100m14b4c_fsm_state {
 
 #include "field-desc.h"
 
+extern int fa_enable_test_data_adc;
+
 /*
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
  */
-#define ZFA_CHx_MULT 6
+#define ZFA_CHx_MULT 9
 
 /* Device registers */
 enum zfadc_dregs_enum {
@@ -128,20 +163,17 @@ enum zfadc_dregs_enum {
 	ZFA_CTL_TEST_DATA_EN,
 	ZFA_CTL_TRIG_LED,
 	ZFA_CTL_ACQ_LED,
+	ZFA_CTL_RST_TRG_STA,
 	/* Status registers */
 	ZFA_STA_FSM,
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
 	/* Configuration register */
-	ZFAT_CFG_HW_SEL,
-	ZFAT_CFG_HW_POL,
-	ZFAT_CFG_HW_EN,
-	ZFAT_CFG_SW_EN,
-	ZFAT_CFG_INT_SEL,
-	ZFAT_CFG_THRES,
-	ZFAT_CFG_THRES_FILT,
+	ZFAT_CFG_STA,
+	ZFAT_CFG_SRC,
+	ZFAT_CFG_POL,
 	/* Delay*/
-	ZFAT_DLY,
+	ZFAT_EXT_DLY,
 	/* Software */
 	ZFAT_SW,
 	/* Number of shots */
@@ -149,7 +181,7 @@ enum zfadc_dregs_enum {
 	/* Remaining shots counter */
 	ZFAT_SHOTS_REM,
 	/* Sample rate */
-	ZFAT_SR_DECI,
+	ZFAT_SR_UNDER,
 	/* Sampling clock frequency */
 	ZFAT_SAMPLING_HZ,
 	/* Position address */
@@ -160,6 +192,8 @@ enum zfadc_dregs_enum {
 	ZFAT_POST,
 	/* Sample counter */
 	ZFAT_CNT,
+	/* Pattern data for the ADC chip */
+	ZFAT_ADC_TST_PATTERN,
 	/* start:declaration block requiring some order */
 	/* Channel 1 */
 	ZFA_CH1_CTL_RANGE,
@@ -168,6 +202,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH1_GAIN,
 	ZFA_CH1_OFFSET,
 	ZFA_CH1_SAT,
+	ZFA_CH1_THRES,
+	ZFA_CH1_HYST,
+	ZFA_CH1_DLY,
+
 	/* Channel 2 */
 	ZFA_CH2_CTL_RANGE,
 	ZFA_CH2_CTL_TERM,
@@ -175,6 +213,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH2_GAIN,
 	ZFA_CH2_OFFSET,
 	ZFA_CH2_SAT,
+	ZFA_CH2_THRES,
+	ZFA_CH2_HYST,
+	ZFA_CH2_DLY,
+
 	/* Channel 3 */
 	ZFA_CH3_CTL_RANGE,
 	ZFA_CH3_CTL_TERM,
@@ -182,6 +224,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH3_GAIN,
 	ZFA_CH3_OFFSET,
 	ZFA_CH3_SAT,
+	ZFA_CH3_THRES,
+	ZFA_CH3_HYST,
+	ZFA_CH3_DLY,
+
 	/* Channel 4 */
 	ZFA_CH4_CTL_RANGE,
 	ZFA_CH4_CTL_TERM,
@@ -189,6 +235,10 @@ enum zfadc_dregs_enum {
 	ZFA_CH4_GAIN,
 	ZFA_CH4_OFFSET,
 	ZFA_CH4_SAT,
+	ZFA_CH4_THRES,
+	ZFA_CH4_HYST,
+	ZFA_CH4_DLY,
+
 	/*
 	 * CHx__ are specifc ids used by some internal arithmetic
 	 * Be carefull: the arithmetic expects
@@ -202,7 +252,9 @@ enum zfadc_dregs_enum {
 	ZFA_CHx_GAIN,
 	ZFA_CHx_OFFSET,
 	ZFA_CHx_SAT,
-
+	ZFA_CHx_THRES,
+	ZFA_CHx_HYST,
+	ZFA_CHx_DLY,
 	/* Other options */
 	ZFA_MULT_MAX_SAMP,
 	/* end:declaration block requiring some order */
@@ -237,9 +289,11 @@ enum zfadc_dregs_enum {
 	ZFA_HW_PARAM_COMMON_LAST,
 };
 
-/* trigger timestamp block size in bytes */
-/* This block is added after the post trigger samples */
-/* in the DDR and contains the trigger timestamp */
+
+/*
+ * Acquisition metadata. It contains the trigger timestamp and the trigger
+ * source. This block is added after the post-trigger-samples in the DDR.
+ */
 #define FA_TRIG_TIMETAG_BYTES 0x10
 
 /*
@@ -252,6 +306,10 @@ enum fa_sw_param_id {
 
 	ZFA_SW_R_NOADDRES_TEMP,
 	ZFA_SW_R_NOADDERS_AUTO,
+	ZFA_SW_CH1_OFFSET_ZERO,
+	ZFA_SW_CH2_OFFSET_ZERO,
+	ZFA_SW_CH3_OFFSET_ZERO,
+	ZFA_SW_CH4_OFFSET_ZERO,
 	ZFA_SW_PARAM_COMMON_LAST,
 };
 
@@ -315,7 +373,8 @@ struct fa_calib {
  * @n_fires: number of trigger fire occurred within an acquisition
  *
  * @n_dma_err: number of errors
- *
+ * @user_offset: user offset (micro-Volts)
+ * @zero_offset: necessary offset to push the channel to zero (micro-Volts)
  */
 struct fa_dev {
 	struct device *msgdev; /**< device used to print messages */
@@ -359,8 +418,8 @@ struct fa_dev {
 	unsigned int		n_dma_err;
 
 	/* Configuration */
-	int			user_offset[4]; /* one per channel */
-
+	int32_t		user_offset[4]; /* one per channel */
+	int32_t		zero_offset[FA100M14B4C_NCHAN];
 	/* one-wire */
 	uint8_t ds18_id[8];
 	unsigned long		next_t;
@@ -371,8 +430,6 @@ struct fa_dev {
 
 	/* flag  */
 	int enable_auto_start;
-
-	uint32_t trig_compensation;
 
 	struct dentry *reg_dump;
 };
@@ -496,8 +553,7 @@ extern const struct zfa_field_desc zfad_regs[];
 
 /* Functions exported by fa-core.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
-extern int zfad_apply_user_offset(struct fa_dev *fa, struct zio_channel *chan,
-				  uint32_t usr_val);
+extern int zfad_apply_offset(struct zio_channel *chan);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,

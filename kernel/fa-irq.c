@@ -53,8 +53,7 @@ int zfad_dma_start(struct zio_cset *cset)
 	 * Disable all triggers to prevent fires between
 	 * different DMA transfers required for multi-shots
 	 */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 0);
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 0);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
 
 	/* Fix dev_mem_addr in single-shot mode */
 	if (fa->n_shots == 1) {
@@ -124,13 +123,16 @@ void zfad_dma_done(struct zio_cset *cset)
 		ctrl = zio_get_ctrl(block);
 		trig_timetag = (uint32_t *)(block->data + block->datalen
 					    - FA_TRIG_TIMETAG_BYTES);
-		/* Timetag marker (metadata) used for debugging */
-		dev_dbg(fa->msgdev, "trig_timetag metadata of the shot %d"
-			" (expected value: 0x6fc8ad2d): 0x%x\n",
-			i, *trig_timetag);
-		ctrl->tstamp.secs = *(++trig_timetag);
-		ctrl->tstamp.ticks = *(++trig_timetag);
-		ctrl->tstamp.bins = *(++trig_timetag);
+
+		if (unlikely((*(trig_timetag + 1) >> 8) != 0xACCE55))
+			dev_err(fa->msgdev,
+				"Wrong acquisition TAG, expected 0xACCE55 but got 0x%X (0x%X)\n",
+				(*(trig_timetag + 1) >> 8), *trig_timetag);
+		ctrl->tstamp.secs = ((uint64_t)*(trig_timetag + 1) & 0xFF) << 32;
+		ctrl->tstamp.secs |= *(trig_timetag);
+		ctrl->tstamp.ticks = *(trig_timetag + 2);
+		ctrl->tstamp.bins = 0;
+		ctrl->attr_trigger.ext_val[FA100M14B4C_TATTR_STA]= *(trig_timetag + 3);
 
 		/* Acquisition start Timetag */
 		ctrl->attr_channel.ext_val[FA100M14B4C_DATTR_ACQ_START_S] =
@@ -159,24 +161,8 @@ void zfad_dma_done(struct zio_cset *cset)
 	dev_dbg(fa->msgdev, "%i blocks transfered\n", fa->n_shots);
 	zio_trigger_data_done(cset);
 
-	/*
-	 * we can safely re-enable triggers.
-	 * Hardware trigger depends on the enable status
-	 * of the trigger. Software trigger depends on the previous
-	 * status taken form zio attributes (index 5 of extended one)
-	 * If the user is using a software trigger, enable the software
-	 * trigger.
-	 */
-	if (cset->trig == &zfat_type) {
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN],
-				    (ti->flags & ZIO_STATUS ? 0 : 1));
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
-				    ti->zattr_set.ext_zattr[6].value);
-	} else {
-		dev_dbg(fa->msgdev, "Software acquisition over\n");
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN],
-			  1);
-	}
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
+		  ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
 }
 
 

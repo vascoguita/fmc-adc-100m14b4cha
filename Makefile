@@ -4,7 +4,7 @@ CURDIR:=$(shell /bin/pwd)
 REPO_PARENT ?= $(CURDIR)/..
 -include $(REPO_PARENT)/parent_common.mk
 
-all: kernel tools lib libtools
+all: kernel tools
 
 FMC_BUS ?= fmc-bus
 ZIO ?= zio
@@ -24,11 +24,9 @@ export ZIO_ABS
 export SVEC_SW_ABS
 export VMEBUS_ABS
 
-DIRS = $(FMC_BUS_ABS) $(ZIO_ABS) kernel tools lib libtools
+DIRS = $(FMC_BUS_ABS) $(ZIO_ABS) kernel tools
 
 kernel: $(FMC_BUS_ABS) $(ZIO_ABS)
-lib: $(ZIO_ABS)
-tools libtools: lib
 
 .PHONY: all clean modules install modules_install $(DIRS)
 .PHONY: gitmodules prereq_install prereq_install_warn

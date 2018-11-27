@@ -30,43 +30,62 @@ static ZIO_ATTR_DEFINE_STD(ZIO_TRG, zfat_std_zattr) = {
 	ZIO_ATTR(trig, ZIO_ATTR_TRIG_POST_SAMP, ZIO_RW_PERM, ZFAT_POST, 1),
 };
 static struct zio_attribute zfat_ext_zattr[] = {
-	/* Config register */
-	/* Hardware trigger selction
-	 * 0: internal (data threshold)
-	 * 1: external (front panel trigger input)
-	 */
-	[FA100M14B4C_TATTR_EXT] = ZIO_ATTR_EXT("external", ZIO_RW_PERM,
-							ZFAT_CFG_HW_SEL, 0),
-	/*
-	 * Internal Hardware trigger polarity
-	 * 0: positive edge/slope
-	 * 1: negative edge/slope
-	 */
+	[FA100M14B4C_TATTR_STA] = ZIO_ATTR_EXT("source-triggered", ZIO_RW_PERM,
+					       ZFAT_CFG_STA, 0),
+	[FA100M14B4C_TATTR_SRC] = ZIO_ATTR_EXT("source", ZIO_RW_PERM,
+					       ZFAT_CFG_SRC,
+					       FA100M14B4C_TRG_SRC_SW),
 	[FA100M14B4C_TATTR_POL] = ZIO_ATTR_EXT("polarity", ZIO_RW_PERM,
-							ZFAT_CFG_HW_POL, 0),
-	/*
-	 * Channel selection for internal trigger
-	 * 0: channel 1, 1: channel 2, 2: channel 3, 3: channel 4
-	 */
-	[FA100M14B4C_TATTR_INT_CHAN] = ZIO_ATTR_EXT("int-channel",
-					ZIO_RW_PERM, ZFAT_CFG_INT_SEL, 0),
+					       ZFAT_CFG_POL, 0),
+
 	/* Internal trigger threshold value is 2 complement format */
-	[FA100M14B4C_TATTR_INT_THRES] = ZIO_ATTR_EXT("int-threshold",
-					ZIO_RW_PERM, ZFAT_CFG_THRES, 0),
+	[FA100M14B4C_TATTR_CH1_THRES] = ZIO_ATTR_EXT("ch0-threshold",
+						     ZIO_RW_PERM,
+						     ZFA_CH1_THRES, 0),
+	[FA100M14B4C_TATTR_CH2_THRES] = ZIO_ATTR_EXT("ch1-threshold",
+						     ZIO_RW_PERM,
+						     ZFA_CH2_THRES, 0),
+	[FA100M14B4C_TATTR_CH3_THRES] = ZIO_ATTR_EXT("ch2-threshold",
+						     ZIO_RW_PERM,
+						     ZFA_CH3_THRES, 0),
+	[FA100M14B4C_TATTR_CH4_THRES] = ZIO_ATTR_EXT("ch3-threshold",
+						     ZIO_RW_PERM,
+						     ZFA_CH4_THRES, 0),
+
+	[FA100M14B4C_TATTR_CH1_HYST] = ZIO_ATTR_EXT("ch0-hysteresis",
+						    ZIO_RW_PERM,
+						    ZFA_CH1_HYST, 0),
+	[FA100M14B4C_TATTR_CH2_HYST] = ZIO_ATTR_EXT("ch1-hysteresis",
+						    ZIO_RW_PERM,
+						    ZFA_CH2_HYST, 0),
+	[FA100M14B4C_TATTR_CH3_HYST] = ZIO_ATTR_EXT("ch2-hysteresis",
+						    ZIO_RW_PERM,
+						    ZFA_CH3_HYST, 0),
+	[FA100M14B4C_TATTR_CH4_HYST] = ZIO_ATTR_EXT("ch3-hysteresis",
+						    ZIO_RW_PERM,
+						    ZFA_CH4_HYST, 0),
+
+	[FA100M14B4C_TATTR_CH1_DLY] = ZIO_ATTR_EXT("ch0-delay",
+						    ZIO_RW_PERM,
+						    ZFA_CH1_DLY, 0),
+	[FA100M14B4C_TATTR_CH2_DLY] = ZIO_ATTR_EXT("ch1-delay",
+						    ZIO_RW_PERM,
+						    ZFA_CH2_DLY, 0),
+	[FA100M14B4C_TATTR_CH3_DLY] = ZIO_ATTR_EXT("ch2-delay",
+						    ZIO_RW_PERM,
+						    ZFA_CH3_DLY, 0),
+	[FA100M14B4C_TATTR_CH4_DLY] = ZIO_ATTR_EXT("ch3-delay",
+						    ZIO_RW_PERM,
+						    ZFA_CH4_DLY, 0),
+
 	/*
 	 * Delay to apply on the trigger in sampling clock period. The default
 	 * clock frequency is 100MHz (period = 10ns)
 	 */
-	[FA100M14B4C_TATTR_DELAY] = ZIO_ATTR_EXT("delay", ZIO_RW_PERM,
-							ZFAT_DLY, 0),
+	[FA100M14B4C_TATTR_EXT_DLY] = ZIO_ATTR_EXT("ext-delay", ZIO_RW_PERM,
+							ZFAT_EXT_DLY, 0),
 
-	/* setup the maximum glith length to filter */
-	ZIO_ATTR_EXT("int-threshold-filter", ZIO_RW_PERM, ZFAT_CFG_THRES_FILT,
-			0),
 	/* Software Trigger */
-	/* Enable (1) or disable (0) software trigger */
-	[FA100M14B4C_TATTR_SW_EN] = ZIO_PARAM_EXT("sw-trg-enable", ZIO_RW_PERM,
-							ZFAT_CFG_SW_EN, 0),
 	[FA100M14B4C_TATTR_SW_FIRE] = ZIO_PARAM_EXT("sw-trg-fire", ZIO_WO_PERM,
 							ZFAT_SW, 0),
 
@@ -90,7 +109,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
-	uint32_t tmp_val = usr_val, delay;
+	uint32_t tmp_val = usr_val;
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
@@ -108,7 +127,8 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFAT_SW:
 		/* Fire if software trigger is enabled (index 5) */
-		if (!ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SW_EN].value) {
+		if (!(ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value &
+		      FA100M14B4C_TRG_SRC_SW)) {
 			dev_info(fa->msgdev, "sw trigger is not enabled\n");
 			return -EPERM;
 		}
@@ -123,20 +143,16 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		 * acquisition or other problems:
 		 */
 		break;
-	case ZFAT_DLY:
-		/* Add channel signal transmission delay */
-		tmp_val += fa->trig_compensation;
-		break;
-	case ZFAT_CFG_HW_SEL:
-		/* Remove old compensation value  */
-		delay = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY]);
-		delay -= fa->trig_compensation;
-
-		/* Calculate and apply new compensation */
-		fa->trig_compensation = tmp_val ? FA_CH_TX_DELAY : 0;
-		delay += fa->trig_compensation;
-		fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_DLY], delay);
-		break;
+	case ZFAT_CFG_SRC:
+		/*
+		 * Do not copy to hardware when globally disabled
+		 * We tell ZIO to save the value locally and will do
+		 * it when the user starts an acquisition
+		 *
+		 * We cannot save the value in cache only when disabled
+		 * because the trigger is always disabled during configuration
+		 */
+		return 0;
 	}
 
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id], tmp_val);
@@ -153,14 +169,19 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 
+	switch (zattr->id) {
+	case ZFAT_CFG_SRC:
+		/*
+		 * The good value for the trigger source is always in
+		 * the ZIO cache.
+		 */
+		return 0;
+	}
+
 	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
 	switch (zattr->id) {
 	case ZFAT_POST:
 		(*usr_val)++; /* add the trigger sample */
-		break;
-	case ZFAT_DLY:
-		/* Add channel signal transmission delay */
-		*usr_val -= fa->trig_compensation;
 		break;
 	}
 
@@ -190,11 +211,6 @@ static struct zio_ti *zfat_create(struct zio_trigger_type *trig,
 	if (!zfat)
 		return ERR_PTR(-ENOMEM);
 
-	/* Disable Software trigger*/
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 0);
-	/* Enable Hardware trigger*/
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 1);
-
 	zfat->fa = fa;
 	zfat->ti.cset = cset;
 
@@ -206,10 +222,9 @@ static void zfat_destroy(struct zio_ti *ti)
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
 	struct zfat_instance *zfat = to_zfat_instance(ti);
 
-	/* Enable Software trigger */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SW_EN], 1);
-	/* Disable Hardware trigger */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], 0);
+	/* Disable all trigger sources */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
+
 	/* Other triggers cannot use pre-samples */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_PRE], 0);
 	/* Reset post samples */
@@ -222,15 +237,22 @@ static void zfat_destroy(struct zio_ti *ti)
 
 /*
  *
- * Enable or disable the hardware trigger. The hardware trigger is the prefered
- * trigger so it correspond to the ZIO enable of the trigger.Status is active
- * low on ZIO but active high on the FMC-ADC, then use '!' on status
+ * Enable or disable the trigger sources globally.
+ * On disable (status > 0), we disable all the trigger sources
+ * On enable (status == 0), we enable the trigger soruces specified in the
+ * correspondent sysfs attribute
  */
 static void zfat_change_status(struct zio_ti *ti, unsigned int status)
 {
 	struct fa_dev *fa = ti->cset->zdev->priv_d;
+	uint32_t src = ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value;
 
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_HW_EN], !status);
+	if (status)
+		fa_writel(fa, fa->fa_adc_csr_base,
+			  &zfad_regs[ZFAT_CFG_SRC], 0);
+	else
+		fa_writel(fa, fa->fa_adc_csr_base,
+			  &zfad_regs[ZFAT_CFG_SRC], src);
 }
 
 /*
@@ -291,7 +313,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
 	unsigned int size;
-	uint32_t dev_mem_off;
+	uint32_t dev_mem_off, trg_src;
 	int i, err = 0;
 
 	dev_dbg(fa->msgdev, "Arming trigger\n");
@@ -365,6 +387,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	err = ti->cset->raw_io(ti->cset);
 	if (err != -EAGAIN && err != 0)
 		goto out_allocate;
+
+	/* Everything looks fine for the time being, enable the trigger sources */
+	trg_src = ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value;
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], trg_src);
 
 	return err;
 

@@ -19,7 +19,6 @@
 
 ZIO_PARAM_BUFFER(adc_buffer);
 
-
 /*
  * zio device attributes
  */
@@ -41,12 +40,17 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * acquisition you can decimate samples. 0 is a forbidden value, 1
 	 * for the maximum speed.
 	 */
-	ZIO_ATTR_EXT("sample-decimation", ZIO_RW_PERM, ZFAT_SR_DECI, 1),
+	ZIO_ATTR_EXT("undersample", ZIO_RW_PERM, ZFAT_SR_UNDER, 1),
 
 	ZIO_ATTR_EXT("ch0-offset", ZIO_RW_PERM, ZFA_CH1_OFFSET, 0),
 	ZIO_ATTR_EXT("ch1-offset", ZIO_RW_PERM, ZFA_CH2_OFFSET, 0),
 	ZIO_ATTR_EXT("ch2-offset", ZIO_RW_PERM, ZFA_CH3_OFFSET, 0),
 	ZIO_ATTR_EXT("ch3-offset", ZIO_RW_PERM, ZFA_CH4_OFFSET, 0),
+
+	ZIO_ATTR_EXT("ch0-offset-zero", ZIO_RW_PERM, ZFA_SW_CH1_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch1-offset-zero", ZIO_RW_PERM, ZFA_SW_CH2_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch2-offset-zero", ZIO_RW_PERM, ZFA_SW_CH3_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch3-offset-zero", ZIO_RW_PERM, ZFA_SW_CH4_OFFSET_ZERO, 0),
 
 	ZIO_ATTR_EXT("ch0-vref", ZIO_RW_PERM, ZFA_CH1_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch1-vref", ZIO_RW_PERM, ZFA_CH2_CTL_RANGE, 0),
@@ -120,6 +124,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 	ZIO_PARAM_EXT("max-sample-mshot", ZIO_RO_PERM, ZFA_MULT_MAX_SAMP, 0),
 	ZIO_PARAM_EXT("sample-counter", ZIO_RO_PERM, ZFAT_CNT, 0),
+	ZIO_PARAM_EXT("test-data-pattern", ZIO_RW_PERM, ZFAT_ADC_TST_PATTERN, 0),
 };
 
 #if 0 /* FIXME Unused until TLV control will be available */
@@ -167,7 +172,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	unsigned int baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
-	int i, range, err, reg_index;
+	int i, range, err = 0, reg_index;
+	uint32_t off;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
@@ -186,6 +192,21 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_SW_R_NOADDERS_AUTO:
 		fa->enable_auto_start = usr_val;
 		return 0;
+	case ZFA_SW_CH1_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH2_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH3_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH4_OFFSET_ZERO:
+		i--;
+
+		chan = to_zio_cset(dev)->chan + i;
+		fa->zero_offset[i] = usr_val;
+		err = zfad_apply_offset(chan);
+		if (err == -EIO)
+			fa->zero_offset[chan->index] = 0;
+		return err;
 	case ZFA_CHx_SAT:
 		/* TODO when TLV */
 		break;
@@ -209,25 +230,24 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 	case ZFA_CH4_OFFSET:
 		i--;
-		chan = to_zio_cset(dev)->chan + i;
-		err = zfad_apply_user_offset(fa, chan, usr_val);
-		if (err)
-			return err;
-		fa->user_offset[chan->index] = usr_val;
-		return 0;
 
+		chan = to_zio_cset(dev)->chan + i;
+		fa->user_offset[chan->index] = usr_val;
+		err = zfad_apply_offset(chan);
+		if (err == -EIO)
+			fa->user_offset[chan->index] = 0;
+		return err;
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev),
-			err = zfad_apply_user_offset(fa, chan, usr_val);
-		if (err)
-			return err;
 		fa->user_offset[chan->index] = usr_val;
-		return 0;
-
+		err = zfad_apply_offset(chan);
+		if (err == -EIO)
+			fa->user_offset[chan->index] = 0;
+		return err;
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
-	case ZFAT_SR_DECI:
+	case ZFAT_SR_UNDER:
 		if (usr_val == 0)
 			usr_val++;
 		break;
@@ -261,9 +281,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return range;
 		return zfad_set_range(fa, to_zio_chan(dev), range);
 
-	case ZFA_CHx_STA:
-		reg_index = zfad_get_chx_index(reg_index, to_zio_chan(dev));
-		break;
 	case ZFA_UTC_COARSE:
 		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {
 			dev_err(fa->msgdev,
@@ -274,6 +291,24 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFA_CTL_FMS_CMD:
 		return zfad_fsm_command(fa, usr_val);
+	case ZFAT_ADC_TST_PATTERN:
+		if (unlikely(fa_enable_test_data_adc)) {
+			usr_val &= 0xFFF;
+			err = zfad_pattern_data_enable(fa, usr_val,
+						       fa_enable_test_data_adc);
+			if (err)
+				dev_warn(fa->msgdev,
+					 "Failed to set the ADC test data. Continue without\n");
+			else if (fa_enable_test_data_adc)
+				dev_info(fa->msgdev,
+					 "the ADC test data (0x%x) is enabled on all channels\n",
+					 usr_val);
+			return err;
+		} else {
+			dev_err(fa->msgdev,
+				"Cannot set the ADC test data. The driver is not in test mode\n");
+			return -EPERM;
+		}
 	}
 
 	fa_writel(fa, baseoff, &zfad_regs[reg_index], usr_val);
@@ -313,7 +348,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_OFFSET:
 		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
 		return 0;
-
+	case ZFAT_ADC_TST_PATTERN:
 	case ZFA_SW_R_NOADDRES_NBIT:
 	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
@@ -326,19 +361,28 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		*usr_val = fa_read_temp(fa, 0);
 		*usr_val = (*usr_val * 1000 + 8) / 16;
 		return 0;
+	case ZFA_SW_CH1_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH2_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH3_OFFSET_ZERO:
+		i--;
+	case ZFA_SW_CH4_OFFSET_ZERO:
+		i--;
+		*usr_val = fa->zero_offset[i];
+		return 0;
 	case ZFA_CHx_SAT:
 	case ZFA_CHx_CTL_TERM:
 	case ZFA_CHx_CTL_RANGE:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		break;
-
 	case ZFA_CHx_STA:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		*usr_val = fa_readl(fa, fa->fa_adc_csr_base,
 				    &zfad_regs[reg_index]);
 		i = (int16_t)(*usr_val); /* now signed integer */
 		*usr_val = i;
-		break;
+		return 0;
 	default:
 		reg_index = zattr->id;
 	}
@@ -491,10 +535,15 @@ static void zfad_stop_cset(struct zio_cset *cset)
 static int zfad_zio_probe(struct zio_device *zdev)
 {
 	struct fa_dev *fa = zdev->priv_d;
+	int err;
 
 	dev_dbg(fa->msgdev, "%s:%d\n", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
+
+	err = zfad_pattern_data_enable(fa, 0, fa_enable_test_data_adc);
+	if (err)
+		return err;
 
 	/* We don't have csets at this point, so don't do anything more */
 	return 0;
