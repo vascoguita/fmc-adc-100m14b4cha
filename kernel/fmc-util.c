@@ -35,13 +35,13 @@ signed long fmc_find_sdb_device_ext(struct sdb_array *tree,
 		c = &r->dev.sdb_component;
 		p = &c->product;
 
-		if (!IS_ERR(tree->subtree[i]))
+		if (!IS_ERR(tree->subtree[i])) {
+			/* FIXME: this index SHOULD be recursive, too */
 			res = fmc_find_sdb_device(tree->subtree[i],
 						  vid, did, sz);
-
-		/* FIXME: this index SHOULD be recursive, too */
-		if (ci == index && res >= 0)
-			return res + tree->baseaddr;
+			if (res >= 0 && ci++ == index)
+				return res + tree->baseaddr;
+		}
 		if (r->empty.record_type != sdb_type_device)
 			continue;
 		if (__be64_to_cpu(p->vendor_id) != vid)
@@ -53,9 +53,8 @@ signed long fmc_find_sdb_device_ext(struct sdb_array *tree,
 		first = __be64_to_cpu(c->addr_first);
 		if (sz)
 			*sz = (typeof(*sz)) (last + 1 - first);
-		if (ci == index)
+		if (ci++ == index)
 			return first + tree->baseaddr;
-		ci++;
 	}
 	return res;
 }
