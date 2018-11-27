@@ -53,6 +53,7 @@ module main;
 	      .trig_irq_o          (),
 	      .acq_end_irq_o       (),
 	      .eic_irq_o           (),
+	      .acq_cfg_ok_o        (),
 	      .ext_trigger_p_i     (ext_trig),
 	      .ext_trigger_n_i     (~ext_trig),
 	      .adc_dco_p_i         (adc0_dco),
@@ -156,12 +157,14 @@ module main;
 
    initial begin
 
-      CBusAccessor acc;
+      CWishboneAccessor acc;
       uint64_t val, expected;
 
       $timeformat (-6, 3, "us", 10);
 
       acc = Host.get_accessor();
+
+      acc.set_mode(PIPELINED);
 
       #1us;
 

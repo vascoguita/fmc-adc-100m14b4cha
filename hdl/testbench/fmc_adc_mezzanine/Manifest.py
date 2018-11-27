@@ -12,7 +12,7 @@ fetchto = "../../ip_cores"
 include_dirs = [
     "../include",
     fetchto + "/general-cores/sim/",
-    fetchto + "/general-cores/modules/wishbone/wb_spi/"
+    fetchto + "/general-cores/modules/wishbone/wb_spi/",
 ]
 
 files = [
@@ -27,5 +27,3 @@ modules = {
         "git://ohwr.org/hdl-core-lib/general-cores.git",
     ],
 }
-
-ctrls = [ "bank3_64b_32b" ]
