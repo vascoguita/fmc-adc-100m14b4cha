@@ -775,7 +775,7 @@ TIMESPEC TS_ddr_rst_tig = FROM FFS THRU ddr_rst TIG;
 NET "clk_sys_62m5" TNM_NET = sys_clk_62_5;
 NET "clk_ref_125m" TNM_NET = clk_125m_pllref;
 NET "cmp_xwrc_board_svec/clk_pll_dmtd"       TNM_NET = clk_dmtd;
-NET "cmp_xwrc_board_svec/phy8_to_wrc_rx_clk" TNM_NET = phy_rx_rbclk;
+NET "cmp_xwrc_board_svec/phy8_to_wrc_rx_clk" TNM_NET = phy_clk;
 NET "gen_fmc_mezzanine[0].*/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs0_clk;
 NET "gen_fmc_mezzanine[1].*/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs1_clk;
 
@@ -787,20 +787,34 @@ TIMEGRP "ddr_clk" = "ddr_clk_333m" "ddr_bank4_clk" "ddr_bank5_clk";
 TIMEGRP "sys_clk" = "sys_clk_62_5" "clk_125m_pllref";
 
 NET "*/gc_sync_ffs_in" TNM_NET = "sync_ffs";
+
+TIMEGRP "sys_sync_ffs"  = "sync_ffs" EXCEPT "sys_clk";
+TIMEGRP "dmtd_sync_ffs" = "sync_ffs" EXCEPT "clk_dmtd";
+TIMEGRP "ddr_sync_ffs"  = "sync_ffs" EXCEPT "ddr_clk";
+TIMEGRP "phy_sync_ffs"  = "sync_ffs" EXCEPT "phy_clk";
+TIMEGRP "adc0_sync_ffs" = "sync_ffs" EXCEPT "fs0_clk";
+TIMEGRP "adc1_sync_ffs" = "sync_ffs" EXCEPT "fs1_clk";
+
+TIMESPEC TS_sys_sync_ffs  = FROM sys_clk   TO "sys_sync_ffs"  TIG;
+TIMESPEC TS_dmtd_sync_ffs = FROM clk_dmtd  TO "dmtd_sync_ffs" TIG;
+TIMESPEC TS_ddr_sync_ffs  = FROM ddr_clk   TO "ddr_sync_ffs"  TIG;
+TIMESPEC TS_phy_sync_ffs  = FROM phy_clk   TO "phy_sync_ffs"  TIG;
+TIMESPEC TS_adc0_sync_ffs = FROM fs0_clk   TO "adc0_sync_ffs" TIG;
+TIMESPEC TS_adc1_sync_ffs = FROM fs1_clk   TO "adc1_sync_ffs" TIG;
+
 NET "*/gc_sync_register_in[*]" TNM_NET = "sync_reg";
-TIMEGRP "synchronizers" = "sync_ffs" "sync_reg";
 
-TIMEGRP "sys_sync"      = "synchronizers" EXCEPT "sys_clk";
-TIMEGRP "dmtd_sync"     = "synchronizers" EXCEPT "clk_dmtd";
-TIMEGRP "ddr_sync"      = "synchronizers" EXCEPT "ddr_clk";
-TIMEGRP "phy_sync"      = "synchronizers" EXCEPT "phy_rx_rbclk";
-TIMEGRP "adc0_sync"     = "synchronizers" EXCEPT "fs0_clk";
-TIMEGRP "adc1_sync"     = "synchronizers" EXCEPT "fs1_clk";
+TIMEGRP "sys_sync_reg"  = "sync_reg" EXCEPT "sys_clk";
+TIMEGRP "dmtd_sync_reg" = "sync_reg" EXCEPT "clk_dmtd";
+TIMEGRP "ddr_sync_reg"  = "sync_reg" EXCEPT "ddr_clk";
+TIMEGRP "phy_sync_reg"  = "sync_reg" EXCEPT "phy_clk";
+TIMEGRP "adc0_sync_reg" = "sync_reg" EXCEPT "fs0_clk";
+TIMEGRP "adc1_sync_reg" = "sync_reg" EXCEPT "fs1_clk";
 
-TIMESPEC TS_sys_sync      = FROM sys_clk TO "sys_sync" TIG;
-TIMESPEC TS_dmtd_sync     = FROM clk_dmtd TO "dmtd_sync" TIG;
-TIMESPEC TS_ddr_sync      = FROM ddr_clk TO "ddr_sync" TIG;
-TIMESPEC TS_phy_sync      = FROM phy_rx_rbclk TO "phy_sync" TIG;
-TIMESPEC TS_adc0_sync     = FROM fs0_clk TO "adc0_sync" TIG;
-TIMESPEC TS_adc1_sync     = FROM fs1_clk TO "adc1_sync" TIG;
-
+TIMESPEC TS_sys_62m5_sync_reg = FROM sys_clk_62_5    TO "sys_sync_reg"  16ns DATAPATHONLY;
+TIMESPEC TS_sys_125m_sync_reg = FROM clk_125m_pllref TO "sys_sync_reg"  8ns  DATAPATHONLY;
+TIMESPEC TS_dmtd_sync_reg     = FROM clk_dmtd        TO "dmtd_sync_reg" 16ns DATAPATHONLY;
+TIMESPEC TS_ddr_sync_reg      = FROM ddr_clk         TO "ddr_sync_reg"  3ns  DATAPATHONLY;
+TIMESPEC TS_phy_sync_reg      = FROM phy_clk         TO "phy_sync_reg"  8ns  DATAPATHONLY;
+TIMESPEC TS_adc0_sync_reg     = FROM fs0_clk         TO "adc0_sync_reg" 10ns DATAPATHONLY;
+TIMESPEC TS_adc1_sync_reg     = FROM fs1_clk         TO "adc1_sync_reg" 10ns DATAPATHONLY;
