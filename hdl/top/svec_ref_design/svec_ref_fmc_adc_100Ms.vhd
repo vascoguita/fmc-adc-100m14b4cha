@@ -905,7 +905,7 @@ begin
         ddr3_clk_n_o  => ddr_ck_n_o(I),
         ddr3_rzq_b    => ddr_rzq_b(I),
 
-        wb0_rst_n_i => rst_ref_125m_n,
+        wb0_rst_n_i => fmc_rst_ref_n(I),
         wb0_clk_i   => clk_ref_125m,
         wb0_sel_i   => wb_ddr_out(I).sel,
         wb0_cyc_i   => wb_ddr_out(I).cyc,
@@ -971,7 +971,7 @@ begin
     p_ddr_dat_cyc : process (clk_sys_62m5)
     begin
       if rising_edge(clk_sys_62m5) then
-        if (rst_sys_62m5_n = '0' or sw_rst_fmc(I) = '1') then
+        if rst_sys_62m5_n = '0' then
           ddr_dat_cyc_d(I) <= '0';
         else
           ddr_dat_cyc_d(I) <= cnx_slave_in(c_WB_SLAVE_FMC0_DDR_DAT + 3*I).cyc;
@@ -985,7 +985,7 @@ begin
     p_ddr_addr_cnt : process (clk_sys_62m5)
     begin
       if rising_edge(clk_sys_62m5) then
-        if (rst_sys_62m5_n = '0' or sw_rst_fmc(I) = '1') then
+        if rst_sys_62m5_n = '0' then
           ddr_addr_cnt(I) <= (others => '0');
         elsif (cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR + 3*I).we = '1' and
                cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR + 3*I).stb = '1' and
@@ -1001,7 +1001,7 @@ begin
     p_ddr_addr_ack : process (clk_sys_62m5)
     begin
       if rising_edge(clk_sys_62m5) then
-        if (rst_sys_62m5_n = '0' or sw_rst_fmc(I) = '1') then
+        if rst_sys_62m5_n = '0' then
           cnx_slave_out(c_WB_SLAVE_FMC0_DDR_ADR + 3*I).ack <= '0';
         elsif (cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR + 3*I).stb = '1' and
                cnx_slave_in(c_WB_SLAVE_FMC0_DDR_ADR + 3*I).cyc = '1') then
