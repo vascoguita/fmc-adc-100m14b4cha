@@ -38,9 +38,10 @@ use work.timetag_core_pkg.all;
 
 
 entity fmc_adc_mezzanine is
-  generic(
-    g_MULTISHOT_RAM_SIZE : natural := 2048
-    );
+  generic (
+    g_MULTISHOT_RAM_SIZE : natural := 2048;
+    g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
+    g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
   port (
     -- Clock, reset
     sys_clk_i   : in std_logic;
@@ -106,10 +107,9 @@ entity fmc_adc_mezzanine is
     wr_tm_time_valid_i : in std_logic;            -- WR timecode valid status bit
     wr_tm_tai_i        : in std_logic_vector(39 downto 0);  -- WR timecode seconds
     wr_tm_cycles_i     : in std_logic_vector(27 downto 0);  -- WR timecode 8ns ticks
-    wr_enable_i        : in std_logic             -- enable white rabbit features on mezzanine
-    );
-end fmc_adc_mezzanine;
+    wr_enable_i        : in std_logic);           -- enable white rabbit features on mezzanine
 
+end fmc_adc_mezzanine;
 
 architecture rtl of fmc_adc_mezzanine is
 
@@ -212,6 +212,9 @@ architecture rtl of fmc_adc_mezzanine is
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
+  signal wb_csr_out : t_wishbone_slave_in;
+  signal wb_csr_in  : t_wishbone_slave_out;
+
   -- Mezzanine system I2C for EEPROM
   signal sys_scl_in   : std_logic;
   signal sys_scl_out  : std_logic;
@@ -256,15 +259,36 @@ begin
   -- Main wishbone crossbar for mezzanine
   ------------------------------------------------------------------------------
 
-  -- Additional register to help timing
-  cmp_xwb_reg : xwb_register_link
-    port map(
+  cmp_fmc_wb_slave_adapter_in : wb_slave_adapter
+    generic map (
+      g_master_use_struct  => TRUE,
+      g_master_mode        => PIPELINED,
+      g_master_granularity => BYTE,
+      g_slave_use_struct   => TRUE,
+      g_slave_mode         => g_WB_MODE,
+      g_slave_granularity  => g_WB_GRANULARITY)
+    port map (
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
       slave_i   => wb_csr_slave_i,
       slave_o   => wb_csr_slave_o,
-      master_i  => cnx_master_in(c_WB_MASTER),
-      master_o  => cnx_master_out(c_WB_MASTER));
+      master_i  => wb_csr_in,
+      master_o  => wb_csr_out);
+
+  -- Additional register to help timing
+  cmp_xwb_register : xwb_register
+    generic map (
+      g_WB_MODE  => PIPELINED,
+      -- Do not register the return path (ACK/STALL).
+      -- See xwb_register for more details.
+      g_FULL_REG => FALSE)
+    port map (
+      rst_n_i  => sys_rst_n_i,
+      clk_i    => sys_clk_i,
+      slave_i  => wb_csr_out,
+      slave_o  => wb_csr_in,
+      master_i => cnx_master_in(c_WB_MASTER),
+      master_o => cnx_master_out(c_WB_MASTER));
 
   cmp_sdb_crossbar : xwb_sdb_crossbar
     generic map (
@@ -273,6 +297,7 @@ begin
       g_registered  => TRUE,
       g_wraparound  => TRUE,
       g_layout      => c_INTERCONNECT_LAYOUT,
+      g_sdb_wb_mode => PIPELINED,
       g_sdb_addr    => c_SDB_ADDRESS)
     port map (
       clk_sys_i => sys_clk_i,
@@ -288,7 +313,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_sys_i2c : xwb_i2c_master
     generic map(
-      g_interface_mode      => CLASSIC,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
       )
     port map (
@@ -321,7 +346,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_spi : xwb_spi
     generic map(
-      g_interface_mode      => CLASSIC,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
       )
     port map (
@@ -365,7 +390,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_i2c : xwb_i2c_master
     generic map(
-      g_interface_mode      => CLASSIC,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
       )
     port map (
@@ -400,6 +425,8 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_adc_100Ms_core : fmc_adc_100Ms_core
     generic map (
+      g_WB_CSR_MODE        => PIPELINED,
+      g_WB_CSR_GRANULARITY => BYTE,
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
       )
     port map(
@@ -452,7 +479,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_onewire : xwb_onewire_master
     generic map(
-      g_interface_mode      => CLASSIC,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,
       g_num_ports           => 1,
       g_ow_btp_normal       => "5.0",

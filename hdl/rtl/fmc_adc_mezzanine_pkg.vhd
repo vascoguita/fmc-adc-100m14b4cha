@@ -43,9 +43,10 @@ package fmc_adc_mezzanine_pkg is
   -- Components declaration
   ------------------------------------------------------------------------------
   component fmc_adc_mezzanine
-    generic(
-      g_MULTISHOT_RAM_SIZE : natural := 2048
-    );
+    generic (
+      g_MULTISHOT_RAM_SIZE : natural := 2048;
+      g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
+      g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
     port (
       -- Clock, reset
       sys_clk_i   : in std_logic;
@@ -111,14 +112,8 @@ package fmc_adc_mezzanine_pkg is
       wr_tm_time_valid_i : in std_logic;          -- WR timecode valid status bit
       wr_tm_tai_i        : in std_logic_vector(39 downto 0);  -- WR timecode seconds
       wr_tm_cycles_i     : in std_logic_vector(27 downto 0);  -- WR timecode 8ns ticks
-      wr_enable_i        : in std_logic           -- enable white rabbit features on mezzanine
-      );
+      wr_enable_i        : in std_logic);         -- enable white rabbit features on mezzanine
+
   end component fmc_adc_mezzanine;
-
-end fmc_adc_mezzanine_pkg;
-
-package body fmc_adc_mezzanine_pkg is
-
-
 
 end fmc_adc_mezzanine_pkg;
