@@ -35,16 +35,16 @@ use UNISIM.vcomponents.all;
 
 library work;
 
+use work.vme64x_pkg.all;
 use work.ddr3_ctrl_pkg.all;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
 use work.synthesis_descriptor.all;
-use work.vme64x_pkg.all;
 use work.timetag_core_pkg.all;
 use work.carrier_csr_wbgen2_pkg.all;
-use work.wr_board_pkg.all;
 use work.wr_xilinx_pkg.all;
+use work.wr_board_pkg.all;
 use work.wr_svec_pkg.all;
 
 entity svec_ref_fmc_adc_100Ms is
@@ -154,24 +154,24 @@ entity svec_ref_fmc_adc_100Ms is
       ------------------------------------------
       -- DDR (banks 4 and 5)
       ------------------------------------------
-      ddr_we_n_o    : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_udqs_p_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_udqs_n_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_udm_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_reset_n_o : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ras_n_o   : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_odt_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ldqs_p_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ldqs_n_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ldm_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_cke_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ck_p_o    : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ck_n_o    : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_cas_n_o   : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
-      ddr_dq_b      : inout std_logic_vector(16*g_NB_FMC_SLOTS-1 downto 0);
-      ddr_ba_o      : out   std_logic_vector(3*g_NB_FMC_SLOTS-1 downto 0);
       ddr_a_o       : out   std_logic_vector(14*g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ba_o      : out   std_logic_vector(3*g_NB_FMC_SLOTS-1 downto 0);
+      ddr_cas_n_o   : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ck_n_o    : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ck_p_o    : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_cke_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_dq_b      : inout std_logic_vector(16*g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ldm_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ldqs_n_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ldqs_p_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_odt_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_ras_n_o   : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_reset_n_o : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
       ddr_rzq_b     : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_udm_o     : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_udqs_n_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_udqs_p_b  : inout std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
+      ddr_we_n_o    : out   std_logic_vector(g_NB_FMC_SLOTS-1 downto 0);
 
       ------------------------------------------
       -- FMC slots
@@ -262,14 +262,13 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   -- SDB meta info
   constant c_SDB_GIT_REPO_URL : integer := c_NUM_WB_SLAVES;
   constant c_SDB_SYNTHESIS    : integer := c_NUM_WB_SLAVES + 1;
-  constant c_SDB_INTEGRATE    : integer := c_NUM_WB_SLAVES + 2;
 
   -- Devices sdb description
-  constant c_wb_svec_csr_sdb : t_sdb_device := (
+  constant c_WB_SVEC_CSR_SDB : t_sdb_device := (
     abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
+    wbd_endian    => c_SDB_ENDIAN_BIG,
     wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
@@ -281,11 +280,11 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
         date      => x"20121116",
         name      => "WB-SVEC-CSR        ")));
 
-  constant c_wb_ddr_dat_sdb : t_sdb_device := (
+  constant c_WB_DDR_DAT_SDB : t_sdb_device := (
     abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
+    wbd_endian    => c_SDB_ENDIAN_BIG,
     wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
@@ -297,11 +296,11 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
         date      => x"20130704",
         name      => "WB-DDR-Data-Access ")));
 
-  constant c_wb_ddr_adr_sdb : t_sdb_device := (
+  constant c_WB_DDR_ADR_SDB : t_sdb_device := (
     abi_class     => x"0000",                     -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
+    wbd_endian    => c_SDB_ENDIAN_BIG,
     wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
@@ -315,38 +314,27 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
 
   -- f_xwb_bridge_manual_sdb(size, sdb_addr)
   -- Note: sdb_addr is the sdb records address relative to the bridge base address
-  constant c_fmc0_bridge_sdb    : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
-  constant c_fmc1_bridge_sdb    : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
-  constant c_wr_core_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
+  constant c_FMC0_BRIDGE_SDB    : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
+  constant c_FMC1_BRIDGE_SDB    : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"00001fff", x"00000000");
+  constant c_WR_CORE_BRIDGE_SDB : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
 
   -- sdb header address
   constant c_SDB_ADDRESS : t_wishbone_address := x"00000000";
 
-  -- sdb integration record
-  constant c_integration_sdb : t_sdb_integration := (
-    product     => (
-      vendor_id => x"000000000000CE42",  -- CERN
-      device_id => x"5c01a632",          -- echo "svec_fmc-adc-100m14b4cha" | md5sum | cut -c1-8
-      version   => x"00050000",          -- bcd encoded, [31:16] = major, [15:0] = minor
-      date      => x"20181025",          -- yyyymmdd
-      name      => "svec_fmcadc100m14b "));
-
   -- Wishbone crossbar layout
-  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_SLAVES + 2 downto 0) :=
+  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_SLAVES + 1 downto 0) :=
     (
-      c_WB_SLAVE_SVEC_CSR     => f_sdb_embed_device(c_wb_svec_csr_sdb, x"00001200"),
-      c_WB_SLAVE_VIC          => f_sdb_embed_device(c_xwb_vic_sdb, x"00001300"),
-      c_WB_SLAVE_FMC0_ADC     => f_sdb_embed_bridge(c_fmc0_bridge_sdb, x"00002000"),
-      c_WB_SLAVE_FMC0_DDR_ADR => f_sdb_embed_device(c_wb_ddr_adr_sdb, x"00004000"),
-      c_WB_SLAVE_FMC0_DDR_DAT => f_sdb_embed_device(c_wb_ddr_dat_sdb, x"00005000"),
-      c_WB_SLAVE_FMC1_ADC     => f_sdb_embed_bridge(c_fmc1_bridge_sdb, x"00006000"),
-      c_WB_SLAVE_FMC1_DDR_ADR => f_sdb_embed_device(c_wb_ddr_adr_sdb, x"00008000"),
-      c_WB_SLAVE_FMC1_DDR_DAT => f_sdb_embed_device(c_wb_ddr_dat_sdb, x"00009000"),
-      c_WB_SLAVE_WR_CORE      => f_sdb_embed_bridge(c_wr_core_bridge_sdb, x"00040000"),
-      c_SDB_GIT_REPO_URL      => f_sdb_embed_repo_url(c_sdb_repo_url),
-      c_SDB_SYNTHESIS         => f_sdb_embed_synthesis(c_sdb_synthesis_info),
-      c_SDB_INTEGRATE         => f_sdb_embed_integration(c_integration_sdb)
-      );
+      c_WB_SLAVE_SVEC_CSR     => f_sdb_embed_device(c_WB_SVEC_CSR_SDB,    x"00001200"),
+      c_WB_SLAVE_VIC          => f_sdb_embed_device(c_XWB_VIC_SDB,        x"00001300"),
+      c_WB_SLAVE_FMC0_ADC     => f_sdb_embed_bridge(c_FMC0_BRIDGE_SDB,    x"00002000"),
+      c_WB_SLAVE_FMC0_DDR_ADR => f_sdb_embed_device(c_WB_DDR_ADR_SDB,     x"00004000"),
+      c_WB_SLAVE_FMC0_DDR_DAT => f_sdb_embed_device(c_WB_DDR_DAT_SDB,     x"00005000"),
+      c_WB_SLAVE_FMC1_ADC     => f_sdb_embed_bridge(c_FMC1_BRIDGE_SDB,    x"00006000"),
+      c_WB_SLAVE_FMC1_DDR_ADR => f_sdb_embed_device(c_WB_DDR_ADR_SDB,     x"00008000"),
+      c_WB_SLAVE_FMC1_DDR_DAT => f_sdb_embed_device(c_WB_DDR_DAT_SDB,     x"00009000"),
+      c_WB_SLAVE_WR_CORE      => f_sdb_embed_bridge(c_WR_CORE_BRIDGE_SDB, x"00040000"),
+      c_SDB_GIT_REPO_URL      => f_sdb_embed_repo_url(c_SDB_REPO_URL),
+      c_SDB_SYNTHESIS         => f_sdb_embed_synthesis(c_SDB_SYNTHESIS_INFO));
 
   -- VIC default vector setting
   constant c_VIC_VECTOR_TABLE : t_wishbone_address_array(0 to 1) :=
@@ -357,15 +345,14 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   -- Other constants declaration
   ------------------------------------------------------------------------------
 
-  -- WRPC auxiliary clock configuration, use aux out0 for DDR clock
-  constant c_wrpc_pll_config : t_px_pll_cfg := (
-    0      => (enabled => TRUE, divide => 3, phase => 0.0, duty_cycle => 0.50),
-    others => c_PX_DEFAULT_CLK_CFG);
+  -- WRPC Xilinx platform auxiliary clock configuration, used for DDR clock
+  constant c_WRPC_PLL_CONFIG : t_px_pll_cfg := (
+    enabled => TRUE, divide => 3, multiply => 8 );
 
   -- SVEC carrier CSR constants
   constant c_CARRIER_TYPE : std_logic_vector(15 downto 0) := X"0002";
 
-  -- Conversion of g_simulation to string needed for DDR3 controller
+  -- Conversion of g_simulation to string needed for DDR controller
   function f_int2string (n : natural) return string is
   begin
     if n = 0 then
@@ -375,7 +362,7 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
     end if;
   end;
 
-  constant c_SIMULATION_STR : string := f_int2string(g_simulation);
+  constant c_SIMULATION_STR : string := f_int2string(g_SIMULATION);
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -388,8 +375,6 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal clk_ref_125m       : std_logic;
   signal sys_clk_pll_locked : std_logic;
   signal clk_ddr_333m       : std_logic;
-  signal clk_pll_aux        : t_px_aux_clk;
-  signal rst_pll_aux_n      : t_px_aux_clk;
 
   signal areset_n           : std_logic            := '0';
   signal rst_sys_62m5_n     : std_logic            := '0';
@@ -399,7 +384,7 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal sw_rst_fmc_sync    : t_fmc_slot_vec       := (others => '1');
   signal fmc_rst_ref_n      : t_fmc_slot_vec       := (others => '0');
   signal fmc_rst_sys_n      : t_fmc_slot_vec       := (others => '0');
-  signal ddr_rst            : t_fmc_slot_vec       := (others => '0');
+  signal ddr_rst            : t_fmc_slot_vec       := (others => '1');
 
   attribute keep                 : string;
   attribute keep of clk_sys_62m5 : signal is "TRUE";
@@ -431,8 +416,8 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal cnx_fmc_sync_master_in  : t_wishbone_master_in_array(g_NB_FMC_SLOTS-1 downto 0);
 
   -- Wishbone buses from FMC ADC cores to DDR controller
-  signal wb_ddr_in  : t_wishbone_master_data64_in_array(g_NB_FMC_SLOTS-1 downto 0);
-  signal wb_ddr_out : t_wishbone_master_data64_out_array(g_NB_FMC_SLOTS-1 downto 0);
+  signal fmc_wb_ddr_in  : t_wishbone_master_data64_in_array(g_NB_FMC_SLOTS-1 downto 0);
+  signal fmc_wb_ddr_out : t_wishbone_master_data64_out_array(g_NB_FMC_SLOTS-1 downto 0);
 
   -- Interrupts and status
   signal ddr_wr_fifo_empty   : t_fmc_slot_vec;
@@ -587,12 +572,12 @@ begin
   ------------------------------------------------------------------------------
   cmp_sdb_crossbar : xwb_sdb_crossbar
     generic map (
-      g_num_masters => c_NUM_WB_MASTERS,
-      g_num_slaves  => c_NUM_WB_SLAVES,
-      g_registered  => TRUE,
-      g_wraparound  => TRUE,
-      g_layout      => c_INTERCONNECT_LAYOUT,
-      g_sdb_addr    => c_SDB_ADDRESS)
+      g_NUM_MASTERS => c_NUM_WB_MASTERS,
+      g_NUM_SLAVES  => c_NUM_WB_SLAVES,
+      g_REGISTERED  => TRUE,
+      g_WRAPAROUND  => TRUE,
+      g_LAYOUT      => c_INTERCONNECT_LAYOUT,
+      g_SDB_ADDR    => c_SDB_ADDRESS)
     port map (
       clk_sys_i => clk_sys_62m5,
       rst_n_i   => rst_sys_62m5_n,
@@ -623,11 +608,11 @@ begin
 
   cmp_xwrc_board_svec : xwrc_board_svec
     generic map (
-      g_simulation                => g_simulation,
-      g_with_external_clock_input => FALSE,
-      g_dpram_initf               => g_wrpc_initf,
-      g_pll_config                => c_wrpc_pll_config,
-      g_fabric_iface              => PLAIN)
+      g_SIMULATION                => g_SIMULATION,
+      g_WITH_EXTERNAL_CLOCK_INPUT => FALSE,
+      g_DPRAM_INITF               => g_WRPC_INITF,
+      g_AUX_PLL_CONFIG            => c_WRPC_PLL_CONFIG,
+      g_FABRIC_IFACE              => PLAIN)
     port map (
       clk_20m_vcxo_i      => clk_20m_vcxo_i,
       clk_125m_pllref_p_i => clk_125m_pllref_p_i,
@@ -637,10 +622,10 @@ begin
       areset_n_i          => areset_n,
       clk_sys_62m5_o      => clk_sys_62m5,
       clk_ref_125m_o      => clk_ref_125m,
-      clk_pll_aux_o       => clk_pll_aux,
+      clk_pll_aux_o       => clk_ddr_333m,
       rst_sys_62m5_n_o    => rst_sys_62m5_n,
       rst_ref_125m_n_o    => rst_ref_125m_n,
-      rst_pll_aux_n_o     => rst_pll_aux_n,
+      rst_pll_aux_n_o     => rst_ddr_333m_n,
       pll20dac_din_o      => pll20dac_din_o,
       pll20dac_sclk_o     => pll20dac_sclk_o,
       pll20dac_sync_n_o   => pll20dac_sync_n_o,
@@ -684,9 +669,6 @@ begin
       led_act_o           => wr_led_act,
       link_ok_o           => wrabbit_en);
 
-  rst_ddr_333m_n <= rst_pll_aux_n(0);
-  clk_ddr_333m   <= clk_pll_aux(0);
-
   ------------------------------------------------------------------------------
   -- Carrier CSR
   --    Carrier type and PCB version
@@ -694,7 +676,7 @@ begin
   --    Front panel LED manual control
   ------------------------------------------------------------------------------
   cmp_carrier_csr : entity work.carrier_csr
-    port map(
+    port map (
       rst_n_i    => rst_sys_62m5_n,
       clk_sys_i  => clk_sys_62m5,
       wb_adr_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).adr(3 downto 2),
@@ -744,10 +726,10 @@ begin
 
   cmp_vic : xwb_vic
     generic map (
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE,
-      g_num_interrupts      => 2,
-      g_init_vectors        => c_VIC_VECTOR_TABLE)
+      g_INTERFACE_MODE      => PIPELINED,
+      g_ADDRESS_GRANULARITY => BYTE,
+      g_NUM_INTERRUPTS      => 2,
+      g_INIT_VECTORS        => c_VIC_VECTOR_TABLE)
     port map (
       clk_sys_i    => clk_sys_62m5,
       rst_n_i      => rst_sys_62m5_n,
@@ -800,8 +782,8 @@ begin
 
         wb_ddr_clk_i    => clk_ref_125m,
         wb_ddr_rst_n_i  => fmc_rst_ref_n(I),
-        wb_ddr_master_i => wb_ddr_in(I),
-        wb_ddr_master_o => wb_ddr_out(I),
+        wb_ddr_master_i => fmc_wb_ddr_in(I),
+        wb_ddr_master_o => fmc_wb_ddr_out(I),
 
         ddr_wr_fifo_empty_i => ddr_wr_fifo_empty_sync(I),
         trig_irq_o          => open,
@@ -907,15 +889,15 @@ begin
 
         wb0_rst_n_i => fmc_rst_ref_n(I),
         wb0_clk_i   => clk_ref_125m,
-        wb0_sel_i   => wb_ddr_out(I).sel,
-        wb0_cyc_i   => wb_ddr_out(I).cyc,
-        wb0_stb_i   => wb_ddr_out(I).stb,
-        wb0_we_i    => wb_ddr_out(I).we,
-        wb0_addr_i  => wb_ddr_out(I).adr,
-        wb0_data_i  => wb_ddr_out(I).dat,
-        wb0_data_o  => wb_ddr_in(I).dat,
-        wb0_ack_o   => wb_ddr_in(I).ack,
-        wb0_stall_o => wb_ddr_in(I).stall,
+        wb0_sel_i   => fmc_wb_ddr_out(I).sel,
+        wb0_cyc_i   => fmc_wb_ddr_out(I).cyc,
+        wb0_stb_i   => fmc_wb_ddr_out(I).stb,
+        wb0_we_i    => fmc_wb_ddr_out(I).we,
+        wb0_addr_i  => fmc_wb_ddr_out(I).adr,
+        wb0_data_i  => fmc_wb_ddr_out(I).dat,
+        wb0_data_o  => fmc_wb_ddr_in(I).dat,
+        wb0_ack_o   => fmc_wb_ddr_in(I).ack,
+        wb0_stall_o => fmc_wb_ddr_in(I).stall,
 
         p0_cmd_empty_o   => open,
         p0_cmd_full_o    => open,
@@ -957,8 +939,8 @@ begin
 
         );
 
-    wb_ddr_in(I).err <= '0';
-    wb_ddr_in(I).rty <= '0';
+    fmc_wb_ddr_in(I).err <= '0';
+    fmc_wb_ddr_in(I).rty <= '0';
 
     ddr_calib_done(I) <= ddr_status(I)(0);
 

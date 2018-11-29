@@ -24,8 +24,8 @@ xilinx::project set "Enable Multi-Threading" "4" -process "Place & Route"
 xilinx::project set "Register Balancing" "Yes"
 xilinx::project set "Register Duplication Map" "On"
 
-xilinx::project set "Placer Extra Effort Map" "Normal"
-xilinx::project set "Extra Effort (Highest PAR level only)" "Normal"
+#xilinx::project set "Placer Extra Effort Map" "Normal"
+#xilinx::project set "Extra Effort (Highest PAR level only)" "Normal"
 
 xilinx::project save
 
