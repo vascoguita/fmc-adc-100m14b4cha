@@ -492,7 +492,6 @@ begin
 
     -- reset for mezzanines
     -- including soft reset, with re-sync from 62.5MHz domain
-    -- and registers to help with timing
     cmp_fmc_sw_reset_sync : gc_sync_ffs
       port map (
         clk_i    => clk_ref_125m,

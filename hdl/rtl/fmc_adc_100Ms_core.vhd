@@ -393,7 +393,7 @@ begin
   cmp_csr_wb_slave_adapter : wb_slave_adapter
     generic map (
       g_master_use_struct  => TRUE,
-      g_master_mode        => PIPELINED,
+      g_master_mode        => CLASSIC,
       g_master_granularity => WORD,
       g_slave_use_struct   => TRUE,
       g_slave_mode         => g_WB_CSR_MODE,
