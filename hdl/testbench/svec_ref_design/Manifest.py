@@ -13,6 +13,7 @@ include_dirs = [
     "../include",
     fetchto + "/general-cores/sim/",
     fetchto + "/general-cores/modules/wishbone/wb_spi/",
+    fetchto + "/ddr3-sp6-core/hdl/sim/",
     fetchto + "/vme64x-core/hdl/sim/vme64x_bfm/",
 ]
 

@@ -36,6 +36,22 @@ module main;
    reg[7:0] adc_dat_even = 8'h00;
    reg signed [13:0] adc_data = 0;
 
+   logic             ddr_reset_n [1:0];
+   logic             ddr_ck_p    [1:0];
+   logic             ddr_ck_n    [1:0];
+   logic             ddr_cke     [1:0];
+   logic             ddr_ras_n   [1:0];
+   logic             ddr_cas_n   [1:0];
+   logic             ddr_we_n    [1:0];
+   wire  [1:0]       ddr_dm      [1:0];
+   logic [5:0]       ddr_ba;
+   logic [27:0]      ddr_a;
+   wire  [31:0]      ddr_dq;
+   wire  [1:0]       ddr_dqs_p   [1:0];
+   wire  [1:0]       ddr_dqs_n   [1:0];
+   wire              ddr_rzq     [1:0];
+   logic             ddr_odt     [1:0];
+
    // 400Mhz
    always #1.25ns adc_dco <= ~adc_dco;
 
@@ -88,8 +104,66 @@ module main;
       .vme_data_dir_o           (VME_DATA_DIR),
       .vme_data_oe_n_o          (VME_DATA_OE_N),
       .vme_addr_dir_o           (VME_ADDR_DIR),
-      .vme_addr_oe_n_o          (VME_ADDR_OE_N)
+      .vme_addr_oe_n_o          (VME_ADDR_OE_N),
+      .ddr_reset_n_o            (ddr_reset_n),
+      .ddr_ck_p_o               (ddr_ck_p),
+      .ddr_ck_n_o               (ddr_ck_n),
+      .ddr_cke_o                (ddr_cke),
+      .ddr_ras_n_o              (ddr_ras_n),
+      .ddr_cas_n_o              (ddr_cas_n),
+      .ddr_we_n_o               (ddr_we_n),
+      .ddr_udm_o                (ddr_dm[1]),
+      .ddr_ldm_o                (ddr_dm[0]),
+      .ddr_ba_o                 (ddr_ba),
+      .ddr_a_o                  (ddr_a),
+      .ddr_dq_b                 (ddr_dq),
+      .ddr_udqs_p_b             (ddr_dqs_p[1]),
+      .ddr_udqs_n_b             (ddr_dqs_n[1]),
+      .ddr_ldqs_p_b             (ddr_dqs_p[0]),
+      .ddr_ldqs_n_b             (ddr_dqs_n[0]),
+      .ddr_odt_o                (ddr_odt),
+      .ddr_rzq_b                (ddr_rzq)
       );
+
+   ddr3
+     cmp_ddr0
+       (
+	.rst_n   (ddr_reset_n[0]),
+	.ck      (ddr_ck_p[0]),
+	.ck_n    (ddr_ck_n[0]),
+	.cke     (ddr_cke[0]),
+	.cs_n    (1'b0),
+	.ras_n   (ddr_ras_n[0]),
+	.cas_n   (ddr_cas_n[0]),
+	.we_n    (ddr_we_n[0]),
+	.dm_tdqs ({ddr_dm[1][0], ddr_dm[0][0]}),
+	.ba      (ddr_ba[2:0]),
+	.addr    (ddr_a[13:0]),
+	.dq      (ddr_dq[15:0]),
+	.dqs     ({ddr_dqs_p[1][0],ddr_dqs_p[0][0]}),
+	.dqs_n   ({ddr_dqs_n[1][0],ddr_dqs_n[0][0]}),
+	.odt     (ddr_odt[0])
+	);
+
+   ddr3
+     cmp_ddr1
+       (
+	.rst_n   (ddr_reset_n[1]),
+	.ck      (ddr_ck_p[1]),
+	.ck_n    (ddr_ck_n[1]),
+	.cke     (ddr_cke[1]),
+	.cs_n    (1'b0),
+	.ras_n   (ddr_ras_n[1]),
+	.cas_n   (ddr_cas_n[1]),
+	.we_n    (ddr_we_n[1]),
+	.dm_tdqs ({ddr_dm[1][1], ddr_dm[0][1]}),
+	.ba      (ddr_ba[5:3]),
+	.addr    (ddr_a[27:14]),
+	.dq      (ddr_dq[31:16]),
+	.dqs     ({ddr_dqs_p[1][1],ddr_dqs_p[0][1]}),
+	.dqs_n   ({ddr_dqs_n[1][1],ddr_dqs_n[0][1]}),
+	.odt     (ddr_odt[1])
+	);
 
    int adc_div = 0;
 
