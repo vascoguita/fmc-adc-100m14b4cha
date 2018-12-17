@@ -173,7 +173,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	unsigned int baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
 	int i, range, err = 0, reg_index;
-	uint32_t off;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
