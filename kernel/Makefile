@@ -1,3 +1,4 @@
+-include Makefile.specific
 # include parent_common.mk for buildsystem's defines
 # use absolute path for REPO_PARENT
 CURDIR:=$(shell /bin/pwd)
