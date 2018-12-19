@@ -71,12 +71,14 @@ begin
         when "00" => 
           case wb_i.adr(2 downto 2) is
           when "0" => 
+            -- Register version
+            wr_ack_int <= not wr_ack_done_int;
+          when "1" => 
             -- Register ctrl
             ctrl_wr_o <= '1';
             ctrl_enable_o <= wb_i.dat(0);
             wr_ack_int <= not wr_ack_done_int;
           when others =>
-            wr_ack_int <= not wr_ack_done_int;
           end case;
         when "01" => 
           case wb_i.adr(2 downto 2) is
@@ -122,6 +124,9 @@ begin
         when "00" => 
           case wb_i.adr(2 downto 2) is
           when "0" => 
+            -- version
+            reg_rdat_int <= "10101101110000010000000000000001";
+          when "1" => 
             -- ctrl
             reg_rdat_int(0) <= ctrl_enable_i;
           when others =>
@@ -160,6 +165,10 @@ begin
     when "00" => 
       case wb_i.adr(2 downto 2) is
       when "0" => 
+        -- version
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "1" => 
         -- ctrl
         wb_o.dat <= reg_rdat_int;
         rd_ack_int <= rd_ack1_int;

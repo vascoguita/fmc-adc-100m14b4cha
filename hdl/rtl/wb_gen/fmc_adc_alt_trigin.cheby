@@ -5,6 +5,14 @@ memory-map:
     busgroup: True
   children:
   - reg:
+     name: version
+     description: Core version
+     access: ro
+     width: 32
+     preset: 0xADC10001  # ADC Input 0001
+     x-hdl:
+        type: const
+  - reg:
      name: ctrl
      description: Control register
      access: rw

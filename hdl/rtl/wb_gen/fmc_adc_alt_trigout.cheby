@@ -28,8 +28,8 @@ memory-map:
           description: Set when the timestamp fifo is not empty
           range: 8
   - reg:
-     name: ctrl
-     description: Control register
+     name: enable
+     description: Enable register
      access: rw
      width: 32
      children:

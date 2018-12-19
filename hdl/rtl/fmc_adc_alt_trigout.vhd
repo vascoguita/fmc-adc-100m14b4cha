@@ -116,7 +116,7 @@ begin
             -- Register status
             wr_ack_int <= not wr_ack_done_int;
           when "1" => 
-            -- Register ctrl
+            -- Register enable
             ch1_enable_reg <= wb_i.dat(0);
             ch2_enable_reg <= wb_i.dat(1);
             ch3_enable_reg <= wb_i.dat(2);
@@ -174,7 +174,7 @@ begin
             reg_rdat_int(2) <= wr_valid_i;
             reg_rdat_int(8) <= ts_present_i;
           when "1" => 
-            -- ctrl
+            -- enable
             reg_rdat_int(0) <= ch1_enable_reg;
             reg_rdat_int(1) <= ch2_enable_reg;
             reg_rdat_int(2) <= ch3_enable_reg;
@@ -226,7 +226,7 @@ begin
         wb_o.dat <= reg_rdat_int;
         rd_ack_int <= rd_ack1_int;
       when "1" => 
-        -- ctrl
+        -- enable
         wb_o.dat <= reg_rdat_int;
         rd_ack_int <= rd_ack1_int;
       when others =>
