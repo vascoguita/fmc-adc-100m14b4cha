@@ -113,9 +113,10 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 			      enum fa100m14b4c_input_range range)
 {
 	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-	int offset, gain, hwval;
+	int offset, gain;
+	int64_t hwval;
 
-	hwval = uval * 0x8000 / 5000000;
+	hwval = uval * 0x8000LL / 5000000;
 	if (hwval == 0x8000)
 		hwval = 0x7fff; /* -32768 .. 32767 */
 
