@@ -307,6 +307,7 @@ begin
 
   cmp_sdb_crossbar : xwb_sdb_crossbar
     generic map (
+      g_VERBOSE     => FALSE,
       g_num_masters => c_NUM_WB_MASTERS,
       g_num_slaves  => c_NUM_WB_SLAVES,
       g_registered  => TRUE,
