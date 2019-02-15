@@ -18,6 +18,7 @@ CC ?= $(CROSS_COMPILE)gcc
 
 progs := fau-trg-config
 progs += fau-acq-time
+progs += fau-calibration
 progs += parport-burst
 
 # we are not in the kernel, so we need to piggy-back on "make modules"

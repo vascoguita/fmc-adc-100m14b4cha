@@ -8,6 +8,12 @@
 #ifndef FMC_ADC_100M14B4C_H_
 #define FMC_ADC_100M14B4C_H_
 
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
+
 #ifndef BIT
 #define BIT(nr) (1UL << (nr))
 #endif
@@ -128,6 +134,17 @@ enum fa100m14b4c_fsm_state {
 	FA100M14B4C_STATE_DECR,
 };
 
+/* ADC and DAC Calibration, from  EEPROM */
+struct fa_calib_stanza {
+	int16_t offset[4]; /* One per channel */
+	uint16_t gain[4];  /* One per channel */
+	uint16_t temperature;
+};
+
+struct fa_calib {
+	struct fa_calib_stanza adc[3];  /* For input, one per range */
+	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
+};
 
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
 #include <linux/dma-mapping.h>
@@ -348,18 +365,6 @@ struct fa_carrier_op {
 	int (*dma_start)(struct zio_cset *cset);
 	void (*dma_done)(struct zio_cset *cset);
 	void (*dma_error)(struct zio_cset *cset);
-};
-
-/* ADC and DAC Calibration, from  EEPROM */
-struct fa_calib_stanza {
-	int16_t offset[4]; /* One per channel */
-	uint16_t gain[4];  /* One per channel */
-	uint16_t temperature;
-};
-
-struct fa_calib {
-	struct fa_calib_stanza adc[3];  /* For input, one per range */
-	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
 };
 
 /*
