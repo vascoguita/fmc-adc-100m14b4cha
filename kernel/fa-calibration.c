@@ -91,3 +91,68 @@ void fa_read_eeprom_calib(struct fa_dev *fa)
 	fa_endian_calib(&fa->calib);
 	fa_verify_calib(&fa->fmc->dev, &fa->calib, &fa_identity_calib);
 }
+
+/**
+ * Calculate calibrated values for offset and range using current values
+ * @fa: FMC ADC device
+ * @chan: channel
+ */
+static void fa_apply_calib(struct fa_dev *fa, struct zio_channel *chan)
+{
+	int reg = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+	int range = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg]);
+
+	zfad_set_range(fa, chan, range);
+	zfad_apply_offset(chan);
+}
+
+static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
+			       struct bin_attribute *attr,
+			       char *buf, loff_t off, size_t count)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct fa_dev *fa = get_zfadc(dev);
+	struct fa_calib *calib = (struct fa_calib *) buf;
+	int i;
+
+	if (off != 0 || count != sizeof(*calib))
+		return -EINVAL;
+
+	fa_endian_calib(calib);
+	fa_verify_calib(dev, calib, &fa_identity_calib);
+
+	/*
+	 * The user should be careful enough to not change calibration
+	 * values while running an acquisition
+	 */
+	memcpy(&fa->calib, calib, sizeof(*calib));
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
+		fa_apply_calib(fa, &fa->zdev->cset->chan[i]);
+
+	return count;
+}
+
+static ssize_t fa_read_eeprom(struct file *file, struct kobject *kobj,
+			      struct bin_attribute *attr,
+			      char *buf, loff_t off, size_t count)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct fa_dev *fa = get_zfadc(dev);
+
+	if (off != 0 || count < sizeof(fa->calib))
+		return -EINVAL;
+
+	memcpy(buf, &fa->calib, sizeof(fa->calib));
+
+	return count;
+}
+
+struct bin_attribute dev_attr_calibration = {
+	.attr = {
+		.name = "calibration_data",
+		.mode = 0744,
+	},
+	.size = sizeof(struct fa_calib),
+	.write = fa_write_eeprom,
+	.read = fa_read_eeprom,
+};
