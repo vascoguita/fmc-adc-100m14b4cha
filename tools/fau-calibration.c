@@ -67,7 +67,7 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 	close(fd);
 
 	/* Fix endianess */
-	for (i = 0; i < sizeof(*calib) / 2; ++i)
+	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); ++i)
 		data16[i] = le16toh(data16[i]);
 
 	return ret;
@@ -144,7 +144,7 @@ static int fau_calibration_write(unsigned int devid, struct fa_calib *calib)
 	/* Fix endianess */
 	memcpy(&calib_cp, calib, sizeof(calib_cp));
 	data16 = (uint16_t *) &calib_cp;
-	for (i = 0; i < sizeof(calib_cp) / 2; ++i)
+	for (i = 0; i < sizeof(calib_cp) / sizeof(uint16_t); ++i)
 		data16[i] = htole16(data16[i]);
 
 	fd = open(path, O_WRONLY);
