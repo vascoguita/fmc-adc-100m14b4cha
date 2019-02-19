@@ -138,7 +138,7 @@ static int fau_calibration_write(unsigned int devid, struct fa_calib *calib)
 	int ret;
 
 	sprintf(path,
-		"/sys/bus/zio/devices/adc-100m14b-%04x/cset0/calibration_data",
+		"/sys/bus/zio/devices/adc-100m14b-%04x/calibration_data",
 		devid);
 
 	/* Fix endianess */

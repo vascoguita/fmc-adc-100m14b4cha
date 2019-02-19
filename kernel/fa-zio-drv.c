@@ -544,7 +544,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	if (err)
 		return err;
 
-	err = device_create_bin_file(&zdev->cset->head.dev, &dev_attr_calibration);
+	err = device_create_bin_file(&zdev->head.dev, &dev_attr_calibration);
 	if (err)
 		return err;
 
@@ -560,7 +560,7 @@ static int zfad_zio_probe(struct zio_device *zdev)
  */
 static int zfad_zio_remove(struct zio_device *zdev)
 {
-	device_remove_bin_file(&zdev->cset->head.dev, &dev_attr_calibration);
+	device_remove_bin_file(&zdev->head.dev, &dev_attr_calibration);
 
 	return 0;
 }
