@@ -181,10 +181,18 @@ The ADC registers can be accessed in the proper sysfs directory. For a
 card in slot 0 of bus 2 (like shown above), the directory is
 */sys/bus/zio/devices/adc-100m14b-0200*.
 
-The overall device (*adc-100m14b*) does not offer configuration items
-besides its own temperature (read-only) because configuration is
-specific of the cset and the trigger, or the individual channel.
+The overall device (*adc-100m14b*) provides the following attributes:
 
+calibration_data
+  It is a binary attribute which allows the user to change the runt-time
+  calibration data (the EEPROM will not be touched). The ``fau-calibration``
+  tool can be used to read write calibration data.
+  To be consistent, this binary interface expects **only** little endian
+  values because this is the endianess used to store calibration data for
+  this device.
+
+temperature
+  It shows the current temperature
 
 The Channel Set
 '''''''''''''''
@@ -510,6 +518,13 @@ integer.
      - Default
      - Values
      - Comments
+
+   * - device
+     - calibration_data
+     - rw
+     - --
+     -
+     - Run-time calibration data
 
    * - device
      - temperature
