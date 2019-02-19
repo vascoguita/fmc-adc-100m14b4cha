@@ -75,8 +75,8 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 
 static void fau_calibration_dump_stanza(struct fa_calib_stanza *stanza)
 {
-	fprintf(stdout, "  temperature: 0x%x\n",
-		stanza->temperature);
+	fprintf(stdout, "  temperature: %f C\n",
+		stanza->temperature * 0.01);
 	fprintf(stdout, "  gain: [0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16"]\n",
 		stanza->gain[0],
 		stanza->gain[1],
