@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /*
- * It lists all VME devices
- * Copyright (C) 2018 CERN (www.cern.ch)
+ * Copyright (C) 2019 CERN (www.cern.ch)
  * Author: Federico Vaga <federico.vaga@cern.ch>
  */
 
