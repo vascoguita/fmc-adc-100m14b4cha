@@ -170,7 +170,7 @@ static ssize_t fa_read_eeprom(struct file *file, struct kobject *kobj,
 struct bin_attribute dev_attr_calibration = {
 	.attr = {
 		.name = "calibration_data",
-		.mode = 0744,
+		.mode = 0644,
 	},
 	.size = sizeof(struct fa_calib),
 	.write = fa_write_eeprom,
