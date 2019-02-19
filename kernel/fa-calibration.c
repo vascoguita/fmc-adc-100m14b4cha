@@ -73,22 +73,39 @@ static void fa_verify_calib(struct device *msgdev,
 	}
 }
 
-static void fa_endian_calib(struct fa_calib *calib)
+/**
+ * @calib: calibration data
+ *
+ * We know for sure that our structure is only made of 16bit fields
+ */
+static void fa_calib_le16_to_cpus(struct fa_calib *calib)
 {
 	int i;
 	uint16_t *p = (void *)calib;
 
-	/* We know for sure that our structure is only made of 16bit fields */
 	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); i++)
 		le16_to_cpus(p + i); /* s == in situ */
 }
 
+/**
+ * @calib: calibration data
+ *
+ * We know for sure that our structure is only made of 16bit fields
+ */
+static void fa_calib_cpu_to_le16s(struct fa_calib *calib)
+{
+	int i;
+	uint16_t *p = (void *)calib;
+
+	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); i++)
+		cpu_to_le16s(p + i); /* s == in situ */
+}
 
 void fa_read_eeprom_calib(struct fa_dev *fa)
 {
 	/* Retrieve calibration data from the eeprom, then verify it */
 	memcpy(&fa->calib, fa->fmc->eeprom + FA_CAL_OFFSET, sizeof(fa->calib));
-	fa_endian_calib(&fa->calib);
+	fa_calib_le16_to_cpus(&fa->calib);
 	fa_verify_calib(&fa->fmc->dev, &fa->calib, &fa_identity_calib);
 }
 
@@ -118,7 +135,7 @@ static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
 	if (off != 0 || count != sizeof(*calib))
 		return -EINVAL;
 
-	fa_endian_calib(calib);
+	fa_calib_le16_to_cpus(calib);
 	fa_verify_calib(dev, calib, &fa_identity_calib);
 
 	/*
@@ -138,11 +155,14 @@ static ssize_t fa_read_eeprom(struct file *file, struct kobject *kobj,
 {
 	struct device *dev = container_of(kobj, struct device, kobj);
 	struct fa_dev *fa = get_zfadc(dev);
+	struct fa_calib *calib = (struct fa_calib *) buf;
+
 
 	if (off != 0 || count < sizeof(fa->calib))
 		return -EINVAL;
 
-	memcpy(buf, &fa->calib, sizeof(fa->calib));
+	memcpy(calib, &fa->calib, sizeof(fa->calib));
+	fa_calib_cpu_to_le16s(calib);
 
 	return count;
 }

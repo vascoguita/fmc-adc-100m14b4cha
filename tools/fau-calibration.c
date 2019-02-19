@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <endian.h>
 
 #include <fmc-adc-100m14b4cha.h>
 
@@ -28,6 +29,7 @@ static const char help_msg[] =
 	"This could be used to change the ADC calibration data at runtime\n"
 	"by redirectiong the binary output of this program to the proper \n"
 	"sysfs binary attribute\n"
+	"Rembember that we expect all values to be little endian\n"
 	"\n"
 	"General options:\n"
 	"-h                 Print this message\n"
@@ -43,25 +45,30 @@ static const char help_msg[] =
 /**
  * Read calibration data from file
  * @path: file path
- * @data: data location
- * @size: data size
+ * @calib: calibration data
  * @offset: offset in file
  *
  * Return: number of bytes read
  */
-static int fau_calibration_read(char *path, void *data,
-				size_t size, off_t offset)
+static int fau_calibration_read(char *path, struct fa_calib *calib,
+				off_t offset)
 {
 	int fd;
 	int ret = 0;
+	uint16_t *data16 = (uint16_t *)calib;
+	int i;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return -1;
 	ret = lseek(fd, offset, SEEK_SET);
 	if (ret >= 0)
-		ret = read(fd, data, size);
+		ret = read(fd, calib, sizeof(*calib));
 	close(fd);
+
+	/* Fix endianess */
+	for (i = 0; i < sizeof(*calib) / 2; ++i)
+		data16[i] = le16toh(data16[i]);
 
 	return ret;
 }
@@ -117,25 +124,33 @@ static void fau_calibration_dump_machine(struct fa_calib *calib)
 /**
  * Write calibration data to device
  * @devid: Device ID
- * @data: data location
- * @size: data size
+ * @calib: calibration data
  *
  * Return: number of bytes wrote
  */
-static int fau_calibration_write(unsigned int devid,
-				 void *data, size_t size)
+static int fau_calibration_write(unsigned int devid, struct fa_calib *calib)
 {
+	struct fa_calib calib_cp;
 	char path[128];
+	uint16_t *data16;
+	int i;
 	int fd;
 	int ret;
 
 	sprintf(path,
 		"/sys/bus/zio/devices/adc-100m14b-%04x/cset0/calibration_data",
 		devid);
+
+	/* Fix endianess */
+	memcpy(&calib_cp, calib, sizeof(calib_cp));
+	data16 = (uint16_t *) &calib_cp;
+	for (i = 0; i < sizeof(calib_cp) / 2; ++i)
+		data16[i] = htole16(data16[i]);
+
 	fd = open(path, O_WRONLY);
 	if (fd < 0)
 		return -1;
-	ret = write(fd, data, size);
+	ret = write(fd, &calib_cp, sizeof(calib_cp));
 	close(fd);
 
 	return ret;
@@ -194,7 +209,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Read EEPROM file */
-	ret = fau_calibration_read(path, &calib, sizeof(calib), offset);
+	ret = fau_calibration_read(path, &calib, offset);
 	if (ret < 0) {
 		fprintf(stderr, "Can't read calibration data from '%s'. %s\n",
 			path, strerror(errno));
@@ -215,7 +230,7 @@ int main(int argc, char *argv[])
 
 	/* Write calibration data */
 	if (write) {
-		ret = fau_calibration_write(devid, &calib, sizeof(calib));
+		ret = fau_calibration_write(devid, &calib);
 		if (ret < 0) {
 			fprintf(stderr,
 				"Can't write calibration data to '0x%x'. %s\n",
