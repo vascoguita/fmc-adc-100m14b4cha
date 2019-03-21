@@ -22,21 +22,6 @@ entity alt_trigout is
     -- Set when the timestamp fifo is not empty
     ts_present_i         : in    std_logic;
 
-    -- Enable channel 1 trigger
-    ch1_enable_o         : out   std_logic;
-
-    -- Enable channel 2 trigger
-    ch2_enable_o         : out   std_logic;
-
-    -- Enable channel 3 trigger
-    ch3_enable_o         : out   std_logic;
-
-    -- Enable channel 4 trigger
-    ch4_enable_o         : out   std_logic;
-
-    -- Enable external trigger
-    ext_enable_o         : out   std_logic;
-
     -- Seconds part of the timestamp
     ts_sec_i             : in    std_logic_vector(39 downto 0);
 
@@ -68,11 +53,6 @@ architecture syn of alt_trigout is
   signal ack_int                        : std_logic;
   signal rd_ack_int                     : std_logic;
   signal wr_ack_int                     : std_logic;
-  signal ch1_enable_reg                 : std_logic;
-  signal ch2_enable_reg                 : std_logic;
-  signal ch3_enable_reg                 : std_logic;
-  signal ch4_enable_reg                 : std_logic;
-  signal ext_enable_reg                 : std_logic;
   signal wr_ack_done_int                : std_logic;
   signal reg_rdat_int                   : std_logic_vector(31 downto 0);
   signal rd_ack1_int                    : std_logic;
@@ -89,22 +69,12 @@ begin
   wb_o.err <= '0';
 
   -- Assign outputs
-  ch1_enable_o <= ch1_enable_reg;
-  ch2_enable_o <= ch2_enable_reg;
-  ch3_enable_o <= ch3_enable_reg;
-  ch4_enable_o <= ch4_enable_reg;
-  ext_enable_o <= ext_enable_reg;
 
   -- Process for write requests.
   process (clk_i, rst_n_i) begin
     if rst_n_i = '0' then 
       wr_ack_int <= '0';
       wr_ack_done_int <= '0';
-      ch1_enable_reg <= '0';
-      ch2_enable_reg <= '0';
-      ch3_enable_reg <= '0';
-      ch4_enable_reg <= '0';
-      ext_enable_reg <= '0';
     elsif rising_edge(clk_i) then
       if wr_int = '1' then
         -- Write in progress
@@ -115,15 +85,8 @@ begin
           when "0" => 
             -- Register status
             wr_ack_int <= not wr_ack_done_int;
-          when "1" => 
-            -- Register enable
-            ch1_enable_reg <= wb_i.dat(0);
-            ch2_enable_reg <= wb_i.dat(1);
-            ch3_enable_reg <= wb_i.dat(2);
-            ch4_enable_reg <= wb_i.dat(3);
-            ext_enable_reg <= wb_i.dat(8);
-            wr_ack_int <= not wr_ack_done_int;
           when others =>
+            wr_ack_int <= not wr_ack_done_int;
           end case;
         when "01" => 
           case wb_i.adr(2 downto 2) is
@@ -173,13 +136,6 @@ begin
             reg_rdat_int(1) <= wr_link_i;
             reg_rdat_int(2) <= wr_valid_i;
             reg_rdat_int(8) <= ts_present_i;
-          when "1" => 
-            -- enable
-            reg_rdat_int(0) <= ch1_enable_reg;
-            reg_rdat_int(1) <= ch2_enable_reg;
-            reg_rdat_int(2) <= ch3_enable_reg;
-            reg_rdat_int(3) <= ch4_enable_reg;
-            reg_rdat_int(8) <= ext_enable_reg;
           when others =>
           end case;
         when "01" => 
@@ -223,10 +179,6 @@ begin
       case wb_i.adr(2 downto 2) is
       when "0" => 
         -- status
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "1" => 
-        -- enable
         wb_o.dat <= reg_rdat_int;
         rd_ack_int <= rd_ack1_int;
       when others =>

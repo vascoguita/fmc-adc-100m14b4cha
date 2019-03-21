@@ -741,6 +741,8 @@ begin
   gpio_ssr_ch3_o         <= csr_regout.ch3_ctl_ssr_o;
   gpio_ssr_ch4_o         <= csr_regout.ch4_ctl_ssr_o;
 
+  -- NOTE: trigger forwards are read from CSR in the b_trigout block later
+
   gain_calibr <= csr_regout.ch4_gain_val_o & csr_regout.ch3_gain_val_o &
                  csr_regout.ch2_gain_val_o & csr_regout.ch1_gain_val_o;
 
@@ -1766,11 +1768,6 @@ begin
         wr_valid_i  => wr_tm_time_valid_i,
 
         ts_present_i => trigout_fifo_not_empty,
-        ch1_enable_o => trigout_en(0),
-        ch2_enable_o => trigout_en(1),
-        ch3_enable_o => trigout_en(2),
-        ch4_enable_o => trigout_en(3),
-        ext_enable_o => trigout_en(4),
         ts_sec_i     => trigout_fifo_dout(t_trigout_data_seconds'range),
         ch1_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 0),
         ch2_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 1),
@@ -1801,6 +1798,12 @@ begin
           npulse_o => open,
           ppulse_o => trigout_triggers(i));
     end generate;
+
+    trigout_en(0) <= csr_regout.trig_en_fwd_ch1_o;
+    trigout_en(1) <= csr_regout.trig_en_fwd_ch2_o;
+    trigout_en(2) <= csr_regout.trig_en_fwd_ch3_o;
+    trigout_en(3) <= csr_regout.trig_en_fwd_ch4_o;
+    trigout_en(4) <= csr_regout.trig_en_fwd_ext_o;
 
     trigout_trig <= f_reduce_or (trigout_triggers and trigout_en);
 

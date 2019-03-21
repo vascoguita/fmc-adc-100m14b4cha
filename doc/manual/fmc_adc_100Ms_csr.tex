@@ -354,6 +354,31 @@ Channel 3 internal threshold trigger
 @code{CH4}
 @tab @code{0} @tab 
 Channel 4 internal threshold trigger
+@item @code{16}
+@tab R/W @tab
+@code{FWD_EXT}
+@tab @code{0} @tab 
+Forward external trigger to trigger out
+@item @code{24}
+@tab R/W @tab
+@code{FWD_CH1}
+@tab @code{0} @tab 
+Forward channel 1 internal threshold trigger to trigger out
+@item @code{25}
+@tab R/W @tab
+@code{FWD_CH2}
+@tab @code{0} @tab 
+Forward channel 2 internal threshold trigger to trigger out
+@item @code{26}
+@tab R/W @tab
+@code{FWD_CH3}
+@tab @code{0} @tab 
+Forward channel 3 internal threshold trigger to trigger out
+@item @code{27}
+@tab R/W @tab
+@code{FWD_CH4}
+@tab @code{0} @tab 
+Forward channel 4 internal threshold trigger to trigger out
 @end multitable
 @multitable @columnfractions 0.15 0.85
 @headitem Field @tab Description
@@ -365,6 +390,11 @@ Channel 4 internal threshold trigger
 @item @code{ch2} @tab 0: disable@*1: enable
 @item @code{ch3} @tab 0: disable@*1: enable
 @item @code{ch4} @tab 0: disable@*1: enable
+@item @code{fwd_ext} @tab 0: disable@*1: enable
+@item @code{fwd_ch1} @tab 0: disable@*1: enable
+@item @code{fwd_ch2} @tab 0: disable@*1: enable
+@item @code{fwd_ch3} @tab 0: disable@*1: enable
+@item @code{fwd_ch4} @tab 0: disable@*1: enable
 @end multitable
 @regsection @code{trig_pol} - Trigger polarity
 @multitable @columnfractions .10 .10 .15 .10 .55

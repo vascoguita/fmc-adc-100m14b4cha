@@ -28,32 +28,6 @@ memory-map:
           description: Set when the timestamp fifo is not empty
           range: 8
   - reg:
-     name: enable
-     description: Enable register
-     access: rw
-     width: 32
-     children:
-       - field:
-          name: ch1_enable
-          description: Enable channel 1 trigger
-          range: 0
-       - field:
-          name: ch2_enable
-          description: Enable channel 2 trigger
-          range: 1
-       - field:
-          name: ch3_enable
-          description: Enable channel 3 trigger
-          range: 2
-       - field:
-          name: ch4_enable
-          description: Enable channel 4 trigger
-          range: 3
-       - field:
-          name: ext_enable
-          description: Enable external trigger
-          range: 8
-  - reg:
      name: ts_mask_sec
      description: Time (seconds) of the last event
      width: 64
@@ -86,7 +60,7 @@ memory-map:
   - reg:
      name: ts_cycles
      description: Cycles part of timestamp fifo.
-     comment: Reading this register discard the entry
+     comment: Reading this register discards the entry
      width: 32
      access: ro
      x-hdl:

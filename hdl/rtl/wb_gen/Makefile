@@ -4,7 +4,7 @@ RTL=../
 SIM=../../testbench/include/
 TEX=../../../doc/manual/
 
-all: fmc_adc_100Ms_csr fmc_adc_eic
+all: fmc_adc_100Ms_csr fmc_adc_eic fmc_adc_alt_trigin fmc_adc_alt_trigout
 
 fmc_adc_100Ms_csr:
 	$(WBGEN2) -l vhdl -H record -V $(RTL)$@.vhd -p $(RTL)$@_wbgen2_pkg.vhd -f html -D $@.htm -C $@.h  -K $(SIM)$@.v $@.wb

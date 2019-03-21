@@ -40,7 +40,7 @@ module main;
    IVHDWishboneMaster Trigout ( clk_sys, rst_n );
 
    wire t_wishbone_slave_data64_out dummy_wb64_out =
-        '{ack: 1'b1, err: 1'b0, rty: 1'b0, stall: 1'b0, dat: 64'bx};
+	'{ack: 1'b1, err: 1'b0, rty: 1'b0, stall: 1'b0, dat: 64'bx};
 
    fmc_adc_mezzanine
      #(
@@ -51,18 +51,18 @@ module main;
 	      .wb_csr_slave_i      (Host.out),
 	      .wb_csr_slave_o      (Host.in),
 	      .wb_ddr_clk_i        (clk_sys),
-              .wb_ddr_rst_n_i      (rst_n),
+	      .wb_ddr_rst_n_i      (rst_n),
 	      .wb_ddr_master_i     (dummy_wb64_out),
-              .wb_ddr_master_o     (),
+	      .wb_ddr_master_o     (),
 	      .ddr_wr_fifo_empty_i (),
 	      .trig_irq_o          (),
 	      .acq_end_irq_o       (),
 	      .eic_irq_o           (),
 	      .acq_cfg_ok_o        (),
-              .wb_trigin_slave_i   (Trigin.out),
-              .wb_trigin_slave_o   (Trigin.in),
-              .wb_trigout_slave_i  (Trigout.out),
-              .wb_trigout_slave_o  (Trigout.in),
+	      .wb_trigin_slave_i   (Trigin.out),
+	      .wb_trigin_slave_o   (Trigin.in),
+	      .wb_trigout_slave_i  (Trigout.out),
+	      .wb_trigout_slave_o  (Trigout.in),
 	      .ext_trigger_p_i     (ext_trig),
 	      .ext_trigger_n_i     (~ext_trig),
 	      .adc_dco_p_i         (adc0_dco),
@@ -235,14 +235,16 @@ module main;
       expected = 0;
       if (val != expected)
 	$fatal (1, "trigout status error (got 0x%8x, expected 0x%8x).",
-                val, expected);
+		val, expected);
 
       //  Save all triggers in trigout fifo.
-      trigout_acc.write(`ADDR_ALT_TRIGOUT_CTRL, (  `ALT_TRIGOUT_CH1_ENABLE
-                                                 | `ALT_TRIGOUT_CH2_ENABLE
-                                                 | `ALT_TRIGOUT_CH3_ENABLE
-                                                 | `ALT_TRIGOUT_CH4_ENABLE
-                                                 | `ALT_TRIGOUT_EXT_ENABLE));
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+      val |= `FMC_ADC_100MS_CSR_TRIG_EN_FWD_EXT
+	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH1
+	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH2
+	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH3
+	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH4;
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
       #1us;
 
@@ -288,9 +290,10 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000008);
 
       // FMC-ADC core trigger configuration
-      val = (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET)  |
-	    (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH1_OFFSET) |
-	    (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH3_OFFSET);
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+      val |= (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET)  |
+	     (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH1_OFFSET) |
+	     (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH3_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
       $display("<%t> START ACQ 3", $realtime);
@@ -311,18 +314,19 @@ module main;
 
       // set time trigger
       acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_UPPER,
-                'h00000032); // timetag core seconds high
+		'h00000032); // timetag core seconds high
       acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_LOWER,
-                'h00005a34); // timetag core seconds low
+		'h00005a34); // timetag core seconds low
       acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE,
-                'h00000e00); // timetag core ticks
+		'h00000e00); // timetag core ticks
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000010);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000080);
 
       // FMC-ADC core trigger configuration
-      val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_TIME_OFFSET) |
-	    (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_EXT_OFFSET);
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+      val |= (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_TIME_OFFSET) |
+	     (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_EXT_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_EXT_TRIG_DLY, 3);
@@ -354,7 +358,8 @@ module main;
       // set time trigger
       trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 0, 'h00000032);
       trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 4, 'h00005a34);
-      trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES, 'h00001000);
+      acc.read(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE, val);
+      trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES, val + 'h00001000);
       trigin_acc.write(`ADDR_ALT_TRIGIN_CTRL, `ALT_TRIGIN_CTRL_ENABLE);
 
       trigin_acc.read(`ADDR_ALT_TRIGIN_CTRL, val);
@@ -362,7 +367,7 @@ module main;
       if (val != expected)
 	begin
 	   $fatal (1, "trigin ctrl error (got 0x%8x, expected 0x%8x).",
-                   val, expected);
+		   val, expected);
 	end
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000001);
@@ -386,7 +391,7 @@ module main;
       if (val != expected)
 	begin
 	   $fatal (1, "trigin ctrl error (got 0x%8x, expected 0x%8x).",
-                   val, expected);
+		   val, expected);
 	end
 
       $display("<%t> END ACQ 5", $realtime);
@@ -394,18 +399,18 @@ module main;
       $display("<%t> read trigout fifo", $realtime);
 
       while (1) begin
-         uint64_t sec_hi, sec_lo, cycs;
+	 uint64_t sec_hi, sec_lo, cycs;
 
-         trigout_acc.read(`ADDR_ALT_TRIGOUT_STATUS, val);
-         if (!(val & `ALT_TRIGOUT_TS_PRESENT))
-           break;
+	 trigout_acc.read(`ADDR_ALT_TRIGOUT_STATUS, val);
+	 if (!(val & `ALT_TRIGOUT_TS_PRESENT))
+	   break;
 
-         trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 0, sec_hi);
-         trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 4, sec_lo);
-         trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_CYCLES, cycs);
+	 trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 0, sec_hi);
+	 trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 4, sec_lo);
+	 trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_CYCLES, cycs);
 
-         $display("trigout TS: 0x%16x 0x%8x",
-                  ((sec_hi << 32) | sec_lo), cycs);
+	 $display("trigout TS: 0x%16x 0x%8x",
+		  ((sec_hi << 32) | sec_lo), cycs);
       end;
 
       #1us;

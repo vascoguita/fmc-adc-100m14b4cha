@@ -8,14 +8,6 @@
 #define ALT_TRIGOUT_WR_VALID 0x4UL
 #define ALT_TRIGOUT_TS_PRESENT 0x100UL
 
-/* Enable register */
-#define ALT_TRIGOUT_ENABLE 0x4UL
-#define ALT_TRIGOUT_CH1_ENABLE 0x1UL
-#define ALT_TRIGOUT_CH2_ENABLE 0x2UL
-#define ALT_TRIGOUT_CH3_ENABLE 0x4UL
-#define ALT_TRIGOUT_CH4_ENABLE 0x8UL
-#define ALT_TRIGOUT_EXT_ENABLE 0x100UL
-
 /* Time (seconds) of the last event */
 #define ALT_TRIGOUT_TS_MASK_SEC 0x8UL
 #define ALT_TRIGOUT_TS_SEC_MASK 0xffffffffffULL
@@ -35,8 +27,8 @@ struct alt_trigout {
   /* [0x0]: REG (ro) Status register */
   uint32_t status;
   
-  /* [0x4]: REG (rw) Enable register */
-  uint32_t enable;
+  /* padding to: 2 words */
+  uint32_t __padding_0[1];
   
   /* [0x8]: REG (ro) Time (seconds) of the last event */
   uint64_t ts_mask_sec;

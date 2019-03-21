@@ -1452,6 +1452,91 @@ fmc_adc_100ms_csr_trig_en_ch4_o
 
 </td>
 <td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_trig_en_fwd_ext_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_trig_en_fwd_ch1_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_trig_en_fwd_ch2_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_trig_en_fwd_ch3_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
+
+</td>
+<td  class="td_pblock_right">
+fmc_adc_100ms_csr_trig_en_fwd_ch4_o
+</td>
+<td  class="td_arrow_right">
+&rarr;
+</td>
+</tr>
+<tr>
+<td  class="td_arrow_left">
+
+</td>
+<td  class="td_pblock_left">
+
+</td>
+<td  class="td_sym_center">
 &nbsp;
 </td>
 <td  class="td_pblock_right">
@@ -4554,17 +4639,17 @@ TRIG_EN
 <td  class="td_unused">
 -
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+FWD_CH4
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+FWD_CH3
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+FWD_CH2
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+FWD_CH1
 </td>
 </tr>
 </table>
@@ -4617,8 +4702,8 @@ TRIG_EN
 <td  class="td_unused">
 -
 </td>
-<td  class="td_unused">
--
+<td style="border: solid 1px black;" colspan=1  class="td_field">
+FWD_EXT
 </td>
 </tr>
 </table>
@@ -4762,6 +4847,26 @@ CH3
 <li><b>
 CH4
 </b>[<i>read/write</i>]: Channel 4 internal threshold trigger
+<br>0: disable<br>1: enable
+<li><b>
+FWD_EXT
+</b>[<i>read/write</i>]: Forward external trigger to trigger out
+<br>0: disable<br>1: enable
+<li><b>
+FWD_CH1
+</b>[<i>read/write</i>]: Forward channel 1 internal threshold trigger to trigger out
+<br>0: disable<br>1: enable
+<li><b>
+FWD_CH2
+</b>[<i>read/write</i>]: Forward channel 2 internal threshold trigger to trigger out
+<br>0: disable<br>1: enable
+<li><b>
+FWD_CH3
+</b>[<i>read/write</i>]: Forward channel 3 internal threshold trigger to trigger out
+<br>0: disable<br>1: enable
+<li><b>
+FWD_CH4
+</b>[<i>read/write</i>]: Forward channel 4 internal threshold trigger to trigger out
 <br>0: disable<br>1: enable
 </ul>
 <a name="TRIG_POL"></a>
