@@ -1,6 +1,6 @@
 [submodule "zio"]
 	path = zio
-	url = git://ohwr.org/misc/zio.git
+	url = https://ohwr.org/project/zio.git
 [submodule "fmc-bus"]
 	path = fmc-bus
-	url = git://ohwr.org/fmc-projects/fmc-bus.git
+	url = https://ohwr.org/project/fmc-bus.git
