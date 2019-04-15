@@ -1,10 +1,10 @@
 CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
-SVEC_SW_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
+VMEBUS_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
 KBUILD_EXTRA_SYMBOLS := \
 	$(ZIO_ABS)/Module.symvers \
 	$(FMC_BUS_ABS)/kernel/Module.symvers \
-	$(SVEC_SW_EXTRA_SYMBOLS-y)
+	$(VMEBUS_EXTRA_SYMBOLS-y)
 
 # add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
 # of a bigger project that we want to track
