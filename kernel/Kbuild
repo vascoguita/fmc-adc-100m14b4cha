@@ -1,9 +1,9 @@
 CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
 VMEBUS_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
-KBUILD_EXTRA_SYMBOLS := \
-	$(ZIO_ABS)/Module.symvers \
-	$(VMEBUS_EXTRA_SYMBOLS-y)
+
+KBUILD_EXTRA_SYMBOLS += $(ZIO_EXTRA_SYMBOLS-y)
+KBUILD_EXTRA_SYMBOLS += $(VMEBUS_EXTRA_SYMBOLS-y)
 
 # add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
 # of a bigger project that we want to track
@@ -30,20 +30,20 @@ ccflags-y += -D__ZIO_MIN_MINOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' 
 
 subdirs-ccflags-y = $(ccflags-y)
 
-obj-m := fmc-adc-100m14b.o
-fmc-adc-100m14b-y =  fa-core.o
-fmc-adc-100m14b-y += fa-zio-drv.o
-fmc-adc-100m14b-y += fa-calibration.o
-fmc-adc-100m14b-y += fa-regtable.o
-fmc-adc-100m14b-y += fa-zio-trg.o
-fmc-adc-100m14b-y += fa-irq.o
-fmc-adc-100m14b-y += fa-debug.o
-fmc-adc-100m14b-y += onewire.o
-fmc-adc-100m14b-y += spi.o
-fmc-adc-100m14b-y += fa-spec-core.o
-fmc-adc-100m14b-y += fa-spec-regtable.o
-fmc-adc-100m14b-y += fa-spec-dma.o
-fmc-adc-100m14b-y += fa-spec-irq.o
-fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-core.o
-fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-regtable.o
-fmc-adc-100m14b-$(CONFIG_FMC_ADC_SVEC) += fa-svec-dma.o
+obj-m := fmc-adc-100m14b4ch.o
+fmc-adc-100m14b4ch-y =  fa-core.o
+fmc-adc-100m14b4ch-y += fa-zio-drv.o
+fmc-adc-100m14b4ch-y += fa-calibration.o
+fmc-adc-100m14b4ch-y += fa-regtable.o
+fmc-adc-100m14b4ch-y += fa-zio-trg.o
+fmc-adc-100m14b4ch-y += fa-irq.o
+fmc-adc-100m14b4ch-y += fa-debug.o
+fmc-adc-100m14b4ch-y += onewire.o
+fmc-adc-100m14b4ch-y += spi.o
+fmc-adc-100m14b4ch-y += fa-spec-core.o
+fmc-adc-100m14b4ch-y += fa-spec-regtable.o
+fmc-adc-100m14b4ch-y += fa-spec-dma.o
+fmc-adc-100m14b4ch-y += fa-spec-irq.o
+fmc-adc-100m14b4ch-$(CONFIG_FMC_ADC_SVEC) += fa-svec-core.o
+fmc-adc-100m14b4ch-$(CONFIG_FMC_ADC_SVEC) += fa-svec-regtable.o
+fmc-adc-100m14b4ch-$(CONFIG_FMC_ADC_SVEC) += fa-svec-dma.o
