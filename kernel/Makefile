@@ -5,7 +5,8 @@ CURDIR:=$(shell /bin/pwd)
 REPO_PARENT ?= $(CURDIR)/../..
 -include $(REPO_PARENT)/parent_common.mk
 
-LINUX ?= /lib/modules/$(shell uname -r)/build
+KVERSION ?= $(shell uname -r)
+LINUX ?= /lib/modules/$(KVERSION)/build
 FMC_BUS ?= ../fmc-bus
 ZIO ?= ../zio
 SVEC_SW ?= ../svec-sw
