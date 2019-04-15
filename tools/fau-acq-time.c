@@ -1,7 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /*
- * Copyright 2012 CERN
- * Author: Federico Vaga <federico.vaga@gmail.comZ
- * License: GPLv2
+ * Copyright 2012-2019 CERN
+ * Author: Federico Vaga <federico.vaga@gmail.com>
  *
  * This is a simple program which calculate the acquisition time.
  */

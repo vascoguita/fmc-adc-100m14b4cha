@@ -1,8 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright CERN 2012
- *
- * Header for the fmc-adc-100m14b spec driver
- *
+ * Copyright CERN 2012-2019
  */
 
 #ifndef __FA_SVEC_CORE_H__

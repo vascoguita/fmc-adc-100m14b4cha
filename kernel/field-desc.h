@@ -1,7 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright 2012 Federico Vaga
- *
- * GNU GPLv2 or later
+ * Copyright 2012-2019 Federico Vaga
  */
 
 

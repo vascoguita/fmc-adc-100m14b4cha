@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright CERN 2018
+ * Copyright CERN 2018-2019
  * Author: Federico Vaga <federico.vaga@cern.ch>
  */
 

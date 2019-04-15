@@ -1,7 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright CERN 2012, author Federico Vaga
- *
- * Trigger for the driver of the mezzanine ADC
+ * Copyright CERN 2012-2019
+ * Author: Federico Vaga
  */
 
 #include <linux/kernel.h>

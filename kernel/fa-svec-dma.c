@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/*
+ * Copyright (C) 2012-2019 CERN (www.cern.ch)
+ * Author: Federico Vaga <federico.vaga@gmail.com>
+ */
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <asm/byteorder.h>

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Access to 1w thermometer
  *
@@ -6,11 +7,6 @@
  * Author: Alessandro Rubini <rubini@gnudd.com>
  *
  * Copied from the fine-delay driver and updated with fmc-adc variable
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2 as published by the Free Software Foundation or, at your
- * option, any later version.
  */
 
 #include <linux/jiffies.h>

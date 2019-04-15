@@ -1,10 +1,7 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * core fmc-adc-100m14b driver
- *
- * Copyright (C) 2012 CERN (www.cern.ch)
+ * Copyright (C) 2012-2019 CERN (www.cern.ch)
  * Author: Federico Vaga <federico.vaga@gmail.com>
- *		Copied from fine-delay fd-core.c
- *
  */
 
 #include <linux/kernel.h>

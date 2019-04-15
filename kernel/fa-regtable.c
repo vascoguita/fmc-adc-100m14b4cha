@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright CERN 2012
+ * Copyright CERN 2012-2019
  * Author: Federico Vaga <federico.vaga@gmail.com>
  *
  * Table of register masks, used by driver functions
