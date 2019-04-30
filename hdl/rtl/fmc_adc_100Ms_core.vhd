@@ -698,8 +698,6 @@ begin
 
   fsm_cmd                <= csr_regout.ctl_fsm_cmd_o;
   fsm_cmd_wr             <= csr_regout.ctl_fsm_cmd_wr_o;
-  gpio_si570_oe_o        <= csr_regout.ctl_fmc_clk_oe_o;
-  gpio_dac_clr_n_o       <= csr_regout.ctl_offset_dac_clr_n_o;
   serdes_man_bitslip     <= csr_regout.ctl_man_bitslip_o;
   test_data_en           <= csr_regout.ctl_test_data_en_o;
   trig_led_man           <= csr_regout.ctl_trig_led_o;
@@ -736,10 +734,6 @@ begin
   undersample_factor     <= csr_regout.sr_undersample_o;
   pre_trig_value         <= csr_regout.pre_samples_o;
   post_trig_value        <= csr_regout.post_samples_o;
-  gpio_ssr_ch1_o         <= csr_regout.ch1_ctl_ssr_o;
-  gpio_ssr_ch2_o         <= csr_regout.ch2_ctl_ssr_o;
-  gpio_ssr_ch3_o         <= csr_regout.ch3_ctl_ssr_o;
-  gpio_ssr_ch4_o         <= csr_regout.ch4_ctl_ssr_o;
 
   -- NOTE: trigger forwards are read from CSR in the b_trigout block later
 
@@ -751,6 +745,19 @@ begin
 
   sat_val <= csr_regout.ch4_sat_val_o & csr_regout.ch3_sat_val_o &
              csr_regout.ch2_sat_val_o & csr_regout.ch1_sat_val_o;
+
+  -- Delays for user-controlled GPIO outputs to help with timing
+  p_delay_gpio_ssr : process (sys_clk_i) is
+  begin
+    if rising_edge(sys_clk_i) then
+      gpio_si570_oe_o  <= csr_regout.ctl_fmc_clk_oe_o;
+      gpio_dac_clr_n_o <= csr_regout.ctl_offset_dac_clr_n_o;
+      gpio_ssr_ch1_o   <= csr_regout.ch1_ctl_ssr_o;
+      gpio_ssr_ch2_o   <= csr_regout.ch2_ctl_ssr_o;
+      gpio_ssr_ch3_o   <= csr_regout.ch3_ctl_ssr_o;
+      gpio_ssr_ch4_o   <= csr_regout.ch4_ctl_ssr_o;
+    end if;
+  end process p_delay_gpio_ssr;
 
   ------------------------------------------------------------------------------
   -- Offset and gain calibration
