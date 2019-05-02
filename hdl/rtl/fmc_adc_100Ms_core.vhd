@@ -1000,7 +1000,7 @@ begin
                    "00" & sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) &
                    ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH);
 
-  trig_fifo_wr <= not trig_fifo_full and acq_in_wait_trig;
+  trig_fifo_wr <= not trig_fifo_full;
 
   cmp_trig_sync_fifo : generic_async_fifo
     generic map (
@@ -1047,7 +1047,7 @@ begin
     if rising_edge(sys_clk_i) then
       if sys_rst_n_i = '0' or trig_storage_clear = '1' then
         trig_storage <= (others => '0');
-      elsif trig_fifo_dout(32) = '1' and trig_fifo_empty = '0' then
+      elsif trig_fifo_dout(32) = '1' and trig_fifo_empty = '0' and acq_in_wait_trig = '1' then
         trig_storage <= trig_fifo_dout(31 downto 0);
       end if;
     end if;
