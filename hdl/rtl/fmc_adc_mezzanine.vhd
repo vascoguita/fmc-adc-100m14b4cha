@@ -261,8 +261,6 @@ architecture rtl of fmc_adc_mezzanine is
   signal trigger_tag  : t_timetag;
   signal time_trigger : std_logic;
 
-  signal current_time : t_timetag;
-
   -- Alternative time trigger
   signal alt_trigin_enable_in  : std_logic;
   signal alt_trigin_enable_out : std_logic;
@@ -475,8 +473,6 @@ begin
       wr_tm_time_valid_i => wr_tm_time_valid_i,
       wr_enable_i        => wr_enable_i,
 
-      current_time_i     => current_time,
-
       ext_trigger_p_i => ext_trigger_p_i,
       ext_trigger_n_i => ext_trigger_n_i,
 
@@ -608,8 +604,6 @@ begin
       alt_trigin_enable_wr_i => alt_trigin_enable_wr,
       alt_trigin_tag_i       => alt_trigin_tag,
       alt_trigin_o           => alt_time_trigger,
-
-      current_time_o         => current_time,
 
       wb_adr_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_slave_in.adr is byte address
       wb_dat_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).dat,

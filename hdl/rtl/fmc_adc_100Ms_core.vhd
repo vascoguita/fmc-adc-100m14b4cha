@@ -82,8 +82,6 @@ entity fmc_adc_100Ms_core is
     wr_tm_time_valid_i : in std_logic;
     wr_enable_i        : in std_logic;
 
-    current_time_i     : in t_timetag;
-
     -- FMC interface
     ext_trigger_p_i : in std_logic;               -- External trigger
     ext_trigger_n_i : in std_logic;
@@ -1743,8 +1741,8 @@ begin
 
   b_trigout : block
     subtype t_trigout_channels is std_logic_vector(4 downto 0);
-    signal trigout_fs_triggers, trigout_triggers : t_trigout_channels;
-    signal trigout_en : t_trigout_channels;
+    signal trigout_triggers : t_trigout_channels;
+    signal trigout_en       : t_trigout_channels;
 
     signal trigout_trig : std_logic;
 
@@ -1753,58 +1751,42 @@ begin
     subtype t_trigout_data_channels is std_logic_vector(72 downto 68);
     subtype t_trigout_data is std_logic_vector(72 downto 0);
 
-    signal trigout_fifo_dout : t_trigout_data;
-    signal trigout_fifo_din : t_trigout_data;
-    signal trigout_fifo_empty : std_logic;
-    signal trigout_fifo_full : std_logic;
-    signal trigout_fifo_wr : std_logic;
+    signal trigout_fifo_dout      : t_trigout_data;
+    signal trigout_fifo_din       : t_trigout_data;
+    signal trigout_fifo_empty     : std_logic;
+    signal trigout_fifo_full      : std_logic;
+    signal trigout_fifo_wr        : std_logic;
     signal trigout_fifo_not_empty : std_logic;
-    signal trigout_fifo_rd_rq : std_logic;
-    signal trigout_fifo_rd : std_logic;
+    signal trigout_fifo_rd_rq     : std_logic;
+    signal trigout_fifo_rd        : std_logic;
 
   begin
     cmp_alt_trigout : entity work.alt_trigout
       port map (
-        rst_n_i => sys_rst_n_i,
-        clk_i   => sys_clk_i,
-        wb_i    => wb_trigout_slave_i,
-        wb_o    => wb_trigout_slave_o,
-
-        wr_enable_i => wr_enable_i,
-        wr_link_i   => wr_tm_link_up_i,
-        wr_valid_i  => wr_tm_time_valid_i,
-
-        ts_present_i => trigout_fifo_not_empty,
-        ts_sec_i     => trigout_fifo_dout(t_trigout_data_seconds'range),
-        ch1_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 0),
-        ch2_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 1),
-        ch3_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 2),
-        ch4_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 3),
-        ext_mask_i   => trigout_fifo_dout(t_trigout_data_channels'right + 4),
-        cycles_i     => trigout_fifo_dout(t_trigout_data_coarse'range),
-        ts_cycles_rd_o => trigout_fifo_rd_rq
-        );
+        rst_n_i        => sys_rst_n_i,
+        clk_i          => sys_clk_i,
+        wb_i           => wb_trigout_slave_i,
+        wb_o           => wb_trigout_slave_o,
+        wr_enable_i    => wr_enable_i,
+        wr_link_i      => wr_tm_link_up_i,
+        wr_valid_i     => wr_tm_time_valid_i,
+        ts_present_i   => trigout_fifo_not_empty,
+        ts_sec_i       => trigout_fifo_dout(t_trigout_data_seconds'range),
+        ch1_mask_i     => trigout_fifo_dout(t_trigout_data_channels'RIGHT + 0),
+        ch2_mask_i     => trigout_fifo_dout(t_trigout_data_channels'RIGHT + 1),
+        ch3_mask_i     => trigout_fifo_dout(t_trigout_data_channels'RIGHT + 2),
+        ch4_mask_i     => trigout_fifo_dout(t_trigout_data_channels'RIGHT + 3),
+        ext_mask_i     => trigout_fifo_dout(t_trigout_data_channels'RIGHT + 4),
+        cycles_i       => trigout_fifo_dout(t_trigout_data_coarse'range),
+        ts_cycles_rd_o => trigout_fifo_rd_rq);
 
     trigout_fifo_rd <= trigout_fifo_rd_rq and not trigout_fifo_empty;
 
-    --  Triggers (from fs_clk domain).
-    trigout_fs_triggers <=
-      (0 => int_trig_d(1),
-       1 => int_trig_d(2),
-       2 => int_trig_d(3),
-       3 => int_trig_d(4),
-       4 => ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH));
-
-    gen_trigout_sync : for i in trigout_triggers'range generate
-      cmp_trigout_sync : gc_sync_ffs
-        port map (
-          clk_i    => sys_clk_i,
-          rst_n_i  => '1',
-          data_i   => trigout_fs_triggers(i),
-          synced_o => open,
-          npulse_o => open,
-          ppulse_o => trigout_triggers(i));
-    end generate;
+    trigout_triggers(0) <= trig_storage(8);
+    trigout_triggers(1) <= trig_storage(9);
+    trigout_triggers(2) <= trig_storage(10);
+    trigout_triggers(3) <= trig_storage(11);
+    trigout_triggers(4) <= trig_storage(0);
 
     trigout_en(0) <= csr_regout.trig_en_fwd_ch1_o;
     trigout_en(1) <= csr_regout.trig_en_fwd_ch2_o;
@@ -1814,7 +1796,7 @@ begin
 
     trigout_trig <= f_reduce_or (trigout_triggers and trigout_en);
 
-    trigout_fifo_wr <= trigout_trig and not trigout_fifo_full;
+    trigout_fifo_wr <= trigout_trig and not trigout_fifo_full and trig_tag_done;
 
     cmp_trigout_fifo : generic_sync_fifo
       generic map (
@@ -1845,8 +1827,8 @@ begin
 
     trigout_fifo_not_empty <= not trigout_fifo_empty;
 
-    trigout_fifo_din(t_trigout_data_seconds'range) <= current_time_i.seconds;
-    trigout_fifo_din(t_trigout_data_coarse'range) <= current_time_i.coarse;
+    trigout_fifo_din(t_trigout_data_seconds'range)  <= trigger_tag_i.seconds;
+    trigout_fifo_din(t_trigout_data_coarse'range)   <= trigger_tag_i.coarse;
     trigout_fifo_din(t_trigout_data_channels'range) <= trigout_triggers;
   end block b_trigout;
 end rtl;

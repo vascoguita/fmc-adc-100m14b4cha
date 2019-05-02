@@ -91,8 +91,6 @@ package fmc_adc_100Ms_core_pkg is
       wr_tm_time_valid_i : in std_logic;
       wr_enable_i        : in std_logic;
 
-      current_time_i     : in t_timetag;
-
       -- FMC interface
       ext_trigger_p_i : in std_logic;             -- External trigger
       ext_trigger_n_i : in std_logic;
