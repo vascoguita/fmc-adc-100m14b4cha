@@ -346,8 +346,9 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   ------------------------------------------------------------------------------
 
   -- WRPC Xilinx platform auxiliary clock configuration, used for DDR clock
-  constant c_WRPC_PLL_CONFIG : t_px_pll_cfg := (
-    enabled => TRUE, divide => 3, multiply => 8 );
+  constant c_WRPC_PLL_CONFIG : t_auxpll_cfg_array := (
+    0      => (enabled => TRUE, bufg_en => TRUE, divide => 3),
+    others => c_AUXPLL_CFG_DEFAULT);
 
   -- SVEC carrier CSR constants
   constant c_CARRIER_TYPE : std_logic_vector(15 downto 0) := X"0002";
@@ -375,7 +376,9 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal clk_ref_125m       : std_logic;
   signal sys_clk_pll_locked : std_logic;
   signal clk_ddr_333m       : std_logic;
+  signal clk_pll_aux        : std_logic_vector(3 downto 0);
 
+  signal rst_pll_aux_n      : std_logic_vector(3 downto 0) := (others => '0');
   signal areset_n           : std_logic            := '0';
   signal rst_sys_62m5_n     : std_logic            := '0';
   signal rst_ref_125m_n     : std_logic            := '0';
@@ -610,7 +613,7 @@ begin
       g_SIMULATION                => g_SIMULATION,
       g_WITH_EXTERNAL_CLOCK_INPUT => FALSE,
       g_DPRAM_INITF               => g_WRPC_INITF,
-      g_AUX_PLL_CONFIG            => c_WRPC_PLL_CONFIG,
+      g_AUX_PLL_CFG               => c_WRPC_PLL_CONFIG,
       g_FABRIC_IFACE              => PLAIN)
     port map (
       clk_20m_vcxo_i      => clk_20m_vcxo_i,
@@ -621,10 +624,10 @@ begin
       areset_n_i          => areset_n,
       clk_sys_62m5_o      => clk_sys_62m5,
       clk_ref_125m_o      => clk_ref_125m,
-      clk_pll_aux_o       => clk_ddr_333m,
+      clk_pll_aux_o       => clk_pll_aux,
       rst_sys_62m5_n_o    => rst_sys_62m5_n,
       rst_ref_125m_n_o    => rst_ref_125m_n,
-      rst_pll_aux_n_o     => rst_ddr_333m_n,
+      rst_pll_aux_n_o     => rst_pll_aux_n,
       pll20dac_din_o      => pll20dac_din_o,
       pll20dac_sclk_o     => pll20dac_sclk_o,
       pll20dac_sync_n_o   => pll20dac_sync_n_o,
@@ -667,6 +670,9 @@ begin
       led_link_o          => wr_led_link,
       led_act_o           => wr_led_act,
       link_ok_o           => wrabbit_en);
+
+  clk_ddr_333m   <= clk_pll_aux(0);
+  rst_ddr_333m_n <= rst_pll_aux_n(0);
 
   ------------------------------------------------------------------------------
   -- Carrier CSR
