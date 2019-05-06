@@ -14,6 +14,5 @@ files = [
 modules = {
     "local" : [
         "timetag_core",
-        "../ip_cores/adc-serdes-core",
     ],
 }

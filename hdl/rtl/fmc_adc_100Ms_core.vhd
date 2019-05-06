@@ -25,12 +25,12 @@
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
 -------------------------------------------------------------------------------
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.all;
-use IEEE.NUMERIC_STD.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-library UNISIM;
-use UNISIM.vcomponents.all;
+library unisim;
+use unisim.vcomponents.all;
 
 library work;
 use work.timetag_core_pkg.all;
@@ -112,31 +112,6 @@ architecture rtl of fmc_adc_100Ms_core is
   -- Components declaration
   ------------------------------------------------------------------------------
 
-  component adc_serdes
-    generic
-      (
-        sys_w : integer := 9;                     -- width of the data for the system
-        dev_w : integer := 72                     -- width of the data for the device
-        );
-    port
-      (
-        -- Datapath
-        DATA_IN_FROM_PINS_P : in  std_logic_vector(sys_w-1 downto 0);
-        DATA_IN_FROM_PINS_N : in  std_logic_vector(sys_w-1 downto 0);
-        DATA_IN_TO_DEVICE   : out std_logic_vector(dev_w-1 downto 0);
-        -- Data control
-        BITSLIP             : in  std_logic;
-        -- Clock and reset signals
-        CLK_IN              : in  std_logic;      -- Fast clock from PLL/MMCM
-        CLK_OUT             : out std_logic;
-        CLK_DIV_IN          : in  std_logic;      -- Slow clock from PLL/MMCM
-        LOCKED_IN           : in  std_logic;
-        LOCKED_OUT          : out std_logic;
-        CLK_RESET           : in  std_logic;      -- Reset signal for Clock circuit
-        IO_RESET            : in  std_logic       -- Reset signal for IO circuit
-        );
-  end component adc_serdes;
-
   component fmc_adc_100Ms_csr is
     port (
       rst_n_i    : in  std_logic;
@@ -191,18 +166,13 @@ architecture rtl of fmc_adc_100Ms_core is
   ------------------------------------------------------------------------------
 
   -- Reset
-  signal sys_rst  : std_logic;
-  signal fs_rst_n : std_logic;
-
-  signal sys_rst_n_fs_resync : std_logic;
+  signal fs_rst_n    : std_logic;
+  signal serdes_arst : std_logic;
 
   -- Clocks and PLL
-  signal dco_clk       : std_logic;
-  signal dco_clk_buf   : std_logic;
   signal clk_fb        : std_logic;
   signal clk_fb_buf    : std_logic;
   signal locked_in     : std_logic;
-  signal locked_out    : std_logic;
   signal serdes_clk    : std_logic;
   signal fs_clk        : std_logic;
   signal fs_clk_buf    : std_logic;
@@ -214,16 +184,9 @@ architecture rtl of fmc_adc_100Ms_core is
   attribute keep of fs_clk : signal is "TRUE";
 
   -- SerDes
-  signal serdes_in_p         : std_logic_vector(8 downto 0);
-  signal serdes_in_n         : std_logic_vector(8 downto 0);
-  signal serdes_out_raw      : std_logic_vector(71 downto 0);
   signal serdes_out_data     : std_logic_vector(63 downto 0);
-  signal serdes_out_fr       : std_logic_vector(7 downto 0);
-  signal serdes_auto_bitslip : std_logic;
   signal serdes_man_bitslip  : std_logic;
-  signal serdes_bitslip      : std_logic;
   signal serdes_synced       : std_logic;
-  signal bitslip_sreg        : std_logic_vector(7 downto 0);
 
   -- Trigger
   signal ext_trig_a, ext_trig       : std_logic;
@@ -255,15 +218,10 @@ architecture rtl of fmc_adc_100Ms_core is
   signal alt_time_trig_en           : std_logic;
   signal alt_time_trig_fixed_delay  : std_logic_vector(4 downto 0);
   signal trig                       : std_logic;
-  signal trig_align                 : std_logic;
-  signal trig_fifo_din              : std_logic_vector(32 downto 0);
-  signal trig_fifo_dout             : std_logic_vector(32 downto 0);
-  signal trig_fifo_empty            : std_logic;
-  signal trig_fifo_full             : std_logic;
-  signal trig_fifo_rd               : std_logic;
-  signal trig_fifo_wr               : std_logic;
+  signal trig_align                 : std_logic_vector(8 downto 0);
   signal trig_storage               : std_logic_vector(31 downto 0);
   signal trig_storage_clear         : std_logic;
+  signal trig_src_vector            : std_logic_vector(7 downto 0);
 
   -- Under-sampling
   signal undersample_factor : std_logic_vector(31 downto 0);
@@ -271,8 +229,8 @@ architecture rtl of fmc_adc_100Ms_core is
   signal undersample_en     : std_logic;
 
   -- Sync FIFO (from fs_clk to sys_clk_i)
-  signal sync_fifo_din   : std_logic_vector(64 downto 0);
-  signal sync_fifo_dout  : std_logic_vector(64 downto 0);
+  signal sync_fifo_din   : std_logic_vector(72 downto 0);
+  signal sync_fifo_dout  : std_logic_vector(72 downto 0);
   signal sync_fifo_empty : std_logic;
   signal sync_fifo_full  : std_logic;
   signal sync_fifo_wr    : std_logic;
@@ -432,97 +390,20 @@ begin
   ------------------------------------------------------------------------------
   -- Resets
   ------------------------------------------------------------------------------
-  sys_rst <= not(sys_rst_n_i);
 
   cmp_sys_rst_fs_resync : gc_sync_ffs
     port map (
       clk_i    => fs_clk,
       rst_n_i  => '1',
       data_i   => sys_rst_n_i,
-      synced_o => sys_rst_n_fs_resync);
+      synced_o => fs_rst_n);
 
-  fs_rst_n <= sys_rst_n_fs_resync and locked_out;
-
-  ------------------------------------------------------------------------------
-  -- ADC data clock buffer
-  ------------------------------------------------------------------------------
-  cmp_dco_buf : IBUFDS
-    generic map (
-      DIFF_TERM  => TRUE,                         -- Differential termination
-      IOSTANDARD => "LVDS_25")
-    port map (
-      I  => adc_dco_p_i,
-      IB => adc_dco_n_i,
-      O  => dco_clk_buf
-      );
-
-  cmp_dco_bufio : BUFIO2
-    generic map (
-      DIVIDE        => 1,
-      DIVIDE_BYPASS => TRUE,
-      I_INVERT      => FALSE,
-      USE_DOUBLER   => FALSE)
-    port map (
-      I            => dco_clk_buf,
-      IOCLK        => open,
-      DIVCLK       => dco_clk,
-      SERDESSTROBE => open
-      );
+  serdes_arst <= not fs_rst_n;
 
   ------------------------------------------------------------------------------
-  -- Clock PLL for SerDes
-  -- LTC2174-14 must be configured in 16-bit serialization
-  --    dco_clk = 4*fs_clk = 400MHz
-  -- WARNING : The PLL expects a 400MHz input frequency, therefore the sampling
-  --           frequency has to be 100MHz and can't be change dynamically.
-  ------------------------------------------------------------------------------
-  cmp_serdes_clk_pll : PLL_BASE
-    generic map (
-      BANDWIDTH          => "OPTIMIZED",
-      CLK_FEEDBACK       => "CLKOUT0",
-      COMPENSATION       => "SYSTEM_SYNCHRONOUS",
-      DIVCLK_DIVIDE      => 1,
-      CLKFBOUT_MULT      => 2,
-      CLKFBOUT_PHASE     => 0.000,
-      CLKOUT0_DIVIDE     => 1,
-      CLKOUT0_PHASE      => 0.000,
-      CLKOUT0_DUTY_CYCLE => 0.500,
-      CLKOUT1_DIVIDE     => 8,
-      CLKOUT1_PHASE      => 0.000,
-      CLKOUT1_DUTY_CYCLE => 0.500,
-      CLKIN_PERIOD       => 2.5,
-      REF_JITTER         => 0.010)
-    port map (
-      -- Output clocks
-      CLKFBOUT => open,
-      CLKOUT0  => serdes_clk,
-      CLKOUT1  => fs_clk_buf,
-      CLKOUT2  => open,
-      CLKOUT3  => open,
-      CLKOUT4  => open,
-      CLKOUT5  => open,
-      -- Status and control signals
-      LOCKED   => locked_in,
-      RST      => sys_rst,
-      -- Input clock control
-      CLKFBIN  => clk_fb,
-      CLKIN    => dco_clk);
-
-  cmp_fs_clk_buf : BUFG
-    port map (
-      O => fs_clk,
-      I => fs_clk_buf
-      );
-
-  cmp_fb_clk_bufio : BUFIO2FB
-    generic map (
-      DIVIDE_BYPASS => TRUE)
-    port map (
-      I => clk_fb_buf,
-      O => clk_fb
-      );
-
   -- Sampinling clock frequency meter
+  ------------------------------------------------------------------------------
+
   cmp_fs_freq : gc_frequency_meter
     generic map(
       g_with_internal_timebase => TRUE,
@@ -552,108 +433,30 @@ begin
   end process p_fs_freq;
 
   ------------------------------------------------------------------------------
-  -- ADC data and frame SerDes
+  -- ADC SerDes
   ------------------------------------------------------------------------------
-  cmp_adc_serdes : adc_serdes
-    port map(
-      DATA_IN_FROM_PINS_P => serdes_in_p,
-      DATA_IN_FROM_PINS_N => serdes_in_n,
-      DATA_IN_TO_DEVICE   => serdes_out_raw,
-      BITSLIP             => serdes_bitslip,
-      CLK_IN              => serdes_clk,
-      CLK_OUT             => clk_fb_buf,
-      CLK_DIV_IN          => fs_clk,
-      LOCKED_IN           => locked_in,
-      LOCKED_OUT          => locked_out,
-      CLK_RESET           => '0',                 -- unused
-      IO_RESET            => sys_rst
-      );
 
-
-  --============================================================================
-  -- Sampling clock domain
-  --============================================================================
-
-  -- serdes inputs forming
-  serdes_in_p <= adc_fr_p_i
-                 & adc_outa_p_i(3) & adc_outb_p_i(3)
-                 & adc_outa_p_i(2) & adc_outb_p_i(2)
-                 & adc_outa_p_i(1) & adc_outb_p_i(1)
-                 & adc_outa_p_i(0) & adc_outb_p_i(0);
-  serdes_in_n <= adc_fr_n_i
-                 & adc_outa_n_i(3) & adc_outb_n_i(3)
-                 & adc_outa_n_i(2) & adc_outb_n_i(2)
-                 & adc_outa_n_i(1) & adc_outb_n_i(1)
-                 & adc_outa_n_i(0) & adc_outb_n_i(0);
-
-  -- serdes outputs re-ordering (time slices -> channel)
-  --    out_raw :(71:63)(62:54)(53:45)(44:36)(35:27)(26:18)(17:9)(8:0)
-  --                |      |      |      |      |      |      |    |
-  --                V      V      V      V      V      V      V    V
-  --              CH1D12 CH1D10 CH1D8  CH1D6  CH1D4  CH1D2  CH1D0  0   = CH1_B
-  --              CH1D13 CH1D11 CH1D9  CH1D7  CH1D5  CH1D3  CH1D1  0   = CH1_A
-  --              CH2D12 CH2D10 CH2D8  CH2D6  CH2D4  CH2D2  CH2D0  0   = CH2_B
-  --              CH2D13 CH2D11 CH2D9  CH2D7  CH2D5  CH2D3  CH2D1  0   = CH2_A
-  --              CH3D12 CH3D10 CH3D8  CH3D6  CH3D4  CH3D2  CH3D0  0   = CH3_B
-  --              CH3D13 CH3D11 CH3D9  CH3D7  CH3D5  CH3D3  CH3D1  0   = CH3_A
-  --              CH4D12 CH4D10 CH4D8  CH4D6  CH4D4  CH4D2  CH4D0  0   = CH4_B
-  --              CH4D13 CH4D11 CH4D9  CH4D7  CH4D5  CH4D3  CH4D1  0   = CH4_A
-  --              FR7    FR6    FR5    FR4    FR3    FR2    FR1    FR0 = FR
-  --
-  --    out_data(15:0)  = CH1
-  --    out_data(31:16) = CH2
-  --    out_data(47:32) = CH3
-  --    out_data(63:48) = CH4
-  --    Note: The two LSBs of each channel are always '0' => 14-bit ADC
-  gen_serdes_dout_reorder : for I in 0 to 7 generate
-    serdes_out_data(0*16 + 2*i)   <= serdes_out_raw(0 + i*9);  -- CH1 even bits
-    serdes_out_data(0*16 + 2*i+1) <= serdes_out_raw(1 + i*9);  -- CH1 odd bits
-    serdes_out_data(1*16 + 2*i)   <= serdes_out_raw(2 + i*9);  -- CH2 even bits
-    serdes_out_data(1*16 + 2*i+1) <= serdes_out_raw(3 + i*9);  -- CH2 odd bits
-    serdes_out_data(2*16 + 2*i)   <= serdes_out_raw(4 + i*9);  -- CH3 even bits
-    serdes_out_data(2*16 + 2*i+1) <= serdes_out_raw(5 + i*9);  -- CH3 odd bits
-    serdes_out_data(3*16 + 2*i)   <= serdes_out_raw(6 + i*9);  -- CH4 even bits
-    serdes_out_data(3*16 + 2*i+1) <= serdes_out_raw(7 + i*9);  -- CH4 odd bits
-    serdes_out_fr(i)              <= serdes_out_raw(8 + i*9);  -- FR
-  end generate gen_serdes_dout_reorder;
-
-
-  -- serdes bitslip generation
-  p_auto_bitslip : process (fs_clk)
-  begin
-    if rising_edge(fs_clk) then
-      if fs_rst_n = '0' then
-        bitslip_sreg        <= std_logic_vector(to_unsigned(1, bitslip_sreg'length));
-        serdes_auto_bitslip <= '0';
-        serdes_synced       <= '0';
-      else
-        -- Shift register to generate bitslip enable (serdes_clk/8)
-        bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
-
-        -- Generate bitslip and synced signal
-        if(bitslip_sreg(bitslip_sreg'LEFT) = '1') then
-          -- use fr_n pattern (fr_p and fr_n are swapped on the adc mezzanine)
-          if(serdes_out_fr /= "00001111") then
-            serdes_auto_bitslip <= '1';
-            serdes_synced       <= '0';
-          else
-            serdes_auto_bitslip <= '0';
-            serdes_synced       <= '1';
-          end if;
-        else
-          serdes_auto_bitslip <= '0';
-        end if;
-      end if;
-    end if;
-  end process p_auto_bitslip;
-
-  serdes_bitslip <= serdes_auto_bitslip or serdes_man_bitslip;
+  cmp_adc_serdes :  entity work.ltc2174_2l16b_receiver
+    port map (
+      adc_dco_p_i     => adc_dco_p_i,
+      adc_dco_n_i     => adc_dco_n_i,
+      adc_fr_p_i      => adc_fr_p_i,
+      adc_fr_n_i      => adc_fr_n_i,
+      adc_outa_p_i    => adc_outa_p_i,
+      adc_outa_n_i    => adc_outa_n_i,
+      adc_outb_p_i    => adc_outb_p_i,
+      adc_outb_n_i    => adc_outb_n_i,
+      serdes_arst_i   => serdes_arst,
+      serdes_bslip_i  => serdes_man_bitslip,
+      serdes_synced_o => serdes_synced,
+      adc_data_o      => serdes_out_data,
+      adc_clk_o       => fs_clk);
 
   ------------------------------------------------------------------------------
   -- ADC core control and status registers (CSR)
   ------------------------------------------------------------------------------
   cmp_fmc_adc_100Ms_csr : fmc_adc_100Ms_csr
-    port map(
+    port map (
       rst_n_i    => sys_rst_n_i,
       clk_sys_i  => sys_clk_i,
       wb_adr_i   => wb_csr_in.adr(7 downto 0),
@@ -674,7 +477,7 @@ begin
   wb_csr_out.rty <= '0';
 
   csr_regin.sta_fsm_i           <= acq_fsm_state;
-  csr_regin.sta_serdes_pll_i    <= locked_out;
+  csr_regin.sta_serdes_pll_i    <= '1';
   csr_regin.sta_serdes_synced_i <= serdes_synced;
   csr_regin.sta_acq_cfg_i       <= acq_config_ok;
   csr_regin.trig_stat_ext_i     <= trig_storage(0);
@@ -872,7 +675,7 @@ begin
   g_int_trig : for I in 1 to 4 generate
     int_trig_data(I) <= data_calibr_out(16*I-1 downto 16*I-16);
 
-    cmp_gc_comparator: entity work.gc_comparator
+    cmp_gc_comparator: gc_comparator
       generic map (
         g_IN_WIDTH => 16)
       port map (
@@ -975,83 +778,17 @@ begin
     end if;
   end process p_trig_shift;
 
+  trig_src_vector <= (sw_trig_fixed_delay(sw_trig_fixed_delay'high) and sw_trig_en) &
+                     (ext_trig_fixed_delay(ext_trig_fixed_delay'high) and ext_trig_en) &
+                     (alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'high) and alt_time_trig_en) &
+                     (time_trig_fixed_delay(time_trig_fixed_delay'high) and time_trig_en) &
+                     (int_trig_d(4) and int_trig_en(4)) &
+                     (int_trig_d(3) and int_trig_en(3)) &
+                     (int_trig_d(2) and int_trig_en(2)) &
+                     (int_trig_d(1) and int_trig_en(1));
+
   -- Trigger sources ORing
-  trig <= (sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) and sw_trig_en) or
-          (ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH) and ext_trig_en) or
-          (int_trig_d(1) and int_trig_en(1)) or
-          (int_trig_d(2) and int_trig_en(2)) or
-          (int_trig_d(3) and int_trig_en(3)) or
-          (int_trig_d(4) and int_trig_en(4)) or
-          (time_trig_fixed_delay(time_trig_fixed_delay'HIGH)
-           and time_trig_en) or
-          (alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'HIGH)
-           and alt_time_trig_en);
-
-  ------------------------------------------------------------------------------
-  -- Trigger source storage and synchronisation to system clock domain
-  ------------------------------------------------------------------------------
-
-  trig_fifo_din <= trig & X"00000" &
-                   int_trig_d(4) & int_trig_d(3) &
-                   int_trig_d(2) & int_trig_d(1) &
-                   "00" &
-                   alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'HIGH) &
-                   time_trig_fixed_delay(time_trig_fixed_delay'HIGH) &
-                   "00" & sw_trig_fixed_delay(sw_trig_fixed_delay'HIGH) &
-                   ext_trig_fixed_delay(ext_trig_fixed_delay'HIGH);
-
-  trig_fifo_wr <= not trig_fifo_full;
-
-  cmp_trig_sync_fifo : generic_async_fifo
-    generic map (
-      g_data_width             => 33,
-      g_size                   => 16,
-      g_show_ahead             => FALSE,
-      g_with_rd_empty          => TRUE,
-      g_with_rd_full           => FALSE,
-      g_with_rd_almost_empty   => FALSE,
-      g_with_rd_almost_full    => FALSE,
-      g_with_rd_count          => FALSE,
-      g_with_wr_empty          => FALSE,
-      g_with_wr_full           => TRUE,
-      g_with_wr_almost_empty   => FALSE,
-      g_with_wr_almost_full    => FALSE,
-      g_with_wr_count          => FALSE,
-      g_almost_empty_threshold => 0,
-      g_almost_full_threshold  => 0
-      )
-    port map(
-      rst_n_i           => fs_rst_n,
-      clk_wr_i          => fs_clk,
-      d_i               => trig_fifo_din,
-      we_i              => trig_fifo_wr,
-      wr_empty_o        => open,
-      wr_full_o         => trig_fifo_full,
-      wr_almost_empty_o => open,
-      wr_almost_full_o  => open,
-      wr_count_o        => open,
-      clk_rd_i          => sys_clk_i,
-      q_o               => trig_fifo_dout,
-      rd_i              => trig_fifo_rd,
-      rd_empty_o        => trig_fifo_empty,
-      rd_full_o         => open,
-      rd_almost_empty_o => open,
-      rd_almost_full_o  => open,
-      rd_count_o        => open
-      );
-
-  trig_fifo_rd <= not trig_fifo_empty;
-
-  p_trig_storage_sys: process (sys_clk_i) is
-  begin
-    if rising_edge(sys_clk_i) then
-      if sys_rst_n_i = '0' or trig_storage_clear = '1' then
-        trig_storage <= (others => '0');
-      elsif trig_fifo_dout(32) = '1' and trig_fifo_empty = '0' and acq_in_wait_trig = '1' then
-        trig_storage <= trig_fifo_dout(31 downto 0);
-      end if;
-    end if;
-  end process p_trig_storage_sys;
+  trig <= f_reduce_or (trig_src_vector);
 
   ------------------------------------------------------------------------------
   -- Under-sampling and trigger alignment
@@ -1082,12 +819,12 @@ begin
   begin
     if rising_edge(fs_clk) then
       if fs_rst_n = '0' then
-        trig_align <= '0';
+        trig_align <= (others => '0');
       else
         if trig = '1' then
-          trig_align <= '1';
+          trig_align <= trig_src_vector & trig;
         elsif undersample_en = '1' then
-          trig_align <= '0';
+          trig_align <= (others => '0');
         end if;
       end if;
     end if;
@@ -1096,65 +833,42 @@ begin
   ------------------------------------------------------------------------------
   -- Synchronisation FIFO to system clock domain
   ------------------------------------------------------------------------------
-  cmp_adc_sync_fifo : generic_async_fifo
+
+  cmp_adc_sync_fifo : generic_async_fifo_dual_rst
     generic map (
-      g_data_width             => 65,
+      g_data_width             => 73,
       g_size                   => 16,
-      g_show_ahead             => FALSE,
-      g_with_rd_empty          => TRUE,
-      g_with_rd_full           => FALSE,
-      g_with_rd_almost_empty   => FALSE,
-      g_with_rd_almost_full    => FALSE,
-      g_with_rd_count          => FALSE,
-      g_with_wr_empty          => FALSE,
-      g_with_wr_full           => TRUE,
-      g_with_wr_almost_empty   => FALSE,
-      g_with_wr_almost_full    => FALSE,
-      g_with_wr_count          => FALSE,
-      g_almost_empty_threshold => 0,
-      g_almost_full_threshold  => 0
-      )
+      g_show_ahead             => TRUE)
     port map(
-      rst_n_i           => fs_rst_n,
+      rst_wr_n_i        => fs_rst_n,
       clk_wr_i          => fs_clk,
       d_i               => sync_fifo_din,
       we_i              => sync_fifo_wr,
-      wr_empty_o        => open,                  -- sync_fifo_empty,
       wr_full_o         => sync_fifo_full,
-      wr_almost_empty_o => open,
-      wr_almost_full_o  => open,
-      wr_count_o        => open,
+      rst_rd_n_i        => sys_rst_n_i,
       clk_rd_i          => sys_clk_i,
       q_o               => sync_fifo_dout,
       rd_i              => sync_fifo_rd,
-      rd_empty_o        => sync_fifo_empty,
-      rd_full_o         => open,
-      rd_almost_empty_o => open,
-      rd_almost_full_o  => open,
-      rd_count_o        => open
-      );
-
-  -- One clock cycle delay for the FIFO's VALID signal. Since the General Cores
-  -- package does not offer the possibility to use the FWFT feature of the FIFOs,
-  -- we simulate the valid flag here according to Figure 4-7 in Xilinx UG175.
-  p_sync_fifo_valid : process (sys_clk_i) is
-  begin
-    if rising_edge(sys_clk_i) then
-      sync_fifo_valid <= sync_fifo_rd;
-      if (sync_fifo_empty = '1') then
-        sync_fifo_valid <= '0';
-      end if;
-    end if;
-  end process p_sync_fifo_valid;
+      rd_empty_o        => sync_fifo_empty);
 
   -- Data to FIFO
-  sync_fifo_din(64) <= trig_align;
-  sync_fifo_din(63 downto 0) <= data_calibr_out_d3;
+  --     72 : sw trigger
+  --     71 : ext trigger
+  --     70 : alt time trigger
+  --     69 : time trigger
+  --     68 : int4 trigger
+  --     67 : int3 trigger
+  --     66 : int2 trigger
+  --     65 : int1 trigger
+  --     64 : trigger pulse signal
+  -- 63..00 : sample data
+  sync_fifo_din(72 downto 64) <= trig_align;
+  sync_fifo_din(63 downto 0)  <= data_calibr_out_d3;
 
-  sync_fifo_wr <= undersample_en and serdes_synced and not(sync_fifo_full);
-
-  sync_fifo_rd <= not(sync_fifo_empty);           -- read sync fifo as soon as data are available
-
+  -- FIFO control
+  sync_fifo_wr    <= undersample_en and serdes_synced and (not sync_fifo_full);
+  sync_fifo_rd    <= not sync_fifo_empty;
+  sync_fifo_valid <= not sync_fifo_empty;
 
   --============================================================================
   -- System clock domain
@@ -1454,6 +1168,20 @@ begin
   ------------------------------------------------------------------------------
   -- Inserting trigger information after post_trigger samples
   ------------------------------------------------------------------------------
+  p_trig_storage_sys: process (sys_clk_i) is
+  begin
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' or trig_storage_clear = '1' then
+        trig_storage <= (others => '0');
+      elsif acq_trig = '1' then
+        trig_storage <= X"0000" &
+                        X"0" & sync_fifo_dout(68 downto 65) &
+                        "00" & sync_fifo_dout(70 downto 69) &
+                        "00" & sync_fifo_dout(72 downto 71);
+      end if;
+    end if;
+  end process p_trig_storage_sys;
+
   p_trig_tag_done : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
