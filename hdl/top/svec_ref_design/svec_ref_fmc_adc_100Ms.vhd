@@ -474,8 +474,6 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal tm_tai        : std_logic_vector(39 downto 0);
   signal tm_cycles     : std_logic_vector(27 downto 0);
   signal tm_time_valid : std_logic;
-  -- re-synced to ref clock
-  signal tm_time_valid_sync : std_logic;
 
   -- IO for CSR registers
   signal csr_regin  : t_carrier_csr_in_registers;
@@ -835,19 +833,12 @@ begin
         sys_sda_b => fmc_sda_b(I),
 
         wr_tm_link_up_i    => tm_link_up,
-        wr_tm_time_valid_i => tm_time_valid_sync,
+        wr_tm_time_valid_i => tm_time_valid,
         wr_tm_tai_i        => tm_tai,
         wr_tm_cycles_i     => tm_cycles,
         wr_enable_i        => wrabbit_en);
 
   end generate gen_fmc_mezzanine;
-
-  cmp_tm_time_valid_sync : gc_sync_ffs
-    port map (
-      clk_i    => clk_ref_125m,
-      rst_n_i  => '1',
-      data_i   => tm_time_valid,
-      synced_o => tm_time_valid_sync);
 
   ------------------------------------------------------------------------------
   -- DDR controllers (banks 4 and 5)

@@ -433,9 +433,6 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal tm_cycles          : std_logic_vector(27 downto 0);
   signal tm_time_valid      : std_logic;
 
-  -- re-synced to ref clock
-  signal tm_time_valid_sync : std_logic;
-
   -- IO for CSR registers
   signal csr_regin  : t_carrier_csr_in_registers;
   signal csr_regout : t_carrier_csr_out_registers;
@@ -750,13 +747,6 @@ begin
       data_i   => ddr_wr_fifo_empty,
       synced_o => ddr_wr_fifo_empty_sync);
 
-  cmp_tm_time_valid_sync : gc_sync_ffs
-    port map (
-      clk_i    => clk_ref_125m,
-      rst_n_i  => '1',
-      data_i   => tm_time_valid,
-      synced_o => tm_time_valid_sync);
-
   cmp_fmc_adc_mezzanine : fmc_adc_mezzanine
     generic map (
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
@@ -820,7 +810,7 @@ begin
       sys_sda_b => fmc_sda_b,
 
       wr_tm_link_up_i    => tm_link_up,
-      wr_tm_time_valid_i => tm_time_valid_sync,
+      wr_tm_time_valid_i => tm_time_valid,
       wr_tm_tai_i        => tm_tai,
       wr_tm_cycles_i     => tm_cycles,
       wr_enable_i        => wrabbit_en
