@@ -40,6 +40,8 @@ use work.timetag_core_pkg.all;
 entity fmc_adc_mezzanine is
   generic (
     g_MULTISHOT_RAM_SIZE : natural := 2048;
+    -- Only used on Xilinx Spartan6 FPGAs
+    g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
     g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
     g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
   port (
@@ -441,6 +443,7 @@ begin
     generic map (
       g_WB_CSR_MODE        => CLASSIC,
       g_WB_CSR_GRANULARITY => BYTE,
+      g_SPARTAN6_USE_PLL   => g_SPARTAN6_USE_PLL,
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
       )
     port map(

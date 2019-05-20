@@ -42,6 +42,8 @@ use work.fmc_adc_100Ms_csr_wbgen2_pkg.all;
 entity fmc_adc_100Ms_core is
   generic (
     g_MULTISHOT_RAM_SIZE : natural                        := 2048;
+    -- Only used on Xilinx Spartan6 FPGAs
+    g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
     g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
     g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);
   port (
@@ -436,7 +438,9 @@ begin
   -- ADC SerDes
   ------------------------------------------------------------------------------
 
-  cmp_adc_serdes :  entity work.ltc2174_2l16b_receiver
+  cmp_adc_serdes : entity work.ltc2174_2l16b_receiver
+    generic map (
+      g_USE_PLL => g_SPARTAN6_USE_PLL)
     port map (
       adc_dco_p_i     => adc_dco_p_i,
       adc_dco_n_i     => adc_dco_n_i,

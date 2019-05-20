@@ -739,6 +739,7 @@ begin
   cmp_fmc_adc_mezzanine : fmc_adc_mezzanine
     generic map (
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
+      g_SPARTAN6_USE_PLL   => FALSE,
       g_WB_MODE            => PIPELINED,
       g_WB_GRANULARITY     => BYTE)
     port map (

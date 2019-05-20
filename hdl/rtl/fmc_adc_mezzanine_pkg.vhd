@@ -45,6 +45,8 @@ package fmc_adc_mezzanine_pkg is
   component fmc_adc_mezzanine
     generic (
       g_MULTISHOT_RAM_SIZE : natural := 2048;
+      -- Only used on Xilinx Spartan6 FPGAs
+      g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
       g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
       g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
     port (
