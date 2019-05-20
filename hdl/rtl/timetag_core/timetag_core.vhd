@@ -8,13 +8,12 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
--- Last update: 2019-05-02
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Implements a UTC seconds counter and a 125MHz system clock
 -- ticks counter to time-tag trigger, acquisition start and stop events.
 -------------------------------------------------------------------------------
--- Copyright (c) 2011-2016 CERN (BE-CO-HT)
+-- Copyright (c) 2011-2019 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -40,6 +39,11 @@ use work.timetag_core_pkg.all;
 use work.timetag_core_wbgen2_pkg.all;
 
 entity timetag_core is
+  generic (
+    -- Value to be subtracted from trigger tag coarse counter.
+    -- This is useful if you know that the system introduces
+    -- some systematic delay wrt the actual trigger time
+    g_TAG_ADJUST : natural := 0);
   port (
     -- Clock, reset
     clk_i   : in std_logic;                       -- Must be 125MHz
@@ -208,7 +212,7 @@ begin
       elsif regout.coarse_load_o = '1' then
         time_counter.coarse <= regout.coarse_o;
         local_pps           <= '0';
-      elsif time_counter.coarse = std_logic_vector(to_unsigned(124999999, 28)) then
+      elsif time_counter.coarse = std_logic_vector(c_TAG_COARSE_MAX - 1) then
         time_counter.coarse <= (others => '0');
         local_pps           <= '1';
       else
@@ -277,17 +281,49 @@ begin
   ------------------------------------------------------------------------------
   -- Last trigger event time-tag
   ------------------------------------------------------------------------------
-  p_trig_tag : process (clk_i)
-  begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        trig_tag.seconds <= (others => '0');
-        trig_tag.coarse  <= (others => '0');
-      elsif trigger_p_i = '1' then
-        trig_tag <= current_time;
+
+  gen_trig_tag_no_adjust : if g_TAG_ADJUST = 0 generate
+    p_trig_tag : process (clk_i)
+    begin
+      if rising_edge(clk_i) then
+        if rst_n_i = '0' then
+          trig_tag.seconds <= (others => '0');
+          trig_tag.coarse  <= (others => '0');
+        elsif trigger_p_i = '1' then
+          trig_tag <= current_time;
+        end if;
       end if;
-    end if;
-  end process p_trig_tag;
+    end process p_trig_tag;
+  end generate gen_trig_tag_no_adjust;
+
+
+  gen_trig_tag : if g_TAG_ADJUST /= 0 generate
+    p_trig_tag : process (clk_i)
+      variable v_seconds_now  : unsigned(39 downto 0) := (others => '0');
+      variable v_coarse_now   : unsigned(27 downto 0) := (others => '0');
+      variable v_seconds_next : unsigned(39 downto 0) := (others => '0');
+      variable v_coarse_next  : unsigned(27 downto 0) := (others => '0');
+    begin
+      if rising_edge(clk_i) then
+        if rst_n_i = '0' then
+          trig_tag.seconds <= (others => '0');
+          trig_tag.coarse  <= (others => '0');
+        elsif trigger_p_i = '1' then
+          v_seconds_now := unsigned(current_time.seconds);
+          v_coarse_now  := unsigned(current_time.coarse);
+          if g_TAG_ADJUST > v_coarse_now then
+            v_seconds_next := v_seconds_now - 1;
+            v_coarse_next  := c_TAG_COARSE_MAX - (g_TAG_ADJUST - v_coarse_now);
+          else
+            v_seconds_next := v_seconds_now;
+            v_coarse_next  := v_coarse_now - g_TAG_ADJUST;
+          end if;
+          trig_tag.seconds <= std_logic_vector(v_seconds_next);
+          trig_tag.coarse  <= std_logic_vector(v_coarse_next);
+        end if;
+      end if;
+    end process p_trig_tag;
+  end generate gen_trig_tag;
 
   trig_tag_o <= trig_tag;
 

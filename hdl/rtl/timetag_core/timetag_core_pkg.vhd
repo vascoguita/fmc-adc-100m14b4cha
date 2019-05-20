@@ -8,12 +8,11 @@
 --            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2013-07-05
--- Last update: 2018-11-06
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
 -- Description: Package for timetag core
 -------------------------------------------------------------------------------
--- Copyright (c) 2013-2016 CERN (BE-CO-HT)
+-- Copyright (c) 2013-2019 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -45,6 +44,8 @@ package timetag_core_pkg is
     seconds : std_logic_vector(39 downto 0);
     coarse  : std_logic_vector(27 downto 0);
   end record t_timetag;
+
+  constant c_TAG_COARSE_MAX : unsigned := to_unsigned(125000000, 28);
 
 end timetag_core_pkg;
 

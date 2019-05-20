@@ -498,6 +498,7 @@ begin
   -- Mezzanine 1-wire master
   --    DS18B20 (thermometer + unique ID)
   ------------------------------------------------------------------------------
+
   cmp_fmc_onewire : xwb_onewire_master
     generic map(
       g_interface_mode      => CLASSIC,
@@ -580,6 +581,10 @@ begin
   -- Time-tagging core
   ------------------------------------------------------------------------------
   cmp_timetag_core : entity work.timetag_core
+    generic map (
+      -- Systematic delay introduced to the time tag by the FMC-ADC-100M core.
+      -- Measured experimentally.
+      g_TAG_ADJUST => 24)
     port map(
       clk_i   => sys_clk_i,
       rst_n_i => sys_rst_n_i,
