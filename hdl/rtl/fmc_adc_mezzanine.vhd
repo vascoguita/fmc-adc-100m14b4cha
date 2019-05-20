@@ -234,7 +234,7 @@ architecture rtl of fmc_adc_mezzanine is
   signal sys_sda_oe_n : std_logic;
 
   -- Mezzanine SPI
-  signal spi_din_t : std_logic_vector(3 downto 0);
+  signal spi_din_t : std_logic_vector(3 downto 0) := (others => '0');
   signal spi_ss_t  : std_logic_vector(7 downto 0);
 
   -- Mezzanine I2C for Si570
@@ -390,11 +390,7 @@ begin
   p_fmc_spi : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
-      if sys_rst_n_i = '0' then
-        spi_din_t <= (others => '0');
-      else
-        spi_din_t <= spi_din_t(spi_din_t'LEFT-1 downto 0) & spi_din_i;
-      end if;
+      spi_din_t <= spi_din_t(spi_din_t'LEFT-1 downto 0) & spi_din_i;
     end if;
   end process p_fmc_spi;
 

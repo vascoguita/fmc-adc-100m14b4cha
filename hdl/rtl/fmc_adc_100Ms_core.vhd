@@ -415,7 +415,7 @@ begin
     port map(
       clk_sys_i    => sys_clk_i,
       clk_in_i     => fs_clk,
-      rst_n_i      => sys_rst_n_i,
+      rst_n_i      => '1',
       pps_p1_i     => '0',
       freq_o       => fs_freq_t,
       freq_valid_o => fs_freq_valid
