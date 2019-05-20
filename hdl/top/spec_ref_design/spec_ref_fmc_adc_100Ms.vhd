@@ -467,7 +467,20 @@ begin
   ------------------------------------------------------------------------------
   -- GN4124 interface
   ------------------------------------------------------------------------------
+
+  -- Reduce the default FIFO sizes to make it easier for the 45T Spartan6.
   cmp_gn4124_core : xwb_gn4124_core
+    generic map (
+      g_WBM_TO_WB_FIFO_SIZE         => 16,
+      g_WBM_TO_WB_FIFO_FULL_THRES   => 12,
+      g_WBM_FROM_WB_FIFO_SIZE       => 16,
+      g_WBM_FROM_WB_FIFO_FULL_THRES => 12,
+      g_P2L_FIFO_SIZE               => 256,
+      g_P2L_FIFO_FULL_THRES         => 175,
+      g_L2P_ADDR_FIFO_FULL_SIZE     => 256,
+      g_L2P_ADDR_FIFO_FULL_THRES    => 175,
+      g_L2P_DATA_FIFO_FULL_SIZE     => 256,
+      g_L2P_DATA_FIFO_FULL_THRES    => 175)
     port map (
       rst_n_a_i          => gn_rst_n_i,
       status_o           => gn4124_status,
