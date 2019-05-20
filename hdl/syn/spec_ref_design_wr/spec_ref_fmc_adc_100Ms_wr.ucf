@@ -380,6 +380,14 @@ NET "adc_si570_scl_b"       IOSTANDARD = "LVCMOS25";
 NET "adc_si570_sda_b"       IOSTANDARD = "LVCMOS25";
 NET "adc_one_wire_b"        IOSTANDARD = "LVCMOS25";
 
+#----------------------------------------
+# IOBs
+#----------------------------------------
+
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out"   IOB = FALSE;
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"     IOB = FALSE;
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_onewire/*/Wrapped_1wire/owr_oen_1" IOB = FALSE;
+
 #===============================================================================
 # Timing Constraints
 #===============================================================================
@@ -498,4 +506,3 @@ TIMESPEC TS_dmtd_sync_reg     = FROM clk_dmtd        TO "dmtd_sync_reg" 16ns DAT
 TIMESPEC TS_ddr_sync_reg      = FROM ddr_clk         TO "ddr_sync_reg"  3ns  DATAPATHONLY;
 TIMESPEC TS_phy_sync_reg      = FROM phy_clk         TO "phy_sync_reg"  8ns  DATAPATHONLY;
 TIMESPEC TS_adc_sync_reg      = FROM fs_clk          TO "adc_sync_reg"  10ns DATAPATHONLY;
-

@@ -18,8 +18,8 @@ xilinx::project open $project_file
 xilinx::project set "Enable Multi-Threading" "2" -process "Map"
 xilinx::project set "Enable Multi-Threading" "4" -process "Place & Route"
 
-#xilinx::project set "Pack I/O Registers into IOBs" "Yes"
-#xilinx::project set "Pack I/O Registers/Latches into IOBs" "For Inputs and Outputs"
+xilinx::project set "Pack I/O Registers into IOBs" "Yes"
+xilinx::project set "Pack I/O Registers/Latches into IOBs" "For Inputs and Outputs"
 
 xilinx::project set "Register Balancing" "Yes"
 xilinx::project set "Register Duplication Map" "On"

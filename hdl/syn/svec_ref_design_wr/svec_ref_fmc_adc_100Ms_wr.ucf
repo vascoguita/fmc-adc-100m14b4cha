@@ -581,11 +581,9 @@ NET "adc_one_wire_b[*]"       IOSTANDARD = "LVCMOS25";
 # IOBs
 #----------------------------------------
 
-# Force PPS output to always be placed as IOB register
-INST "cmp_xwrc_board_svec/*/wrapped_ppsgen/pps_out_o" IOB = FORCE;
-
-INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"   IOB = FALSE;
-INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out" IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"     IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out"   IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_onewire/*/Wrapped_1wire/owr_oen_1" IOB = FALSE;
 
 #===============================================================================
 # Timing Constraints
