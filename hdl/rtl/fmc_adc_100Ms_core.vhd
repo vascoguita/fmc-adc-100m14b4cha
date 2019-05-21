@@ -44,6 +44,11 @@ entity fmc_adc_100Ms_core is
     g_MULTISHOT_RAM_SIZE : natural                        := 2048;
     -- Only used on Xilinx Spartan6 FPGAs
     g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
+    -- External trigger delay calibration value
+    g_TRIG_DELAY_EXT     : natural                        := 7;
+    -- Software and time trigger delay calibration value
+    g_TRIG_DELAY_SW      : natural                        := 9;
+    -- WB interface configuration
     g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
     g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);
   port (
@@ -197,7 +202,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal ext_trig_delay_cnt         : unsigned(31 downto 0);
   signal ext_trig_delay_bsy         : std_logic;
   signal ext_trig_en                : std_logic;
-  signal ext_trig_fixed_delay       : std_logic_vector(9 downto 0);
+  signal ext_trig_fixed_delay       : std_logic_vector(g_TRIG_DELAY_EXT+2 downto 0);
   signal ext_trig_p, ext_trig_n     : std_logic;
   signal ext_trig_pol               : std_logic;
   signal int_trig                   : std_logic_vector(1 to 4);
@@ -212,13 +217,13 @@ architecture rtl of fmc_adc_100Ms_core is
   signal int_trig_thres_hyst        : t_fmc_adc_vec16_array(1 to 4);
   signal sw_trig                    : std_logic;
   signal sw_trig_en                 : std_logic;
-  signal sw_trig_fixed_delay        : std_logic_vector(11 downto 0);
+  signal sw_trig_fixed_delay        : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal time_trig                  : std_logic;
   signal time_trig_en               : std_logic;
-  signal time_trig_fixed_delay      : std_logic_vector(11 downto 0);
+  signal time_trig_fixed_delay      : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal alt_time_trig              : std_logic;
   signal alt_time_trig_en           : std_logic;
-  signal alt_time_trig_fixed_delay  : std_logic_vector(11 downto 0);
+  signal alt_time_trig_fixed_delay  : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal trig                       : std_logic;
   signal trig_align                 : std_logic_vector(8 downto 0);
   signal trig_storage               : std_logic_vector(31 downto 0);
@@ -752,9 +757,9 @@ begin
   -- We solve this by introducing individual delays to the other triggers. In doing
   -- so, we always add more to account for the 3 clock cycles data delays mentioned
   -- before. Thus:
-  -- * EXT  triggers are delayed by 10 (7+3) cycles
-  -- * TIME triggers are delayed by 12 (9+3) cycles
-  -- * SOFT triggers are delayed by 12 (9+3) cycles
+  -- * EXT  triggers are delayed by g_TRIG_DELAY_EXT + 3 cycles
+  -- * TIME triggers are delayed by g_TRIG_DELAY_SW  + 3 cycles
+  -- * SOFT triggers are delayed by g_TRIG_DELAY_SW  + 3 cycles
 
   p_data_shift : process (fs_clk)
   begin

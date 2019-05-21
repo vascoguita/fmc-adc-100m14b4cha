@@ -44,9 +44,18 @@ package fmc_adc_mezzanine_pkg is
   ------------------------------------------------------------------------------
   component fmc_adc_mezzanine
     generic (
-      g_MULTISHOT_RAM_SIZE : natural := 2048;
+      g_MULTISHOT_RAM_SIZE : natural                        := 2048;
       -- Only used on Xilinx Spartan6 FPGAs
       g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
+      -- External trigger delay calibration value
+      g_TRIG_DELAY_EXT     : natural                        := 7;
+      -- Software and time trigger delay calibration value
+      g_TRIG_DELAY_SW      : natural                        := 9;
+      -- Value to be subtracted from trigger tag coarse counter.
+      -- This is useful if you know that the system introduces
+      -- some systematic delay wrt the actual trigger time
+      g_TAG_ADJUST         : natural                        := 24;
+      -- WB interface configuration
       g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
       g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
     port (

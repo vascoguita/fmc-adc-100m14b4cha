@@ -42,6 +42,15 @@ entity fmc_adc_mezzanine is
     g_MULTISHOT_RAM_SIZE : natural := 2048;
     -- Only used on Xilinx Spartan6 FPGAs
     g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
+    -- External trigger delay calibration value
+    g_TRIG_DELAY_EXT     : natural                        := 7;
+    -- Software and time trigger delay calibration value
+    g_TRIG_DELAY_SW      : natural                        := 9;
+    -- Value to be subtracted from trigger tag coarse counter.
+    -- This is useful if you know that the system introduces
+    -- some systematic delay wrt the actual trigger time
+    g_TAG_ADJUST         : natural                        := 24;
+    -- WB interface configuration
     g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
     g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
   port (
@@ -435,14 +444,16 @@ begin
   --    Offset DACs control (CLR_N)
   --    ADC core control and status
   ------------------------------------------------------------------------------
+
   cmp_fmc_adc_100Ms_core : fmc_adc_100Ms_core
     generic map (
-      g_WB_CSR_MODE        => CLASSIC,
-      g_WB_CSR_GRANULARITY => BYTE,
+      g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
       g_SPARTAN6_USE_PLL   => g_SPARTAN6_USE_PLL,
-      g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE
-      )
-    port map(
+      g_TRIG_DELAY_EXT     => g_TRIG_DELAY_EXT,
+      g_TRIG_DELAY_SW      => g_TRIG_DELAY_SW,
+      g_WB_CSR_MODE        => CLASSIC,
+      g_WB_CSR_GRANULARITY => BYTE)
+    port map (
       sys_clk_i   => sys_clk_i,
       sys_rst_n_i => sys_rst_n_i,
 
@@ -491,8 +502,7 @@ begin
       gpio_ssr_ch2_o   => gpio_ssr_ch2_o,
       gpio_ssr_ch3_o   => gpio_ssr_ch3_o,
       gpio_ssr_ch4_o   => gpio_ssr_ch4_o,
-      gpio_si570_oe_o  => gpio_si570_oe_o
-      );
+      gpio_si570_oe_o  => gpio_si570_oe_o);
 
   ------------------------------------------------------------------------------
   -- Mezzanine 1-wire master
@@ -584,7 +594,7 @@ begin
     generic map (
       -- Systematic delay introduced to the time tag by the FMC-ADC-100M core.
       -- Measured experimentally.
-      g_TAG_ADJUST => 24)
+      g_TAG_ADJUST => g_TAG_ADJUST)
     port map(
       clk_i   => sys_clk_i,
       rst_n_i => sys_rst_n_i,
