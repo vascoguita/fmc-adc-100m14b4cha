@@ -262,6 +262,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal acq_start             : std_logic;
   signal acq_stop              : std_logic;
   signal acq_trig              : std_logic;
+  signal acq_trig_d            : std_logic;
   signal acq_end               : std_logic;
   signal acq_end_d             : std_logic;
   signal acq_in_pre_trig       : std_logic;
@@ -989,11 +990,7 @@ begin
   p_acq_end : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
-      if sys_rst_n_i = '0' then
-        acq_end_d <= '0';
-      else
-        acq_end_d <= acq_end;
-      end if;
+      acq_end_d <= acq_end;
     end if;
   end process p_acq_end;
 
@@ -1194,11 +1191,7 @@ begin
   p_trig_tag_done : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
-      if sys_rst_n_i = '0' then
-        acq_in_trig_tag_d <= '0';
-      else
-        acq_in_trig_tag_d <= acq_in_trig_tag;
-      end if;
+      acq_in_trig_tag_d <= acq_in_trig_tag;
     end if;
   end process p_trig_tag_done;
 
@@ -1533,7 +1526,15 @@ begin
 
     trigout_trig <= f_reduce_or (trigout_triggers and trigout_en);
 
-    trigout_fifo_wr <= trigout_trig and not trigout_fifo_full and trig_tag_done;
+    -- Acquisition trigger delayed pulse
+    p_acq_end : process (sys_clk_i)
+    begin
+      if rising_edge(sys_clk_i) then
+        acq_trig_d <= acq_trig;
+      end if;
+    end process p_acq_end;
+
+    trigout_fifo_wr <= trigout_trig and not trigout_fifo_full and acq_trig_d;
 
     cmp_trigout_fifo : generic_sync_fifo
       generic map (
