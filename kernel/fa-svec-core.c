@@ -16,7 +16,6 @@ static int fa_svec_init(struct fa_dev *fa)
 {
 	struct fa_svec_data *cdata;
 	struct resource *r;
-	unsigned int res_i;
 
 	cdata = kzalloc(sizeof(struct fa_svec_data), GFP_KERNEL);
 	if (!cdata)
@@ -24,24 +23,7 @@ static int fa_svec_init(struct fa_dev *fa)
 
 	r = platform_get_resource(fa->pdev, IORESOURCE_BUS, ADC_CARR_VME_ADDR);
 	cdata->vme_ddr_data = r->start;
-
-	r = platform_get_resource(fa->pdev, IORESOURCE_BUS, ADC_BUS_FMC_SLOT);
-	switch(r->start) {
-	case 1:
-		res_i = FA_CAR_FMC0_RES;
-		break;
-	case 2:
-		res_i = FA_CAR_FMC1_RES;
-		break;
-	default:
-		return -EINVAL;
-	}
 	cdata->fa_dma_ddr_addr = fa->fa_top_level + 0x2000;
-
-	fa_writel(fa, fa->fa_carrier_csr_base, &fa_svec_regfield[res_i], 1);
-	mdelay(50);
-	fa_writel(fa, fa->fa_carrier_csr_base, &fa_svec_regfield[res_i], 0);
-	mdelay(50);
 
 	/* register carrier data */
 	fa->carrier_data = cdata;

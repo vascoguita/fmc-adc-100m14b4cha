@@ -173,7 +173,6 @@ enum fa_irq_resource {
 
 enum fa_mem_resource {
 	ADC_MEM_BASE = 0,
-	ADC_CARR_MEM_BASE,
 	ADC_CARR_DMA, /* SPEC only, remove it when we support DMA engine */
 };
 
@@ -421,7 +420,6 @@ struct fa_dev {
 	void *fa_spi_base;
 	void *fa_ow_base;
 	void *fa_top_level;
-	void *fa_carrier_csr_base;
 	void *fa_irq_vic_base;
 	void *fa_irq_adc_base;
 	void *fa_utc_base;

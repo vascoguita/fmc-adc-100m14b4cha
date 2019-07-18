@@ -438,13 +438,6 @@ static int fa_resource_validation(struct platform_device *pdev)
 		return -ENXIO;
 	}
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_CARR_MEM_BASE);
-	if (!r) {
-		dev_err(&pdev->dev,
-			"The ADC needs the carrier base address\n");
-		return -ENXIO;
-	}
-
 	r = platform_get_resource(pdev, IORESOURCE_BUS, ADC_BUS_FMC_SLOT);
 	if (!r) {
 		dev_err(&pdev->dev,
@@ -535,9 +528,6 @@ int fa_probe(struct platform_device *pdev)
 	fa->fa_ow_base =      fa->fa_top_level + 0x1700;
 	fa->fa_spi_base =     fa->fa_top_level + 0x1800;
 	fa->fa_utc_base =     fa->fa_top_level + 0x1900;
-
-	r = platform_get_resource(fa->pdev, IORESOURCE_MEM, ADC_CARR_MEM_BASE);
-	fa->fa_carrier_csr_base = ioremap(r->start, resource_size(r));
 
 	err = fa->carrier_op->init(fa);
 	if (err < 0)

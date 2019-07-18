@@ -15,7 +15,6 @@ static int fa_spec_init(struct fa_dev *fa)
 {
 	struct resource *r;
 	struct fa_spec_data *cdata;
-	uint32_t val;
 
 	cdata = kzalloc(sizeof(struct fa_spec_data), GFP_KERNEL);
 	if (!cdata)
@@ -26,39 +25,8 @@ static int fa_spec_init(struct fa_dev *fa)
 	cdata->fa_irq_dma_base = cdata->fa_dma_base + 0x0200;
 
 	dev_info(fa->msgdev,
-		"Spec Base addrs: irq_dmma: %p, dma_ctrl: %p, csr: %p\n",
-		cdata->fa_irq_dma_base, cdata->fa_dma_base,
-		fa->fa_carrier_csr_base);
-
-	/* Reset the FMC slot */
-	fa_writel(fa, fa->fa_carrier_csr_base,
-		  &fa_spec_regs[ZFA_CAR_FMC_RES], 1);
-	mdelay(50);
-	fa_writel(fa, fa->fa_carrier_csr_base,
-		  &fa_spec_regs[ZFA_CAR_FMC_RES], 0);
-	mdelay(50);
-
-	/* Verify that the FMC is plugged (0 is plugged) */
-	val = fa_readl(fa, fa->fa_carrier_csr_base,
-		       &fa_spec_regs[ZFA_CAR_FMC_PRES]);
-	if (val) {
-		dev_err(fa->msgdev, "No FCM ADC plugged\n");
-		return -ENODEV;
-	}
-	/* Verify that system PLL is locked (1 is calibrated) */
-	val = fa_readl(fa, fa->fa_carrier_csr_base,
-		       &fa_spec_regs[ZFA_CAR_SYS_PLL]);
-	if (!val) {
-		dev_err(fa->msgdev, "System PLL not locked\n");
-		return -ENODEV;
-	}
-	/* Verify that DDR3 calibration is done (1 is calibrated) */
-	val = fa_readl(fa, fa->fa_carrier_csr_base,
-		       &fa_spec_regs[ZFA_CAR_DDR_CAL]);
-	if (!val) {
-		dev_err(fa->msgdev, "DDR3 Calibration not done\n");
-		return -ENODEV;
-	}
+		"Spec Base addrs: irq_dmma: %p, dma_ctrl: %p\n",
+		cdata->fa_irq_dma_base, cdata->fa_dma_base);
 
 	/* Set DMA to transfer data from device to host */
 	fa_writel(fa, cdata->fa_dma_base,
