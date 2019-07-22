@@ -38,6 +38,7 @@ fmc-adc-100m14b4ch-y += fa-regtable.o
 fmc-adc-100m14b4ch-y += fa-zio-trg.o
 fmc-adc-100m14b4ch-y += fa-irq.o
 fmc-adc-100m14b4ch-y += fa-debug.o
+fmc-adc-100m14b4ch-y += fa-dma.o
 fmc-adc-100m14b4ch-y += onewire.o
 fmc-adc-100m14b4ch-y += spi.o
 fmc-adc-100m14b4ch-y += fa-spec-core.o

@@ -595,6 +595,12 @@ extern int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan);
 extern int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
 				    unsigned int enable);
 
+/* Function exported by fa-dma.c */
+extern int zfad_dma_start(struct zio_cset *cset);
+extern void zfad_dma_done(struct zio_cset *cset);
+extern void zfad_dma_error(struct zio_cset *cset);
+extern void fa_irq_work(struct work_struct *work);
+
 /* Functions exported by fa-zio-drv.c */
 extern int fa_zio_register(void);
 extern void fa_zio_unregister(void);
@@ -606,9 +612,6 @@ extern int fa_trig_init(void);
 extern void fa_trig_exit(void);
 
 /* Functions exported by fa-irq.c */
-extern int zfad_dma_start(struct zio_cset *cset);
-extern void zfad_dma_done(struct zio_cset *cset);
-extern void zfad_dma_error(struct zio_cset *cset);
 extern void zfat_irq_trg_fire(struct zio_cset *cset);
 extern int fa_setup_irqs(struct fa_dev *fa);
 extern int fa_free_irqs(struct fa_dev *fa);
