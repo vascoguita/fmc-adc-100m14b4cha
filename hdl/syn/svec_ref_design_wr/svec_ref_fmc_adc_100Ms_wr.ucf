@@ -365,12 +365,12 @@ NET "fp_led_column_o[*]"   IOSTANDARD="LVCMOS33";
 #----------------------------------------
 # Front panel IOs
 #----------------------------------------
-NET "fp_gpio1_o"      LOC = R30;
-NET "fp_gpio2_o"      LOC = T28;
-NET "fp_gpio3_o"      LOC = U29;
-NET "fp_gpio4_o"      LOC = V27;
-NET "fp_gpio1_a2b_o"  LOC = R29;
-NET "fp_gpio2_a2b_o"  LOC = T30;
+NET "fp_gpio1_o"      LOC = T28;
+NET "fp_gpio2_o"      LOC = R30;
+NET "fp_gpio3_i"      LOC = V27;
+NET "fp_gpio4_i"      LOC = U29;
+NET "fp_gpio1_a2b_o"  LOC = T30;
+NET "fp_gpio2_a2b_o"  LOC = R29;
 NET "fp_gpio34_a2b_o" LOC = V28;
 NET "fp_term_en_o[1]" LOC = AB1;
 NET "fp_term_en_o[2]" LOC = W5;
