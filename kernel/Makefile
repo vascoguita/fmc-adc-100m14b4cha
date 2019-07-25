@@ -26,13 +26,12 @@ endif
 VMEBUS_ABS ?= $(abspath $(VMEBUS) )
 
 GIT_VERSION = $(shell git describe --always --dirty --long --tags)
-export GIT_VERSION
-export ZIO_VERSION
-
 
 all modules:
 	$(MAKE) -C $(LINUX) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) \
 		ZIO_EXTRA_SYMBOLS-y=$(ZIO_EXTRA_SYMBOLS-y) \
+		ZIO_VERSION=$(ZIO_VERSION) \
+		GIT_VERSION=$(GIT_VERSION) \
 		VMEBUS_ABS=$(VMEBUS_ABS) modules
 
 install modules_install: modules
