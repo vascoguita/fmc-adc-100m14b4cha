@@ -298,6 +298,15 @@ enum zfadc_dregs_enum {
 	/* Other options */
 	ZFA_MULT_MAX_SAMP,
 	/* end:declaration block requiring some order */
+	/* two wishbone core for IRQ: VIC, ADC */
+	ZFA_IRQ_ADC_DISABLE_MASK,
+	ZFA_IRQ_ADC_ENABLE_MASK,
+	ZFA_IRQ_ADC_MASK_STATUS,
+	ZFA_IRQ_ADC_SRC,
+	ZFA_IRQ_VIC_CTRL,
+	ZFA_IRQ_VIC_DISABLE_MASK,
+	ZFA_IRQ_VIC_ENABLE_MASK,
+	ZFA_IRQ_VIC_MASK_STATUS,
 	/* UTC core */
 	ZFA_UTC_SECONDS,
 	ZFA_UTC_COARSE,
@@ -342,6 +351,23 @@ enum fa_sw_param_id {
 	ZFA_SW_CH3_OFFSET_ZERO,
 	ZFA_SW_CH4_OFFSET_ZERO,
 	ZFA_SW_PARAM_COMMON_LAST,
+};
+
+/*
+ * Bit pattern used in order to factorize code  between SVEC and SPEC
+ * Depending of the carrier, ADC may have to listen vaious IRQ sources
+ * SVEC: only ACQ irq source (end DMA irq is manged by vmebus driver)
+ * SPEC: ACQ and DMA irq source
+ */
+enum fa_irq_src {
+	FA_IRQ_SRC_ACQ = 0x1,
+	FA_IRQ_SRC_DMA = 0x2,
+};
+
+/* adc IRQ values */
+enum fa_irq_adc {
+	FA_IRQ_ADC_NONE =	0x0,
+	FA_IRQ_ADC_ACQ_END =	0x2,
 };
 
 /* Carrier-specific operations (gateware does not fully decouple
@@ -578,6 +604,8 @@ extern void fa_trig_exit(void);
 extern void zfat_irq_trg_fire(struct zio_cset *cset);
 extern int fa_setup_irqs(struct fa_dev *fa);
 extern int fa_free_irqs(struct fa_dev *fa);
+extern int fa_enable_irqs(struct fa_dev *fa);
+extern int fa_disable_irqs(struct fa_dev *fa);
 
 /* Functions exported by onewire.c */
 extern int fa_onewire_init(struct fa_dev *fa);
