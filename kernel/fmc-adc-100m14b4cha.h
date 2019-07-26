@@ -176,7 +176,6 @@ enum fa_mem_resource {
 };
 
 enum fa_bus_resource {
-	ADC_BUS_FMC_SLOT = 0,
 	ADC_CARR_VME_ADDR,
 };
 

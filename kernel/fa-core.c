@@ -461,13 +461,6 @@ static int fa_resource_validation(struct platform_device *pdev)
 		return -ENXIO;
 	}
 
-	r = platform_get_resource(pdev, IORESOURCE_BUS, ADC_BUS_FMC_SLOT);
-	if (!r) {
-		dev_err(&pdev->dev,
-			"The ADC needs to be assigned to an FMC slot\n");
-		return -ENXIO;
-	}
-
 	/* Special Configurations */
 	switch (pdev->id_entry->driver_data) {
 	case ADC_VER_SPEC:
