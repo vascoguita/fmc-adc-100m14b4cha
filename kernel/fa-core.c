@@ -354,14 +354,13 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		}
 
 		dev_dbg(fa->msgdev, "FSM START Command, Enable interrupts\n");
-		fa_enable_irqs(fa);
-
+		/*FIXME enable interrupts ?*/
 		fa_writel(fa, fa->fa_adc_csr_base,
 			  &zfad_regs[ZFA_CTL_RST_TRG_STA], 1);
 	} else {
 		dev_dbg(fa->msgdev, "FSM STOP Command, Disable interrupts\n");
 		fa->enable_auto_start = 0;
-		fa_disable_irqs(fa);
+		/*FIXME disable interrupts ?*/
 	}
 
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
