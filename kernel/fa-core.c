@@ -517,13 +517,11 @@ int fa_probe(struct platform_device *pdev)
 	case ADC_VER_SPEC:
 		memops.read = ioread32;
 		memops.write = iowrite32;
-		fa->carrier_op = &fa_spec_op;
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages;
 		break;
 	case ADC_VER_SVEC:
 		memops.read = ioread32be;
 		memops.write = iowrite32be;
-		fa->carrier_op = &fa_svec_op;
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
 		break;
 	default:
@@ -539,10 +537,6 @@ int fa_probe(struct platform_device *pdev)
 	fa->fa_ow_base =      fa->fa_top_level + 0x1700;
 	fa->fa_spi_base =     fa->fa_top_level + 0x1800;
 	fa->fa_utc_base =     fa->fa_top_level + 0x1900;
-
-	err = fa->carrier_op->init(fa);
-	if (err < 0)
-		goto out;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
@@ -587,8 +581,6 @@ int fa_remove(struct platform_device *pdev)
 		if (m->exit)
 			m->exit(fa);
 	}
-
-	fa->carrier_op->exit(fa);
 
 	return 0;
 }

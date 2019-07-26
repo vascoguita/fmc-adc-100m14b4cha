@@ -121,9 +121,6 @@ int fa_setup_irqs(struct fa_dev *fa)
 	/* set IRQ sources to listen */
 	fa->irq_src = FA_IRQ_SRC_ACQ;
 
-	if (fa->carrier_op->setup_irqs)
-		err = fa->carrier_op->setup_irqs(fa);
-
 	return err;
 }
 
@@ -135,10 +132,6 @@ int fa_free_irqs(struct fa_dev *fa)
 	 * interrupt when the driver is not there to handle them.
 	 */
 	fa_disable_irqs(fa);
-
-	/* Release carrier IRQs (if any) */
-	if (fa->carrier_op->free_irqs)
-		fa->carrier_op->free_irqs(fa);
 
 	/* Release ADC IRQs */
 	free_irq(platform_get_irq(fa->pdev, ADC_IRQ_TRG), fa);
@@ -153,9 +146,6 @@ int fa_enable_irqs(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_irq_adc_base,
 			&zfad_regs[ZFA_IRQ_ADC_ENABLE_MASK],
 			FA_IRQ_ADC_ACQ_END);
-
-	if (fa->carrier_op->enable_irqs)
-		fa->carrier_op->enable_irqs(fa);
 	return 0;
 }
 
@@ -167,8 +157,6 @@ int fa_disable_irqs(struct fa_dev *fa)
 			&zfad_regs[ZFA_IRQ_ADC_DISABLE_MASK],
 			FA_IRQ_ADC_ACQ_END);
 
-	if (fa->carrier_op->disable_irqs)
-		fa->carrier_op->disable_irqs(fa);
 	return 0;
 }
 

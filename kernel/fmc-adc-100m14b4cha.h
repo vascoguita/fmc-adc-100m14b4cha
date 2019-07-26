@@ -375,17 +375,6 @@ enum fa_irq_adc {
    carrier specific stuff, such as DMA or resets, from
    mezzanine-specific operations). */
 struct fa_dev; /* forward declaration */
-struct fa_carrier_op {
-	char* (*get_gwname)(void);
-	int (*init) (struct fa_dev *);
-	int (*reset_core) (struct fa_dev *);
-	void (*exit) (struct fa_dev *);
-	int (*setup_irqs) (struct fa_dev *);
-	int (*free_irqs) (struct fa_dev *);
-	int (*enable_irqs) (struct fa_dev *);
-	int (*disable_irqs) (struct fa_dev *);
-	int (*ack_irq) (struct fa_dev *, int irq_id);
-};
 
 /*
  * fa_dev: is the descriptor of the FMC ADC mezzanine
@@ -424,10 +413,6 @@ struct fa_dev {
 	struct zio_dma_sgt *zdma;
 	struct sg_table sgt;
 
-	/* carrier specific functions (init/exit/reset/readout/irq handling) */
-	struct fa_carrier_op *carrier_op;
-	/* carrier private data */
-	void *carrier_data;
 	int irq_src; /* list of irq sources to listen */
 	struct work_struct irq_work;
 	/*
@@ -588,12 +573,6 @@ extern struct bin_attribute dev_attr_calibration;
 
 /* Global variable exported by fa-core.c */
 extern struct workqueue_struct *fa_workqueue;
-
-/* Global variable exported by fa-spec.c */
-extern struct fa_carrier_op fa_spec_op;
-
-/* Global variable exported by fa-svec.c */
-extern struct fa_carrier_op fa_svec_op;
 
 /* Global variable exported by fa-regfield.c */
 extern const struct zfa_field_desc zfad_regs[];
