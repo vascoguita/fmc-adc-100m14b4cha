@@ -163,12 +163,12 @@ architecture rtl of fmc_adc_mezzanine is
     wbd_width     => x"4",                        -- 32-bit port granularity
     sdb_component => (
       addr_first  => x"0000000000000000",
-      addr_last   => x"00000000000003FF",
+      addr_last   => x"00000000000001FF",
       product     => (
         vendor_id => x"000000000000CE42",         -- CERN
         device_id => x"00000608",
-        version   => x"00000001",
-        date      => x"20121116",
+        version   => x"00000002",
+        date      => x"20190730",
         name      => "WB-FMC-ADC-Core    ")));
 
   constant c_wb_timetag_sdb : t_sdb_device := (

@@ -1,0 +1,2932 @@
+== Memory map summary
+FMC ADC 100MS/s core registers
+
+|===
+|HW address | Type | Name | HDL name
+
+|0x000
+|REG
+|ctl
+|ctl
+
+|0x004
+|REG
+|sta
+|sta
+
+|0x008
+|REG
+|trig_stat
+|trig_stat
+
+|0x00c
+|REG
+|trig_en
+|trig_en
+
+|0x010
+|REG
+|trig_pol
+|trig_pol
+
+|0x014
+|REG
+|ext_trig_dly
+|ext_trig_dly
+
+|0x018
+|REG
+|sw_trig
+|sw_trig
+
+|0x01c
+|REG
+|shots
+|shots
+
+|0x020
+|REG
+|multi_depth
+|multi_depth
+
+|0x024
+|REG
+|trig_pos
+|trig_pos
+
+|0x028
+|REG
+|fs_freq
+|fs_freq
+
+|0x02c
+|REG
+|undersample
+|undersample
+
+|0x030
+|REG
+|pre_samples
+|pre_samples
+
+|0x034
+|REG
+|post_samples
+|post_samples
+
+|0x038
+|REG
+|samples_cnt
+|samples_cnt
+
+|0x080
+|REG
+|ch1_ctl
+|ch1_ctl
+
+|0x084
+|REG
+|ch1_sta
+|ch1_sta
+
+|0x088
+|REG
+|ch1_calib
+|ch1_calib
+
+|0x08c
+|REG
+|ch1_sat
+|ch1_sat
+
+|0x090
+|REG
+|ch1_trig_thres
+|ch1_trig_thres
+
+|0x094
+|REG
+|ch1_trig_dly
+|ch1_trig_dly
+
+|0x0c0
+|REG
+|ch2_ctl
+|ch2_ctl
+
+|0x0c4
+|REG
+|ch2_sta
+|ch2_sta
+
+|0x0c8
+|REG
+|ch2_calib
+|ch2_calib
+
+|0x0cc
+|REG
+|ch2_sat
+|ch2_sat
+
+|0x0d0
+|REG
+|ch2_trig_thres
+|ch2_trig_thres
+
+|0x0d4
+|REG
+|ch2_trig_dly
+|ch2_trig_dly
+
+|0x100
+|REG
+|ch3_ctl
+|ch3_ctl
+
+|0x104
+|REG
+|ch3_sta
+|ch3_sta
+
+|0x108
+|REG
+|ch3_calib
+|ch3_calib
+
+|0x10c
+|REG
+|ch3_sat
+|ch3_sat
+
+|0x110
+|REG
+|ch3_trig_thres
+|ch3_trig_thres
+
+|0x114
+|REG
+|ch3_trig_dly
+|ch3_trig_dly
+
+|0x140
+|REG
+|ch4_ctl
+|ch4_ctl
+
+|0x144
+|REG
+|ch4_sta
+|ch4_sta
+
+|0x148
+|REG
+|ch4_calib
+|ch4_calib
+
+|0x14c
+|REG
+|ch4_sat
+|ch4_sat
+
+|0x150
+|REG
+|ch4_trig_thres
+|ch4_trig_thres
+
+|0x154
+|REG
+|ch4_trig_dly
+|ch4_trig_dly
+|===
+
+== Registers description
+=== ctl
+[horizontal]
+HDL name:: ctl
+address:: 0x0
+block offset:: 0x0
+access mode:: rw
+
+Control register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+s| clear_trig_stat
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+s| acq_led
+s| trig_led
+s| test_data_en
+s| man_bitslip
+s| offset_dac_clr_n
+s| fmc_clk_oe
+2+s| fsm_cmd[1:0]
+|===
+
+fsm_cmd:: 1: ACQ_START (start acquisition, only when FSM is idle)
+2: ACQ_STOP (stop acquisition, anytime)
+fmc_clk_oe:: FMC Si750 output enable
+offset_dac_clr_n:: Offset DACs clear (active low)
+man_bitslip:: Manual serdes bitslip (ignore on read)
+test_data_en:: Write the DDR RAM address counter value instead of ADC data to DDR.
+Note that no timetags are appended at the end of test data.
+trig_led:: Manual control of the front panel TRIG LED
+acq_led:: Manual control of the front panel ACQ LED
+clear_trig_stat:: Write 1 to clear the last trigger status register. Auto-resets to zero.
+
+=== sta
+[horizontal]
+HDL name:: sta
+address:: 0x4
+block offset:: 0x4
+access mode:: ro
+
+Status register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+| -
+s| acq_cfg
+s| serdes_synced
+s| serdes_pll
+3+s| fsm[2:0]
+|===
+
+fsm:: States:
+0: illegal
+1: IDLE
+2: PRE_TRIG
+3: WAIT_TRIG
+4: POST_TRIG
+5: TRIG_TAG
+6: DECR_SHOT
+7: illegal
+serdes_pll:: Sampling clock recovery PLL.
+0: not locked
+1: locked
+serdes_synced:: 0: bitslip in progress
+1: serdes synchronized
+acq_cfg:: 0: Unauthorised acquisition configuration (will prevent acquisition to start)
+1: Valid acquisition configuration
+- Shot number > 0
+- Post-trigger sample > 0
+
+=== trig_stat
+[horizontal]
+HDL name:: trig_stat
+address:: 0x8
+block offset:: 0x8
+access mode:: ro
+
+Trigger status
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+s| ch4
+s| ch3
+s| ch2
+s| ch1
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+| -
+| -
+s| time
+| -
+| -
+s| sw
+s| ext
+|===
+
+ext:: 0: not triggered
+1: triggered
+sw:: 0: not triggered
+1: triggered
+time:: 0: not triggered
+1: triggered
+ch1:: 0: not triggered
+1: triggered
+ch2:: 0: not triggered
+1: triggered
+ch3:: 0: not triggered
+1: triggered
+ch4:: 0: not triggered
+1: triggered
+
+=== trig_en
+[horizontal]
+HDL name:: trig_en
+address:: 0xc
+block offset:: 0xc
+access mode:: rw
+
+Trigger enable
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+s| fwd_ch4
+s| fwd_ch3
+s| fwd_ch2
+s| fwd_ch1
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+s| fwd_ext
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+s| ch4
+s| ch3
+s| ch2
+s| ch1
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+| -
+s| alt_time
+s| time
+| -
+| -
+s| sw
+s| ext
+|===
+
+ext:: 0: disable
+1: enable
+sw:: 0: disable
+1: enable
+time:: 0: disable
+1: enable
+alt_time:: 0: disable
+1: enable
+ch1:: 0: disable
+1: enable
+ch2:: 0: disable
+1: enable
+ch3:: 0: disable
+1: enable
+ch4:: 0: disable
+1: enable
+fwd_ext:: 0: disable
+1: enable
+fwd_ch1:: 0: disable
+1: enable
+fwd_ch2:: 0: disable
+1: enable
+fwd_ch3:: 0: disable
+1: enable
+fwd_ch4:: 0: disable
+1: enable
+
+=== trig_pol
+[horizontal]
+HDL name:: trig_pol
+address:: 0x10
+block offset:: 0x10
+access mode:: rw
+
+Trigger polarity
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+s| ch4
+s| ch3
+s| ch2
+s| ch1
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+s| ext
+|===
+
+ext:: 0: positive edge/slope
+1: negative edge/slope
+ch1:: 0: positive edge/slope
+1: negative edge/slope
+ch2:: 0: positive edge/slope
+1: negative edge/slope
+ch3:: 0: positive edge/slope
+1: negative edge/slope
+ch4:: 0: positive edge/slope
+1: negative edge/slope
+
+=== ext_trig_dly
+[horizontal]
+HDL name:: ext_trig_dly
+address:: 0x14
+block offset:: 0x14
+access mode:: rw
+
+External trigger delay
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| ext_trig_dly[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| ext_trig_dly[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| ext_trig_dly[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| ext_trig_dly[7:0]
+|===
+=== sw_trig
+[horizontal]
+HDL name:: sw_trig
+address:: 0x18
+block offset:: 0x18
+access mode:: wo
+
+Software trigger
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| sw_trig[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| sw_trig[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| sw_trig[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| sw_trig[7:0]
+|===
+=== shots
+[horizontal]
+HDL name:: shots
+address:: 0x1c
+block offset:: 0x1c
+access mode:: rw
+
+Number of shots
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| remain[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| remain[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| nbr[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| nbr[7:0]
+|===
+
+nbr:: Number of shots required in multi-shot mode, set to one for single-shot mode.
+remain:: Counts the number of remaining shots to acquire.
+
+=== multi_depth
+[horizontal]
+HDL name:: multi_depth
+address:: 0x20
+block offset:: 0x20
+access mode:: ro
+
+Multi-shot sample depth register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| multi_depth[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| multi_depth[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| multi_depth[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| multi_depth[7:0]
+|===
+=== trig_pos
+[horizontal]
+HDL name:: trig_pos
+address:: 0x24
+block offset:: 0x24
+access mode:: ro
+
+Trigger address register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| trig_pos[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| trig_pos[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| trig_pos[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| trig_pos[7:0]
+|===
+=== fs_freq
+[horizontal]
+HDL name:: fs_freq
+address:: 0x28
+block offset:: 0x28
+access mode:: ro
+
+Sampling clock frequency
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| fs_freq[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| fs_freq[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| fs_freq[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| fs_freq[7:0]
+|===
+=== undersample
+[horizontal]
+HDL name:: undersample
+address:: 0x2c
+block offset:: 0x2c
+access mode:: rw
+
+Undersampling ratio
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| undersample[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| undersample[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| undersample[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| undersample[7:0]
+|===
+=== pre_samples
+[horizontal]
+HDL name:: pre_samples
+address:: 0x30
+block offset:: 0x30
+access mode:: rw
+
+Pre-trigger samples
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| pre_samples[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| pre_samples[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| pre_samples[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| pre_samples[7:0]
+|===
+=== post_samples
+[horizontal]
+HDL name:: post_samples
+address:: 0x34
+block offset:: 0x34
+access mode:: rw
+
+Post-trigger samples
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| post_samples[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| post_samples[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| post_samples[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| post_samples[7:0]
+|===
+=== samples_cnt
+[horizontal]
+HDL name:: samples_cnt
+address:: 0x38
+block offset:: 0x38
+access mode:: ro
+
+Samples counter
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| samples_cnt[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| samples_cnt[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| samples_cnt[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| samples_cnt[7:0]
+|===
+=== ch1_ctl
+[horizontal]
+HDL name:: ch1_ctl
+address:: 0x80
+block offset:: 0x80
+access mode:: rw
+
+Channel 1 control register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+7+s| ssr[6:0]
+|===
+
+ssr:: Controls input voltage range, termination and DC offset error calibration
+0x23: 100mV range
+0x11: 1V range
+0x45: 10V range
+0x00: Open input
+0x42: 100mV range calibration
+0x40: 1V range calibration
+0x44: 10V range calibration
+Bit3 is indepandant of the others and enables the 50ohms termination.
+
+=== ch1_sta
+[horizontal]
+HDL name:: ch1_sta
+address:: 0x84
+block offset:: 0x84
+access mode:: ro
+
+Channel 1 status register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Current ADC raw value. The format is binary two\'s complement.
+
+=== ch1_calib
+[horizontal]
+HDL name:: ch1_calib
+address:: 0x88
+block offset:: 0x88
+access mode:: rw
+
+Channel 1 calibration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| offset[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| offset[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| gain[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| gain[7:0]
+|===
+
+gain:: Gain applied to all data coming from the ADC.
+Fixed point format:
+Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+offset:: Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+
+=== ch1_sat
+[horizontal]
+HDL name:: ch1_sat
+address:: 0x8c
+block offset:: 0x8c
+access mode:: rw
+
+Channel 1 saturation register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+7+s| val[14:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+
+=== ch1_trig_thres
+[horizontal]
+HDL name:: ch1_trig_thres
+address:: 0x90
+block offset:: 0x90
+access mode:: rw
+
+Channel 1 trigger threshold configuration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| hyst[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| hyst[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Treated as binary two\'s complement and compared to raw ADC data.
+hyst:: Configures the internal trigger threshold hysteresis.
+The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+
+=== ch1_trig_dly
+[horizontal]
+HDL name:: ch1_trig_dly
+address:: 0x94
+block offset:: 0x94
+access mode:: rw
+
+Channel 1 trigger delay
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| ch1_trig_dly[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| ch1_trig_dly[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| ch1_trig_dly[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| ch1_trig_dly[7:0]
+|===
+=== ch2_ctl
+[horizontal]
+HDL name:: ch2_ctl
+address:: 0xc0
+block offset:: 0xc0
+access mode:: rw
+
+Channel 2 control register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+7+s| ssr[6:0]
+|===
+
+ssr:: Controls input voltage range, termination and DC offset error calibration
+0x23: 100mV range
+0x11: 1V range
+0x45: 10V range
+0x00: Open input
+0x42: 100mV range calibration
+0x40: 1V range calibration
+0x44: 10V range calibration
+Bit3 is indepandant of the others and enables the 50ohms termination.
+
+=== ch2_sta
+[horizontal]
+HDL name:: ch2_sta
+address:: 0xc4
+block offset:: 0xc4
+access mode:: ro
+
+Channel 2 status register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Current ADC raw value. The format is binary two\'s complement.
+
+=== ch2_calib
+[horizontal]
+HDL name:: ch2_calib
+address:: 0xc8
+block offset:: 0xc8
+access mode:: rw
+
+Channel 2 calibration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| offset[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| offset[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| gain[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| gain[7:0]
+|===
+
+gain:: Gain applied to all data coming from the ADC.
+Fixed point format:
+Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+offset:: Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+
+=== ch2_sat
+[horizontal]
+HDL name:: ch2_sat
+address:: 0xcc
+block offset:: 0xcc
+access mode:: rw
+
+Channel 2 saturation register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+7+s| val[14:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+
+=== ch2_trig_thres
+[horizontal]
+HDL name:: ch2_trig_thres
+address:: 0xd0
+block offset:: 0xd0
+access mode:: rw
+
+Channel 2 trigger threshold configuration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| hyst[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| hyst[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Treated as binary two\'s complement and compared to raw ADC data.
+hyst:: Configures the internal trigger threshold hysteresis.
+The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+
+=== ch2_trig_dly
+[horizontal]
+HDL name:: ch2_trig_dly
+address:: 0xd4
+block offset:: 0xd4
+access mode:: rw
+
+Channel 2 trigger delay
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| ch2_trig_dly[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| ch2_trig_dly[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| ch2_trig_dly[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| ch2_trig_dly[7:0]
+|===
+=== ch3_ctl
+[horizontal]
+HDL name:: ch3_ctl
+address:: 0x100
+block offset:: 0x100
+access mode:: rw
+
+Channel 3 control register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+7+s| ssr[6:0]
+|===
+
+ssr:: Controls input voltage range, termination and DC offset error calibration
+0x23: 100mV range
+0x11: 1V range
+0x45: 10V range
+0x00: Open input
+0x42: 100mV range calibration
+0x40: 1V range calibration
+0x44: 10V range calibration
+Bit3 is indepandant of the others and enables the 50ohms termination.
+
+=== ch3_sta
+[horizontal]
+HDL name:: ch3_sta
+address:: 0x104
+block offset:: 0x104
+access mode:: ro
+
+Channel 3 status register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Current ADC raw value. The format is binary two\'s complement.
+
+=== ch3_calib
+[horizontal]
+HDL name:: ch3_calib
+address:: 0x108
+block offset:: 0x108
+access mode:: rw
+
+Channel 3 calibration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| offset[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| offset[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| gain[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| gain[7:0]
+|===
+
+gain:: Gain applied to all data coming from the ADC.
+Fixed point format:
+Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+offset:: Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+
+=== ch3_sat
+[horizontal]
+HDL name:: ch3_sat
+address:: 0x10c
+block offset:: 0x10c
+access mode:: rw
+
+Channel 3 saturation register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+7+s| val[14:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+
+=== ch3_trig_thres
+[horizontal]
+HDL name:: ch3_trig_thres
+address:: 0x110
+block offset:: 0x110
+access mode:: rw
+
+Channel 3 trigger threshold configuration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| hyst[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| hyst[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Treated as binary two\'s complement and compared to raw ADC data.
+hyst:: Configures the internal trigger threshold hysteresis.
+The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+
+=== ch3_trig_dly
+[horizontal]
+HDL name:: ch3_trig_dly
+address:: 0x114
+block offset:: 0x114
+access mode:: rw
+
+Channel 3 trigger delay
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| ch3_trig_dly[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| ch3_trig_dly[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| ch3_trig_dly[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| ch3_trig_dly[7:0]
+|===
+=== ch4_ctl
+[horizontal]
+HDL name:: ch4_ctl
+address:: 0x140
+block offset:: 0x140
+access mode:: rw
+
+Channel 4 control register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+| -
+7+s| ssr[6:0]
+|===
+
+ssr:: Controls input voltage range, termination and DC offset error calibration
+0x23: 100mV range
+0x11: 1V range
+0x45: 10V range
+0x00: Open input
+0x42: 100mV range calibration
+0x40: 1V range calibration
+0x44: 10V range calibration
+Bit3 is indepandant of the others and enables the 50ohms termination.
+
+=== ch4_sta
+[horizontal]
+HDL name:: ch4_sta
+address:: 0x144
+block offset:: 0x144
+access mode:: ro
+
+Channel 4 status register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Current ADC raw value. The format is binary two\'s complement.
+
+=== ch4_calib
+[horizontal]
+HDL name:: ch4_calib
+address:: 0x148
+block offset:: 0x148
+access mode:: rw
+
+Channel 4 gain calibration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| offset[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| offset[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| gain[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| gain[7:0]
+|===
+
+gain:: Gain applied to all data coming from the ADC.
+Fixed point format:
+Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+offset:: Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+
+=== ch4_sat
+[horizontal]
+HDL name:: ch4_sat
+address:: 0x14c
+block offset:: 0x14c
+access mode:: rw
+
+Channel 4 saturation register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+| -
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+| -
+7+s| val[14:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+
+=== ch4_trig_thres
+[horizontal]
+HDL name:: ch4_trig_thres
+address:: 0x150
+block offset:: 0x150
+access mode:: rw
+
+Channel 4 trigger threshold configuration register
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| hyst[15:8]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| hyst[7:0]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| val[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| val[7:0]
+|===
+
+val:: Treated as binary two\'s complement and compared to raw ADC data.
+hyst:: Configures the internal trigger threshold hysteresis.
+The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+
+=== ch4_trig_dly
+[horizontal]
+HDL name:: ch4_trig_dly
+address:: 0x154
+block offset:: 0x154
+access mode:: rw
+
+Channel 4 trigger delay
+
+[cols="8*^"]
+|===
+
+| 31
+| 30
+| 29
+| 28
+| 27
+| 26
+| 25
+| 24
+
+8+s| ch4_trig_dly[31:24]
+
+| 23
+| 22
+| 21
+| 20
+| 19
+| 18
+| 17
+| 16
+
+8+s| ch4_trig_dly[23:16]
+
+| 15
+| 14
+| 13
+| 12
+| 11
+| 10
+| 9
+| 8
+
+8+s| ch4_trig_dly[15:8]
+
+| 7
+| 6
+| 5
+| 4
+| 3
+| 2
+| 1
+| 0
+
+8+s| ch4_trig_dly[7:0]
+|===

@@ -1,6 +1,7 @@
 memory-map:
   bus: wb-32-be
   name: alt_trigin
+  description: FMC ADC alt trigger out registers
   x-hdl:
     busgroup: True
   children:
