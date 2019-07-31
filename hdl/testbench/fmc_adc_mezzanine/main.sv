@@ -248,9 +248,9 @@ module main;
 
       #1us;
 
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_SECONDS_UPPER, 'h00000032); // timetag core seconds high
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_SECONDS_LOWER, 'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_COARSE, 'h00000000); // timetag core ticks
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_SECONDS_UPPER, 'h00000032); // timetag core seconds high
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_SECONDS_LOWER, 'h00005a34); // timetag core seconds low
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_COARSE, 'h00000000); // timetag core ticks
 
       wait (acq_fsm_state == 1);
       $display("<%t> START ACQ 1", $realtime);
@@ -313,11 +313,11 @@ module main;
       #1us;
 
       // set time trigger
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_UPPER,
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_SECONDS_UPPER,
 		'h00000032); // timetag core seconds high
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_LOWER,
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_SECONDS_LOWER,
 		'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE,
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_COARSE,
 		'h00000e00); // timetag core ticks
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000010);
@@ -358,7 +358,7 @@ module main;
       // set time trigger
       trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 0, 'h00000032);
       trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 4, 'h00005a34);
-      acc.read(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE, val);
+      acc.read(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_COARSE, val);
       trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES, val + 'h00001000);
       trigin_acc.write(`ADDR_ALT_TRIGIN_CTRL, `ALT_TRIGIN_CTRL_ENABLE);
 

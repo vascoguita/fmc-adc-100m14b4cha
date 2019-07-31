@@ -4,8 +4,6 @@
 -- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
 -------------------------------------------------------------------------------
 -- File       : timetag_core.vhd
--- Author(s)  : Matthieu Cattin <matthieu.cattin@cern.ch>
---            : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-11-18
 -- Standard   : VHDL'93/02
@@ -27,26 +25,42 @@
 -- received a copy of the GNU Lesser General Public License along with this
 -- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
 -------------------------------------------------------------------------------
--- Revisions  :
--- Date        Version  Author
--- 2011-11-18  1.0      Matthieu Cattin
--------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
-use work.timetag_core_pkg.all;
-use work.timetag_core_wbgen2_pkg.all;
+
+package timetag_core_defs_pkg is
+
+  type t_timetag is record
+    seconds : std_logic_vector(39 downto 0);
+    coarse  : std_logic_vector(27 downto 0);
+  end record t_timetag;
+
+  constant c_TAG_COARSE_MAX : unsigned := to_unsigned(125000000, 28);
+
+end timetag_core_defs_pkg;
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.all;
+use IEEE.NUMERIC_STD.all;
+
+use work.wishbone_pkg.all;
+use work.timetag_core_regs_pkg.all;
+use work.timetag_core_defs_pkg.all;
 
 entity timetag_core is
   generic (
+    -- WB interface configuration
+    g_WB_MODE        : t_wishbone_interface_mode      := PIPELINED;
+    g_WB_GRANULARITY : t_wishbone_address_granularity := BYTE;
     -- Value to be subtracted from trigger tag coarse counter.
     -- This is useful if you know that the system introduces
     -- some systematic delay wrt the actual trigger time
-    g_TAG_ADJUST : natural := 0);
+    g_TAG_ADJUST     : natural := 0);
   port (
     -- Clock, reset
-    clk_i   : in std_logic;                       -- Must be 125MHz
+    clk_i   : in std_logic;  -- Must be 125MHz
     rst_n_i : in std_logic;
 
     -- Input pulses to time-tag
@@ -75,40 +89,11 @@ entity timetag_core is
     alt_trigin_o           : out std_logic;
 
     -- Wishbone interface
-    wb_adr_i : in  std_logic_vector(4 downto 0);
-    wb_dat_i : in  std_logic_vector(31 downto 0);
-    wb_dat_o : out std_logic_vector(31 downto 0);
-    wb_cyc_i : in  std_logic;
-    wb_sel_i : in  std_logic_vector(3 downto 0);
-    wb_stb_i : in  std_logic;
-    wb_we_i  : in  std_logic;
-    wb_ack_o : out std_logic
-    );
+    wb_i : in  t_wishbone_slave_in;
+    wb_o : out t_wishbone_slave_out);
 end timetag_core;
 
-
 architecture rtl of timetag_core is
-
-
-  ------------------------------------------------------------------------------
-  -- Components declaration
-  ------------------------------------------------------------------------------
-  component timetag_core_regs is
-    port (
-      rst_n_i    : in  std_logic;
-      clk_sys_i  : in  std_logic;
-      wb_adr_i   : in  std_logic_vector(4 downto 0);
-      wb_dat_i   : in  std_logic_vector(31 downto 0);
-      wb_dat_o   : out std_logic_vector(31 downto 0);
-      wb_cyc_i   : in  std_logic;
-      wb_sel_i   : in  std_logic_vector(3 downto 0);
-      wb_stb_i   : in  std_logic;
-      wb_we_i    : in  std_logic;
-      wb_ack_o   : out std_logic;
-      wb_stall_o : out std_logic;
-      regs_i     : in  t_timetag_core_in_registers;
-      regs_o     : out t_timetag_core_out_registers);
-  end component timetag_core_regs;
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -121,19 +106,22 @@ architecture rtl of timetag_core is
   signal acq_stop_tag  : t_timetag;
   signal acq_end_tag   : t_timetag;
 
-  signal time_trig     : std_logic;
-  signal time_trig_d   : std_logic;
+  signal time_trig   : std_logic;
+  signal time_trig_d : std_logic;
 
   signal local_pps : std_logic;
 
   signal wr_enabled : std_logic := '0';
 
-  signal regin  : t_timetag_core_in_registers;
-  signal regout : t_timetag_core_out_registers;
+  signal regin  : t_timetag_core_master_in;
+  signal regout : t_timetag_core_master_out;
 
   signal alt_trigin        : std_logic;
   signal alt_trigin_d      : std_logic;
   signal alt_trigin_enable : std_logic;
+
+  signal wb_in  : t_wishbone_slave_in;
+  signal wb_out : t_wishbone_slave_out;
 
 begin
 
@@ -143,40 +131,50 @@ begin
   ------------------------------------------------------------------------------
   -- Wishbone interface to UTC core registers
   ------------------------------------------------------------------------------
-  cmp_timetag_core_regs : timetag_core_regs
+
+  cmp_timetag_wb_slave_adapter_in : wb_slave_adapter
+    generic map (
+      g_master_use_struct  => TRUE,
+      g_master_mode        => PIPELINED,
+      g_master_granularity => BYTE,
+      g_slave_use_struct   => TRUE,
+      g_slave_mode         => g_WB_MODE,
+      g_slave_granularity  => g_WB_GRANULARITY)
     port map (
-      rst_n_i    => rst_n_i,
-      clk_sys_i  => clk_i,
-      wb_adr_i   => wb_adr_i,
-      wb_dat_i   => wb_dat_i,
-      wb_dat_o   => wb_dat_o,
-      wb_cyc_i   => wb_cyc_i,
-      wb_sel_i   => wb_sel_i,
-      wb_stb_i   => wb_stb_i,
-      wb_we_i    => wb_we_i,
-      wb_ack_o   => wb_ack_o,
-      wb_stall_o => open,
-      regs_i     => regin,
-      regs_o     => regout);
+      clk_sys_i => clk_i,
+      rst_n_i   => rst_n_i,
+      slave_i   => wb_i,
+      slave_o   => wb_o,
+      master_i  => wb_out,
+      master_o  => wb_in);
 
-  regin.seconds_upper_i               <= current_time.seconds(39 downto 32);
-  regin.seconds_lower_i               <= current_time.seconds(31 downto 0);
-  regin.coarse_i                      <= current_time.coarse;
-  regin.trig_tag_seconds_upper_i      <= trig_tag.seconds(39 downto 32);
-  regin.trig_tag_seconds_lower_i      <= trig_tag.seconds(31 downto 0);
-  regin.trig_tag_coarse_i             <= trig_tag.coarse;
-  regin.acq_start_tag_seconds_upper_i <= acq_start_tag.seconds(39 downto 32);
-  regin.acq_start_tag_seconds_lower_i <= acq_start_tag.seconds(31 downto 0);
-  regin.acq_start_tag_coarse_i        <= acq_start_tag.coarse;
-  regin.acq_stop_tag_seconds_upper_i  <= acq_stop_tag.seconds(39 downto 32);
-  regin.acq_stop_tag_seconds_lower_i  <= acq_stop_tag.seconds(31 downto 0);
-  regin.acq_stop_tag_coarse_i         <= acq_stop_tag.coarse;
-  regin.acq_end_tag_seconds_upper_i   <= acq_end_tag.seconds(39 downto 32);
-  regin.acq_end_tag_seconds_lower_i   <= acq_end_tag.seconds(31 downto 0);
-  regin.acq_end_tag_coarse_i          <= acq_end_tag.coarse;
+  cmp_timetag_core_regs : entity work.timetag_core_regs
+    port map (
+      rst_n_i        => rst_n_i,
+      clk_i          => clk_i,
+      wb_i           => wb_in,
+      wb_o           => wb_out,
+      timetag_core_i => regin,
+      timetag_core_o => regout);
 
-  time_trigger.seconds <= regout.time_trig_seconds_upper_o & regout.time_trig_seconds_lower_o;
-  time_trigger.coarse  <= regout.time_trig_coarse_o;
+  regin.seconds_upper               <= current_time.seconds(39 downto 32);
+  regin.seconds_lower               <= current_time.seconds(31 downto 0);
+  regin.coarse                      <= current_time.coarse;
+  regin.trig_tag_seconds_upper      <= trig_tag.seconds(39 downto 32);
+  regin.trig_tag_seconds_lower      <= trig_tag.seconds(31 downto 0);
+  regin.trig_tag_coarse             <= trig_tag.coarse;
+  regin.acq_start_tag_seconds_upper <= acq_start_tag.seconds(39 downto 32);
+  regin.acq_start_tag_seconds_lower <= acq_start_tag.seconds(31 downto 0);
+  regin.acq_start_tag_coarse        <= acq_start_tag.coarse;
+  regin.acq_stop_tag_seconds_upper  <= acq_stop_tag.seconds(39 downto 32);
+  regin.acq_stop_tag_seconds_lower  <= acq_stop_tag.seconds(31 downto 0);
+  regin.acq_stop_tag_coarse         <= acq_stop_tag.coarse;
+  regin.acq_end_tag_seconds_upper   <= acq_end_tag.seconds(39 downto 32);
+  regin.acq_end_tag_seconds_lower   <= acq_end_tag.seconds(31 downto 0);
+  regin.acq_end_tag_coarse          <= acq_end_tag.coarse;
+
+  time_trigger.seconds <= regout.time_trig_seconds_upper & regout.time_trig_seconds_lower;
+  time_trigger.coarse  <= regout.time_trig_coarse;
 
   ------------------------------------------------------------------------------
   -- UTC seconds counter
@@ -186,10 +184,10 @@ begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         time_counter.seconds <= (others => '0');
-      elsif regout.seconds_upper_load_o = '1' then
-        time_counter.seconds(39 downto 32) <= regout.seconds_upper_o;
-      elsif regout.seconds_lower_load_o = '1' then
-        time_counter.seconds(31 downto 0) <= regout.seconds_lower_o;
+      elsif regout.seconds_upper_wr = '1' then
+        time_counter.seconds(39 downto 32) <= regout.seconds_upper;
+      elsif regout.seconds_lower_wr = '1' then
+        time_counter.seconds(31 downto 0) <= regout.seconds_lower;
       elsif local_pps = '1' then
         time_counter.seconds <= std_logic_vector(unsigned(current_time.seconds) + 1);
       else
@@ -209,8 +207,8 @@ begin
       if rst_n_i = '0' then
         time_counter.coarse <= (others => '0');
         local_pps           <= '0';
-      elsif regout.coarse_load_o = '1' then
-        time_counter.coarse <= regout.coarse_o;
+      elsif regout.coarse_wr = '1' then
+        time_counter.coarse <= regout.coarse;
         local_pps           <= '0';
       elsif time_counter.coarse = std_logic_vector(c_TAG_COARSE_MAX - 1) then
         time_counter.coarse <= (others => '0');

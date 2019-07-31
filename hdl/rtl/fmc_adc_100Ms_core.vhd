@@ -33,7 +33,7 @@ library unisim;
 use unisim.vcomponents.all;
 
 library work;
-use work.timetag_core_pkg.all;
+use work.timetag_core_defs_pkg.all;
 use work.genram_pkg.all;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;

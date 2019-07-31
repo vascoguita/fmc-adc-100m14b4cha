@@ -34,8 +34,8 @@ use IEEE.NUMERIC_STD.all;
 library work;
 use work.fmc_adc_100Ms_core_pkg.all;
 use work.wishbone_pkg.all;
-use work.timetag_core_pkg.all;
-
+use work.timetag_core_regs_pkg.all;
+use work.timetag_core_defs_pkg.all;
 
 entity fmc_adc_mezzanine is
   generic (
@@ -592,9 +592,11 @@ begin
   ------------------------------------------------------------------------------
   cmp_timetag_core : entity work.timetag_core
     generic map (
+      g_WB_MODE        => PIPELINED,
+      g_WB_GRANULARITY => BYTE,
       -- Systematic delay introduced to the time tag by the FMC-ADC-100M core.
       -- Measured experimentally.
-      g_TAG_ADJUST => g_TAG_ADJUST)
+      g_TAG_ADJUST     => g_TAG_ADJUST)
     port map(
       clk_i   => sys_clk_i,
       rst_n_i => sys_rst_n_i,
@@ -619,15 +621,8 @@ begin
       alt_trigin_tag_i       => alt_trigin_tag,
       alt_trigin_o           => alt_time_trigger,
 
-      wb_adr_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).adr(6 downto 2),  -- cnx_slave_in.adr is byte address
-      wb_dat_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).dat,
-      wb_dat_o => cnx_slave_out(c_WB_SLAVE_TIMETAG).dat,
-      wb_cyc_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).cyc,
-      wb_sel_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).sel,
-      wb_stb_i => cnx_slave_in(c_WB_SLAVE_TIMETAG).stb,
-      wb_we_i  => cnx_slave_in(c_WB_SLAVE_TIMETAG).we,
-      wb_ack_o => cnx_slave_out(c_WB_SLAVE_TIMETAG).ack
-      );
+      wb_i => cnx_slave_in(c_WB_SLAVE_TIMETAG),
+      wb_o => cnx_slave_out(c_WB_SLAVE_TIMETAG));
 
   cmp_alt_trigin : entity work.alt_trigin
     port map (
@@ -646,10 +641,5 @@ begin
 
   alt_trigin_tag <= (seconds => alt_trigin_secs(39 downto 0),
                      coarse => alt_trigin_cycs(27 downto 0));
-
-  -- Unused wishbone signals
-  cnx_slave_out(c_WB_SLAVE_TIMETAG).err   <= '0';
-  cnx_slave_out(c_WB_SLAVE_TIMETAG).rty   <= '0';
-  cnx_slave_out(c_WB_SLAVE_TIMETAG).stall <= '0';
 
 end rtl;

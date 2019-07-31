@@ -1,0 +1,227 @@
+memory-map:
+  bus: wb-32-be
+  name: timetag_core_regs
+  description: Time-tagging core registers
+  comment: |
+    Wishbone slave for registers related to time-tagging core
+  x-hdl:
+    busgroup: True
+    iogroup: timetag_core
+  children:
+  - reg:
+      name: seconds_upper
+      address: 0x00000000
+      width: 32
+      access: rw
+      description: Timetag seconds register (upper)
+      x-hdl:
+        write-strobe: True
+      comment: |
+        8 upper bits of seconds counter. Incremented every time the coarse counter overflows.
+      children:
+      - field:
+          name: ""
+          range: 7-0
+          description: Timetag seconds
+          x-hdl:
+            type: wire
+  - reg:
+      name: seconds_lower
+      address: 0x00000004
+      width: 32
+      access: rw
+      description: Timetag seconds register (lower)
+      x-hdl:
+        write-strobe: True
+        type: wire
+      comment: |
+        32 lower bits of seconds counter. Incremented every time the coarse counter overflows.
+  - reg:
+      name: coarse
+      address: 0x00000008
+      width: 32
+      access: rw
+      description: Timetag coarse time register, system clock ticks (125MHz)
+      x-hdl:
+        write-strobe: True
+      comment: |
+        Coarse time counter clocked by 125MHz system clock.
+        Counts from 0 to 125000000.
+      children:
+      - field:
+          name: ""
+          range: 27-0
+          description: Timetag coarse time
+          x-hdl:
+            type: wire
+  - reg:
+      name: time_trig_seconds_upper
+      address: 0x0000000c
+      width: 32
+      access: rw
+      description: Time trigger seconds register (upper)
+      comment: |
+        8 upper bits of seconds used for timer trigger.
+      children:
+      - field:
+          name: ""
+          range: 7-0
+          description: Time trigger seconds
+  - reg:
+      name: time_trig_seconds_lower
+      address: 0x00000010
+      width: 32
+      access: rw
+      description: Time trigger seconds register (lower)
+      comment: |
+        32 lower bits of seconds used for time trigger.
+  - reg:
+      name: time_trig_coarse
+      address: 0x00000014
+      width: 32
+      access: rw
+      description: Time trigger coarse time register, system clock ticks (125MHz)
+      comment: |
+        Coarse time counter clocked by 125MHz system clock.
+        Counts from 0 to 125000000.
+      children:
+      - field:
+          name: ""
+          range: 27-0
+          description: Time trigger coarse value
+  - reg:
+      name: trig_tag_seconds_upper
+      address: 0x00000018
+      width: 32
+      access: ro
+      description: Trigger time-tag seconds register (upper)
+      children:
+      - field:
+          name: ""
+          range: 7-0
+          description: Trigger time-tag seconds
+          comment: |
+            Holds time-tag seconds of the last trigger event
+  - reg:
+      name: trig_tag_seconds_lower
+      address: 0x0000001c
+      width: 32
+      access: ro
+      description: Trigger time-tag seconds register (lower)
+      comment: |
+        Holds time-tag seconds of the last trigger event
+  - reg:
+      name: trig_tag_coarse
+      address: 0x00000020
+      width: 32
+      access: ro
+      description: Trigger time-tag coarse time (system clock ticks 125MHz) register
+      children:
+      - field:
+          name: ""
+          range: 27-0
+          description: Trigger time-tag coarse time
+          comment: |
+            Holds time-tag coarse time of the last trigger event
+  - reg:
+      name: acq_start_tag_seconds_upper
+      address: 0x00000024
+      width: 32
+      access: ro
+      description: Acquisition start time-tag seconds register (upper)
+      children:
+      - field:
+          name: ""
+          range: 7-0
+          description: Acquisition start time-tag seconds
+          comment: |
+            Holds time-tag seconds of the last acquisition start event
+  - reg:
+      name: acq_start_tag_seconds_lower
+      address: 0x00000028
+      width: 32
+      access: ro
+      description: Acquisition start time-tag seconds register (lower)
+      comment: |
+        Holds time-tag seconds of the last acquisition start event
+  - reg:
+      name: acq_start_tag_coarse
+      address: 0x0000002c
+      width: 32
+      access: ro
+      description: Acquisition start time-tag coarse time (system clock ticks 125MHz) register
+      children:
+      - field:
+          name: ""
+          range: 27-0
+          description: Acquisition start time-tag coarse time
+          comment: |
+            Holds time-tag coarse time of the last acquisition start event
+  - reg:
+      name: acq_stop_tag_seconds_upper
+      address: 0x00000030
+      width: 32
+      access: ro
+      description: Acquisition stop time-tag seconds register (upper)
+      children:
+      - field:
+          name: ""
+          range: 7-0
+          description: Acquisition stop time-tag seconds
+          comment: |
+            Holds time-tag seconds of the last acquisition stop event
+  - reg:
+      name: acq_stop_tag_seconds_lower
+      address: 0x00000034
+      width: 32
+      access: ro
+      description: Acquisition stop time-tag seconds register (lower)
+      comment: |
+        Holds time-tag seconds of the last acquisition stop event
+  - reg:
+      name: acq_stop_tag_coarse
+      address: 0x00000038
+      width: 32
+      access: ro
+      description: Acquisition stop time-tag coarse time (system clock ticks 125MHz) register
+      children:
+      - field:
+          name: ""
+          range: 27-0
+          description: Acquisition stop time-tag coarse time
+          comment: |
+            Holds time-tag coarse time of the last acquisition stop event
+  - reg:
+      name: acq_end_tag_seconds_upper
+      address: 0x0000003c
+      width: 32
+      access: ro
+      description: Acquisition end time-tag seconds register (upper)
+      children:
+      - field:
+          name: ""
+          range: 7-0
+          description: Acquisition end time-tag seconds
+          comment: |
+            Holds time-tag seconds of the last acquisition end event
+  - reg:
+      name: acq_end_tag_seconds_lower
+      address: 0x00000040
+      width: 32
+      access: ro
+      description: Acquisition end time-tag seconds register (lower)
+      comment: |
+        Holds time-tag seconds of the last acquisition end event
+  - reg:
+      name: acq_end_tag_coarse
+      address: 0x00000044
+      width: 32
+      access: ro
+      description: Acquisition end time-tag coarse time (system clock ticks 125MHz) register
+      children:
+      - field:
+          name: ""
+          range: 27-0
+          description: Acquisition end time-tag coarse time
+          comment: |
+            Holds time-tag coarse time of the last acquisition end event

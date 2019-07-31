@@ -34,7 +34,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
-use work.timetag_core_pkg.all;
+use work.timetag_core_defs_pkg.all;
 use work.wishbone_pkg.all;
 
 package fmc_adc_mezzanine_pkg is

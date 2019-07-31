@@ -41,7 +41,6 @@ use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
 use work.synthesis_descriptor.all;
-use work.timetag_core_pkg.all;
 use work.carrier_csr_wbgen2_pkg.all;
 use work.wr_xilinx_pkg.all;
 use work.wr_board_pkg.all;
