@@ -442,7 +442,9 @@ memory-map:
           range: 15-0
           description: Channel 1 current ADC value
           comment: |
-            Current ADC raw value. The format is binary two\'s complement.
+            Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is
+            configured for "offset binary". The FMC-ADC driver when loaded, will change this to
+            binary two\'s complement.
   - reg:
       name: ch1_calib
       address: 0x00000088
@@ -539,7 +541,9 @@ memory-map:
           range: 15-0
           description: Channel 2 current ACD value
           comment: |
-            Current ADC raw value. The format is binary two\'s complement.
+            Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is
+            configured for "offset binary". The FMC-ADC driver when loaded, will change this to
+            binary two\'s complement.
   - reg:
       name: ch2_calib
       address: 0x000000c8
@@ -636,7 +640,9 @@ memory-map:
           range: 15-0
           description: Channel 3 current ADC value
           comment: |
-            Current ADC raw value. The format is binary two\'s complement.
+            Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is
+            configured for "offset binary". The FMC-ADC driver when loaded, will change this to
+            binary two\'s complement.
   - reg:
       name: ch3_calib
       address: 0x00000108
@@ -733,7 +739,9 @@ memory-map:
           range: 15-0
           description: Channel 4 current ADC value
           comment: |
-            Current ADC raw value. The format is binary two\'s complement.
+            Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is
+            configured for "offset binary". The FMC-ADC driver when loaded, will change this to
+            binary two\'s complement.
   - reg:
       name: ch4_calib
       address: 0x00000148
