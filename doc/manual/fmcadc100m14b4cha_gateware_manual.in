@@ -956,7 +956,7 @@ As for the ADC correction values, there is one pair (offset, gain) of DAC correc
 Below is the formula to calculate the corrected DAC value (applying gain and offset correction):
 @example
 @group
-c_val = ((val + offset) * gain/0x8000) - 0x8000
+c_val = ((val + offset) * gain/0x8000) + 0x8000
 where:
 c_val  = corrected value to write to DAC (16-bit unsigned)
 val    = value from user (16-bit signed)
