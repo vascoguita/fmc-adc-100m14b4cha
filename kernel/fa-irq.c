@@ -14,7 +14,6 @@
 #include <linux/interrupt.h>
 
 #include "fmc-adc-100m14b4cha.h"
-#include "fa-spec.h"
 
 /*
  * fat_get_irq_status
