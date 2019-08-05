@@ -222,10 +222,10 @@ architecture rtl of fmc_adc_100Ms_core is
   signal trig_storage_clear         : std_logic;
   signal trig_src_vector            : std_logic_vector(7 downto 0);
 
-  -- Under-sampling
-  signal undersample_factor : std_logic_vector(31 downto 0) := (others => '0');
-  signal undersample_cnt    : unsigned(31 downto 0);
-  signal undersample_en     : std_logic;
+  -- Down-sampling
+  signal downsample_factor : std_logic_vector(31 downto 0) := (others => '0');
+  signal downsample_cnt    : unsigned(31 downto 0);
+  signal downsample_en     : std_logic;
 
   -- Sync FIFO (from fs_clk to sys_clk_i)
   signal sync_fifo_din   : std_logic_vector(72 downto 0);
@@ -590,7 +590,7 @@ begin
       data_i   => csr_regout.trig_en_alt_time,
       synced_o => alt_time_trig_en);
 
-  cmp_undersample_sync : gc_sync_word_wr
+  cmp_downsample_sync : gc_sync_word_wr
     generic map (
       g_AUTO_WR => TRUE,
       g_WIDTH   => 32)
@@ -599,8 +599,8 @@ begin
       rst_in_n_i  => '1',
       clk_out_i   => fs_clk,
       rst_out_n_i => '1',
-      data_i      => csr_regout.undersample,
-      data_o      => undersample_factor);
+      data_i      => csr_regout.downsample,
+      data_o      => downsample_factor);
 
   cmp_ch_sta_sync : gc_sync_word_wr
     generic map (
@@ -957,29 +957,29 @@ begin
   trig <= f_reduce_or (trig_src_vector);
 
   ------------------------------------------------------------------------------
-  -- Under-sampling and trigger alignment
-  --    When under-sampling is enabled, if the trigger occurs between two
+  -- Down-sampling and trigger alignment
+  --    When down-sampling is enabled, if the trigger occurs between two
   --    samples it will be realigned to the next sample
   ------------------------------------------------------------------------------
-  p_undersample_cnt : process (fs_clk)
+  p_downsample_cnt : process (fs_clk)
   begin
     if rising_edge(fs_clk) then
       if fs_rst_n = '0' then
-        undersample_cnt <= to_unsigned(1, undersample_cnt'length);
-        undersample_en  <= '0';
+        downsample_cnt <= to_unsigned(1, downsample_cnt'length);
+        downsample_en  <= '0';
       else
-        if undersample_cnt = to_unsigned(0, undersample_cnt'length) then
-          if undersample_factor /= X"00000000" then
-            undersample_cnt <= unsigned(undersample_factor) - 1;
+        if downsample_cnt = to_unsigned(0, downsample_cnt'length) then
+          if downsample_factor /= X"00000000" then
+            downsample_cnt <= unsigned(downsample_factor) - 1;
           end if;
-          undersample_en <= '1';
+          downsample_en <= '1';
         else
-          undersample_cnt <= undersample_cnt - 1;
-          undersample_en  <= '0';
+          downsample_cnt <= downsample_cnt - 1;
+          downsample_en  <= '0';
         end if;
       end if;
     end if;
-  end process p_undersample_cnt;
+  end process p_downsample_cnt;
 
   p_trig_align : process (fs_clk)
   begin
@@ -989,7 +989,7 @@ begin
       else
         if trig = '1' then
           trig_align <= trig_src_vector & trig;
-        elsif undersample_en = '1' then
+        elsif downsample_en = '1' then
           trig_align <= (others => '0');
         end if;
       end if;
@@ -1032,7 +1032,7 @@ begin
   sync_fifo_din(63 downto 0)  <= data_calibr_out_d3;
 
   -- FIFO control
-  sync_fifo_wr    <= undersample_en and serdes_synced and (not sync_fifo_full);
+  sync_fifo_wr    <= downsample_en and serdes_synced and (not sync_fifo_full);
   sync_fifo_rd    <= not sync_fifo_empty;
   sync_fifo_valid <= not sync_fifo_empty;
 

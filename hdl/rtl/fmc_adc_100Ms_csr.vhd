@@ -40,7 +40,7 @@ package fmc_adc_100ms_csr_pkg is
     sw_trig_wr       : std_logic;
     shots_nbr        : std_logic_vector(15 downto 0);
     shots_remain     : std_logic_vector(15 downto 0);
-    undersample      : std_logic_vector(31 downto 0);
+    downsample       : std_logic_vector(31 downto 0);
     pre_samples      : std_logic_vector(31 downto 0);
     post_samples     : std_logic_vector(31 downto 0);
     ch1_ctl_ssr      : std_logic_vector(6 downto 0);
@@ -155,7 +155,7 @@ architecture syn of fmc_adc_100ms_csr is
   signal trig_pol_ch4_reg               : std_logic;
   signal ext_trig_dly_reg               : std_logic_vector(31 downto 0);
   signal shots_nbr_reg                  : std_logic_vector(15 downto 0);
-  signal undersample_reg                : std_logic_vector(31 downto 0);
+  signal downsample_reg                 : std_logic_vector(31 downto 0);
   signal pre_samples_reg                : std_logic_vector(31 downto 0);
   signal post_samples_reg               : std_logic_vector(31 downto 0);
   signal ch1_ctl_ssr_reg                : std_logic_vector(6 downto 0);
@@ -247,7 +247,7 @@ begin
   fmc_adc_100ms_csr_o.trig_pol_ch4 <= trig_pol_ch4_reg;
   fmc_adc_100ms_csr_o.ext_trig_dly <= ext_trig_dly_reg;
   fmc_adc_100ms_csr_o.shots_nbr <= shots_nbr_reg;
-  fmc_adc_100ms_csr_o.undersample <= undersample_reg;
+  fmc_adc_100ms_csr_o.downsample <= downsample_reg;
   fmc_adc_100ms_csr_o.pre_samples <= pre_samples_reg;
   fmc_adc_100ms_csr_o.post_samples <= post_samples_reg;
   fmc_adc_100ms_csr_o.ch1_ctl_ssr <= ch1_ctl_ssr_reg;
@@ -311,7 +311,7 @@ begin
         ext_trig_dly_reg <= "00000000000000000000000000000000";
         fmc_adc_100ms_csr_o.sw_trig_wr <= '0';
         shots_nbr_reg <= "0000000000000000";
-        undersample_reg <= "00000000000000000000000000000000";
+        downsample_reg <= "00000000000000000000000000000000";
         pre_samples_reg <= "00000000000000000000000000000000";
         post_samples_reg <= "00000000000000000000000000000000";
         ch1_ctl_ssr_reg <= "0000000";
@@ -420,9 +420,9 @@ begin
         when "0001010" => 
           -- Register fs_freq
         when "0001011" => 
-          -- Register undersample
+          -- Register downsample
           if wr_int = '1' then
-            undersample_reg <= wb_i.dat;
+            downsample_reg <= wb_i.dat;
           end if;
           wr_ack_int <= wr_int;
         when "0001100" => 
@@ -667,8 +667,8 @@ begin
           reg_rdat_int <= fmc_adc_100ms_csr_i.fs_freq;
           rd_ack1_int <= rd_int;
         when "0001011" => 
-          -- undersample
-          reg_rdat_int <= undersample_reg;
+          -- downsample
+          reg_rdat_int <= downsample_reg;
           rd_ack1_int <= rd_int;
         when "0001100" => 
           -- pre_samples
@@ -844,7 +844,7 @@ begin
       wb_o.dat <= reg_rdat_int;
       rd_ack_int <= rd_ack1_int;
     when "0001011" => 
-      -- undersample
+      -- downsample
       wb_o.dat <= reg_rdat_int;
       rd_ack_int <= rd_ack1_int;
     when "0001100" => 

@@ -377,13 +377,13 @@ memory-map:
       comment: |
         ADC sampling clock frequency in Hz
   - reg:
-      name: undersample
+      name: downsample
       address: 0x0000002c
       width: 32
       access: rw
-      description: Undersampling ratio
+      description: Downsampling ratio
       comment: |
-        Undersampling ratio. Takes one sample every N samples and discards the others (N = undersampling ratio)
+        Downsampling ratio. Takes one sample every N samples and discards the others (N = downsampling ratio)
   - reg:          
       name: pre_samples
       address: 0x00000030

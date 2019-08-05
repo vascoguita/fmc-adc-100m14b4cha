@@ -77,8 +77,8 @@
 /* Sampling clock frequency */
 #define FMC_ADC_100MS_CSR_FS_FREQ 0x28UL
 
-/* Undersampling ratio */
-#define FMC_ADC_100MS_CSR_UNDERSAMPLE 0x2cUL
+/* Downsampling ratio */
+#define FMC_ADC_100MS_CSR_DOWNSAMPLE 0x2cUL
 
 /* Pre-trigger samples */
 #define FMC_ADC_100MS_CSR_PRE_SAMPLES 0x30UL
@@ -251,8 +251,8 @@ struct fmc_adc_100ms_csr {
   /* [0x28]: REG (ro) Sampling clock frequency */
   uint32_t fs_freq;
   
-  /* [0x2c]: REG (rw) Undersampling ratio */
-  uint32_t undersample;
+  /* [0x2c]: REG (rw) Downsampling ratio */
+  uint32_t downsample;
   
   /* [0x30]: REG (rw) Pre-trigger samples */
   uint32_t pre_samples;
