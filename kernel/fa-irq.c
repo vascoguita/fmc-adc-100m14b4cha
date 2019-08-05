@@ -65,9 +65,9 @@ irqreturn_t fa_irq_handler(int irq, void *arg)
 	if (!status)
 		return IRQ_NONE; /* No interrupt fired by this mezzanine */
 
-	dev_dbg(fa->msgdev, "Handle ADC interrupts\n");
-
 	if (status & FA_IRQ_ADC_ACQ_END) {
+		dev_dbg(fa->msgdev, "Handle ADC interrupts\n");
+
 		/*
 		 * Acquiring samples is a critical section
 		 * protected against any concurrent abbort trigger.
@@ -142,8 +142,6 @@ int fa_free_irqs(struct fa_dev *fa)
 
 int fa_enable_irqs(struct fa_dev *fa)
 {
-	dev_dbg(fa->msgdev, "Enable interrupts\n");
-
 	fa_writel(fa, fa->fa_irq_adc_base,
 			&zfad_regs[ZFA_IRQ_ADC_ENABLE_MASK],
 			FA_IRQ_ADC_ACQ_END);
@@ -152,8 +150,6 @@ int fa_enable_irqs(struct fa_dev *fa)
 
 int fa_disable_irqs(struct fa_dev *fa)
 {
-	dev_dbg(fa->msgdev, "Disable interrupts\n");
-
 	fa_writel(fa, fa->fa_irq_adc_base,
 			&zfad_regs[ZFA_IRQ_ADC_DISABLE_MASK],
 			FA_IRQ_ADC_ACQ_END);
