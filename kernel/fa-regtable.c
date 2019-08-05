@@ -32,67 +32,67 @@ const struct zfa_field_desc zfad_regs[] = {
 		/* Software */
 	[ZFAT_SW] =			{0x18, 0xFFFFFFFF, 0},
 		/* Number of shots */
-	[ZFAT_SHOTS_NB] =		{0x1C, 0x0000FFFF, 0},
+	[ZFAT_SHOTS_NB] =		{0x1C, 0x0000FFFF, 1},
+		/* Remaining shots counter */
+	[ZFAT_SHOTS_REM] =		{0x1C, 0xFFFF0000, 1},
 		/* Multishot max samples*/
 	[ZFA_MULT_MAX_SAMP] =		{0x20, 0xFFFFFFFF, 0},
-		/* Remaining shots counter */
-	[ZFAT_SHOTS_REM] =		{0x24, 0x0000FFFF, 0},
 		/* Position address */
-	[ZFAT_POS] =			{0x28, 0xFFFFFFFF, 0},
+	[ZFAT_POS] =			{0x24, 0xFFFFFFFF, 0},
 		/* Sampling clock frequency */
-	[ZFAT_SAMPLING_HZ] =		{0x2C, 0xFFFFFFFF, 0},
+	[ZFAT_SAMPLING_HZ] =		{0x28, 0xFFFFFFFF, 0},
 		/* Sample rate */
-	[ZFAT_SR_UNDER] =		{0x30, 0xFFFFFFFF, 0},
+	[ZFAT_SR_UNDER] =		{0x2C, 0xFFFFFFFF, 0},
 		/* Pre-sample */
-	[ZFAT_PRE] =			{0x34, 0xFFFFFFFF, 0},
+	[ZFAT_PRE] =			{0x30, 0xFFFFFFFF, 0},
 		/* Post-sample */
-	[ZFAT_POST] =			{0x38, 0xFFFFFFFF, 0},
+	[ZFAT_POST] =			{0x34, 0xFFFFFFFF, 0},
 		/* Sample counter */
-	[ZFAT_CNT] =			{0x3C, 0xFFFFFFFF, 0},
+	[ZFAT_CNT] =			{0x38, 0xFFFFFFFF, 0},
 
 	/* Channel 1 */
 	[ZFA_CH1_CTL_RANGE] =		{0x80, 0x00000077, 1},
 	[ZFA_CH1_CTL_TERM] =		{0x80, 0x00000008, 1},
 	[ZFA_CH1_STA] =		{0x84, 0x0000FFFF, 0},
-	[ZFA_CH1_GAIN] =		{0x88, 0x0000FFFF, 0},
-	[ZFA_CH1_OFFSET] =		{0x8C, 0x0000FFFF, 0},
-	[ZFA_CH1_SAT] =		{0x90, 0x00007FFF, 0},
-	[ZFA_CH1_HYST] =		{0x94, 0xFFFF0000, 1},
-	[ZFA_CH1_THRES] =		{0x94, 0x0000FFFF, 1},
-	[ZFA_CH1_DLY] =		{0x98, 0xFFFFFFFF, 0},
+	[ZFA_CH1_GAIN] =		{0x88, 0x0000FFFF, 1},
+	[ZFA_CH1_OFFSET] =		{0x88, 0xFFFF0000, 1},
+	[ZFA_CH1_SAT] =		{0x8C, 0x00007FFF, 0},
+	[ZFA_CH1_HYST] =		{0x90, 0xFFFF0000, 1},
+	[ZFA_CH1_THRES] =		{0x90, 0x0000FFFF, 1},
+	[ZFA_CH1_DLY] =		{0x94, 0xFFFFFFFF, 0},
 
 	/* Channel 2 */
-	[ZFA_CH2_CTL_RANGE] =		{0x100, 0x00000077, 1},
-	[ZFA_CH2_CTL_TERM] =		{0x100, 0x00000008, 1},
-	[ZFA_CH2_STA] =		{0x104, 0x0000FFFF, 0},
-	[ZFA_CH2_GAIN] =		{0x108, 0x0000FFFF, 0},
-	[ZFA_CH2_OFFSET] =		{0x10C, 0x0000FFFF, 0},
-	[ZFA_CH2_SAT] =		{0x110, 0x00007FFF, 0},
-	[ZFA_CH2_HYST] =		{0x114, 0xFFFF0000, 1},
-	[ZFA_CH2_THRES] =		{0x114, 0x0000FFFF, 1},
-	[ZFA_CH2_DLY] =		{0x118, 0xFFFFFFFF, 0},
+	[ZFA_CH2_CTL_RANGE] =		{0xC0, 0x00000077, 1},
+	[ZFA_CH2_CTL_TERM] =		{0xC0, 0x00000008, 1},
+	[ZFA_CH2_STA] =		{0xC4, 0x0000FFFF, 0},
+	[ZFA_CH2_GAIN] =		{0xC8, 0x0000FFFF, 1},
+	[ZFA_CH2_OFFSET] =		{0xC8, 0xFFFF0000, 1},
+	[ZFA_CH2_SAT] =		{0xCC, 0x00007FFF, 0},
+	[ZFA_CH2_HYST] =		{0xD0, 0xFFFF0000, 1},
+	[ZFA_CH2_THRES] =		{0xD0, 0x0000FFFF, 1},
+	[ZFA_CH2_DLY] =		{0xD4, 0xFFFFFFFF, 0},
 
 	/* Channel 3 */
-	[ZFA_CH3_CTL_RANGE] =		{0x180, 0x00000077, 1},
-	[ZFA_CH3_CTL_TERM] =		{0x180, 0x00000008, 1},
-	[ZFA_CH3_STA] =		{0x184, 0x0000FFFF, 0},
-	[ZFA_CH3_GAIN] =		{0x188, 0x0000FFFF, 0},
-	[ZFA_CH3_OFFSET] =		{0x18C, 0x0000FFFF, 0},
-	[ZFA_CH3_SAT] =		{0x190, 0x00007FFF, 0},
-	[ZFA_CH3_HYST] =		{0x194, 0xFFFF0000, 1},
-	[ZFA_CH3_THRES] =		{0x194, 0x0000FFFF, 1},
-	[ZFA_CH3_DLY] =		{0x198, 0xFFFFFFFF, 0},
+	[ZFA_CH3_CTL_RANGE] =		{0x100, 0x00000077, 1},
+	[ZFA_CH3_CTL_TERM] =		{0x100, 0x00000008, 1},
+	[ZFA_CH3_STA] =		{0x104, 0x0000FFFF, 0},
+	[ZFA_CH3_GAIN] =		{0x108, 0x0000FFFF, 1},
+	[ZFA_CH3_OFFSET] =		{0x108, 0xFFFF0000, 1},
+	[ZFA_CH3_SAT] =		{0x10C, 0x00007FFF, 0},
+	[ZFA_CH3_HYST] =		{0x110, 0xFFFF0000, 1},
+	[ZFA_CH3_THRES] =		{0x110, 0x0000FFFF, 1},
+	[ZFA_CH3_DLY] =		{0x114, 0xFFFFFFFF, 0},
 
 	/* Channel 4 */
-	[ZFA_CH4_CTL_RANGE] =		{0x200, 0x00000077, 1},
-	[ZFA_CH4_CTL_TERM] =		{0x200, 0x00000008, 1},
-	[ZFA_CH4_STA] =		{0x204, 0x0000FFFF, 0},
-	[ZFA_CH4_GAIN] =		{0x208, 0x0000FFFF, 0},
-	[ZFA_CH4_OFFSET] =		{0x20C, 0x0000FFFF, 0},
-	[ZFA_CH4_SAT] =		{0x210, 0x00007FFF, 0},
-	[ZFA_CH4_HYST] =		{0x214, 0xFFFF0000, 1},
-	[ZFA_CH4_THRES] =		{0x214, 0x0000FFFF, 1},
-	[ZFA_CH4_DLY] =		{0x218, 0xFFFFFFFF, 0},
+	[ZFA_CH4_CTL_RANGE] =		{0x140, 0x00000077, 1},
+	[ZFA_CH4_CTL_TERM] =		{0x140, 0x00000008, 1},
+	[ZFA_CH4_STA] =		{0x144, 0x0000FFFF, 0},
+	[ZFA_CH4_GAIN] =		{0x148, 0x0000FFFF, 1},
+	[ZFA_CH4_OFFSET] =		{0x148, 0xFFFF0000, 1},
+	[ZFA_CH4_SAT] =		{0x14C, 0x00007FFF, 0},
+	[ZFA_CH4_HYST] =		{0x150, 0xFFFF0000, 1},
+	[ZFA_CH4_THRES] =		{0x150, 0x0000FFFF, 1},
+	[ZFA_CH4_DLY] =		{0x154, 0xFFFFFFFF, 0},
 
 	/* IRQ */
 	[ZFA_IRQ_ADC_DISABLE_MASK] =	{0x00, 0x00000003, 0},
