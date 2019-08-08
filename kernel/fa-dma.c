@@ -306,6 +306,7 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 	struct dma_async_tx_descriptor *tx;
 	struct page **pages;
 	unsigned int nr_pages, sg_mapped;
+	size_t max_segment_size;
 	int err;
 
 	/* prepare the context for the block transfer */
@@ -323,9 +324,11 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 		goto err_to_pages;
 
 	/* With some version we cannot use the version from the Linux kernel */
+	max_segment_size = dma_get_max_seg_size(dchan->device->dev);
 	fa->sg_alloc_table_from_pages(&zfad_block->sgt, pages, nr_pages,
 				      offset_in_page(zfad_block->block->data),
-				      zfad_block->block->datalen, GFP_KERNEL);
+				      zfad_block->block->datalen,
+				      max_segment_size, GFP_KERNEL);
 	if (unlikely(err))
 		goto err_sgt;
 

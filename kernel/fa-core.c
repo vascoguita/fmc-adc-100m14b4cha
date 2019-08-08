@@ -48,6 +48,7 @@ static int sg_alloc_table_from_pages_no_squash(struct sg_table *sgt,
 					       unsigned int n_pages,
 					       unsigned int offset,
 					       unsigned long size,
+					       unsigned int max_segment,
 					       gfp_t gfp_mask)
 {
 	struct scatterlist *sg;
@@ -510,7 +511,7 @@ int fa_probe(struct platform_device *pdev)
 	case ADC_VER_SPEC:
 		memops.read = ioread32;
 		memops.write = iowrite32;
-		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages;
+		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
 		break;
 	case ADC_VER_SVEC:
 		memops.read = ioread32be;

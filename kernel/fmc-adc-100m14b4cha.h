@@ -451,6 +451,7 @@ struct fa_dev {
 					 unsigned int n_pages,
 					 unsigned int offset,
 					 unsigned long size,
+					 unsigned int max_segment,
 					 gfp_t gfp_mask);
 };
 
