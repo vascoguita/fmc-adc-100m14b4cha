@@ -450,7 +450,6 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 		return -ENOMEM;
 	tmp->block = cset->interleave->active_block;
 	cset->interleave->priv_d = tmp;
-	tmp->dev_mem_off = 0; /* Always the first block */
 
 	/* Configure post samples */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_POST],

@@ -378,11 +378,6 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		       zio_control_size(interleave));
 		/* Add to the vector of prepared blocks */
 		zfad_block[i].block = block;
-		zfad_block[i].dev_mem_off = dev_mem_off;
-		dev_mem_off += size;
-		dev_dbg(fa->msgdev, "next dev_mem_off 0x%x (+%d)\n",
-			dev_mem_off, size);
-
 		zfad_block[i].cset = ti->cset;
 	}
 

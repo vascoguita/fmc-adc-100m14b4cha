@@ -423,6 +423,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	struct dma_chan *dchan;
+	struct dma_slave_config sconfig;
 	dma_cap_mask_t dma_mask;
 	int err, i;
 
@@ -440,10 +441,6 @@ static int zfad_dma_start(struct zio_cset *cset)
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
 
-	/* Fix dev_mem_addr in single-shot mode */
-	if (fa->n_shots == 1)
-		zfad_block[0].dev_mem_off = zfad_dev_mem_offset(cset);
-
 	dev_dbg(fa->msgdev, "Start DMA transfer\n");
 	dma_cap_zero(dma_mask);
 	dma_cap_set(DMA_SLAVE, dma_mask);
@@ -454,6 +451,14 @@ static int zfad_dma_start(struct zio_cset *cset)
 		goto err;
 	}
 
+	memset(&sconfig, 0, sizeof(sconfig));
+	sconfig.direction = DMA_DEV_TO_MEM;
+	if (fa->n_shots == 1)
+		sconfig.src_addr = zfad_dev_mem_offset(cset);
+	sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+	err = dmaengine_slave_config(dchan, &sconfig);
+	if (err)
+		goto err_config;
 	for (i = 0; i < fa->n_shots; ++i) {
 		err = zfad_dma_prep_slave_sg(dchan, cset, &zfad_block[i]);
 		if (err)
@@ -466,6 +471,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	return 0;
 
 err_prep:
+err_config:
 	dmaengine_terminate_all(dchan);
 	dma_release_channel(dchan);
 err:
@@ -567,7 +573,6 @@ static void zfad_dma_done(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
-	struct zio_control *ctrl = NULL;
 	struct zio_ti *ti = cset->ti;
 	struct zio_block *block = NULL;
 	struct zio_timestamp ztstamp;

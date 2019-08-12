@@ -458,8 +458,6 @@ struct fa_dev {
 /*
  * zfad_block
  * @block is zio_block which contains data and metadata from a single shot
- * @dev_mem_off is the offset in ADC internal memory. It points to the first
- *              sample of the stored shot
  * @first_nent is the index of the first nent used for this block
  * @cset: channel set source for the block
  * @tx: DMA transfer descriptor
@@ -467,7 +465,6 @@ struct fa_dev {
  */
 struct zfad_block {
 	struct zio_block *block;
-	uint32_t	dev_mem_off;
 	unsigned int first_nent;
 	struct zio_cset *cset;
 	struct dma_async_tx_descriptor *tx;
