@@ -301,7 +301,6 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 				  struct zio_cset *cset,
 				  struct zfad_block *zfad_block)
 {
-
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct dma_async_tx_descriptor *tx;
 	struct page **pages;
