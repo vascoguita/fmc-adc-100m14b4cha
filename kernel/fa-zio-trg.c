@@ -329,7 +329,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
 	unsigned int size;
-	uint32_t dev_mem_off, trg_src;
+	uint32_t dev_mem_off;
 	int i, err = 0;
 
 	dev_dbg(fa->msgdev, "Arming trigger\n");
@@ -400,10 +400,6 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	err = ti->cset->raw_io(ti->cset);
 	if (err != -EAGAIN && err != 0)
 		goto out_allocate;
-
-	/* Everything looks fine for the time being, enable the trigger sources */
-	trg_src = ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value;
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], trg_src);
 
 	return err;
 
