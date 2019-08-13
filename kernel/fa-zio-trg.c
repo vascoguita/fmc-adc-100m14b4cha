@@ -114,6 +114,15 @@ static struct zio_attribute zfat_ext_zattr[] = {
 						  ZFA_UTC_TRIG_COARSE, 0),
 };
 
+/*
+ * Reset to default value
+ */
+void zfat_trigger_source_reset(struct fa_dev *fa)
+{
+	fa_writel(fa, fa->fa_adc_csr_base,
+		  &zfad_regs[ZFAT_CFG_SRC],
+		  FA100M14B4C_TRG_SRC_SW | FA100M14B4C_TRG_SRC_ALT);
+}
 
 /*
  * zfat_conf_set
@@ -321,6 +330,12 @@ static int zfat_data_done(struct zio_cset *cset)
 	fa->n_fires = 0;
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;
+
+	/*
+	 * Reset trigger source to avoid clean up the register for the next
+	 * acquisition
+	 */
+	zfat_trigger_source_reset(fa);
 
 	return 0;
 }

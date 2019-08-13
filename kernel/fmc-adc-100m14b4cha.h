@@ -598,6 +598,7 @@ extern int fa_zio_init(struct fa_dev *fa);
 extern void fa_zio_exit(struct fa_dev *fa);
 
 /* Functions exported by fa-zio-trg.c */
+extern void zfat_trigger_source_reset(struct fa_dev *fa);
 extern int fa_trig_init(void);
 extern void fa_trig_exit(void);
 
