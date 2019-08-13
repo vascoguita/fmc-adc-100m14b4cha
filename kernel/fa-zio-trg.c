@@ -125,7 +125,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
+	void *baseoff = fa->fa_adc_csr_base;
 	uint32_t tmp_val = usr_val;
+
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
+		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
@@ -171,7 +176,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	}
 
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id], tmp_val);
+	fa_writel(fa, baseoff, &zfad_regs[zattr->id], tmp_val);
 	return 0;
 }
 
@@ -184,6 +189,11 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
+	void *baseoff = fa->fa_adc_csr_base;
+
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
+		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	case ZFAT_CFG_SRC:
@@ -194,7 +204,7 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	}
 
-	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
+	*usr_val = fa_readl(fa, baseoff, &zfad_regs[zattr->id]);
 	switch (zattr->id) {
 	case ZFAT_POST:
 		(*usr_val)++; /* add the trigger sample */
