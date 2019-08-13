@@ -370,6 +370,16 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	return 0;
 }
 
+static void fa_init_timetag(struct fa_dev *fa)
+{
+	unsigned long seconds;
+
+	seconds = get_seconds();
+	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_U],
+		  (seconds >> 32) & 0xFFFFFFFF);
+	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_L],
+		  (seconds >> 00) & 0xFFFFFFFF);
+}
 
 /*
  * Specific check and init
@@ -420,9 +430,7 @@ static int __fa_init(struct fa_dev *fa)
 	/* Initialize channel saturation values */
 	zfad_init_saturation(fa);
 
-	/* Set UTC seconds from the kernel seconds */
-	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
-		  get_seconds());
+	fa_init_timetag(fa);
 
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_EXT_DLY], 0);
 

@@ -485,11 +485,13 @@ static void zfad_tstamp_start_get(struct fa_dev *fa,
 				  struct zio_timestamp *ztstamp)
 {
 	ztstamp->secs = fa_readl(fa, fa->fa_utc_base,
-				&zfad_regs[ZFA_UTC_ACQ_START_SECONDS]);
+				&zfad_regs[ZFA_UTC_ACQ_START_SECONDS_U]);
+	ztstamp->secs <<= 32;
+	ztstamp->secs |= fa_readl(fa, fa->fa_utc_base,
+				  &zfad_regs[ZFA_UTC_ACQ_START_SECONDS_L]);
 	ztstamp->ticks = fa_readl(fa, fa->fa_utc_base,
 				 &zfad_regs[ZFA_UTC_ACQ_START_COARSE]);
-	ztstamp->bins = fa_readl(fa, fa->fa_utc_base,
-				&zfad_regs[ZFA_UTC_ACQ_START_FINE]);
+	ztstamp->bins = 0;
 }
 
 static int zfad_block_timetag_extract(struct zio_block *block,
