@@ -89,6 +89,20 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	[FA100M14B4C_TATTR_SW_FIRE] = ZIO_PARAM_EXT("sw-trg-fire", ZIO_WO_PERM,
 							ZFAT_SW, 0),
 
+	/* Time Trigger */
+	[FA100M14B4C_TATTR_TRG_TIM_SU] = ZIO_PARAM_EXT("trg-time-su",
+						      ZIO_RW_PERM,
+						      ZFA_UTC_TRIG_TIME_SECONDS_U,
+						       0),
+	[FA100M14B4C_TATTR_TRG_TIM_SL] = ZIO_PARAM_EXT("trg-time-sl",
+						      ZIO_RW_PERM,
+						      ZFA_UTC_TRIG_TIME_SECONDS_L,
+						       0),
+	[FA100M14B4C_TATTR_TRG_TIM_C] = ZIO_PARAM_EXT("trg-time-t",
+						      ZIO_RW_PERM,
+						      ZFA_UTC_TRIG_TIME_COARSE,
+						      0),
+
 	/* last trigger time stamp */
 	[FA100M14B4C_TATTR_TRG_SU] = ZIO_PARAM_EXT("tstamp-trg-lst-su",
 						   ZIO_RO_PERM,
