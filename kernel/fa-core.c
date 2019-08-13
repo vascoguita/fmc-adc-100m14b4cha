@@ -409,8 +409,9 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
 
 	/* Enable the software trigger by default: there is no arm in this */
+	/* Enable the alternative time source: later it will be done by HDL */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
-		  FA100M14B4C_TRG_SRC_SW);
+		  FA100M14B4C_TRG_SRC_SW | FA100M14B4C_TRG_SRC_ALT);
 
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
