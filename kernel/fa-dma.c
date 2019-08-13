@@ -323,11 +323,7 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 		goto err_to_pages;
 
 
-	/*
-	 * max_segment_size = dma_get_max_seg_size(dchan->device->dev);
-	 * Fix it to PAGE_SIZE because of an HDL issue
-	 */
-	max_segment_size = PAGE_SIZE;
+	max_segment_size = dma_get_max_seg_size(dchan->device->dev);
 	/* With some version we cannot use the version from the Linux kernel */
 	fa->sg_alloc_table_from_pages(&zfad_block->sgt, pages, nr_pages,
 				      offset_in_page(zfad_block->block->data),
