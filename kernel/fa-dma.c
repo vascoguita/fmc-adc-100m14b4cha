@@ -336,7 +336,7 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 			       zfad_block->sgt.sgl,
 			       zfad_block->sgt.nents,
 			       DMA_DEV_TO_MEM);
-	if (sg_mapped < 0) {
+	if (sg_mapped <= 0) {
 		err = sg_mapped;
 		goto err_map;
 	}
