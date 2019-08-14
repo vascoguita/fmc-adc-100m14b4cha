@@ -168,6 +168,12 @@ struct fa_calib {
 
 #include "field-desc.h"
 
+#define ADC_CSR_OFF 0x1000
+#define ADC_EIC_OFF 0x1500
+#define ADC_OW_OFF 0x1700
+#define ADC_SPI_OFF 0x1800
+#define ADC_UTC_OFF 0x1900
+
 extern int fa_enable_test_data_adc;
 
 enum fa_irq_resource {

@@ -532,11 +532,11 @@ int fa_probe(struct platform_device *pdev)
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
 	fa->fa_top_level = ioremap(r->start, resource_size(r));
-	fa->fa_adc_csr_base = fa->fa_top_level + 0x1000;
-	fa->fa_irq_adc_base = fa->fa_top_level + 0x1500;
-	fa->fa_ow_base =      fa->fa_top_level + 0x1700;
-	fa->fa_spi_base =     fa->fa_top_level + 0x1800;
-	fa->fa_utc_base =     fa->fa_top_level + 0x1900;
+	fa->fa_adc_csr_base = fa->fa_top_level + ADC_CSR_OFF;
+	fa->fa_irq_adc_base = fa->fa_top_level + ADC_EIC_OFF;
+	fa->fa_ow_base =      fa->fa_top_level + ADC_OW_OFF;
+	fa->fa_spi_base =     fa->fa_top_level + ADC_SPI_OFF;
+	fa->fa_utc_base =     fa->fa_top_level + ADC_UTC_OFF;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
