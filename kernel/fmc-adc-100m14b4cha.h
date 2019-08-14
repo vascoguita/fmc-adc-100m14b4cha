@@ -452,7 +452,10 @@ struct fa_dev {
 	/* flag  */
 	int enable_auto_start;
 
-	struct dentry *reg_dump;
+	struct dentry *dbg_dir;
+	struct debugfs_regset32 dbg_reg32;
+	struct dentry *dbg_reg;
+	struct dentry *dbg_reg_spi;
 
 	/* Operations */
 	int (*sg_alloc_table_from_pages)(struct sg_table *sgt,
