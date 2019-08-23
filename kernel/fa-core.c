@@ -544,14 +544,16 @@ int fa_probe(struct platform_device *pdev)
 		goto out_fmc_pre;
 	}
 
-	dev_warn(fa->msgdev, "use non standard EERPOM type \"%s\"\n",
-		 FA_EEPROM_TYPE);
-	err = fmc_slot_eeprom_type_set(fa->slot, FA_EEPROM_TYPE);
-	if (err) {
-		dev_err(fa->msgdev,
-			"Failed to change EEPROM type to \"%s\"",
-			FA_EEPROM_TYPE);
-		goto out_fmc_eeprom;
+	if (strcmp(fmc_slot_eeprom_type_get(fa->slot), FA_EEPROM_TYPE)) {
+		dev_warn(fa->msgdev, "use non standard EERPOM type \"%s\"\n",
+			 FA_EEPROM_TYPE);
+		err = fmc_slot_eeprom_type_set(fa->slot, FA_EEPROM_TYPE);
+		if (err) {
+			dev_err(fa->msgdev,
+				"Failed to change EEPROM type to \"%s\"",
+				FA_EEPROM_TYPE);
+			goto out_fmc_eeprom;
+		}
 	}
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
