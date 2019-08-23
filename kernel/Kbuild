@@ -3,6 +3,7 @@ CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 VMEBUS_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
 
 KBUILD_EXTRA_SYMBOLS += $(ZIO_EXTRA_SYMBOLS-y)
+KBUILD_EXTRA_SYMBOLS += $(FMC_EXTRA_SYMBOLS-y)
 KBUILD_EXTRA_SYMBOLS += $(VMEBUS_EXTRA_SYMBOLS-y)
 
 # add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
@@ -18,6 +19,7 @@ SUBMODULE_VERSIONS-y += MODULE_INFO(version_zio,\"$(ZIO_VERSION)\");
 ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS-y)"
 ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-I$(ZIO_ABS)/include \
+	-I$(FMC_ABS)/include \
 	-I $(VMEBUS_ABS)/driver \
 	-I$(src)
 

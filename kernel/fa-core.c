@@ -18,6 +18,8 @@ module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
 int fa_enable_test_data_adc = 0;
 module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
 
+#define FA_EEPROM_TYPE "at24c64"
+
 struct fa_memory_ops memops = {
 	.read = NULL,
 	.write = NULL,
@@ -527,7 +529,29 @@ int fa_probe(struct platform_device *pdev)
 	default:
 		dev_err(fa->msgdev, "Unknow version %lu\n",
 			pdev->id_entry->driver_data);
-		return -EINVAL;
+		goto out_ops;
+	}
+
+	fa->slot = fmc_slot_get(pdev->dev.parent->parent, 1);
+	if (IS_ERR(fa->slot)) {
+		dev_err(fa->msgdev, "Can't find FMC slot %d err: %ld\n",
+			1, PTR_ERR(fa->slot));
+		goto out_fmc;
+	}
+
+	if (!fmc_slot_present(fa->slot)) {
+		dev_err(fa->msgdev, "Missing FMC ADC 100M card\n");
+		goto out_fmc_pre;
+	}
+
+	dev_warn(fa->msgdev, "use non standard EERPOM type \"%s\"\n",
+		 FA_EEPROM_TYPE);
+	err = fmc_slot_eeprom_replace_type(fa->slot, FA_EEPROM_TYPE);
+	if (err) {
+		dev_err(fa->msgdev,
+			"Failed to change EEPROM type to \"%s\"",
+			FA_EEPROM_TYPE);
+		goto out_fmc_eeprom;
 	}
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
@@ -564,6 +588,12 @@ out:
 	while (--m, --i >= 0)
 		if (m->exit)
 			m->exit(fa);
+out_fmc_eeprom:
+out_fmc_pre:
+	fmc_slot_put(fa->slot);
+out_fmc:
+out_ops:
+	devm_kfree(&pdev->dev, fa);
 	return err;
 }
 
@@ -581,6 +611,8 @@ int fa_remove(struct platform_device *pdev)
 		if (m->exit)
 			m->exit(fa);
 	}
+
+	fmc_slot_put(fa->slot);
 
 	return 0;
 }

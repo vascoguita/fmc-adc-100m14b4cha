@@ -10,6 +10,7 @@ DKMS ?= 0
 KVERSION ?= $(shell uname -r)
 LINUX ?= /lib/modules/$(KVERSION)/build
 ZIO ?= ../zio
+FMC ?=
 VMEBUS ?= $(REPO_PARENT)/../vmebridge
 
 ifeq ($(DKMS), 1)
@@ -21,6 +22,8 @@ else
 ZIO_ABS ?= $(abspath $(ZIO))
 ZIO_EXTRA_SYMBOLS-y = $(ZIO_ABS)/Module.symvers
 ZIO_VERSION ?= $(shell cd $(ZIO_ABS); git describe --always --dirty --long --tags)
+FMC_ABS ?= $(abspath $(FMC))
+FMC_EXTRA_SYMBOLS-y = $(FMC_ABS)/drivers/fmc/Module.symvers
 endif
 
 VMEBUS_ABS ?= $(abspath $(VMEBUS) )
@@ -28,8 +31,9 @@ VMEBUS_ABS ?= $(abspath $(VMEBUS) )
 GIT_VERSION = $(shell git describe --always --dirty --long --tags)
 
 all modules:
-	$(MAKE) -C $(LINUX) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) \
+	$(MAKE) -C $(LINUX) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) FMC_ABS=$(FMC_ABS) \
 		ZIO_EXTRA_SYMBOLS-y=$(ZIO_EXTRA_SYMBOLS-y) \
+		FMC_EXTRA_SYMBOLS-y=$(FMC_EXTRA_SYMBOLS-y) \
 		ZIO_VERSION=$(ZIO_VERSION) \
 		GIT_VERSION=$(GIT_VERSION) \
 		VMEBUS_ABS=$(VMEBUS_ABS) modules

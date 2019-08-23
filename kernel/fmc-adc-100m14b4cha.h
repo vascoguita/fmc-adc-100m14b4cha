@@ -159,6 +159,7 @@ struct fa_calib {
 #include <linux/workqueue.h>
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
+#include <linux/fmc.h>
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
@@ -407,6 +408,8 @@ struct fa_dev {
 	struct zio_device	*zdev;
 	/* the pointer to the fake zio_device, used for init/remove */
 	struct zio_device	*hwzdev;
+
+	struct fmc_slot	*slot;
 
 	/* carrier common base offset addresses obtained from SDB */
 	void *fa_adc_csr_base;
