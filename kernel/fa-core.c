@@ -546,7 +546,7 @@ int fa_probe(struct platform_device *pdev)
 
 	dev_warn(fa->msgdev, "use non standard EERPOM type \"%s\"\n",
 		 FA_EEPROM_TYPE);
-	err = fmc_slot_eeprom_replace_type(fa->slot, FA_EEPROM_TYPE);
+	err = fmc_slot_eeprom_type_set(fa->slot, FA_EEPROM_TYPE);
 	if (err) {
 		dev_err(fa->msgdev,
 			"Failed to change EEPROM type to \"%s\"",
