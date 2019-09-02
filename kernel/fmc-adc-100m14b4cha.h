@@ -634,11 +634,12 @@ extern void fa_spi_exit(struct fa_dev *fd);
 
 /* function exporetd by fa-calibration.c */
 extern void fa_identity_calib_set(struct fa_dev *fa);
+extern int fa_calib_init(struct fa_dev *fa);
+extern void fa_calib_exit(struct fa_dev *fa);
 
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);
 extern void fa_debug_exit(struct fa_dev *fa);
-
 
 #endif /* __KERNEL__ */
 #endif /*  FMC_ADC_H_ */

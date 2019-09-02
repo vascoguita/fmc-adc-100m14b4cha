@@ -121,20 +121,12 @@ static void fa_apply_calib(struct fa_dev *fa, struct zio_channel *chan)
 	zfad_apply_offset(chan);
 }
 
-static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
-			       struct bin_attribute *attr,
-			       char *buf, loff_t off, size_t count)
+static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 {
-	struct device *dev = container_of(kobj, struct device, kobj);
-	struct fa_dev *fa = get_zfadc(dev);
-	struct fa_calib *calib = (struct fa_calib *) buf;
 	int i;
 
-	if (off != 0 || count != sizeof(*calib))
-		return -EINVAL;
-
 	fa_calib_le16_to_cpus(calib);
-	fa_verify_calib(dev, calib, &fa_identity_calib);
+	fa_verify_calib(fa->msgdev, calib, &fa_identity_calib);
 
 	/*
 	 * The user should be careful enough to not change calibration
@@ -143,6 +135,20 @@ static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
 	memcpy(&fa->calib, calib, sizeof(*calib));
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
 		fa_apply_calib(fa, &fa->zdev->cset->chan[i]);
+}
+
+static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
+			       struct bin_attribute *attr,
+			       char *buf, loff_t off, size_t count)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct fa_dev *fa = get_zfadc(dev);
+	struct fa_calib *calib = (struct fa_calib *) buf;
+
+	if (off != 0 || count != sizeof(*calib))
+		return -EINVAL;
+
+	fa_calib_write(fa, calib);
 
 	return count;
 }
@@ -174,3 +180,29 @@ struct bin_attribute dev_attr_calibration = {
 	.write = fa_write_eeprom,
 	.read = fa_read_eeprom,
 };
+
+
+int fa_calib_init(struct fa_dev *fa)
+{
+	struct fa_calib calib;
+	int ret;
+
+	ret = fmc_slot_eeprom_read(fa->slot, &calib,
+				   FA_CAL_OFFSET, sizeof(calib));
+	if (ret < 0) {
+		dev_warn(fa->msgdev,
+			 "Failed to read calibration from EEPROM: using identity calibration %d\n",
+			 ret);
+		memcpy(&calib, &fa_identity_calib, sizeof(fa->calib));
+	}
+
+	fa_calib_write(fa, &calib);
+
+
+	return 0;
+}
+
+void fa_calib_exit(struct fa_dev *fa)
+{
+
+}

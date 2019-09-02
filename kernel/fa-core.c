@@ -450,6 +450,7 @@ static struct fa_modlist mods[] = {
 	{"onewire", fa_onewire_init, fa_onewire_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
 	{"debug", fa_debug_init, fa_debug_exit},
+	{"calibration", fa_calib_init, fa_calib_exit},
 };
 
 
