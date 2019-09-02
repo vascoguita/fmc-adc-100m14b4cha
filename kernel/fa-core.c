@@ -591,6 +591,7 @@ out:
 	while (--m, --i >= 0)
 		if (m->exit)
 			m->exit(fa);
+	iounmap(fa->fa_top_level);
 out_fmc_eeprom:
 out_fmc_pre:
 	fmc_slot_put(fa->slot);
@@ -614,6 +615,7 @@ int fa_remove(struct platform_device *pdev)
 		if (m->exit)
 			m->exit(fa);
 	}
+	iounmap(fa->fa_top_level);
 
 	fmc_slot_put(fa->slot);
 
