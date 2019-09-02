@@ -500,7 +500,7 @@ int fa_probe(struct platform_device *pdev)
 	struct fa_modlist *m = NULL;
 	struct fa_dev *fa;
 	struct resource *r;
-	int err, i = 0;
+	int err, i = 0, slot_nr;
 
 	err = fa_resource_validation(pdev);
 	if (err)
@@ -533,10 +533,20 @@ int fa_probe(struct platform_device *pdev)
 		goto out_ops;
 	}
 
-	fa->slot = fmc_slot_get(pdev->dev.parent->parent, 1);
+	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
+	fa->fa_top_level = ioremap(r->start, resource_size(r));
+	fa->fa_adc_csr_base = fa->fa_top_level + ADC_CSR_OFF;
+	fa->fa_irq_adc_base = fa->fa_top_level + ADC_EIC_OFF;
+	fa->fa_ow_base =      fa->fa_top_level + ADC_OW_OFF;
+	fa->fa_spi_base =     fa->fa_top_level + ADC_SPI_OFF;
+	fa->fa_utc_base =     fa->fa_top_level + ADC_UTC_OFF;
+
+	slot_nr = fa_readl(fa, fa->fa_adc_csr_base,
+			   &zfad_regs[ZFA_STA_FMC_NR]) + 1;
+	fa->slot = fmc_slot_get(pdev->dev.parent->parent, slot_nr);
 	if (IS_ERR(fa->slot)) {
 		dev_err(fa->msgdev, "Can't find FMC slot %d err: %ld\n",
-			1, PTR_ERR(fa->slot));
+			slot_nr, PTR_ERR(fa->slot));
 		goto out_fmc;
 	}
 
@@ -556,14 +566,6 @@ int fa_probe(struct platform_device *pdev)
 			goto out_fmc_eeprom;
 		}
 	}
-
-	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
-	fa->fa_top_level = ioremap(r->start, resource_size(r));
-	fa->fa_adc_csr_base = fa->fa_top_level + ADC_CSR_OFF;
-	fa->fa_irq_adc_base = fa->fa_top_level + ADC_EIC_OFF;
-	fa->fa_ow_base =      fa->fa_top_level + ADC_OW_OFF;
-	fa->fa_spi_base =     fa->fa_top_level + ADC_SPI_OFF;
-	fa->fa_utc_base =     fa->fa_top_level + ADC_UTC_OFF;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {

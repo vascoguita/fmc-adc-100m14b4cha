@@ -218,6 +218,7 @@ enum zfadc_dregs_enum {
 	ZFA_STA_FSM,
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
+	ZFA_STA_FMC_NR,
 	/* Configuration register */
 	ZFAT_CFG_STA,
 	ZFAT_CFG_SRC,

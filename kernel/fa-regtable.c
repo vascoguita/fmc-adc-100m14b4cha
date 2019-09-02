@@ -22,6 +22,7 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_STA_FSM] =		{0x04, 0x00000007, 1},
 	[ZFA_STA_SERDES_PLL] =		{0x04, 0x00000008, 1},
 	[ZFA_STA_SERDES_SYNCED] =	{0x04, 0x00000010, 1},
+	[ZFA_STA_FMC_NR] =		{0x04, 0x000000c0, 1},
 	/* Trigger */
 		/* Config register */
 	[ZFAT_CFG_STA] =		{0x08, 0xFFFFFFFF, 0},
