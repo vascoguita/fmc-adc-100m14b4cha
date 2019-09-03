@@ -392,7 +392,6 @@ static int __fa_init(struct fa_dev *fa)
 	int i, addr;
 
 	/* Use identity calibration */
-	fa_identity_calib_set(fa);
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
 					 &zfad_regs[ZFA_MULT_MAX_SAMP]);
 

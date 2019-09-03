@@ -147,9 +147,10 @@ struct fa_calib_stanza {
 	uint16_t temperature;
 };
 
+#define FA_CALIB_STANZA_N 3
 struct fa_calib {
-	struct fa_calib_stanza adc[3];  /* For input, one per range */
-	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
+	struct fa_calib_stanza adc[FA_CALIB_STANZA_N];  /* For input, one per range */
+	struct fa_calib_stanza dac[FA_CALIB_STANZA_N];  /* For user offset, one per range */
 };
 
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
@@ -623,7 +624,6 @@ extern int fa_spi_init(struct fa_dev *fd);
 extern void fa_spi_exit(struct fa_dev *fd);
 
 /* function exporetd by fa-calibration.c */
-extern void fa_identity_calib_set(struct fa_dev *fa);
 extern int fa_calib_init(struct fa_dev *fa);
 extern void fa_calib_exit(struct fa_dev *fa);
 

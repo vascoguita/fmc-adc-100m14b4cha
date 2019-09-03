@@ -7,7 +7,7 @@
 #include "fmc-adc-100m14b4cha.h"
 
 /* This identity calibration is used as default */
-static struct fa_calib_stanza fa_identity_calib = {
+static const struct fa_calib_stanza fa_identity_calib = {
 	.offset = { 0, },
 	.gain = {0x8000, 0x8000, 0x8000, 0x8000},
 	.temperature = 50 * 100, /* 50 celsius degrees */
@@ -19,9 +19,9 @@ static struct fa_calib_stanza fa_identity_calib = {
 
 /* Actual verification code */
 static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
-				    struct fa_calib_stanza *cal,
-				    struct fa_calib_stanza *iden)
+				    struct fa_calib_stanza *cal)
 {
+	const struct fa_calib_stanza *iden = &fa_identity_calib;
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(cal->offset); i++) {
@@ -47,32 +47,20 @@ static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 	return 0;
 }
 
-static void fa_verify_calib(struct device *msgdev,
-			      struct fa_calib *calib,
-			      struct fa_calib_stanza *identity)
+static int fa_verify_calib(struct device *msgdev, struct fa_calib *calib)
 {
 	int i, err = 0;
 
 	for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
-		err = fa_verify_calib_stanza(msgdev, "adc", i,
-					     calib->adc + i, identity);
+		err = fa_verify_calib_stanza(msgdev, "adc", i, calib->adc + i);
 		if (err)
-			break;
-		err = fa_verify_calib_stanza(msgdev, "dac", i,
-					     calib->dac + i, identity);
+			return err;
+		err = fa_verify_calib_stanza(msgdev, "dac", i, calib->dac + i);
 		if (err)
-			break;
+			return err;
 	}
-	if (err) {
-		dev_warn(msgdev,
-			 "Invalid calibration in EEPROM (err: %i, stanza: %i)\n",
-			 err, i);
-		dev_info(msgdev, "Using identity calibration\n");
-		for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
-			calib->adc[i] = *identity;
-			calib->dac[i] = *identity;
-		}
-	}
+
+	return 0;
 }
 
 /**
@@ -103,6 +91,20 @@ static void fa_calib_cpu_to_le16s(struct fa_calib *calib)
 		cpu_to_le16s(p + i); /* s == in situ */
 }
 
+static void fa_identity_calib_set(struct fa_calib *calib)
+{
+	int i, err;
+
+	/* Retrieve calibration data from the eeprom, then verify it */
+	for (i = 0; i < FA_CALIB_STANZA_N; ++i) {
+		memcpy(&calib->adc[i], &fa_identity_calib,
+		       sizeof(calib->adc[i]));
+		memcpy(&calib->dac[i], &fa_identity_calib,
+		       sizeof(calib->dac[i]));
+	}
+	fa_calib_le16_to_cpus(calib);
+}
+
 /**
  * Calculate calibrated values for offset and range using current values
  * @fa: FMC ADC device
@@ -124,14 +126,16 @@ static void fa_apply_calib(struct fa_dev *fa)
 
 static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 {
-	fa_calib_le16_to_cpus(calib);
-	fa_verify_calib(fa->msgdev, calib, &fa_identity_calib);
+	int err;
 
-	/*
-	 * The user should be careful enough to not change calibration
-	 * values while running an acquisition
-	 */
-	memcpy(&fa->calib, calib, sizeof(*calib));
+	fa_calib_le16_to_cpus(calib);
+	err = fa_verify_calib(fa->msgdev, calib);
+	if (err) {
+		dev_info(fa->msgdev, "Apply Calibration Identity\n", __func__);
+		fa_identity_calib_set(&fa->calib);
+	} else {
+		memcpy(&fa->calib, calib, sizeof(*calib));
+	}
 	fa_apply_calib(fa);
 }
 
@@ -191,12 +195,13 @@ int fa_calib_init(struct fa_dev *fa)
 		dev_warn(fa->msgdev,
 			 "Failed to read calibration from EEPROM: using identity calibration %d\n",
 			 ret);
-		memcpy(&calib, &fa_identity_calib, sizeof(fa->calib));
+		fa_identity_calib_set(&calib);
+		goto out;
 	}
 
 	fa_calib_write(fa, &calib);
 
-
+out:
 	return 0;
 }
 
