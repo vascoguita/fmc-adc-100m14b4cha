@@ -600,6 +600,7 @@ out_fmc_pre:
 out_fmc:
 out_ops:
 	devm_kfree(&pdev->dev, fa);
+	platform_set_drvdata(pdev, NULL);
 	return err;
 }
 
@@ -608,6 +609,9 @@ int fa_remove(struct platform_device *pdev)
 	struct fa_dev *fa = platform_get_drvdata(pdev);
 	struct fa_modlist *m;
 	int i = ARRAY_SIZE(mods);
+
+	if (WARN(!fa, "asked to remove fmc-adc-100m device but it does not exists\n"))
+		return 0;
 
 	fa_free_irqs(fa);
 	flush_workqueue(fa_workqueue);
