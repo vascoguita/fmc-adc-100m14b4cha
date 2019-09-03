@@ -118,9 +118,6 @@ int fa_setup_irqs(struct fa_dev *fa)
 	/* workqueue is required to execute DMA transaction */
 	INIT_WORK(&fa->irq_work, fa_irq_work);
 
-	/* set IRQ sources to listen */
-	fa->irq_src = FA_IRQ_SRC_ACQ;
-
 	return err;
 }
 

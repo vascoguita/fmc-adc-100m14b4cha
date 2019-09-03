@@ -364,16 +364,6 @@ enum fa_sw_param_id {
 	ZFA_SW_PARAM_COMMON_LAST,
 };
 
-/*
- * Bit pattern used in order to factorize code  between SVEC and SPEC
- * Depending of the carrier, ADC may have to listen vaious IRQ sources
- * SVEC: only ACQ irq source (end DMA irq is manged by vmebus driver)
- * SPEC: ACQ and DMA irq source
- */
-enum fa_irq_src {
-	FA_IRQ_SRC_ACQ = 0x1,
-	FA_IRQ_SRC_DMA = 0x2,
-};
 
 /* adc IRQ values */
 enum fa_irq_adc {
@@ -425,7 +415,6 @@ struct fa_dev {
 	struct zio_dma_sgt *zdma;
 	struct sg_table sgt;
 
-	int irq_src; /* list of irq sources to listen */
 	struct work_struct irq_work;
 	/*
 	 * keep last core having fired an IRQ
