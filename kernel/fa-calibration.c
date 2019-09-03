@@ -22,29 +22,29 @@ static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 				    struct fa_calib_stanza *cal,
 				    struct fa_calib_stanza *iden)
 {
-	int i, err = 0;
+	int i;
 
 	for (i = 0; i < ARRAY_SIZE(cal->offset); i++) {
 		if (abs(cal->offset[i] - iden->offset[i])
 		    > FA_CALIB_MAX_DELTA_OFFSET) {
-			dev_dbg(msgdev, "wrong offset 0x%x\n", cal->offset[i]);
-			err++;
+			dev_err(msgdev, "wrong offset (%i) 0x%x\n",
+				i, cal->offset[i]);
+			return -EINVAL;
 		}
 		if (abs((s16)(cal->gain[i] - iden->gain[i]))
 		    > FA_CALIB_MAX_DELTA_GAIN) {
-			dev_dbg(msgdev, "wrong gain   0x%x\n", cal->gain[i]);
-			err++;
+			dev_err(msgdev, "invalid gain   (%i) 0x%x\n",
+				i, cal->gain[i]);
+			return -EINVAL;
 		}
 	}
 	if (abs((s16)(cal->temperature - iden->temperature))
 	    > FA_CALIB_MAX_DELTA_TEMP) {
-		dev_dbg(msgdev, "wrong temper 0x%x\n", cal->temperature);
-		err++;
+		dev_err(msgdev, "invalid temper 0x%x\n", cal->temperature);
+		return -EINVAL;
 	}
-	if (err)
-		dev_dbg(msgdev, "%i errors in %s calibration, range %i\n",
-			err, name, r);
-	return err;
+
+	return 0;
 }
 
 static void fa_verify_calib(struct device *msgdev,
@@ -54,19 +54,24 @@ static void fa_verify_calib(struct device *msgdev,
 	int i, err = 0;
 
 	for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
-		err += fa_verify_calib_stanza(msgdev, "adc", i,
-						calib->adc + i, identity);
-		err += fa_verify_calib_stanza(msgdev, "dac", i,
-						calib->dac + i, identity);
+		err = fa_verify_calib_stanza(msgdev, "adc", i,
+					     calib->adc + i, identity);
+		if (err)
+			break;
+		err = fa_verify_calib_stanza(msgdev, "dac", i,
+					     calib->dac + i, identity);
+		if (err)
+			break;
 	}
-	if (!err)
-		return;
-
-	dev_info(msgdev, "Invalid calibration in EEPROM (%i errors)\n", err);
-	dev_info(msgdev, "Using identity calibration\n");
-	for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
-		calib->adc[i] = *identity;
-		calib->dac[i] = *identity;
+	if (err) {
+		dev_warn(msgdev,
+			 "Invalid calibration in EEPROM (err: %i, stanza: %i)\n",
+			 err, i);
+		dev_info(msgdev, "Using identity calibration\n");
+		for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
+			calib->adc[i] = *identity;
+			calib->dac[i] = *identity;
+		}
 	}
 }
 
