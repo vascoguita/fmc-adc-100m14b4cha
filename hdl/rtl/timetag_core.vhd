@@ -81,12 +81,12 @@ entity timetag_core is
     trig_tag_o  : out t_timetag;
     time_trig_o : out std_logic;
 
-    --  Alternative trigger in time
-    alt_trigin_enable_o    : out std_logic;
-    alt_trigin_enable_i    : in  std_logic;
-    alt_trigin_enable_wr_i : in  std_logic;
-    alt_trigin_tag_i       : in  t_timetag;
-    alt_trigin_o           : out std_logic;
+    --  Auxiliary trigger in time
+    aux_trigin_enable_o    : out std_logic;
+    aux_trigin_enable_i    : in  std_logic;
+    aux_trigin_enable_wr_i : in  std_logic;
+    aux_trigin_tag_i       : in  t_timetag;
+    aux_trigin_o           : out std_logic;
 
     -- Wishbone interface
     wb_i : in  t_wishbone_slave_in;
@@ -116,9 +116,9 @@ architecture rtl of timetag_core is
   signal regin  : t_timetag_core_master_in;
   signal regout : t_timetag_core_master_out;
 
-  signal alt_trigin        : std_logic;
-  signal alt_trigin_d      : std_logic;
-  signal alt_trigin_enable : std_logic;
+  signal aux_trigin        : std_logic;
+  signal aux_trigin_d      : std_logic;
+  signal aux_trigin_enable : std_logic := '0';
 
   signal wb_in  : t_wishbone_slave_in;
   signal wb_out : t_wishbone_slave_out;
@@ -241,40 +241,40 @@ begin
 
   time_trig_o <= time_trig or time_trig_d;
 
-  --  Alternative time trigger generation (also stretched).
-  alt_trigin <= alt_trigin_enable when alt_trigin_tag_i = current_time else '0';
+  --  Auxiliary time trigger generation (also stretched).
+  aux_trigin <= aux_trigin_enable when aux_trigin_tag_i = current_time else '0';
 
   process (clk_i)
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        alt_trigin_enable <= '0';
+        aux_trigin_enable <= '0';
       else
-        if alt_trigin_enable_wr_i = '1' then
+        if aux_trigin_enable_wr_i = '1' then
           --  User write.
-          alt_trigin_enable <= alt_trigin_enable_i;
-        elsif alt_trigin = '1' then
+          aux_trigin_enable <= aux_trigin_enable_i;
+        elsif aux_trigin = '1' then
           --  Auto clear after trigger.
-          alt_trigin_enable <= '0';
+          aux_trigin_enable <= '0';
         end if;
       end if;
     end if;
   end process;
 
-  alt_trigin_enable_o <= alt_trigin_enable;
+  aux_trigin_enable_o <= aux_trigin_enable;
 
   process (clk_i)
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        alt_trigin_d <= '0';
+        aux_trigin_d <= '0';
       else
-        alt_trigin_d <= alt_trigin;
+        aux_trigin_d <= aux_trigin;
       end if;
     end if;
   end process;
 
-  alt_trigin_o <= alt_trigin or alt_trigin_d;
+  aux_trigin_o <= aux_trigin or aux_trigin_d;
 
   ------------------------------------------------------------------------------
   -- Last trigger event time-tag

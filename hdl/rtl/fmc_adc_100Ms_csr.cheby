@@ -189,8 +189,9 @@ memory-map:
           range: 1
           description: Software trigger
           comment: |
-            0: disable
-            1: enable
+            Always enabled
+          x-hdl:
+            type: wire
       - field:
           name: time
           range: 4
@@ -199,12 +200,13 @@ memory-map:
             0: disable
             1: enable
       - field:
-          name: alt_time
+          name: aux_time
           range: 5
-          description: Alternate timetag trigger
+          description: Auxiliary timetag trigger
           comment: |
-            0: disable
-            1: enable
+            Always enabled
+          x-hdl:
+            type: wire
       - field:
           name: ch1
           range: 8
@@ -230,41 +232,6 @@ memory-map:
           name: ch4
           range: 11
           description: Channel 4 internal threshold trigger
-          comment: |
-            0: disable
-            1: enable
-      - field:
-          name: fwd_ext
-          range: 16
-          description: Forward external trigger to trigger out
-          comment: |
-            0: disable
-            1: enable
-      - field:
-          name: fwd_ch1
-          range: 24
-          description: Forward channel 1 internal threshold trigger to trigger out
-          comment: |
-            0: disable
-            1: enable
-      - field:
-          name: fwd_ch2
-          range: 25
-          description: Forward channel 2 internal threshold trigger to trigger out
-          comment: |
-            0: disable
-            1: enable
-      - field:
-          name: fwd_ch3
-          range: 26
-          description: Forward channel 3 internal threshold trigger to trigger out
-          comment: |
-            0: disable
-            1: enable
-      - field:
-          name: fwd_ch4
-          range: 27
-          description: Forward channel 4 internal threshold trigger to trigger out
           comment: |
             0: disable
             1: enable

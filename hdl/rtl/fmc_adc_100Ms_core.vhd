@@ -82,7 +82,7 @@ entity fmc_adc_100Ms_core is
     -- Trigger time-tag inputs
     trigger_tag_i   : in t_timetag;
     time_trig_i     : in std_logic;
-    alt_time_trig_i : in std_logic;
+    aux_time_trig_i : in std_logic;
 
     -- WR status (for trigout).
     wr_tm_link_up_i    : in std_logic;
@@ -206,16 +206,14 @@ architecture rtl of fmc_adc_100Ms_core is
   signal int_trig_thres_in          : t_fmc_adc_vec16_array(1 to 4);
   signal int_trig_thres_hyst_in     : t_fmc_adc_vec16_array(1 to 4);
   signal sw_trig                    : std_logic;
-  signal sw_trig_en                 : std_logic;
   signal sw_trig_fixed_delay        : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal sw_trig_in                 : std_logic := '0';
   signal sw_trig_sync_ack           : std_logic := '0';
   signal time_trig                  : std_logic;
   signal time_trig_en               : std_logic;
   signal time_trig_fixed_delay      : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
-  signal alt_time_trig              : std_logic;
-  signal alt_time_trig_en           : std_logic;
-  signal alt_time_trig_fixed_delay  : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
+  signal aux_time_trig              : std_logic;
+  signal aux_time_trig_fixed_delay  : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal trig                       : std_logic;
   signal trig_align                 : std_logic_vector(8 downto 0);
   signal trig_storage               : std_logic_vector(31 downto 0);
@@ -490,6 +488,8 @@ begin
   csr_regin.trig_stat_ch2     <= trig_storage(9);
   csr_regin.trig_stat_ch3     <= trig_storage(10);
   csr_regin.trig_stat_ch4     <= trig_storage(11);
+  csr_regin.trig_en_sw        <= '1';
+  csr_regin.trig_en_aux_time  <= '1';
   csr_regin.shots_remain      <= remaining_shots;
   csr_regin.trig_pos          <= trig_addr;
   csr_regin.fs_freq           <= fs_freq;
@@ -540,8 +540,6 @@ begin
   sat_val_in <= csr_regout.ch4_sat_val & csr_regout.ch3_sat_val &
                 csr_regout.ch2_sat_val & csr_regout.ch1_sat_val;
 
-  -- NOTE: trigger forwards are read from CSR in the b_trigout block later
-
   -- Delays for user-controlled GPIO outputs to help with timing
   p_delay_gpio_ssr : process (sys_clk_i) is
   begin
@@ -569,26 +567,12 @@ begin
       data_i   => csr_regout.trig_pol_ext,
       synced_o => ext_trig_pol);
 
-  cmp_sw_trig_en_sync : gc_sync_ffs
-    port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => csr_regout.trig_en_sw,
-      synced_o => sw_trig_en);
-
   cmp_time_trig_en_sync : gc_sync_ffs
     port map (
       clk_i    => fs_clk,
       rst_n_i  => '1',
       data_i   => csr_regout.trig_en_time,
       synced_o => time_trig_en);
-
-  cmp_alt_time_trig_en_sync : gc_sync_ffs
-    port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => csr_regout.trig_en_alt_time,
-      synced_o => alt_time_trig_en);
 
   cmp_downsample_sync : gc_sync_word_wr
     generic map (
@@ -828,14 +812,14 @@ begin
       npulse_o => open,
       ppulse_o => time_trig);
 
-  cmp_alt_time_trig_sync : gc_sync_ffs
+  cmp_aux_time_trig_sync : gc_sync_ffs
     port map (
       clk_i    => fs_clk,
       rst_n_i  => '1',
-      data_i   => alt_time_trig_i,
+      data_i   => aux_time_trig_i,
       synced_o => open,
       npulse_o => open,
-      ppulse_o => alt_time_trig);
+      ppulse_o => aux_time_trig);
 
   -- Internal hardware trigger
   g_int_trig : for I in 1 to 4 generate
@@ -934,19 +918,19 @@ begin
         sw_trig_fixed_delay       <= (others => '0');
         ext_trig_fixed_delay      <= (others => '0');
         time_trig_fixed_delay     <= (others => '0');
-        alt_time_trig_fixed_delay <= (others => '0');
+        aux_time_trig_fixed_delay <= (others => '0');
       else
         sw_trig_fixed_delay   <= sw_trig_fixed_delay(sw_trig_fixed_delay'high -1 downto 0) & sw_trig;
         ext_trig_fixed_delay  <= ext_trig_fixed_delay(ext_trig_fixed_delay'high -1 downto 0) & ext_trig_d;
         time_trig_fixed_delay <= time_trig_fixed_delay(time_trig_fixed_delay'high -1 downto 0) & time_trig;
-        alt_time_trig_fixed_delay <= alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'high -1 downto 0) & alt_time_trig;
+        aux_time_trig_fixed_delay <= aux_time_trig_fixed_delay(aux_time_trig_fixed_delay'high -1 downto 0) & aux_time_trig;
       end if;
     end if;
   end process p_trig_shift;
 
-  trig_src_vector <= (sw_trig_fixed_delay(sw_trig_fixed_delay'high) and sw_trig_en) &
+  trig_src_vector <= sw_trig_fixed_delay(sw_trig_fixed_delay'high) &
                      (ext_trig_fixed_delay(ext_trig_fixed_delay'high) and ext_trig_en) &
-                     (alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'high) and alt_time_trig_en) &
+                     aux_time_trig_fixed_delay(aux_time_trig_fixed_delay'high) &
                      (time_trig_fixed_delay(time_trig_fixed_delay'high) and time_trig_en) &
                      (int_trig_d(4) and int_trig_en(4)) &
                      (int_trig_d(3) and int_trig_en(3)) &
@@ -1020,7 +1004,7 @@ begin
   -- Data to FIFO
   --     72 : sw trigger
   --     71 : ext trigger
-  --     70 : alt time trigger
+  --     70 : aux time trigger
   --     69 : time trigger
   --     68 : int4 trigger
   --     67 : int3 trigger
@@ -1628,7 +1612,6 @@ begin
   b_trigout : block
     subtype t_trigout_channels is std_logic_vector(4 downto 0);
     signal trigout_triggers : t_trigout_channels;
-    signal trigout_en       : t_trigout_channels;
 
     signal trigout_trig : std_logic;
 
@@ -1647,7 +1630,7 @@ begin
     signal trigout_fifo_rd        : std_logic;
 
   begin
-    cmp_alt_trigout : entity work.alt_trigout
+    cmp_aux_trigout : entity work.aux_trigout
       port map (
         rst_n_i        => sys_rst_n_i,
         clk_i          => sys_clk_i,
@@ -1674,13 +1657,7 @@ begin
     trigout_triggers(3) <= trig_storage(11);
     trigout_triggers(4) <= trig_storage(0);
 
-    trigout_en(0) <= csr_regout.trig_en_fwd_ch1;
-    trigout_en(1) <= csr_regout.trig_en_fwd_ch2;
-    trigout_en(2) <= csr_regout.trig_en_fwd_ch3;
-    trigout_en(3) <= csr_regout.trig_en_fwd_ch4;
-    trigout_en(4) <= csr_regout.trig_en_fwd_ext;
-
-    trigout_trig <= f_reduce_or (trigout_triggers and trigout_en);
+    trigout_trig <= f_reduce_or (trigout_triggers);
 
     -- Acquisition trigger delayed pulse
     p_acq_end : process (sys_clk_i)

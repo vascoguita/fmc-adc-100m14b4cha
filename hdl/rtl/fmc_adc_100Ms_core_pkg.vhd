@@ -91,7 +91,7 @@ package fmc_adc_100Ms_core_pkg is
       -- Trigger time-tag input
       trigger_tag_i   : in t_timetag;
       time_trig_i     : in std_logic;
-      alt_time_trig_i : in std_logic;
+      aux_time_trig_i : in std_logic;
 
       -- WR status (for trigout).
       wr_tm_link_up_i    : in std_logic;

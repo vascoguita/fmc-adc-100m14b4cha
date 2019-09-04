@@ -1,7 +1,7 @@
 memory-map:
   bus: wb-32-be
-  name: alt_trigout
-  description: FMC ADC alt trigger out registers
+  name: aux_trigout
+  description: FMC ADC aux trigger out registers
   x-hdl:
     busgroup: True
     reg_prefix: False

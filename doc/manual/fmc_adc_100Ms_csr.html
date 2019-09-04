@@ -133,9 +133,9 @@
 <tr class="tr_even">
 <td class="td_code">0x02c</td>
 <td>REG</td>
-<td><A href="#undersample">undersample</a></td>
-<td class="td_code">undersample</td>
-<td class="td_code">undersample</td>
+<td><A href="#downsample">downsample</a></td>
+<td class="td_code">downsample</td>
+<td class="td_code">downsample</td>
 </tr>
 <tr class="tr_odd">
 <td class="td_code">0x030</td>
@@ -711,10 +711,10 @@ Trigger enable
  <td class="td_unused" colspan="1">-</td>
  <td class="td_unused" colspan="1">-</td>
  <td class="td_unused" colspan="1">-</td>
- <td class="td_field" colspan="1">fwd_ch4</td>
- <td class="td_field" colspan="1">fwd_ch3</td>
- <td class="td_field" colspan="1">fwd_ch2</td>
- <td class="td_field" colspan="1">fwd_ch1</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
 </tr>
 <tr>
  <td class="td_bit" colspan="1">23</td>
@@ -734,7 +734,7 @@ Trigger enable
  <td class="td_unused" colspan="1">-</td>
  <td class="td_unused" colspan="1">-</td>
  <td class="td_unused" colspan="1">-</td>
- <td class="td_field" colspan="1">fwd_ext</td>
+ <td class="td_unused" colspan="1">-</td>
 </tr>
 <tr>
  <td class="td_bit" colspan="1">15</td>
@@ -769,7 +769,7 @@ Trigger enable
 <tr>
  <td class="td_unused" colspan="1">-</td>
  <td class="td_unused" colspan="1">-</td>
- <td class="td_field" colspan="1">alt_time</td>
+ <td class="td_field" colspan="1">aux_time</td>
  <td class="td_field" colspan="1">time</td>
  <td class="td_unused" colspan="1">-</td>
  <td class="td_unused" colspan="1">-</td>
@@ -785,15 +785,15 @@ ext
 <li><b>
 sw
 </b>[<i>rw</i>]: Software trigger
-<br>0: disable<br>1: enable
+<br>Always enabled
 <li><b>
 time
 </b>[<i>rw</i>]: Timetag trigger
 <br>0: disable<br>1: enable
 <li><b>
-alt_time
-</b>[<i>rw</i>]: Alternate timetag trigger
-<br>0: disable<br>1: enable
+aux_time
+</b>[<i>rw</i>]: Auxiliary timetag trigger
+<br>Always enabled
 <li><b>
 ch1
 </b>[<i>rw</i>]: Channel 1 internal threshold trigger
@@ -809,26 +809,6 @@ ch3
 <li><b>
 ch4
 </b>[<i>rw</i>]: Channel 4 internal threshold trigger
-<br>0: disable<br>1: enable
-<li><b>
-fwd_ext
-</b>[<i>rw</i>]: Forward external trigger to trigger out
-<br>0: disable<br>1: enable
-<li><b>
-fwd_ch1
-</b>[<i>rw</i>]: Forward channel 1 internal threshold trigger to trigger out
-<br>0: disable<br>1: enable
-<li><b>
-fwd_ch2
-</b>[<i>rw</i>]: Forward channel 2 internal threshold trigger to trigger out
-<br>0: disable<br>1: enable
-<li><b>
-fwd_ch3
-</b>[<i>rw</i>]: Forward channel 3 internal threshold trigger to trigger out
-<br>0: disable<br>1: enable
-<li><b>
-fwd_ch4
-</b>[<i>rw</i>]: Forward channel 4 internal threshold trigger to trigger out
 <br>0: disable<br>1: enable
 </ul>
 <a name="trig_pol"></a>
@@ -1371,16 +1351,16 @@ Sampling clock frequency
 fs_freq
 </b>[<i>ro</i>]: Sampling clock frequency
 </ul>
-<a name="undersample"></a>
-<h3><a name="sect_3_12">2.12. undersample</a></h3>
+<a name="downsample"></a>
+<h3><a name="sect_3_12">2.12. downsample</a></h3>
 <table cellpadding=0 cellspacing=0 border=0>
-<tr><td><b>HW prefix:</b></td><td class="td_code">undersample</td></tr>
+<tr><td><b>HW prefix:</b></td><td class="td_code">downsample</td></tr>
 <tr><td><b>HW address:</b></td><td class="td_code">0x2c</td></tr>
-<tr><td><b>C prefix:</b></td><td class="td_code">undersample</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">downsample</td></tr>
 <tr><td><b>C block offset:</b></td><td class="td_code">0x2c</td></tr>
 </table>
 <p>
-Undersampling ratio
+Downsampling ratio
 </p>
 <table cellpadding=0 cellspacing=0 border=0>
 <tr>
@@ -1394,7 +1374,7 @@ Undersampling ratio
  <td class="td_bit" colspan="1">24</td>
 </tr>
 <tr>
- <td class="td_field" colspan="8">undersample[31:24]</td>
+ <td class="td_field" colspan="8">downsample[31:24]</td>
 </tr>
 <tr>
  <td class="td_bit" colspan="1">23</td>
@@ -1407,7 +1387,7 @@ Undersampling ratio
  <td class="td_bit" colspan="1">16</td>
 </tr>
 <tr>
- <td class="td_field" colspan="8">undersample[23:16]</td>
+ <td class="td_field" colspan="8">downsample[23:16]</td>
 </tr>
 <tr>
  <td class="td_bit" colspan="1">15</td>
@@ -1420,7 +1400,7 @@ Undersampling ratio
  <td class="td_bit" colspan="1">8</td>
 </tr>
 <tr>
- <td class="td_field" colspan="8">undersample[15:8]</td>
+ <td class="td_field" colspan="8">downsample[15:8]</td>
 </tr>
 <tr>
  <td class="td_bit" colspan="1">7</td>
@@ -1433,13 +1413,13 @@ Undersampling ratio
  <td class="td_bit" colspan="1">0</td>
 </tr>
 <tr>
- <td class="td_field" colspan="8">undersample[7:0]</td>
+ <td class="td_field" colspan="8">downsample[7:0]</td>
 </tr>
 </table>
 <ul>
 <li><b>
-undersample
-</b>[<i>rw</i>]: Undersampling ratio
+downsample
+</b>[<i>rw</i>]: Downsampling ratio
 </ul>
 <a name="pre_samples"></a>
 <h3><a name="sect_3_13">2.13. pre_samples</a></h3>
@@ -1827,7 +1807,7 @@ Channel 1 status register
 <li><b>
 val
 </b>[<i>ro</i>]: Channel 1 current ADC value
-<br>Current ADC raw value. The format is binary two\'s complement.
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
 </ul>
 <a name="ch1_calib"></a>
 <h3><a name="sect_3_18">2.18. ch1_calib</a></h3>
@@ -2311,7 +2291,7 @@ Channel 2 status register
 <li><b>
 val
 </b>[<i>ro</i>]: Channel 2 current ACD value
-<br>Current ADC raw value. The format is binary two\'s complement.
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
 </ul>
 <a name="ch2_calib"></a>
 <h3><a name="sect_3_24">2.24. ch2_calib</a></h3>
@@ -2795,7 +2775,7 @@ Channel 3 status register
 <li><b>
 val
 </b>[<i>ro</i>]: Channel 3 current ADC value
-<br>Current ADC raw value. The format is binary two\'s complement.
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
 </ul>
 <a name="ch3_calib"></a>
 <h3><a name="sect_3_30">2.30. ch3_calib</a></h3>
@@ -3279,7 +3259,7 @@ Channel 4 status register
 <li><b>
 val
 </b>[<i>ro</i>]: Channel 4 current ADC value
-<br>Current ADC raw value. The format is binary two\'s complement.
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
 </ul>
 <a name="ch4_calib"></a>
 <h3><a name="sect_3_36">2.36. ch4_calib</a></h3>

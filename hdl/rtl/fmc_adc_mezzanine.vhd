@@ -75,7 +75,7 @@ entity fmc_adc_mezzanine is
     eic_irq_o           : out std_logic;
     acq_cfg_ok_o        : out std_logic;
 
-    -- Alternate trigger input wishbone interface
+    -- Auxiliary trigger input wishbone interface
     wb_trigin_slave_i : in  t_wishbone_slave_in;
     wb_trigin_slave_o : out t_wishbone_slave_out;
 
@@ -272,14 +272,14 @@ architecture rtl of fmc_adc_mezzanine is
   signal trigger_tag  : t_timetag;
   signal time_trigger : std_logic;
 
-  -- Alternative time trigger
-  signal alt_trigin_enable_in  : std_logic;
-  signal alt_trigin_enable_out : std_logic;
-  signal alt_trigin_enable_wr  : std_logic;
-  signal alt_trigin_tag        : t_timetag;
-  signal alt_time_trigger      : std_logic;
-  signal alt_trigin_secs       : std_logic_vector(63 downto 0);
-  signal alt_trigin_cycs       : std_logic_vector(31 downto 0);
+  -- Aux time trigger
+  signal aux_trigin_enable_in  : std_logic;
+  signal aux_trigin_enable_out : std_logic;
+  signal aux_trigin_enable_wr  : std_logic;
+  signal aux_trigin_tag        : t_timetag;
+  signal aux_time_trigger      : std_logic;
+  signal aux_trigin_secs       : std_logic_vector(63 downto 0);
+  signal aux_trigin_cycs       : std_logic_vector(31 downto 0);
 begin
 
   ------------------------------------------------------------------------------
@@ -477,7 +477,7 @@ begin
 
       trigger_tag_i   => trigger_tag,
       time_trig_i     => time_trigger,
-      alt_time_trig_i => alt_time_trigger,
+      aux_time_trig_i => aux_time_trigger,
 
       wr_tm_link_up_i    => wr_tm_link_up_i,
       wr_tm_time_valid_i => wr_tm_time_valid_i,
@@ -615,31 +615,31 @@ begin
       trig_tag_o  => trigger_tag,
       time_trig_o => time_trigger,
 
-      alt_trigin_enable_o    => alt_trigin_enable_in,
-      alt_trigin_enable_i    => alt_trigin_enable_out,
-      alt_trigin_enable_wr_i => alt_trigin_enable_wr,
-      alt_trigin_tag_i       => alt_trigin_tag,
-      alt_trigin_o           => alt_time_trigger,
+      aux_trigin_enable_o    => aux_trigin_enable_in,
+      aux_trigin_enable_i    => aux_trigin_enable_out,
+      aux_trigin_enable_wr_i => aux_trigin_enable_wr,
+      aux_trigin_tag_i       => aux_trigin_tag,
+      aux_trigin_o           => aux_time_trigger,
 
       wb_i => cnx_slave_in(c_WB_SLAVE_TIMETAG),
       wb_o => cnx_slave_out(c_WB_SLAVE_TIMETAG));
 
-  cmp_alt_trigin : entity work.alt_trigin
+  cmp_aux_trigin : entity work.aux_trigin
     port map (
       rst_n_i    => sys_rst_n_i,
       clk_i      => sys_clk_i,
       wb_i       => wb_trigin_slave_i,
       wb_o       => wb_trigin_slave_o,
 
-      ctrl_enable_i  => alt_trigin_enable_in,
-      ctrl_enable_o  => alt_trigin_enable_out,
-      ctrl_wr_o      => alt_trigin_enable_wr,
+      ctrl_enable_i  => aux_trigin_enable_in,
+      ctrl_enable_o  => aux_trigin_enable_out,
+      ctrl_wr_o      => aux_trigin_enable_wr,
 
-      seconds_o      => alt_trigin_secs,
-      cycles_o       => alt_trigin_cycs
+      seconds_o      => aux_trigin_secs,
+      cycles_o       => aux_trigin_cycs
       );
 
-  alt_trigin_tag <= (seconds => alt_trigin_secs(39 downto 0),
-                     coarse => alt_trigin_cycs(27 downto 0));
+  aux_trigin_tag <= (seconds => aux_trigin_secs(39 downto 0),
+                     coarse => aux_trigin_cycs(27 downto 0));
 
 end rtl;

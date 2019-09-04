@@ -1,21 +1,21 @@
-#ifndef __CHEBY__ALT_TRIGIN__H__
-#define __CHEBY__ALT_TRIGIN__H__
+#ifndef __CHEBY__AUX_TRIGIN__H__
+#define __CHEBY__AUX_TRIGIN__H__
 
 /* Core version */
-#define ALT_TRIGIN_VERSION 0x0UL
-#define ALT_TRIGIN_VERSION_PRESET 0xadc10001UL
+#define AUX_TRIGIN_VERSION 0x0UL
+#define AUX_TRIGIN_VERSION_PRESET 0xadc10001UL
 
 /* Control register */
-#define ALT_TRIGIN_CTRL 0x4UL
-#define ALT_TRIGIN_CTRL_ENABLE 0x1UL
+#define AUX_TRIGIN_CTRL 0x4UL
+#define AUX_TRIGIN_CTRL_ENABLE 0x1UL
 
 /* Time (seconds) to trigger */
-#define ALT_TRIGIN_SECONDS 0x8UL
+#define AUX_TRIGIN_SECONDS 0x8UL
 
 /* Time (cycles) to trigger */
-#define ALT_TRIGIN_CYCLES 0x10UL
+#define AUX_TRIGIN_CYCLES 0x10UL
 
-struct alt_trigin {
+struct aux_trigin {
   /* [0x0]: REG (ro) Core version */
   uint32_t version;
   
@@ -29,4 +29,4 @@ struct alt_trigin {
   uint32_t cycles;
 };
 
-#endif /* __CHEBY__ALT_TRIGIN__H__ */
+#endif /* __CHEBY__AUX_TRIGIN__H__ */

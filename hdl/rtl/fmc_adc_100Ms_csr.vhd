@@ -20,16 +20,11 @@ package fmc_adc_100ms_csr_pkg is
     trig_en_ext      : std_logic;
     trig_en_sw       : std_logic;
     trig_en_time     : std_logic;
-    trig_en_alt_time : std_logic;
+    trig_en_aux_time : std_logic;
     trig_en_ch1      : std_logic;
     trig_en_ch2      : std_logic;
     trig_en_ch3      : std_logic;
     trig_en_ch4      : std_logic;
-    trig_en_fwd_ext  : std_logic;
-    trig_en_fwd_ch1  : std_logic;
-    trig_en_fwd_ch2  : std_logic;
-    trig_en_fwd_ch3  : std_logic;
-    trig_en_fwd_ch4  : std_logic;
     trig_pol_ext     : std_logic;
     trig_pol_ch1     : std_logic;
     trig_pol_ch2     : std_logic;
@@ -89,6 +84,8 @@ package fmc_adc_100ms_csr_pkg is
     trig_stat_ch2    : std_logic;
     trig_stat_ch3    : std_logic;
     trig_stat_ch4    : std_logic;
+    trig_en_sw       : std_logic;
+    trig_en_aux_time : std_logic;
     shots_remain     : std_logic_vector(15 downto 0);
     multi_depth      : std_logic_vector(31 downto 0);
     trig_pos         : std_logic_vector(31 downto 0);
@@ -136,18 +133,11 @@ architecture syn of fmc_adc_100ms_csr is
   signal ctl_trig_led_reg               : std_logic;
   signal ctl_acq_led_reg                : std_logic;
   signal trig_en_ext_reg                : std_logic;
-  signal trig_en_sw_reg                 : std_logic;
   signal trig_en_time_reg               : std_logic;
-  signal trig_en_alt_time_reg           : std_logic;
   signal trig_en_ch1_reg                : std_logic;
   signal trig_en_ch2_reg                : std_logic;
   signal trig_en_ch3_reg                : std_logic;
   signal trig_en_ch4_reg                : std_logic;
-  signal trig_en_fwd_ext_reg            : std_logic;
-  signal trig_en_fwd_ch1_reg            : std_logic;
-  signal trig_en_fwd_ch2_reg            : std_logic;
-  signal trig_en_fwd_ch3_reg            : std_logic;
-  signal trig_en_fwd_ch4_reg            : std_logic;
   signal trig_pol_ext_reg               : std_logic;
   signal trig_pol_ch1_reg               : std_logic;
   signal trig_pol_ch2_reg               : std_logic;
@@ -228,18 +218,11 @@ begin
   fmc_adc_100ms_csr_o.ctl_trig_led <= ctl_trig_led_reg;
   fmc_adc_100ms_csr_o.ctl_acq_led <= ctl_acq_led_reg;
   fmc_adc_100ms_csr_o.trig_en_ext <= trig_en_ext_reg;
-  fmc_adc_100ms_csr_o.trig_en_sw <= trig_en_sw_reg;
   fmc_adc_100ms_csr_o.trig_en_time <= trig_en_time_reg;
-  fmc_adc_100ms_csr_o.trig_en_alt_time <= trig_en_alt_time_reg;
   fmc_adc_100ms_csr_o.trig_en_ch1 <= trig_en_ch1_reg;
   fmc_adc_100ms_csr_o.trig_en_ch2 <= trig_en_ch2_reg;
   fmc_adc_100ms_csr_o.trig_en_ch3 <= trig_en_ch3_reg;
   fmc_adc_100ms_csr_o.trig_en_ch4 <= trig_en_ch4_reg;
-  fmc_adc_100ms_csr_o.trig_en_fwd_ext <= trig_en_fwd_ext_reg;
-  fmc_adc_100ms_csr_o.trig_en_fwd_ch1 <= trig_en_fwd_ch1_reg;
-  fmc_adc_100ms_csr_o.trig_en_fwd_ch2 <= trig_en_fwd_ch2_reg;
-  fmc_adc_100ms_csr_o.trig_en_fwd_ch3 <= trig_en_fwd_ch3_reg;
-  fmc_adc_100ms_csr_o.trig_en_fwd_ch4 <= trig_en_fwd_ch4_reg;
   fmc_adc_100ms_csr_o.trig_pol_ext <= trig_pol_ext_reg;
   fmc_adc_100ms_csr_o.trig_pol_ch1 <= trig_pol_ch1_reg;
   fmc_adc_100ms_csr_o.trig_pol_ch2 <= trig_pol_ch2_reg;
@@ -291,18 +274,11 @@ begin
         ctl_trig_led_reg <= '0';
         ctl_acq_led_reg <= '0';
         trig_en_ext_reg <= '0';
-        trig_en_sw_reg <= '0';
         trig_en_time_reg <= '0';
-        trig_en_alt_time_reg <= '0';
         trig_en_ch1_reg <= '0';
         trig_en_ch2_reg <= '0';
         trig_en_ch3_reg <= '0';
         trig_en_ch4_reg <= '0';
-        trig_en_fwd_ext_reg <= '0';
-        trig_en_fwd_ch1_reg <= '0';
-        trig_en_fwd_ch2_reg <= '0';
-        trig_en_fwd_ch3_reg <= '0';
-        trig_en_fwd_ch4_reg <= '0';
         trig_pol_ext_reg <= '0';
         trig_pol_ch1_reg <= '0';
         trig_pol_ch2_reg <= '0';
@@ -369,18 +345,13 @@ begin
           -- Register trig_en
           if wr_int = '1' then
             trig_en_ext_reg <= wb_i.dat(0);
-            trig_en_sw_reg <= wb_i.dat(1);
+            fmc_adc_100ms_csr_o.trig_en_sw <= wb_i.dat(1);
             trig_en_time_reg <= wb_i.dat(4);
-            trig_en_alt_time_reg <= wb_i.dat(5);
+            fmc_adc_100ms_csr_o.trig_en_aux_time <= wb_i.dat(5);
             trig_en_ch1_reg <= wb_i.dat(8);
             trig_en_ch2_reg <= wb_i.dat(9);
             trig_en_ch3_reg <= wb_i.dat(10);
             trig_en_ch4_reg <= wb_i.dat(11);
-            trig_en_fwd_ext_reg <= wb_i.dat(16);
-            trig_en_fwd_ch1_reg <= wb_i.dat(24);
-            trig_en_fwd_ch2_reg <= wb_i.dat(25);
-            trig_en_fwd_ch3_reg <= wb_i.dat(26);
-            trig_en_fwd_ch4_reg <= wb_i.dat(27);
           end if;
           wr_ack_int <= wr_int;
         when "0000100" => 
@@ -621,18 +592,13 @@ begin
         when "0000011" => 
           -- trig_en
           reg_rdat_int(0) <= trig_en_ext_reg;
-          reg_rdat_int(1) <= trig_en_sw_reg;
+          reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_en_sw;
           reg_rdat_int(4) <= trig_en_time_reg;
-          reg_rdat_int(5) <= trig_en_alt_time_reg;
+          reg_rdat_int(5) <= fmc_adc_100ms_csr_i.trig_en_aux_time;
           reg_rdat_int(8) <= trig_en_ch1_reg;
           reg_rdat_int(9) <= trig_en_ch2_reg;
           reg_rdat_int(10) <= trig_en_ch3_reg;
           reg_rdat_int(11) <= trig_en_ch4_reg;
-          reg_rdat_int(16) <= trig_en_fwd_ext_reg;
-          reg_rdat_int(24) <= trig_en_fwd_ch1_reg;
-          reg_rdat_int(25) <= trig_en_fwd_ch2_reg;
-          reg_rdat_int(26) <= trig_en_fwd_ch3_reg;
-          reg_rdat_int(27) <= trig_en_fwd_ch4_reg;
           rd_ack1_int <= rd_int;
         when "0000100" => 
           -- trig_pol
