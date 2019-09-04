@@ -9,6 +9,8 @@
 #include <linux/init.h>
 #include <linux/version.h>
 #include <linux/dmaengine.h>
+#include <linux/ipmi-fru.h>
+#include <linux/fmc.h>
 
 #include "fmc-adc-100m14b4cha.h"
 
@@ -493,6 +495,48 @@ static int fa_resource_validation(struct platform_device *pdev)
 	return 0;
 }
 
+#define FA_FMC_NAME "FmcAdc100m14b4cha"
+
+static bool fa_fmc_slot_is_valid(struct fa_dev *fa)
+{
+	int ret;
+	void *fru = NULL;
+	char *fmc_name = NULL;
+
+	if (!fmc_slot_fru_valid(fa->slot)) {
+		dev_err(fa->msgdev, "Can't identify FMC card: invalid FRU\n");
+		return -EINVAL;
+	}
+
+	fru = kmalloc(FRU_SIZE_MAX, GFP_KERNEL);
+	if (!fru)
+		return -ENOMEM;
+
+	ret = fmc_slot_eeprom_read(fa->slot, fru, 0x0, FRU_SIZE_MAX);
+	if (ret != FRU_SIZE_MAX) {
+		dev_err(fa->msgdev, "Failed to read FRU header\n");
+		goto err;
+	}
+
+	fmc_name = fru_get_product_name(fru);
+	ret = strcmp(fmc_name, FA_FMC_NAME);
+	if (ret) {
+		dev_err(fa->msgdev,
+			"Invalid FMC card: expectd '%s', found '%s'\n",
+			FA_FMC_NAME, fmc_name);
+		goto err;
+	}
+
+	kfree(fmc_name);
+	kfree(fru);
+
+	return true;
+err:
+	kfree(fmc_name);
+	kfree(fru);
+	return false;
+}
+
 /* probe and remove are called by fa-spec.c */
 int fa_probe(struct platform_device *pdev)
 {
@@ -550,7 +594,7 @@ int fa_probe(struct platform_device *pdev)
 	}
 
 	if (!fmc_slot_present(fa->slot)) {
-		dev_err(fa->msgdev, "Missing FMC ADC 100M card\n");
+		dev_err(fa->msgdev, "Can't identify FMC card: missing card\n");
 		goto out_fmc_pre;
 	}
 
@@ -565,6 +609,9 @@ int fa_probe(struct platform_device *pdev)
 			goto out_fmc_eeprom;
 		}
 	}
+
+	if(!fa_fmc_slot_is_valid(fa))
+		goto out_fmc_err;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
@@ -593,6 +640,7 @@ out:
 		if (m->exit)
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
+out_fmc_err:
 out_fmc_eeprom:
 out_fmc_pre:
 	fmc_slot_put(fa->slot);
