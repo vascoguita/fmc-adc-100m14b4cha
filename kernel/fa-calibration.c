@@ -93,7 +93,7 @@ static void fa_calib_cpu_to_le16s(struct fa_calib *calib)
 
 static void fa_identity_calib_set(struct fa_calib *calib)
 {
-	int i, err;
+	int i;
 
 	/* Retrieve calibration data from the eeprom, then verify it */
 	for (i = 0; i < FA_CALIB_STANZA_N; ++i) {
@@ -131,7 +131,7 @@ static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 	fa_calib_le16_to_cpus(calib);
 	err = fa_verify_calib(fa->msgdev, calib);
 	if (err) {
-		dev_info(fa->msgdev, "Apply Calibration Identity\n", __func__);
+		dev_info(fa->msgdev, "Apply Calibration Identity\n");
 		fa_identity_calib_set(&fa->calib);
 	} else {
 		memcpy(&fa->calib, calib, sizeof(*calib));
