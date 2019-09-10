@@ -195,8 +195,6 @@ struct fa_memory_ops {
 	void (*write)(u32 value, void *addr);
 };
 
-extern struct fa_memory_ops memops;
-
 /*
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
  * address offset between two registers of the same type on consecutive channel
@@ -402,6 +400,7 @@ struct fa_dev {
 	struct zio_device	*hwzdev;
 
 	struct fmc_slot	*slot;
+	struct fa_memory_ops	memops;
 
 	/* carrier common base offset addresses obtained from SDB */
 	void *fa_adc_csr_base;
@@ -522,12 +521,12 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 
 static inline u32 fa_ioread(struct fa_dev *fa, void *addr)
 {
-	return memops.read(addr);
+	return fa->memops.read(addr);
 }
 
 static inline void fa_iowrite(struct fa_dev *fa, u32 value, void *addr)
 {
-	memops.write(value, addr);
+	fa->memops.write(value, addr);
 }
 
 static inline uint32_t fa_readl(struct fa_dev *fa,

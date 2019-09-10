@@ -22,11 +22,6 @@ module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
 
 #define FA_EEPROM_TYPE "at24c64"
 
-struct fa_memory_ops memops = {
-	.read = NULL,
-	.write = NULL,
-};
-
 
 static const int zfad_hw_range[] = {
 	[FA100M14B4C_RANGE_10V_CAL]   = 0x44,
@@ -561,13 +556,13 @@ int fa_probe(struct platform_device *pdev)
 	/* Assign IO operation */
 	switch (pdev->id_entry->driver_data) {
 	case ADC_VER_SPEC:
-		memops.read = ioread32;
-		memops.write = iowrite32;
+		fa->memops.read = ioread32;
+		fa->memops.write = iowrite32;
 		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
 		break;
 	case ADC_VER_SVEC:
-		memops.read = ioread32be;
-		memops.write = iowrite32be;
+		fa->memops.read = ioread32be;
+		fa->memops.write = iowrite32be;
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
 		break;
 	default:
