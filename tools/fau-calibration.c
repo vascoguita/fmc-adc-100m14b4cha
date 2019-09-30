@@ -55,8 +55,6 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 {
 	int fd;
 	int ret = 0;
-	uint16_t *data16 = (uint16_t *)calib;
-	int i;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
@@ -65,10 +63,6 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 	if (ret >= 0)
 		ret = read(fd, calib, sizeof(*calib));
 	close(fd);
-
-	/* Fix endianess */
-	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); ++i)
-		data16[i] = le16toh(data16[i]);
 
 	return ret;
 }
@@ -95,6 +89,13 @@ static void fau_calibration_dump_stanza(struct fa_calib_stanza *stanza)
  */
 static void fau_calibration_dump_human(struct fa_calib *calib)
 {
+	uint16_t *data16 = (uint16_t *)calib;
+	int i;
+
+	/* Fix endianess */
+	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); ++i)
+		data16[i] = le16toh(data16[i]);
+
 	fputs("ADC Range 10V\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_10V]);
 	fputs("DAC Range 10V\n", stdout);
@@ -130,10 +131,7 @@ static void fau_calibration_dump_machine(struct fa_calib *calib)
  */
 static int fau_calibration_write(unsigned int devid, struct fa_calib *calib)
 {
-	struct fa_calib calib_cp;
 	char path[128];
-	uint16_t *data16;
-	int i;
 	int fd;
 	int ret;
 
@@ -141,16 +139,10 @@ static int fau_calibration_write(unsigned int devid, struct fa_calib *calib)
 		"/sys/bus/zio/devices/adc-100m14b-%04x/calibration_data",
 		devid);
 
-	/* Fix endianess */
-	memcpy(&calib_cp, calib, sizeof(calib_cp));
-	data16 = (uint16_t *) &calib_cp;
-	for (i = 0; i < sizeof(calib_cp) / sizeof(uint16_t); ++i)
-		data16[i] = htole16(data16[i]);
-
 	fd = open(path, O_WRONLY);
 	if (fd < 0)
 		return -1;
-	ret = write(fd, &calib_cp, sizeof(calib_cp));
+	ret = write(fd, calib, sizeof(*calib));
 	close(fd);
 
 	return ret;
