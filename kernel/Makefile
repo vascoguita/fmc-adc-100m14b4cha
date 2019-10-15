@@ -20,7 +20,7 @@ ZIO_ABS ?= $(DKMSTREE)/zio/$(ZIO_VERSION)/source
 ZIO_EXTRA_SYMBOLS-y = $(DKMSTREE)/zio/kernel-$(KVERSION)-$(shell uname -p)/module/Module.symvers
 else
 ZIO_ABS ?= $(abspath $(ZIO))
-ZIO_EXTRA_SYMBOLS-y = $(ZIO_ABS)/Module.symvers
+ZIO_EXTRA_SYMBOLS-y = $(ZIO_ABS)/drivers/zio/Module.symvers
 ZIO_VERSION ?= $(shell cd $(ZIO_ABS); git describe --always --dirty --long --tags)
 FMC_ABS ?= $(abspath $(FMC))
 FMC_EXTRA_SYMBOLS-y = $(FMC_ABS)/drivers/fmc/Module.symvers
