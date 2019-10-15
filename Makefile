@@ -58,4 +58,4 @@ $(ZIO_ABS): zio-init_repo
 
 # init submodule if missing
 zio-init_repo:
-	@test -d $(ZIO_ABS)/doc || ( echo "Checking out submodule $(ZIO_ABS)" && git submodule update --init $(ZIO_ABS) )
+	@test -d $(ZIO_ABS)/Documentation || ( echo "Checking out submodule $(ZIO_ABS)" && git submodule update --init $(ZIO_ABS) )
