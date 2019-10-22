@@ -9,8 +9,8 @@
 #include <linux/init.h>
 #include <linux/version.h>
 #include <linux/dmaengine.h>
-#include <linux/ipmi-fru.h>
-#include <linux/fmc.h>
+#include "linux/ipmi-fru.h"
+#include "linux/fmc.h"
 
 #include "fmc-adc-100m14b4cha.h"
 
