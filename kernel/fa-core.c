@@ -9,6 +9,7 @@
 #include <linux/init.h>
 #include <linux/version.h>
 #include <linux/dmaengine.h>
+#include <linux/mod_devicetable.h>
 #include "linux/ipmi-fru.h"
 #include "linux/fmc.h"
 
