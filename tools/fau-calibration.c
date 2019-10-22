@@ -18,7 +18,6 @@
 
 #include <fmc-adc-100m14b4cha.h>
 
-static const char program_name[] = "fau-calibration";
 static char options[] = "hf:o:D:b";
 static const char help_msg[] =
 	"Usage: fau-calibration [options]\n"
@@ -116,9 +115,9 @@ static void fau_calibration_dump_human(struct fa_calib *calib)
  * Print binary calibration data on stdout
  * @calib: calibration data
  */
-static void fau_calibration_dump_machine(struct fa_calib *calib)
+static int fau_calibration_dump_machine(struct fa_calib *calib)
 {
-	write(fileno(stdout), calib, sizeof(*calib));
+	return write(fileno(stdout), calib, sizeof(*calib));
 }
 
 /**
