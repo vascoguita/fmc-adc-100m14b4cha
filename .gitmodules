@@ -13,3 +13,6 @@
 [submodule "hdl/ip_cores/wr-cores"]
 	path = hdl/ip_cores/wr-cores
 	url = https://ohwr.org/project/wr-cores.git
+[submodule "hdl/ip_cores/spec"]
+	path = hdl/ip_cores/spec
+	url = https://ohwr.org/project/spec.git

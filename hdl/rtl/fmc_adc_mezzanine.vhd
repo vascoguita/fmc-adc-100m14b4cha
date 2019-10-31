@@ -119,9 +119,6 @@ entity fmc_adc_mezzanine is
 
     mezz_one_wire_b : inout std_logic;  -- Mezzanine 1-wire interface (DS18B20 thermometer + unique ID)
 
-    sys_scl_b : inout std_logic;                  -- Mezzanine system I2C clock (EEPROM)
-    sys_sda_b : inout std_logic;                  -- Mezzanine system I2C data (EEPROM)
-
     wr_tm_link_up_i    : in std_logic;            -- WR link status bit
     wr_tm_time_valid_i : in std_logic;            -- WR timecode valid status bit
     wr_tm_tai_i        : in std_logic_vector(39 downto 0);  -- WR timecode seconds
@@ -234,14 +231,6 @@ architecture rtl of fmc_adc_mezzanine is
   signal wb_csr_out : t_wishbone_slave_in;
   signal wb_csr_in  : t_wishbone_slave_out;
 
-  -- Mezzanine system I2C for EEPROM
-  signal sys_scl_in   : std_logic;
-  signal sys_scl_out  : std_logic;
-  signal sys_scl_oe_n : std_logic;
-  signal sys_sda_in   : std_logic;
-  signal sys_sda_out  : std_logic;
-  signal sys_sda_oe_n : std_logic;
-
   -- Mezzanine SPI
   signal spi_din_t : std_logic_vector(3 downto 0) := (others => '0');
   signal spi_ss_t  : std_logic_vector(7 downto 0);
@@ -349,20 +338,12 @@ begin
       slave_o => cnx_slave_out(c_WB_SLAVE_FMC_SYS_I2C),
       desc_o  => open,
 
-      scl_pad_i(0)    => sys_scl_in,
-      scl_pad_o(0)    => sys_scl_out,
-      scl_padoen_o(0) => sys_scl_oe_n,
-      sda_pad_i(0)    => sys_sda_in,
-      sda_pad_o(0)    => sys_sda_out,
-      sda_padoen_o(0) => sys_sda_oe_n
-      );
-
-  -- Tri-state buffer for SDA and SCL
-  sys_scl_b  <= sys_scl_out when sys_scl_oe_n = '0' else 'Z';
-  sys_scl_in <= sys_scl_b;
-
-  sys_sda_b  <= sys_sda_out when sys_sda_oe_n = '0' else 'Z';
-  sys_sda_in <= sys_sda_b;
+      scl_pad_i(0)    => '1',
+      scl_pad_o(0)    => open,
+      scl_padoen_o(0) => open,
+      sda_pad_i(0)    => '1',
+      sda_pad_o(0)    => open,
+      sda_padoen_o(0) => open);
 
   ------------------------------------------------------------------------------
   -- Mezzanine SPI master
