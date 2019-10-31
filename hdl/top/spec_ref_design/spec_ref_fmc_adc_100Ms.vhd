@@ -41,7 +41,7 @@ use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
 use work.synthesis_descriptor.all;
-use work.carrier_csr_wbgen2_pkg.all;
+use work.spec_carrier_csr_pkg.all;
 use work.wr_xilinx_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_spec_pkg.all;
@@ -433,8 +433,8 @@ architecture rtl of spec_ref_fmc_adc_100Ms is
   signal tm_time_valid      : std_logic;
 
   -- IO for CSR registers
-  signal csr_regin  : t_carrier_csr_in_registers;
-  signal csr_regout : t_carrier_csr_out_registers;
+  signal csr_regin  : t_carrier_csr_master_in;
+  signal csr_regout : t_carrier_csr_master_out;
 
 begin
 
@@ -622,38 +622,26 @@ begin
   --    Release tag
   --    VCXO DAC control (CLR_N)
   ------------------------------------------------------------------------------
-  cmp_carrier_csr : entity work.carrier_csr
+  cmp_carrier_csr : entity work.spec_carrier_csr
     port map (
-      rst_n_i    => rst_sys_62m5_n,
-      clk_sys_i  => clk_sys_62m5,
-      wb_adr_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).adr(3 downto 2),  -- cnx_slave_in.adr is byte address
-      wb_dat_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).dat,
-      wb_dat_o   => cnx_slave_out(c_WB_SLAVE_SPEC_CSR).dat,
-      wb_cyc_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).cyc,
-      wb_sel_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).sel,
-      wb_stb_i   => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).stb,
-      wb_we_i    => cnx_slave_in(c_WB_SLAVE_SPEC_CSR).we,
-      wb_ack_o   => cnx_slave_out(c_WB_SLAVE_SPEC_CSR).ack,
-      wb_stall_o => open,
-      regs_i     => csr_regin,
-      regs_o     => csr_regout);
+      rst_n_i       => rst_sys_62m5_n,
+      clk_i         => clk_sys_62m5,
+      wb_i          => cnx_slave_in(c_WB_SLAVE_SPEC_CSR),
+      wb_o          => cnx_slave_out(c_WB_SLAVE_SPEC_CSR),
+      carrier_csr_i => csr_regin,
+      carrier_csr_o => csr_regout);
 
-  csr_regin.carrier_pcb_rev_i    <= pcbrev_i;
-  csr_regin.carrier_reserved_i   <= (others => '0');
-  csr_regin.carrier_type_i       <= c_CARRIER_TYPE;
-  csr_regin.stat_fmc_pres_i      <= fmc_prsnt_m2c_n_i;
-  csr_regin.stat_p2l_pll_lck_i   <= gn4124_status(0);
-  csr_regin.stat_sys_pll_lck_i   <= sys_clk_pll_locked;
-  csr_regin.stat_ddr3_cal_done_i <= ddr_calib_done;
+  csr_regin.carrier_pcb_rev    <= pcbrev_i;
+  csr_regin.carrier_reserved   <= (others => '0');
+  csr_regin.carrier_type       <= c_CARRIER_TYPE;
+  csr_regin.stat_fmc_pres      <= fmc_prsnt_m2c_n_i;
+  csr_regin.stat_p2l_pll_lck   <= gn4124_status(0);
+  csr_regin.stat_sys_pll_lck   <= sys_clk_pll_locked;
+  csr_regin.stat_ddr3_cal_done <= ddr_calib_done;
 
-  led_red    <= csr_regout.ctrl_led_red_o;
-  led_green  <= csr_regout.ctrl_led_green_o;
-  sw_rst_fmc <= csr_regout.rst_fmc0_o;
-
-  -- Unused wishbone signals
-  cnx_slave_out(c_WB_SLAVE_SPEC_CSR).err   <= '0';
-  cnx_slave_out(c_WB_SLAVE_SPEC_CSR).rty   <= '0';
-  cnx_slave_out(c_WB_SLAVE_SPEC_CSR).stall <= '0';
+  led_red    <= csr_regout.ctrl_led_red;
+  led_green  <= csr_regout.ctrl_led_green;
+  sw_rst_fmc <= csr_regout.rst_fmc0;
 
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)

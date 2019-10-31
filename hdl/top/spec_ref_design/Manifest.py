@@ -1,7 +1,6 @@
 files = [
     "spec_ref_fmc_adc_100Ms.vhd",
-    "carrier_csr.vhd",
-    "carrier_csr_wbgen2_pkg.vhd",
+    "spec_carrier_csr.vhd",
     "dma_eic.vhd",
 ]
 
