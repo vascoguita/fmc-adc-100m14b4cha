@@ -1,0 +1,473 @@
+<HTML>
+<HEAD>
+<TITLE>svec_carrier_csr</TITLE>
+<STYLE TYPE="text/css" MEDIA="all">
+<!--
+  BODY { background: white; color: black;
+         font-family: Arial,Helvetica; font-size:12; }
+  h1 { font-family: Trebuchet MS,Arial,Helvetica; font-size:30;
+       color:#404040; }
+  h2 { font-family: Trebuchet MS,Arial,Helvetica; font-size:22;
+       color:#404040; }
+  h3 { font-family: Trebuchet MS,Arial,Helvetica; font-size:16;
+       color:#404040; }
+  .td_arrow_left { padding:0px; background: #ffffff; text-align: right;
+                   font-size:12; }
+  .td_arrow_right { padding:0px; background: #ffffff; text-align: left;
+                    font-size:12; }
+  .td_code { font-family:Courier New,Courier; padding: 3px; }
+  .td_desc { padding: 3px; }
+  .td_sym_center { background: #e0e0f0; padding: 3px; }
+  .td_port_name { font-family:Courier New,Courier; background: #e0e0f0;
+                  text-align: right; font-weight:bold;
+                  padding: 3px; width:200px; }
+  .td_pblock_left { font-family:Courier New,Courier; background: #e0e0f0;
+                    padding: 0px; text-align: left; }
+  .td_pblock_right { font-family:Courier New,Courier;
+                     background: #e0e0f0;
+                     padding: 0px; text-align: right; }
+  .td_bit { background: #ffffff; color:#404040;
+            font-size:10; width: 70px;
+            font-family:Courier New,Courier; padding: 3px;
+            text-align:center; }
+  .td_field { background: #e0e0f0; padding: 3px; text-align:center;
+              border: solid 1px black; }
+  .td_unused { background: #a0a0a0; padding: 3px; text-align:center;  }
+  th { font-weight:bold; color:#ffffff; background: #202080;
+       padding:3px; }
+  .tr_even { background: #f0eff0; }
+  .tr_odd { background: #e0e0f0; }
+-->
+</STYLE>
+</HEAD>
+<BODY>
+<h1 class="heading">svec_carrier_csr</h1>
+<h3>SVEC carrier control and status registers</h3>
+<p>Wishbone slave for control and status registers related to the SVEC FMC carrier</p>
+<h3><a name="sect_1_0">1. Memory map summary</a></h3>
+<table cellpadding=2 cellspacing=0 border=0>
+<tr>
+<th>HW address</th>
+<th>Type</th>
+<th>Name</th>
+<th>HDL prefix</th>
+<th>C prefix</th>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x0</td>
+<td>REG</td>
+<td><A href="#carrier">carrier</a></td>
+<td class="td_code">carrier</td>
+<td class="td_code">carrier</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x4</td>
+<td>REG</td>
+<td><A href="#stat">stat</a></td>
+<td class="td_code">stat</td>
+<td class="td_code">stat</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x8</td>
+<td>REG</td>
+<td><A href="#ctrl">ctrl</a></td>
+<td class="td_code">ctrl</td>
+<td class="td_code">ctrl</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0xc</td>
+<td>REG</td>
+<td><A href="#rst">rst</a></td>
+<td class="td_code">rst</td>
+<td class="td_code">rst</td>
+</tr>
+</table>
+
+<h3><a name="sect_3_0">2. Register description</a></h3>
+<a name="carrier"></a>
+<h3><a name="sect_3_1">2.1. carrier</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">carrier</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x0</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">carrier</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x0</td></tr>
+</table>
+<p>
+Carrier type and PCB version
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">type[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">type[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">reserved[10:3]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="3">reserved[2:0]</td>
+ <td class="td_field" colspan="5">pcb_rev[4:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+pcb_rev
+</b>[<i>ro</i>]: PCB revision
+<br>Binary coded PCB layout revision.
+<li><b>
+reserved
+</b>[<i>ro</i>]: Reserved register
+<br>Ignore on read, write with 0's.
+<li><b>
+type
+</b>[<i>ro</i>]: Carrier type
+<br>Carrier type identifier<br>1 = SPEC<br>2 = SVEC<br>3 = VFC<br>4 = SPEXI
+</ul>
+<a name="stat"></a>
+<h3><a name="sect_3_2">2.2. stat</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">stat</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x4</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">stat</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x4</td></tr>
+</table>
+<p>
+Status
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">ddr1_cal_done</td>
+ <td class="td_field" colspan="1">ddr0_cal_done</td>
+ <td class="td_field" colspan="1">sys_pll_lck</td>
+ <td class="td_field" colspan="1">fmc1_pres</td>
+ <td class="td_field" colspan="1">fmc0_pres</td>
+</tr>
+</table>
+<ul>
+<li><b>
+fmc0_pres
+</b>[<i>ro</i>]: FMC 1 presence
+<br>0: FMC slot 1 is populated<br>1: FMC slot 1 is not populated.
+<li><b>
+fmc1_pres
+</b>[<i>ro</i>]: FMC 2 presence
+<br>0: FMC slot 2 is populated<br>1: FMC slot 2 is not populated.
+<li><b>
+sys_pll_lck
+</b>[<i>ro</i>]: System clock PLL status
+<br>0: not locked<br>1: locked.
+<li><b>
+ddr0_cal_done
+</b>[<i>ro</i>]: DDR3 bank 4 calibration status
+<br>0: not done<br>1: done.
+<li><b>
+ddr1_cal_done
+</b>[<i>ro</i>]: DDR3 bank 5 calibration status
+<br>0: not done<br>1: done.
+</ul>
+<a name="ctrl"></a>
+<h3><a name="sect_3_3">2.3. ctrl</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ctrl</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x8</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ctrl</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x8</td></tr>
+</table>
+<p>
+Control
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">fp_leds_man[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">fp_leds_man[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+fp_leds_man
+</b>[<i>rw</i>]: Front panel LED manual control
+<br>Height front panel LED, two bits per LED.<br>00 = OFF<br>01 = Green<br>10 = Red<br>11 = Orange
+</ul>
+<a name="rst"></a>
+<h3><a name="sect_3_4">2.4. rst</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">rst</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xc</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">rst</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xc</td></tr>
+</table>
+<p>
+Reset Register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">fmc1</td>
+ <td class="td_field" colspan="1">fmc0</td>
+</tr>
+</table>
+<ul>
+<li><b>
+fmc0
+</b>[<i>wo</i>]: State of the FMC 1 reset line
+<br>write 0: Normal FMC operation<br>write 1: FMC is held in reset
+<li><b>
+fmc1
+</b>[<i>wo</i>]: State of the FMC 2 reset line
+<br>write 0: Normal FMC operation<br>write 1: FMC is held in reset
+</ul>
+
+
+</BODY>
+</HTML>

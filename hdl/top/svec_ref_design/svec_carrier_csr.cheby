@@ -1,0 +1,121 @@
+memory-map:
+  bus: wb-32-be
+  name: svec_carrier_csr
+  description: SVEC carrier control and status registers
+  comment: |
+    Wishbone slave for control and status registers related to the SVEC FMC carrier
+  x-hdl:
+    busgroup: True
+    iogroup: carrier_csr
+  children:
+  - reg:
+      name: carrier
+      address: 0x00000000
+      width: 32
+      access: ro
+      description: Carrier type and PCB version
+      children:
+      - field:
+          name: pcb_rev
+          range: 4-0
+          description: PCB revision
+          comment: |
+            Binary coded PCB layout revision.
+      - field:
+          name: reserved
+          range: 15-5
+          description: Reserved register
+          comment: |
+            Ignore on read, write with 0's.
+      - field:
+          name: type
+          range: 31-16
+          description: Carrier type
+          comment: |
+            Carrier type identifier
+            1 = SPEC
+            2 = SVEC
+            3 = VFC
+            4 = SPEXI
+  - reg:
+      name: stat
+      address: 0x00000004
+      width: 32
+      access: ro
+      description: Status
+      children:
+      - field:
+          name: fmc0_pres
+          range: 0
+          description: FMC 1 presence
+          comment: |
+            0: FMC slot 1 is populated
+            1: FMC slot 1 is not populated.
+      - field:
+          name: fmc1_pres
+          range: 1
+          description: FMC 2 presence
+          comment: |
+            0: FMC slot 2 is populated
+            1: FMC slot 2 is not populated.
+      - field:
+          name: sys_pll_lck
+          range: 2
+          description: System clock PLL status
+          comment: |
+            0: not locked
+            1: locked.
+      - field:
+          name: ddr0_cal_done
+          range: 3
+          description: DDR3 bank 4 calibration status
+          comment: |
+            0: not done
+            1: done.
+      - field:
+          name: ddr1_cal_done
+          range: 4
+          description: DDR3 bank 5 calibration status
+          comment: |
+            0: not done
+            1: done.
+  - reg:
+      name: ctrl
+      address: 0x00000008
+      width: 32
+      access: rw
+      description: Control
+      children:
+      - field:
+          name: fp_leds_man
+          range: 15-0
+          description: Front panel LED manual control
+          comment: |
+            Height front panel LED, two bits per LED.
+            00 = OFF
+            01 = Green
+            10 = Red
+            11 = Orange
+  - reg:
+      name: rst
+      address: 0x0000000c
+      width: 32
+      access: wo
+      description: Reset Register
+      comment: |
+        Controls software reset of the mezzanines including the ddr interface and the time-tagging core.
+      children:
+      - field:
+          name: fmc0
+          range: 0
+          description: State of the FMC 1 reset line
+          comment: |
+            write 0: Normal FMC operation
+            write 1: FMC is held in reset
+      - field:
+          name: fmc1
+          range: 1
+          description: State of the FMC 2 reset line
+          comment: |
+            write 0: Normal FMC operation
+            write 1: FMC is held in reset
