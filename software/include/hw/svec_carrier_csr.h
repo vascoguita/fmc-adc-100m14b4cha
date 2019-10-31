@@ -1,0 +1,46 @@
+#ifndef __CHEBY__SVEC_CARRIER_CSR__H__
+#define __CHEBY__SVEC_CARRIER_CSR__H__
+#define SVEC_CARRIER_CSR_SIZE 16
+
+/* Carrier type and PCB version */
+#define SVEC_CARRIER_CSR_CARRIER 0x0UL
+#define SVEC_CARRIER_CSR_CARRIER_PCB_REV_MASK 0x1fUL
+#define SVEC_CARRIER_CSR_CARRIER_PCB_REV_SHIFT 0
+#define SVEC_CARRIER_CSR_CARRIER_RESERVED_MASK 0xffe0UL
+#define SVEC_CARRIER_CSR_CARRIER_RESERVED_SHIFT 5
+#define SVEC_CARRIER_CSR_CARRIER_TYPE_MASK 0xffff0000UL
+#define SVEC_CARRIER_CSR_CARRIER_TYPE_SHIFT 16
+
+/* Status */
+#define SVEC_CARRIER_CSR_STAT 0x4UL
+#define SVEC_CARRIER_CSR_STAT_FMC0_PRES 0x1UL
+#define SVEC_CARRIER_CSR_STAT_FMC1_PRES 0x2UL
+#define SVEC_CARRIER_CSR_STAT_SYS_PLL_LCK 0x4UL
+#define SVEC_CARRIER_CSR_STAT_DDR0_CAL_DONE 0x8UL
+#define SVEC_CARRIER_CSR_STAT_DDR1_CAL_DONE 0x10UL
+
+/* Control */
+#define SVEC_CARRIER_CSR_CTRL 0x8UL
+#define SVEC_CARRIER_CSR_CTRL_FP_LEDS_MAN_MASK 0xffffUL
+#define SVEC_CARRIER_CSR_CTRL_FP_LEDS_MAN_SHIFT 0
+
+/* Reset Register */
+#define SVEC_CARRIER_CSR_RST 0xcUL
+#define SVEC_CARRIER_CSR_RST_FMC0 0x1UL
+#define SVEC_CARRIER_CSR_RST_FMC1 0x2UL
+
+struct svec_carrier_csr {
+  /* [0x0]: REG (ro) Carrier type and PCB version */
+  uint32_t carrier;
+
+  /* [0x4]: REG (ro) Status */
+  uint32_t stat;
+
+  /* [0x8]: REG (rw) Control */
+  uint32_t ctrl;
+
+  /* [0xc]: REG (wo) Reset Register */
+  uint32_t rst;
+};
+
+#endif /* __CHEBY__SVEC_CARRIER_CSR__H__ */

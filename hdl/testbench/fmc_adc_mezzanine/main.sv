@@ -3,8 +3,8 @@
 `include "vhd_wishbone_master.svh"
 `include "fmc_adc_100Ms_csr.v"
 `include "timetag_core_regs.v"
-`include "fmc_adc_alt_trigin.v"
-`include "fmc_adc_alt_trigout.v"
+`include "fmc_adc_aux_trigin.v"
+`include "fmc_adc_aux_trigout.v"
 
 `define SDB_ADDR 'h0000
 `define CSR_BASE 'h1000
@@ -201,14 +201,14 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS,        'h00000001);
 
       // FMC-ADC core channel configuration
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_GAIN, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_GAIN, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_GAIN, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_GAIN, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_SAT,  'h00007fff);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_SAT,  'h00007fff);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_SAT,  'h00007fff);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_SAT,  'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_CALIB, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_CALIB, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_CALIB, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_CALIB, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_SAT,   'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_SAT,   'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_SAT,   'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_SAT,   'h00007fff);
 
       // FMC-ADC core trigger configuration
       val = (16'h100 << `FMC_ADC_100MS_CSR_CH1_TRIG_THRES_HYST_OFFSET) |
@@ -217,9 +217,6 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_TRIG_THRES, val);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_TRIG_THRES, val);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_TRIG_THRES, val);
-      // Enable only software trigger.
-      val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
       expected = 'h39;
       acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val);
@@ -230,27 +227,18 @@ module main;
 	end
 
       // Check trigout status
-      trigout_acc.read(`ADDR_ALT_TRIGOUT_STATUS, val);
-      val &= `ALT_TRIGOUT_TS_PRESENT;
+      trigout_acc.read(`ADDR_AUX_TRIGOUT_STATUS, val);
+      val &= `AUX_TRIGOUT_TS_PRESENT;
       expected = 0;
       if (val != expected)
 	$fatal (1, "trigout status error (got 0x%8x, expected 0x%8x).",
 		val, expected);
 
-      //  Save all triggers in trigout fifo.
-      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
-      val |= `FMC_ADC_100MS_CSR_TRIG_EN_FWD_EXT
-	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH1
-	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH2
-	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH3
-	     | `FMC_ADC_100MS_CSR_TRIG_EN_FWD_CH4;
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
-
       #1us;
 
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_SECONDS_UPPER, 'h00000032); // timetag core seconds high
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_SECONDS_LOWER, 'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_COARSE, 'h00000000); // timetag core ticks
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_SECONDS_UPPER, 'h00000032); // timetag core seconds high
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_SECONDS_LOWER, 'h00005a34); // timetag core seconds low
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_COARSE, 'h00000000); // timetag core ticks
 
       wait (acq_fsm_state == 1);
       $display("<%t> START ACQ 1", $realtime);
@@ -291,8 +279,7 @@ module main;
 
       // FMC-ADC core trigger configuration
       acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
-      val |= (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET)  |
-	     (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH1_OFFSET) |
+      val |= (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH1_OFFSET) |
 	     (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH3_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 
@@ -313,11 +300,11 @@ module main;
       #1us;
 
       // set time trigger
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_UPPER,
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_SECONDS_UPPER,
 		'h00000032); // timetag core seconds high
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_SECONDS_LOWER,
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_SECONDS_LOWER,
 		'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE,
+      acc.write(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_COARSE,
 		'h00000e00); // timetag core ticks
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000010);
@@ -356,14 +343,14 @@ module main;
       #1us;
 
       // set time trigger
-      trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 0, 'h00000032);
-      trigin_acc.write(`ADDR_ALT_TRIGIN_SECONDS + 4, 'h00005a34);
-      acc.read(`TAG_BASE + `ADDR_TIMETAG_CORE_TIME_TRIG_COARSE, val);
-      trigin_acc.write(`ADDR_ALT_TRIGIN_CYCLES, val + 'h00001000);
-      trigin_acc.write(`ADDR_ALT_TRIGIN_CTRL, `ALT_TRIGIN_CTRL_ENABLE);
+      trigin_acc.write(`ADDR_AUX_TRIGIN_SECONDS + 0, 'h00000032);
+      trigin_acc.write(`ADDR_AUX_TRIGIN_SECONDS + 4, 'h00005a34);
+      acc.read(`TAG_BASE + `ADDR_TIMETAG_CORE_REGS_TIME_TRIG_COARSE, val);
+      trigin_acc.write(`ADDR_AUX_TRIGIN_CYCLES, val + 'h00001000);
+      trigin_acc.write(`ADDR_AUX_TRIGIN_CTRL, `AUX_TRIGIN_CTRL_ENABLE);
 
-      trigin_acc.read(`ADDR_ALT_TRIGIN_CTRL, val);
-      expected = `ALT_TRIGIN_CTRL_ENABLE;
+      trigin_acc.read(`ADDR_AUX_TRIGIN_CTRL, val);
+      expected = `AUX_TRIGIN_CTRL_ENABLE;
       if (val != expected)
 	begin
 	   $fatal (1, "trigin ctrl error (got 0x%8x, expected 0x%8x).",
@@ -374,8 +361,7 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000008);
 
       // FMC-ADC core trigger configuration
-      val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_ALT_TIME_OFFSET);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, 0);
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h0000001);
 
@@ -386,7 +372,7 @@ module main;
 
       wait (acq_fsm_state == 1);
 
-      trigin_acc.read(`ADDR_ALT_TRIGIN_CTRL, val);
+      trigin_acc.read(`ADDR_AUX_TRIGIN_CTRL, val);
       expected = 0;
       if (val != expected)
 	begin
@@ -401,13 +387,13 @@ module main;
       while (1) begin
 	 uint64_t sec_hi, sec_lo, cycs;
 
-	 trigout_acc.read(`ADDR_ALT_TRIGOUT_STATUS, val);
-	 if (!(val & `ALT_TRIGOUT_TS_PRESENT))
+	 trigout_acc.read(`ADDR_AUX_TRIGOUT_STATUS, val);
+	 if (!(val & `AUX_TRIGOUT_TS_PRESENT))
 	   break;
 
-	 trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 0, sec_hi);
-	 trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_MASK_SEC + 4, sec_lo);
-	 trigout_acc.read(`ADDR_ALT_TRIGOUT_TS_CYCLES, cycs);
+	 trigout_acc.read(`ADDR_AUX_TRIGOUT_TS_MASK_SEC + 0, sec_hi);
+	 trigout_acc.read(`ADDR_AUX_TRIGOUT_TS_MASK_SEC + 4, sec_lo);
+	 trigout_acc.read(`ADDR_AUX_TRIGOUT_TS_CYCLES, cycs);
 
 	 $display("trigout TS: 0x%16x 0x%8x",
 		  ((sec_hi << 32) | sec_lo), cycs);

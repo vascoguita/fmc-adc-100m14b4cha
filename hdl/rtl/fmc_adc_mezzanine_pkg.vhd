@@ -34,7 +34,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
-use work.timetag_core_pkg.all;
+use work.timetag_core_defs_pkg.all;
 use work.wishbone_pkg.all;
 
 package fmc_adc_mezzanine_pkg is
@@ -80,7 +80,7 @@ package fmc_adc_mezzanine_pkg is
       eic_irq_o           : out std_logic;
       acq_cfg_ok_o        : out std_logic;
 
-      -- Alternate trigger input wishbone interface
+      -- Auxiliary trigger input wishbone interface
       wb_trigin_slave_i : in  t_wishbone_slave_in := c_DUMMY_WB_SLAVE_IN;
       wb_trigin_slave_o : out t_wishbone_slave_out;
 

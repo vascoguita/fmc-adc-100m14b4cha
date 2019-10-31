@@ -33,11 +33,11 @@ library unisim;
 use unisim.vcomponents.all;
 
 library work;
-use work.timetag_core_pkg.all;
+use work.timetag_core_defs_pkg.all;
 use work.genram_pkg.all;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
-use work.fmc_adc_100Ms_csr_wbgen2_pkg.all;
+use work.fmc_adc_100ms_csr_pkg.all;
 
 entity fmc_adc_100Ms_core is
   generic (
@@ -82,7 +82,7 @@ entity fmc_adc_100Ms_core is
     -- Trigger time-tag inputs
     trigger_tag_i   : in t_timetag;
     time_trig_i     : in std_logic;
-    alt_time_trig_i : in std_logic;
+    aux_time_trig_i : in std_logic;
 
     -- WR status (for trigout).
     wr_tm_link_up_i    : in std_logic;
@@ -118,24 +118,6 @@ architecture rtl of fmc_adc_100Ms_core is
   ------------------------------------------------------------------------------
   -- Components declaration
   ------------------------------------------------------------------------------
-
-  component fmc_adc_100Ms_csr is
-    port (
-      rst_n_i    : in  std_logic;
-      clk_sys_i  : in  std_logic;
-      wb_adr_i   : in  std_logic_vector(7 downto 0);
-      wb_dat_i   : in  std_logic_vector(31 downto 0);
-      wb_dat_o   : out std_logic_vector(31 downto 0);
-      wb_cyc_i   : in  std_logic;
-      wb_sel_i   : in  std_logic_vector(3 downto 0);
-      wb_stb_i   : in  std_logic;
-      wb_we_i    : in  std_logic;
-      wb_ack_o   : out std_logic;
-      wb_stall_o : out std_logic;
-      fs_clk_i   : in  std_logic;
-      regs_i     : in  t_fmc_adc_100Ms_csr_in_registers;
-      regs_o     : out t_fmc_adc_100Ms_csr_out_registers);
-  end component fmc_adc_100Ms_csr;
 
   component offset_gain_s
     port (
@@ -191,9 +173,12 @@ architecture rtl of fmc_adc_100Ms_core is
   attribute keep of fs_clk : signal is "TRUE";
 
   -- SerDes
-  signal serdes_out_data     : std_logic_vector(63 downto 0);
-  signal serdes_man_bitslip  : std_logic;
-  signal serdes_synced       : std_logic;
+  signal serdes_out_data         : std_logic_vector(63 downto 0);
+  signal serdes_out_data_synced  : std_logic_vector(63 downto 0);
+  signal serdes_man_bitslip      : std_logic;
+  signal serdes_man_bitslip_sync : std_logic;
+  signal serdes_synced           : std_logic;
+  signal serdes_synced_sync      : std_logic;
 
   -- Trigger
   signal ext_trig_a, ext_trig       : std_logic;
@@ -208,32 +193,37 @@ architecture rtl of fmc_adc_100Ms_core is
   signal int_trig                   : std_logic_vector(1 to 4);
   signal int_trig_d                 : std_logic_vector(1 to 4);
   signal int_trig_data              : t_fmc_adc_vec16_array(1 to 4);
+  signal int_trig_delay_in          : t_fmc_adc_vec32_array(1 to 4);
   signal int_trig_delay             : t_fmc_adc_vec32_array(1 to 4);
   signal int_trig_delay_cnt         : t_fmc_adc_uint32_array(1 to 4);
   signal int_trig_delay_bsy         : std_logic_vector(1 to 4);
+  signal int_trig_en_in             : std_logic_vector(1 to 4);
+  signal int_trig_pol_in            : std_logic_vector(1 to 4);
   signal int_trig_en                : std_logic_vector(1 to 4);
   signal int_trig_pol               : std_logic_vector(1 to 4);
   signal int_trig_thres             : t_fmc_adc_vec16_array(1 to 4);
   signal int_trig_thres_hyst        : t_fmc_adc_vec16_array(1 to 4);
+  signal int_trig_thres_in          : t_fmc_adc_vec16_array(1 to 4);
+  signal int_trig_thres_hyst_in     : t_fmc_adc_vec16_array(1 to 4);
   signal sw_trig                    : std_logic;
-  signal sw_trig_en                 : std_logic;
   signal sw_trig_fixed_delay        : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
+  signal sw_trig_in                 : std_logic := '0';
+  signal sw_trig_sync_ack           : std_logic := '0';
   signal time_trig                  : std_logic;
   signal time_trig_en               : std_logic;
   signal time_trig_fixed_delay      : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
-  signal alt_time_trig              : std_logic;
-  signal alt_time_trig_en           : std_logic;
-  signal alt_time_trig_fixed_delay  : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
+  signal aux_time_trig              : std_logic;
+  signal aux_time_trig_fixed_delay  : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal trig                       : std_logic;
   signal trig_align                 : std_logic_vector(8 downto 0);
   signal trig_storage               : std_logic_vector(31 downto 0);
   signal trig_storage_clear         : std_logic;
   signal trig_src_vector            : std_logic_vector(7 downto 0);
 
-  -- Under-sampling
-  signal undersample_factor : std_logic_vector(31 downto 0);
-  signal undersample_cnt    : unsigned(31 downto 0);
-  signal undersample_en     : std_logic;
+  -- Down-sampling
+  signal downsample_factor : std_logic_vector(31 downto 0) := (others => '0');
+  signal downsample_cnt    : unsigned(31 downto 0);
+  signal downsample_en     : std_logic;
 
   -- Sync FIFO (from fs_clk to sys_clk_i)
   signal sync_fifo_din   : std_logic_vector(72 downto 0);
@@ -247,18 +237,21 @@ architecture rtl of fmc_adc_100Ms_core is
   -- Gain/offset calibration and saturation value
   signal gain_calibr        : std_logic_vector(63 downto 0);
   signal offset_calibr      : std_logic_vector(63 downto 0);
+  signal gain_calibr_in     : std_logic_vector(63 downto 0);
+  signal offset_calibr_in   : std_logic_vector(63 downto 0);
   signal data_calibr_in     : std_logic_vector(63 downto 0);
   signal data_calibr_out    : std_logic_vector(63 downto 0);
   signal data_calibr_out_d1 : std_logic_vector(63 downto 0);
   signal data_calibr_out_d2 : std_logic_vector(63 downto 0);
   signal data_calibr_out_d3 : std_logic_vector(63 downto 0);
   signal sat_val            : std_logic_vector(59 downto 0);
+  signal sat_val_in         : std_logic_vector(59 downto 0);
 
   -- Acquisition FSM
   signal acq_fsm_current_state : t_acq_fsm_state;
   signal acq_fsm_state         : std_logic_vector(2 downto 0);
   signal fsm_cmd               : std_logic_vector(1 downto 0);
-  signal fsm_cmd_wr            : std_logic;
+  signal ctl_reg_wr            : std_logic;
   signal acq_start             : std_logic;
   signal acq_stop              : std_logic;
   signal acq_trig              : std_logic;
@@ -335,8 +328,8 @@ architecture rtl of fmc_adc_100Ms_core is
   signal wb_ddr_stall_t : std_logic;
 
   -- IO from CSR registers
-  signal csr_regin  : t_fmc_adc_100Ms_csr_in_registers;
-  signal csr_regout : t_fmc_adc_100Ms_csr_out_registers;
+  signal csr_regin  : t_fmc_adc_100ms_csr_master_in;
+  signal csr_regout : t_fmc_adc_100ms_csr_master_out;
 
   -- LEDs
   signal trig_led     : std_logic;
@@ -358,7 +351,7 @@ begin
     generic map (
       g_master_use_struct  => TRUE,
       g_master_mode        => CLASSIC,
-      g_master_granularity => WORD,
+      g_master_granularity => BYTE,
       g_slave_use_struct   => TRUE,
       g_slave_mode         => g_WB_CSR_MODE,
       g_slave_granularity  => g_WB_CSR_GRANULARITY)
@@ -414,9 +407,10 @@ begin
 
   cmp_fs_freq : gc_frequency_meter
     generic map(
-      g_with_internal_timebase => TRUE,
-      g_clk_sys_freq           => 125000000,
-      g_counter_bits           => 32
+      g_WITH_INTERNAL_TIMEBASE => TRUE,
+      g_CLK_SYS_FREQ           => 125000000,
+      g_SYNC_OUT               => TRUE,
+      g_COUNTER_BITS           => 32
       )
     port map(
       clk_sys_i    => sys_clk_i,
@@ -427,15 +421,11 @@ begin
       freq_valid_o => fs_freq_valid
       );
 
-  p_fs_freq : process (fs_clk)
+  p_fs_freq : process (sys_clk_i)
   begin
-    if rising_edge(fs_clk) then
-      if fs_rst_n = '0' then
-        fs_freq <= (others => '0');
-      else
-        if fs_freq_valid = '1' then
-          fs_freq <= fs_freq_t;
-        end if;
+    if rising_edge(sys_clk_i) then
+      if fs_freq_valid = '1' then
+        fs_freq <= fs_freq_t;
       end if;
     end if;
   end process p_fs_freq;
@@ -443,6 +433,12 @@ begin
   ------------------------------------------------------------------------------
   -- ADC SerDes
   ------------------------------------------------------------------------------
+  cmp_man_bitslip_sync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => '1',
+      data_i   => serdes_man_bitslip,
+      synced_o => serdes_man_bitslip_sync);
 
   cmp_adc_serdes : entity work.ltc2174_2l16b_receiver
     generic map (
@@ -457,118 +453,262 @@ begin
       adc_outb_p_i    => adc_outb_p_i,
       adc_outb_n_i    => adc_outb_n_i,
       serdes_arst_i   => serdes_arst,
-      serdes_bslip_i  => serdes_man_bitslip,
+      serdes_bslip_i  => serdes_man_bitslip_sync,
       serdes_synced_o => serdes_synced,
       adc_data_o      => serdes_out_data,
       adc_clk_o       => fs_clk);
 
+  cmp_serdes_synced_sync : gc_sync_ffs
+    port map (
+      clk_i    => sys_clk_i,
+      rst_n_i  => '1',
+      data_i   => serdes_synced,
+      synced_o => serdes_synced_sync);
+
   ------------------------------------------------------------------------------
   -- ADC core control and status registers (CSR)
   ------------------------------------------------------------------------------
-  cmp_fmc_adc_100Ms_csr : fmc_adc_100Ms_csr
+  cmp_fmc_adc_100Ms_csr : entity work.fmc_adc_100Ms_csr
     port map (
-      rst_n_i    => sys_rst_n_i,
-      clk_sys_i  => sys_clk_i,
-      wb_adr_i   => wb_csr_in.adr(7 downto 0),
-      wb_dat_i   => wb_csr_in.dat,
-      wb_dat_o   => wb_csr_out.dat,
-      wb_cyc_i   => wb_csr_in.cyc,
-      wb_sel_i   => wb_csr_in.sel,
-      wb_stb_i   => wb_csr_in.stb,
-      wb_we_i    => wb_csr_in.we,
-      wb_ack_o   => wb_csr_out.ack,
-      wb_stall_o => wb_csr_out.stall,
-      fs_clk_i   => fs_clk,
-      regs_i     => csr_regin,
-      regs_o     => csr_regout);
+      rst_n_i             => sys_rst_n_i,
+      clk_i               => sys_clk_i,
+      wb_i                => wb_csr_in,
+      wb_o                => wb_csr_out,
+      fmc_adc_100Ms_csr_i => csr_regin,
+      fmc_adc_100Ms_csr_o => csr_regout);
 
-  -- drive unused wb outputs
-  wb_csr_out.err <= '0';
-  wb_csr_out.rty <= '0';
+  csr_regin.sta_fsm           <= acq_fsm_state;
+  csr_regin.sta_serdes_pll    <= '1';
+  csr_regin.sta_serdes_synced <= serdes_synced_sync;
+  csr_regin.sta_acq_cfg       <= acq_config_ok;
+  csr_regin.trig_stat_ext     <= trig_storage(0);
+  csr_regin.trig_stat_sw      <= trig_storage(1);
+  csr_regin.trig_stat_time    <= trig_storage(4);
+  csr_regin.trig_stat_ch1     <= trig_storage(8);
+  csr_regin.trig_stat_ch2     <= trig_storage(9);
+  csr_regin.trig_stat_ch3     <= trig_storage(10);
+  csr_regin.trig_stat_ch4     <= trig_storage(11);
+  csr_regin.trig_en_sw        <= '1';
+  csr_regin.trig_en_aux_time  <= '1';
+  csr_regin.shots_remain      <= remaining_shots;
+  csr_regin.trig_pos          <= trig_addr;
+  csr_regin.fs_freq           <= fs_freq;
+  csr_regin.samples_cnt       <= std_logic_vector(samples_cnt);
+  csr_regin.ch1_sta_val       <= serdes_out_data_synced(15 downto 0);
+  csr_regin.ch2_sta_val       <= serdes_out_data_synced(31 downto 16);
+  csr_regin.ch3_sta_val       <= serdes_out_data_synced(47 downto 32);
+  csr_regin.ch4_sta_val       <= serdes_out_data_synced(63 downto 48);
+  csr_regin.multi_depth       <= c_MULTISHOT_SAMPLE_DEPTH;
 
-  csr_regin.sta_fsm_i           <= acq_fsm_state;
-  csr_regin.sta_serdes_pll_i    <= '1';
-  csr_regin.sta_serdes_synced_i <= serdes_synced;
-  csr_regin.sta_acq_cfg_i       <= acq_config_ok;
-  csr_regin.trig_stat_ext_i     <= trig_storage(0);
-  csr_regin.trig_stat_sw_i      <= trig_storage(1);
-  csr_regin.trig_stat_time_i    <= trig_storage(4);
-  csr_regin.trig_stat_ch1_i     <= trig_storage(8);
-  csr_regin.trig_stat_ch2_i     <= trig_storage(9);
-  csr_regin.trig_stat_ch3_i     <= trig_storage(10);
-  csr_regin.trig_stat_ch4_i     <= trig_storage(11);
-  csr_regin.shots_cnt_val_i     <= remaining_shots;
-  csr_regin.trig_pos_i          <= trig_addr;
-  csr_regin.fs_freq_i           <= fs_freq;
-  csr_regin.samples_cnt_i       <= std_logic_vector(samples_cnt);
-  csr_regin.ch1_sta_val_i       <= serdes_out_data(15 downto 0);
-  csr_regin.ch2_sta_val_i       <= serdes_out_data(31 downto 16);
-  csr_regin.ch3_sta_val_i       <= serdes_out_data(47 downto 32);
-  csr_regin.ch4_sta_val_i       <= serdes_out_data(63 downto 48);
-  csr_regin.multi_depth_i       <= c_MULTISHOT_SAMPLE_DEPTH;
+  ctl_reg_wr                <= csr_regout.ctl_wr;
+  fsm_cmd                   <= csr_regout.ctl_fsm_cmd;
+  serdes_man_bitslip        <= csr_regout.ctl_man_bitslip and ctl_reg_wr;
+  test_data_en              <= csr_regout.ctl_test_data_en;
+  trig_led_man              <= csr_regout.ctl_trig_led;
+  acq_led_man               <= csr_regout.ctl_acq_led;
+  trig_storage_clear        <= csr_regout.ctl_clear_trig_stat and ctl_reg_wr;
+  int_trig_delay_in(1)      <= csr_regout.ch1_trig_dly;
+  int_trig_delay_in(2)      <= csr_regout.ch2_trig_dly;
+  int_trig_delay_in(3)      <= csr_regout.ch3_trig_dly;
+  int_trig_delay_in(4)      <= csr_regout.ch4_trig_dly;
+  int_trig_en_in(1)         <= csr_regout.trig_en_ch1;
+  int_trig_en_in(2)         <= csr_regout.trig_en_ch2;
+  int_trig_en_in(3)         <= csr_regout.trig_en_ch3;
+  int_trig_en_in(4)         <= csr_regout.trig_en_ch4;
+  int_trig_pol_in(1)        <= csr_regout.trig_pol_ch1;
+  int_trig_pol_in(2)        <= csr_regout.trig_pol_ch2;
+  int_trig_pol_in(3)        <= csr_regout.trig_pol_ch3;
+  int_trig_pol_in(4)        <= csr_regout.trig_pol_ch4;
+  int_trig_thres_in(1)      <= csr_regout.ch1_trig_thres_val;
+  int_trig_thres_in(2)      <= csr_regout.ch1_trig_thres_val;
+  int_trig_thres_in(3)      <= csr_regout.ch1_trig_thres_val;
+  int_trig_thres_in(4)      <= csr_regout.ch1_trig_thres_val;
+  int_trig_thres_hyst_in(1) <= csr_regout.ch1_trig_thres_hyst;
+  int_trig_thres_hyst_in(2) <= csr_regout.ch1_trig_thres_hyst;
+  int_trig_thres_hyst_in(3) <= csr_regout.ch1_trig_thres_hyst;
+  int_trig_thres_hyst_in(4) <= csr_regout.ch1_trig_thres_hyst;
+  shots_value               <= csr_regout.shots_nbr;
+  pre_trig_value            <= csr_regout.pre_samples;
+  post_trig_value           <= csr_regout.post_samples;
 
-  fsm_cmd                <= csr_regout.ctl_fsm_cmd_o;
-  fsm_cmd_wr             <= csr_regout.ctl_fsm_cmd_wr_o;
-  serdes_man_bitslip     <= csr_regout.ctl_man_bitslip_o;
-  test_data_en           <= csr_regout.ctl_test_data_en_o;
-  trig_led_man           <= csr_regout.ctl_trig_led_o;
-  acq_led_man            <= csr_regout.ctl_acq_led_o;
-  trig_storage_clear     <= csr_regout.ctl_clear_trig_stat_o;
-  ext_trig_delay         <= csr_regout.ext_trig_dly_o;
-  ext_trig_en            <= csr_regout.trig_en_ext_o;
-  ext_trig_pol           <= csr_regout.trig_pol_ext_o;
-  int_trig_delay(1)      <= csr_regout.ch1_trig_dly_o;
-  int_trig_delay(2)      <= csr_regout.ch2_trig_dly_o;
-  int_trig_delay(3)      <= csr_regout.ch3_trig_dly_o;
-  int_trig_delay(4)      <= csr_regout.ch4_trig_dly_o;
-  int_trig_en(1)         <= csr_regout.trig_en_ch1_o;
-  int_trig_en(2)         <= csr_regout.trig_en_ch2_o;
-  int_trig_en(3)         <= csr_regout.trig_en_ch3_o;
-  int_trig_en(4)         <= csr_regout.trig_en_ch4_o;
-  int_trig_pol(1)        <= csr_regout.trig_pol_ch1_o;
-  int_trig_pol(2)        <= csr_regout.trig_pol_ch2_o;
-  int_trig_pol(3)        <= csr_regout.trig_pol_ch3_o;
-  int_trig_pol(4)        <= csr_regout.trig_pol_ch4_o;
-  int_trig_thres(1)      <= csr_regout.ch1_trig_thres_val_o;
-  int_trig_thres(2)      <= csr_regout.ch2_trig_thres_val_o;
-  int_trig_thres(3)      <= csr_regout.ch3_trig_thres_val_o;
-  int_trig_thres(4)      <= csr_regout.ch4_trig_thres_val_o;
-  int_trig_thres_hyst(1) <= csr_regout.ch1_trig_thres_hyst_o;
-  int_trig_thres_hyst(2) <= csr_regout.ch2_trig_thres_hyst_o;
-  int_trig_thres_hyst(3) <= csr_regout.ch3_trig_thres_hyst_o;
-  int_trig_thres_hyst(4) <= csr_regout.ch4_trig_thres_hyst_o;
-  sw_trig                <= csr_regout.sw_trig_wr_o;
-  sw_trig_en             <= csr_regout.trig_en_sw_o;
-  time_trig_en           <= csr_regout.trig_en_time_o;
-  alt_time_trig_en       <= csr_regout.trig_en_alt_time_o;
-  shots_value            <= csr_regout.shots_nb_o;
-  undersample_factor     <= csr_regout.sr_undersample_o;
-  pre_trig_value         <= csr_regout.pre_samples_o;
-  post_trig_value        <= csr_regout.post_samples_o;
+  gain_calibr_in <= csr_regout.ch4_calib_gain & csr_regout.ch3_calib_gain &
+                    csr_regout.ch2_calib_gain & csr_regout.ch1_calib_gain;
 
-  -- NOTE: trigger forwards are read from CSR in the b_trigout block later
+  offset_calibr_in <= csr_regout.ch4_calib_offset & csr_regout.ch3_calib_offset &
+                      csr_regout.ch2_calib_offset & csr_regout.ch1_calib_offset;
 
-  gain_calibr <= csr_regout.ch4_gain_val_o & csr_regout.ch3_gain_val_o &
-                 csr_regout.ch2_gain_val_o & csr_regout.ch1_gain_val_o;
-
-  offset_calibr <= csr_regout.ch4_offset_val_o & csr_regout.ch3_offset_val_o &
-                   csr_regout.ch2_offset_val_o & csr_regout.ch1_offset_val_o;
-
-  sat_val <= csr_regout.ch4_sat_val_o & csr_regout.ch3_sat_val_o &
-             csr_regout.ch2_sat_val_o & csr_regout.ch1_sat_val_o;
+  sat_val_in <= csr_regout.ch4_sat_val & csr_regout.ch3_sat_val &
+                csr_regout.ch2_sat_val & csr_regout.ch1_sat_val;
 
   -- Delays for user-controlled GPIO outputs to help with timing
   p_delay_gpio_ssr : process (sys_clk_i) is
   begin
     if rising_edge(sys_clk_i) then
-      gpio_si570_oe_o  <= csr_regout.ctl_fmc_clk_oe_o;
-      gpio_dac_clr_n_o <= csr_regout.ctl_offset_dac_clr_n_o;
-      gpio_ssr_ch1_o   <= csr_regout.ch1_ctl_ssr_o;
-      gpio_ssr_ch2_o   <= csr_regout.ch2_ctl_ssr_o;
-      gpio_ssr_ch3_o   <= csr_regout.ch3_ctl_ssr_o;
-      gpio_ssr_ch4_o   <= csr_regout.ch4_ctl_ssr_o;
+      gpio_si570_oe_o  <= csr_regout.ctl_fmc_clk_oe;
+      gpio_dac_clr_n_o <= csr_regout.ctl_offset_dac_clr_n;
+      gpio_ssr_ch1_o   <= csr_regout.ch1_ctl_ssr;
+      gpio_ssr_ch2_o   <= csr_regout.ch2_ctl_ssr;
+      gpio_ssr_ch3_o   <= csr_regout.ch3_ctl_ssr;
+      gpio_ssr_ch4_o   <= csr_regout.ch4_ctl_ssr;
     end if;
   end process p_delay_gpio_ssr;
+
+  cmp_ext_trig_en_sync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => '1',
+      data_i   => csr_regout.trig_en_ext,
+      synced_o => ext_trig_en);
+
+  cmp_ext_trig_pol_sync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => '1',
+      data_i   => csr_regout.trig_pol_ext,
+      synced_o => ext_trig_pol);
+
+  cmp_time_trig_en_sync : gc_sync_ffs
+    port map (
+      clk_i    => fs_clk,
+      rst_n_i  => '1',
+      data_i   => csr_regout.trig_en_time,
+      synced_o => time_trig_en);
+
+  cmp_downsample_sync : gc_sync_word_wr
+    generic map (
+      g_AUTO_WR => TRUE,
+      g_WIDTH   => 32)
+    port map (
+      clk_in_i    => sys_clk_i,
+      rst_in_n_i  => '1',
+      clk_out_i   => fs_clk,
+      rst_out_n_i => '1',
+      data_i      => csr_regout.downsample,
+      data_o      => downsample_factor);
+
+  cmp_ch_sta_sync : gc_sync_word_wr
+    generic map (
+      g_AUTO_WR => TRUE,
+      g_WIDTH   => 64)
+    port map (
+      clk_in_i    => fs_clk,
+      rst_in_n_i  => '1',
+      clk_out_i   => sys_clk_i,
+      rst_out_n_i => '1',
+      data_i      => serdes_out_data,
+      data_o      => serdes_out_data_synced);
+
+  cmp_ext_trig_delay_sync : gc_sync_word_wr
+    generic map (
+      g_AUTO_WR => TRUE,
+      g_WIDTH   => 32)
+    port map (
+      clk_in_i    => sys_clk_i,
+      rst_in_n_i  => '1',
+      clk_out_i   => fs_clk,
+      rst_out_n_i => '1',
+      data_i      => csr_regout.ext_trig_dly,
+      data_o      => ext_trig_delay);
+
+  gen_ch_reg_sync : for I in 1 to 4 generate
+
+    cmp_int_trig_en_sync : gc_sync_ffs
+      port map (
+        clk_i    => fs_clk,
+        rst_n_i  => '1',
+        data_i   => int_trig_en_in(I),
+        synced_o => int_trig_en(I));
+
+    cmp_int_trig_pol_sync : gc_sync_ffs
+      port map (
+        clk_i    => fs_clk,
+        rst_n_i  => '1',
+        data_i   => int_trig_pol_in(I),
+        synced_o => int_trig_pol(I));
+
+    cmp_ch_trig_thres_sync : gc_sync_word_wr
+      generic map (
+        g_AUTO_WR => TRUE,
+        g_WIDTH   => 32)
+      port map (
+        clk_in_i             => sys_clk_i,
+        rst_in_n_i           => '1',
+        clk_out_i            => fs_clk,
+        rst_out_n_i          => '1',
+        data_i(15 downto 0)  => int_trig_thres_in(I),
+        data_i(31 downto 16) => int_trig_thres_hyst_in(I),
+        data_o(15 downto 0)  => int_trig_thres(I),
+        data_o(31 downto 16) => int_trig_thres_hyst(I));
+
+    cmp_ch_sat_sync : gc_sync_word_wr
+      generic map (
+        g_AUTO_WR => TRUE,
+        g_WIDTH   => 15)
+      port map (
+        clk_in_i    => sys_clk_i,
+        rst_in_n_i  => '1',
+        clk_out_i   => fs_clk,
+        rst_out_n_i => '1',
+        data_i      => sat_val_in(15*I-1 downto 15*(I-1)),
+        data_o      => sat_val(15*I-1 downto 15*(I-1)));
+
+    cmp_ch_gain_sync : gc_sync_word_wr
+      generic map (
+        g_AUTO_WR => TRUE,
+        g_WIDTH   => 16)
+      port map (
+        clk_in_i    => sys_clk_i,
+        rst_in_n_i  => '1',
+        clk_out_i   => fs_clk,
+        rst_out_n_i => '1',
+        data_i      => gain_calibr_in(16*I-1 downto 16*(I-1)),
+        data_o      => gain_calibr(16*I-1 downto 16*(I-1)));
+
+    cmp_ch_offset_sync : gc_sync_word_wr
+      generic map (
+        g_AUTO_WR => TRUE,
+        g_WIDTH   => 16)
+      port map (
+        clk_in_i    => sys_clk_i,
+        rst_in_n_i  => '1',
+        clk_out_i   => fs_clk,
+        rst_out_n_i => '1',
+        data_i      => offset_calibr_in(16*I-1 downto 16*(I-1)),
+        data_o      => offset_calibr(16*I-1 downto 16*(I-1)));
+
+    cmp_ch_trig_delay_sync : gc_sync_word_wr
+      generic map (
+        g_AUTO_WR => TRUE,
+        g_WIDTH   => 32)
+      port map (
+        clk_in_i    => sys_clk_i,
+        rst_in_n_i  => '1',
+        clk_out_i   => fs_clk,
+        rst_out_n_i => '1',
+        data_i      => int_trig_delay_in(I),
+        data_o      => int_trig_delay(I));
+  end generate gen_ch_reg_sync;
+
+  cmp_sw_trig_sync : gc_pulse_synchronizer2
+    port map (
+      clk_in_i    => sys_clk_i,
+      rst_in_n_i  => '1',
+      clk_out_i   => fs_clk,
+      rst_out_n_i => '1',
+      d_ack_p_o   => sw_trig_sync_ack,
+      d_p_i       => sw_trig_in,
+      q_p_o       => sw_trig);
+
+  p_sw_trig_gen : process (sys_clk_i) is
+  begin
+    if rising_edge(sys_clk_i) then
+      if csr_regout.sw_trig_wr = '1' then
+        sw_trig_in <= '1';
+      elsif sw_trig_in = '1' and sw_trig_sync_ack = '1' then
+        sw_trig_in <= '0';
+      end if;
+    end if;
+  end process p_sw_trig_gen;
 
   ------------------------------------------------------------------------------
   -- Offset and gain calibration
@@ -672,14 +812,14 @@ begin
       npulse_o => open,
       ppulse_o => time_trig);
 
-  cmp_alt_time_trig_sync : gc_sync_ffs
+  cmp_aux_time_trig_sync : gc_sync_ffs
     port map (
       clk_i    => fs_clk,
       rst_n_i  => '1',
-      data_i   => alt_time_trig_i,
+      data_i   => aux_time_trig_i,
       synced_o => open,
       npulse_o => open,
-      ppulse_o => alt_time_trig);
+      ppulse_o => aux_time_trig);
 
   -- Internal hardware trigger
   g_int_trig : for I in 1 to 4 generate
@@ -778,19 +918,19 @@ begin
         sw_trig_fixed_delay       <= (others => '0');
         ext_trig_fixed_delay      <= (others => '0');
         time_trig_fixed_delay     <= (others => '0');
-        alt_time_trig_fixed_delay <= (others => '0');
+        aux_time_trig_fixed_delay <= (others => '0');
       else
         sw_trig_fixed_delay   <= sw_trig_fixed_delay(sw_trig_fixed_delay'high -1 downto 0) & sw_trig;
         ext_trig_fixed_delay  <= ext_trig_fixed_delay(ext_trig_fixed_delay'high -1 downto 0) & ext_trig_d;
         time_trig_fixed_delay <= time_trig_fixed_delay(time_trig_fixed_delay'high -1 downto 0) & time_trig;
-        alt_time_trig_fixed_delay <= alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'high -1 downto 0) & alt_time_trig;
+        aux_time_trig_fixed_delay <= aux_time_trig_fixed_delay(aux_time_trig_fixed_delay'high -1 downto 0) & aux_time_trig;
       end if;
     end if;
   end process p_trig_shift;
 
-  trig_src_vector <= (sw_trig_fixed_delay(sw_trig_fixed_delay'high) and sw_trig_en) &
+  trig_src_vector <= sw_trig_fixed_delay(sw_trig_fixed_delay'high) &
                      (ext_trig_fixed_delay(ext_trig_fixed_delay'high) and ext_trig_en) &
-                     (alt_time_trig_fixed_delay(alt_time_trig_fixed_delay'high) and alt_time_trig_en) &
+                     aux_time_trig_fixed_delay(aux_time_trig_fixed_delay'high) &
                      (time_trig_fixed_delay(time_trig_fixed_delay'high) and time_trig_en) &
                      (int_trig_d(4) and int_trig_en(4)) &
                      (int_trig_d(3) and int_trig_en(3)) &
@@ -801,29 +941,29 @@ begin
   trig <= f_reduce_or (trig_src_vector);
 
   ------------------------------------------------------------------------------
-  -- Under-sampling and trigger alignment
-  --    When under-sampling is enabled, if the trigger occurs between two
+  -- Down-sampling and trigger alignment
+  --    When down-sampling is enabled, if the trigger occurs between two
   --    samples it will be realigned to the next sample
   ------------------------------------------------------------------------------
-  p_undersample_cnt : process (fs_clk)
+  p_downsample_cnt : process (fs_clk)
   begin
     if rising_edge(fs_clk) then
       if fs_rst_n = '0' then
-        undersample_cnt <= to_unsigned(1, undersample_cnt'length);
-        undersample_en  <= '0';
+        downsample_cnt <= to_unsigned(1, downsample_cnt'length);
+        downsample_en  <= '0';
       else
-        if undersample_cnt = to_unsigned(0, undersample_cnt'length) then
-          if undersample_factor /= X"00000000" then
-            undersample_cnt <= unsigned(undersample_factor) - 1;
+        if downsample_cnt = to_unsigned(0, downsample_cnt'length) then
+          if downsample_factor /= X"00000000" then
+            downsample_cnt <= unsigned(downsample_factor) - 1;
           end if;
-          undersample_en <= '1';
+          downsample_en <= '1';
         else
-          undersample_cnt <= undersample_cnt - 1;
-          undersample_en  <= '0';
+          downsample_cnt <= downsample_cnt - 1;
+          downsample_en  <= '0';
         end if;
       end if;
     end if;
-  end process p_undersample_cnt;
+  end process p_downsample_cnt;
 
   p_trig_align : process (fs_clk)
   begin
@@ -833,7 +973,7 @@ begin
       else
         if trig = '1' then
           trig_align <= trig_src_vector & trig;
-        elsif undersample_en = '1' then
+        elsif downsample_en = '1' then
           trig_align <= (others => '0');
         end if;
       end if;
@@ -864,7 +1004,7 @@ begin
   -- Data to FIFO
   --     72 : sw trigger
   --     71 : ext trigger
-  --     70 : alt time trigger
+  --     70 : aux time trigger
   --     69 : time trigger
   --     68 : int4 trigger
   --     67 : int3 trigger
@@ -876,7 +1016,7 @@ begin
   sync_fifo_din(63 downto 0)  <= data_calibr_out_d3;
 
   -- FIFO control
-  sync_fifo_wr    <= undersample_en and serdes_synced and (not sync_fifo_full);
+  sync_fifo_wr    <= downsample_en and serdes_synced and (not sync_fifo_full);
   sync_fifo_rd    <= not sync_fifo_empty;
   sync_fifo_valid <= not sync_fifo_empty;
 
@@ -997,8 +1137,8 @@ begin
   acq_end_p_o <= acq_end and not(acq_end_d);
 
   -- FSM commands
-  acq_start <= '1' when fsm_cmd_wr = '1' and fsm_cmd = "01" else '0';
-  acq_stop  <= '1' when fsm_cmd_wr = '1' and fsm_cmd = "10" else '0';
+  acq_start <= '1' when ctl_reg_wr = '1' and fsm_cmd = "01" else '0';
+  acq_stop  <= '1' when ctl_reg_wr = '1' and fsm_cmd = "10" else '0';
   acq_trig  <= sync_fifo_valid and sync_fifo_dout(64) and acq_in_wait_trig;
   acq_end   <= trig_tag_done and shots_done;
 
@@ -1472,7 +1612,6 @@ begin
   b_trigout : block
     subtype t_trigout_channels is std_logic_vector(4 downto 0);
     signal trigout_triggers : t_trigout_channels;
-    signal trigout_en       : t_trigout_channels;
 
     signal trigout_trig : std_logic;
 
@@ -1491,7 +1630,7 @@ begin
     signal trigout_fifo_rd        : std_logic;
 
   begin
-    cmp_alt_trigout : entity work.alt_trigout
+    cmp_aux_trigout : entity work.aux_trigout
       port map (
         rst_n_i        => sys_rst_n_i,
         clk_i          => sys_clk_i,
@@ -1518,13 +1657,7 @@ begin
     trigout_triggers(3) <= trig_storage(11);
     trigout_triggers(4) <= trig_storage(0);
 
-    trigout_en(0) <= csr_regout.trig_en_fwd_ch1_o;
-    trigout_en(1) <= csr_regout.trig_en_fwd_ch2_o;
-    trigout_en(2) <= csr_regout.trig_en_fwd_ch3_o;
-    trigout_en(3) <= csr_regout.trig_en_fwd_ch4_o;
-    trigout_en(4) <= csr_regout.trig_en_fwd_ext_o;
-
-    trigout_trig <= f_reduce_or (trigout_triggers and trigout_en);
+    trigout_trig <= f_reduce_or (trigout_triggers);
 
     -- Acquisition trigger delayed pulse
     p_acq_end : process (sys_clk_i)

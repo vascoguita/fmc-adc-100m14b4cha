@@ -1,0 +1,109 @@
+memory-map:
+  bus: wb-32-be
+  name: spec_carrier_csr
+  description: Carrier control and status registers
+  comment: |
+    Wishbone slave for control and status registers related to the FMC carrier
+  x-hdl:
+    busgroup: True
+    iogroup: carrier_csr
+  children:
+  - reg:
+      name: carrier
+      address: 0x00000000
+      width: 32
+      access: ro
+      description: Carrier type and PCB version
+      children:
+      - field:
+          name: pcb_rev
+          range: 3-0
+          description: PCB revision
+          comment: |
+            Binary coded PCB layout revision.
+      - field:
+          name: reserved
+          range: 15-4
+          description: Reserved register
+          comment: |
+            Ignore on read, write with 0's.
+      - field:
+          name: type
+          range: 31-16
+          description: Carrier type
+          comment: |
+            Carrier type identifier
+            1 = SPEC
+            2 = SVEC
+            3 = VFC
+            4 = SPEXI
+  - reg:
+      name: stat
+      address: 0x00000004
+      width: 32
+      access: ro
+      description: Status
+      children:
+      - field:
+          name: fmc_pres
+          range: 0
+          description: FMC presence
+          comment: |
+            0: FMC slot is populated
+            1: FMC slot is not populated.
+      - field:
+          name: p2l_pll_lck
+          range: 1
+          description: GN4142 core P2L PLL status
+          comment: |
+            0: not locked
+            1: locked.
+      - field:
+          name: sys_pll_lck
+          range: 2
+          description: System clock PLL status
+          comment: |
+            0: not locked
+            1: locked.
+      - field:
+          name: ddr3_cal_done
+          range: 3
+          description: DDR3 calibration status
+          comment: |
+            0: not done
+            1: done.
+  - reg:
+      name: ctrl
+      address: 0x00000008
+      width: 32
+      access: rw
+      description: Control
+      children:
+      - field:
+          name: led_green
+          range: 0
+          description: Green LED
+          comment: |
+            Manual control of the front panel green LED (unused in the fmc-adc application)
+      - field:
+          name: led_red
+          range: 1
+          description: Red LED
+          comment: |
+            Manual control of the front panel red LED (unused in the fmc-adc application)
+  - reg:
+      name: rst
+      address: 0x0000000c
+      width: 32
+      access: wo
+      description: Reset Register
+      comment: |
+        Controls software reset of the mezzanine including the ddr interface and the time-tagging core.
+      children:
+      - field:
+          name: fmc0
+          range: 0
+          description: State of the reset line
+          comment: |
+            write 0: Normal FMC operation
+            write 1: FMC is held in reset

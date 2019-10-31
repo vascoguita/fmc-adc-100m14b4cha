@@ -1,0 +1,3573 @@
+<HTML>
+<HEAD>
+<TITLE>fmc_adc_100ms_csr</TITLE>
+<STYLE TYPE="text/css" MEDIA="all">
+<!--
+  BODY { background: white; color: black;
+         font-family: Arial,Helvetica; font-size:12; }
+  h1 { font-family: Trebuchet MS,Arial,Helvetica; font-size:30;
+       color:#404040; }
+  h2 { font-family: Trebuchet MS,Arial,Helvetica; font-size:22;
+       color:#404040; }
+  h3 { font-family: Trebuchet MS,Arial,Helvetica; font-size:16;
+       color:#404040; }
+  .td_arrow_left { padding:0px; background: #ffffff; text-align: right;
+                   font-size:12; }
+  .td_arrow_right { padding:0px; background: #ffffff; text-align: left;
+                    font-size:12; }
+  .td_code { font-family:Courier New,Courier; padding: 3px; }
+  .td_desc { padding: 3px; }
+  .td_sym_center { background: #e0e0f0; padding: 3px; }
+  .td_port_name { font-family:Courier New,Courier; background: #e0e0f0;
+                  text-align: right; font-weight:bold;
+                  padding: 3px; width:200px; }
+  .td_pblock_left { font-family:Courier New,Courier; background: #e0e0f0;
+                    padding: 0px; text-align: left; }
+  .td_pblock_right { font-family:Courier New,Courier;
+                     background: #e0e0f0;
+                     padding: 0px; text-align: right; }
+  .td_bit { background: #ffffff; color:#404040;
+            font-size:10; width: 70px;
+            font-family:Courier New,Courier; padding: 3px;
+            text-align:center; }
+  .td_field { background: #e0e0f0; padding: 3px; text-align:center;
+              border: solid 1px black; }
+  .td_unused { background: #a0a0a0; padding: 3px; text-align:center;  }
+  th { font-weight:bold; color:#ffffff; background: #202080;
+       padding:3px; }
+  .tr_even { background: #f0eff0; }
+  .tr_odd { background: #e0e0f0; }
+-->
+</STYLE>
+</HEAD>
+<BODY>
+<h1 class="heading">fmc_adc_100ms_csr</h1>
+<h3>FMC ADC 100MS/s core registers</h3>
+<p>Wishbone slave for FMC ADC 100MS/s core</p>
+<h3><a name="sect_1_0">1. Memory map summary</a></h3>
+<table cellpadding=2 cellspacing=0 border=0>
+<tr>
+<th>HW address</th>
+<th>Type</th>
+<th>Name</th>
+<th>HDL prefix</th>
+<th>C prefix</th>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x000</td>
+<td>REG</td>
+<td><A href="#ctl">ctl</a></td>
+<td class="td_code">ctl</td>
+<td class="td_code">ctl</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x004</td>
+<td>REG</td>
+<td><A href="#sta">sta</a></td>
+<td class="td_code">sta</td>
+<td class="td_code">sta</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x008</td>
+<td>REG</td>
+<td><A href="#trig_stat">trig_stat</a></td>
+<td class="td_code">trig_stat</td>
+<td class="td_code">trig_stat</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x00c</td>
+<td>REG</td>
+<td><A href="#trig_en">trig_en</a></td>
+<td class="td_code">trig_en</td>
+<td class="td_code">trig_en</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x010</td>
+<td>REG</td>
+<td><A href="#trig_pol">trig_pol</a></td>
+<td class="td_code">trig_pol</td>
+<td class="td_code">trig_pol</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x014</td>
+<td>REG</td>
+<td><A href="#ext_trig_dly">ext_trig_dly</a></td>
+<td class="td_code">ext_trig_dly</td>
+<td class="td_code">ext_trig_dly</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x018</td>
+<td>REG</td>
+<td><A href="#sw_trig">sw_trig</a></td>
+<td class="td_code">sw_trig</td>
+<td class="td_code">sw_trig</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x01c</td>
+<td>REG</td>
+<td><A href="#shots">shots</a></td>
+<td class="td_code">shots</td>
+<td class="td_code">shots</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x020</td>
+<td>REG</td>
+<td><A href="#multi_depth">multi_depth</a></td>
+<td class="td_code">multi_depth</td>
+<td class="td_code">multi_depth</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x024</td>
+<td>REG</td>
+<td><A href="#trig_pos">trig_pos</a></td>
+<td class="td_code">trig_pos</td>
+<td class="td_code">trig_pos</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x028</td>
+<td>REG</td>
+<td><A href="#fs_freq">fs_freq</a></td>
+<td class="td_code">fs_freq</td>
+<td class="td_code">fs_freq</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x02c</td>
+<td>REG</td>
+<td><A href="#downsample">downsample</a></td>
+<td class="td_code">downsample</td>
+<td class="td_code">downsample</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x030</td>
+<td>REG</td>
+<td><A href="#pre_samples">pre_samples</a></td>
+<td class="td_code">pre_samples</td>
+<td class="td_code">pre_samples</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x034</td>
+<td>REG</td>
+<td><A href="#post_samples">post_samples</a></td>
+<td class="td_code">post_samples</td>
+<td class="td_code">post_samples</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x038</td>
+<td>REG</td>
+<td><A href="#samples_cnt">samples_cnt</a></td>
+<td class="td_code">samples_cnt</td>
+<td class="td_code">samples_cnt</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x080</td>
+<td>REG</td>
+<td><A href="#ch1_ctl">ch1_ctl</a></td>
+<td class="td_code">ch1_ctl</td>
+<td class="td_code">ch1_ctl</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x084</td>
+<td>REG</td>
+<td><A href="#ch1_sta">ch1_sta</a></td>
+<td class="td_code">ch1_sta</td>
+<td class="td_code">ch1_sta</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x088</td>
+<td>REG</td>
+<td><A href="#ch1_calib">ch1_calib</a></td>
+<td class="td_code">ch1_calib</td>
+<td class="td_code">ch1_calib</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x08c</td>
+<td>REG</td>
+<td><A href="#ch1_sat">ch1_sat</a></td>
+<td class="td_code">ch1_sat</td>
+<td class="td_code">ch1_sat</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x090</td>
+<td>REG</td>
+<td><A href="#ch1_trig_thres">ch1_trig_thres</a></td>
+<td class="td_code">ch1_trig_thres</td>
+<td class="td_code">ch1_trig_thres</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x094</td>
+<td>REG</td>
+<td><A href="#ch1_trig_dly">ch1_trig_dly</a></td>
+<td class="td_code">ch1_trig_dly</td>
+<td class="td_code">ch1_trig_dly</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x0c0</td>
+<td>REG</td>
+<td><A href="#ch2_ctl">ch2_ctl</a></td>
+<td class="td_code">ch2_ctl</td>
+<td class="td_code">ch2_ctl</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x0c4</td>
+<td>REG</td>
+<td><A href="#ch2_sta">ch2_sta</a></td>
+<td class="td_code">ch2_sta</td>
+<td class="td_code">ch2_sta</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x0c8</td>
+<td>REG</td>
+<td><A href="#ch2_calib">ch2_calib</a></td>
+<td class="td_code">ch2_calib</td>
+<td class="td_code">ch2_calib</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x0cc</td>
+<td>REG</td>
+<td><A href="#ch2_sat">ch2_sat</a></td>
+<td class="td_code">ch2_sat</td>
+<td class="td_code">ch2_sat</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x0d0</td>
+<td>REG</td>
+<td><A href="#ch2_trig_thres">ch2_trig_thres</a></td>
+<td class="td_code">ch2_trig_thres</td>
+<td class="td_code">ch2_trig_thres</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x0d4</td>
+<td>REG</td>
+<td><A href="#ch2_trig_dly">ch2_trig_dly</a></td>
+<td class="td_code">ch2_trig_dly</td>
+<td class="td_code">ch2_trig_dly</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x100</td>
+<td>REG</td>
+<td><A href="#ch3_ctl">ch3_ctl</a></td>
+<td class="td_code">ch3_ctl</td>
+<td class="td_code">ch3_ctl</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x104</td>
+<td>REG</td>
+<td><A href="#ch3_sta">ch3_sta</a></td>
+<td class="td_code">ch3_sta</td>
+<td class="td_code">ch3_sta</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x108</td>
+<td>REG</td>
+<td><A href="#ch3_calib">ch3_calib</a></td>
+<td class="td_code">ch3_calib</td>
+<td class="td_code">ch3_calib</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x10c</td>
+<td>REG</td>
+<td><A href="#ch3_sat">ch3_sat</a></td>
+<td class="td_code">ch3_sat</td>
+<td class="td_code">ch3_sat</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x110</td>
+<td>REG</td>
+<td><A href="#ch3_trig_thres">ch3_trig_thres</a></td>
+<td class="td_code">ch3_trig_thres</td>
+<td class="td_code">ch3_trig_thres</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x114</td>
+<td>REG</td>
+<td><A href="#ch3_trig_dly">ch3_trig_dly</a></td>
+<td class="td_code">ch3_trig_dly</td>
+<td class="td_code">ch3_trig_dly</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x140</td>
+<td>REG</td>
+<td><A href="#ch4_ctl">ch4_ctl</a></td>
+<td class="td_code">ch4_ctl</td>
+<td class="td_code">ch4_ctl</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x144</td>
+<td>REG</td>
+<td><A href="#ch4_sta">ch4_sta</a></td>
+<td class="td_code">ch4_sta</td>
+<td class="td_code">ch4_sta</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x148</td>
+<td>REG</td>
+<td><A href="#ch4_calib">ch4_calib</a></td>
+<td class="td_code">ch4_calib</td>
+<td class="td_code">ch4_calib</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x14c</td>
+<td>REG</td>
+<td><A href="#ch4_sat">ch4_sat</a></td>
+<td class="td_code">ch4_sat</td>
+<td class="td_code">ch4_sat</td>
+</tr>
+<tr class="tr_even">
+<td class="td_code">0x150</td>
+<td>REG</td>
+<td><A href="#ch4_trig_thres">ch4_trig_thres</a></td>
+<td class="td_code">ch4_trig_thres</td>
+<td class="td_code">ch4_trig_thres</td>
+</tr>
+<tr class="tr_odd">
+<td class="td_code">0x154</td>
+<td>REG</td>
+<td><A href="#ch4_trig_dly">ch4_trig_dly</a></td>
+<td class="td_code">ch4_trig_dly</td>
+<td class="td_code">ch4_trig_dly</td>
+</tr>
+</table>
+
+<h3><a name="sect_3_0">2. Register description</a></h3>
+<a name="ctl"></a>
+<h3><a name="sect_3_1">2.1. ctl</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ctl</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x0</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ctl</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x0</td></tr>
+</table>
+<p>
+Control register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">clear_trig_stat</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="1">acq_led</td>
+ <td class="td_field" colspan="1">trig_led</td>
+ <td class="td_field" colspan="1">test_data_en</td>
+ <td class="td_field" colspan="1">man_bitslip</td>
+ <td class="td_field" colspan="1">offset_dac_clr_n</td>
+ <td class="td_field" colspan="1">fmc_clk_oe</td>
+ <td class="td_field" colspan="2">fsm_cmd[1:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+fsm_cmd
+</b>[<i>rw</i>]: State machine commands (ignore on read)
+<br>1: ACQ_START (start acquisition, only when FSM is idle)<br>2: ACQ_STOP (stop acquisition, anytime)
+<li><b>
+fmc_clk_oe
+</b>[<i>rw</i>]: FMC Si750 output enable
+<li><b>
+offset_dac_clr_n
+</b>[<i>rw</i>]: Offset DACs clear (active low)
+<li><b>
+man_bitslip
+</b>[<i>rw</i>]: Manual serdes bitslip (ignore on read)
+<li><b>
+test_data_en
+</b>[<i>rw</i>]: Enable test data
+<br>Write the DDR RAM address counter value instead of ADC data to DDR.<br>Note that no timetags are appended at the end of test data.
+<li><b>
+trig_led
+</b>[<i>rw</i>]: Manual TRIG LED
+<br>Manual control of the front panel TRIG LED
+<li><b>
+acq_led
+</b>[<i>rw</i>]: Manual ACQ LED
+<br>Manual control of the front panel ACQ LED
+<li><b>
+clear_trig_stat
+</b>[<i>rw</i>]: Clear trigger status
+<br>Write 1 to clear the last trigger status register. Auto-resets to zero.
+</ul>
+<a name="sta"></a>
+<h3><a name="sect_3_2">2.2. sta</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">sta</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x4</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">sta</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x4</td></tr>
+</table>
+<p>
+Status register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">acq_cfg</td>
+ <td class="td_field" colspan="1">serdes_synced</td>
+ <td class="td_field" colspan="1">serdes_pll</td>
+ <td class="td_field" colspan="3">fsm[2:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+fsm
+</b>[<i>ro</i>]: State machine status
+<br>States:<br>0: illegal<br>1: IDLE<br>2: PRE_TRIG<br>3: WAIT_TRIG<br>4: POST_TRIG<br>5: TRIG_TAG<br>6: DECR_SHOT<br>7: illegal
+<li><b>
+serdes_pll
+</b>[<i>ro</i>]: SerDes PLL status
+<br>Sampling clock recovery PLL.<br>0: not locked<br>1: locked
+<li><b>
+serdes_synced
+</b>[<i>ro</i>]: SerDes synchronization status
+<br>0: bitslip in progress<br>1: serdes synchronized
+<li><b>
+acq_cfg
+</b>[<i>ro</i>]: Acquisition configuration status
+<br>0: Unauthorised acquisition configuration (will prevent acquisition to start)<br>1: Valid acquisition configuration<br>- Shot number > 0<br>- Post-trigger sample > 0
+</ul>
+<a name="trig_stat"></a>
+<h3><a name="sect_3_3">2.3. trig_stat</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">trig_stat</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x8</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">trig_stat</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x8</td></tr>
+</table>
+<p>
+Trigger status
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">ch4</td>
+ <td class="td_field" colspan="1">ch3</td>
+ <td class="td_field" colspan="1">ch2</td>
+ <td class="td_field" colspan="1">ch1</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">time</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">sw</td>
+ <td class="td_field" colspan="1">ext</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ext
+</b>[<i>ro</i>]: External trigger input
+<br>0: not triggered<br>1: triggered
+<li><b>
+sw
+</b>[<i>ro</i>]: Software trigger
+<br>0: not triggered<br>1: triggered
+<li><b>
+time
+</b>[<i>ro</i>]: Timetag trigger
+<br>0: not triggered<br>1: triggered
+<li><b>
+ch1
+</b>[<i>ro</i>]: Channel 1 internal threshold trigger
+<br>0: not triggered<br>1: triggered
+<li><b>
+ch2
+</b>[<i>ro</i>]: Channel 2 internal threshold trigger
+<br>0: not triggered<br>1: triggered
+<li><b>
+ch3
+</b>[<i>ro</i>]: Channel 3 internal threshold trigger
+<br>0: not triggered<br>1: triggered
+<li><b>
+ch4
+</b>[<i>ro</i>]: Channel 4 internal threshold trigger
+<br>0: not triggered<br>1: triggered
+</ul>
+<a name="trig_en"></a>
+<h3><a name="sect_3_4">2.4. trig_en</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">trig_en</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xc</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">trig_en</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xc</td></tr>
+</table>
+<p>
+Trigger enable
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">ch4</td>
+ <td class="td_field" colspan="1">ch3</td>
+ <td class="td_field" colspan="1">ch2</td>
+ <td class="td_field" colspan="1">ch1</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">aux_time</td>
+ <td class="td_field" colspan="1">time</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">sw</td>
+ <td class="td_field" colspan="1">ext</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ext
+</b>[<i>rw</i>]: External trigger input
+<br>0: disable<br>1: enable
+<li><b>
+sw
+</b>[<i>rw</i>]: Software trigger
+<br>Always enabled
+<li><b>
+time
+</b>[<i>rw</i>]: Timetag trigger
+<br>0: disable<br>1: enable
+<li><b>
+aux_time
+</b>[<i>rw</i>]: Auxiliary timetag trigger
+<br>Always enabled
+<li><b>
+ch1
+</b>[<i>rw</i>]: Channel 1 internal threshold trigger
+<br>0: disable<br>1: enable
+<li><b>
+ch2
+</b>[<i>rw</i>]: Channel 2 internal threshold trigger
+<br>0: disable<br>1: enable
+<li><b>
+ch3
+</b>[<i>rw</i>]: Channel 3 internal threshold trigger
+<br>0: disable<br>1: enable
+<li><b>
+ch4
+</b>[<i>rw</i>]: Channel 4 internal threshold trigger
+<br>0: disable<br>1: enable
+</ul>
+<a name="trig_pol"></a>
+<h3><a name="sect_3_5">2.5. trig_pol</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">trig_pol</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x10</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">trig_pol</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x10</td></tr>
+</table>
+<p>
+Trigger polarity
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">ch4</td>
+ <td class="td_field" colspan="1">ch3</td>
+ <td class="td_field" colspan="1">ch2</td>
+ <td class="td_field" colspan="1">ch1</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="1">ext</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ext
+</b>[<i>rw</i>]: External trigger input
+<br>0: positive edge/slope<br>1: negative edge/slope
+<li><b>
+ch1
+</b>[<i>rw</i>]: Channel 1 internal threshold trigger
+<br>0: positive edge/slope<br>1: negative edge/slope
+<li><b>
+ch2
+</b>[<i>rw</i>]: Channel 2 internal threshold trigger
+<br>0: positive edge/slope<br>1: negative edge/slope
+<li><b>
+ch3
+</b>[<i>rw</i>]: Channel 3 internal threshold trigger
+<br>0: positive edge/slope<br>1: negative edge/slope
+<li><b>
+ch4
+</b>[<i>rw</i>]: Channel 4 internal threshold trigger
+<br>0: positive edge/slope<br>1: negative edge/slope
+</ul>
+<a name="ext_trig_dly"></a>
+<h3><a name="sect_3_6">2.6. ext_trig_dly</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ext_trig_dly</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x14</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ext_trig_dly</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x14</td></tr>
+</table>
+<p>
+External trigger delay
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ext_trig_dly[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ext_trig_dly[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ext_trig_dly[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ext_trig_dly[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ext_trig_dly
+</b>[<i>rw</i>]: External trigger delay
+</ul>
+<a name="sw_trig"></a>
+<h3><a name="sect_3_7">2.7. sw_trig</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">sw_trig</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x18</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">sw_trig</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x18</td></tr>
+</table>
+<p>
+Software trigger
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">sw_trig[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">sw_trig[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">sw_trig[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">sw_trig[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+sw_trig
+</b>[<i>wo</i>]: Software trigger
+</ul>
+<a name="shots"></a>
+<h3><a name="sect_3_8">2.8. shots</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">shots</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x1c</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">shots</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x1c</td></tr>
+</table>
+<p>
+Number of shots
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">remain[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">remain[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">nbr[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">nbr[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+nbr
+</b>[<i>rw</i>]: Number of shots
+<br>Number of shots required in multi-shot mode, set to one for single-shot mode.
+<li><b>
+remain
+</b>[<i>rw</i>]: Remaining shots counter
+<br>Counts the number of remaining shots to acquire.
+</ul>
+<a name="multi_depth"></a>
+<h3><a name="sect_3_9">2.9. multi_depth</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">multi_depth</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x20</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">multi_depth</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x20</td></tr>
+</table>
+<p>
+Multi-shot sample depth register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">multi_depth[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">multi_depth[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">multi_depth[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">multi_depth[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+multi_depth
+</b>[<i>ro</i>]: Multi-shot sample depth register
+</ul>
+<a name="trig_pos"></a>
+<h3><a name="sect_3_10">2.10. trig_pos</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">trig_pos</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x24</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">trig_pos</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x24</td></tr>
+</table>
+<p>
+Trigger address register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">trig_pos[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">trig_pos[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">trig_pos[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">trig_pos[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+trig_pos
+</b>[<i>ro</i>]: Trigger address register
+</ul>
+<a name="fs_freq"></a>
+<h3><a name="sect_3_11">2.11. fs_freq</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">fs_freq</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x28</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">fs_freq</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x28</td></tr>
+</table>
+<p>
+Sampling clock frequency
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">fs_freq[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">fs_freq[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">fs_freq[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">fs_freq[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+fs_freq
+</b>[<i>ro</i>]: Sampling clock frequency
+</ul>
+<a name="downsample"></a>
+<h3><a name="sect_3_12">2.12. downsample</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">downsample</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x2c</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">downsample</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x2c</td></tr>
+</table>
+<p>
+Downsampling ratio
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">downsample[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">downsample[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">downsample[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">downsample[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+downsample
+</b>[<i>rw</i>]: Downsampling ratio
+</ul>
+<a name="pre_samples"></a>
+<h3><a name="sect_3_13">2.13. pre_samples</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">pre_samples</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x30</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">pre_samples</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x30</td></tr>
+</table>
+<p>
+Pre-trigger samples
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">pre_samples[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">pre_samples[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">pre_samples[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">pre_samples[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+pre_samples
+</b>[<i>rw</i>]: Pre-trigger samples
+</ul>
+<a name="post_samples"></a>
+<h3><a name="sect_3_14">2.14. post_samples</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">post_samples</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x34</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">post_samples</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x34</td></tr>
+</table>
+<p>
+Post-trigger samples
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">post_samples[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">post_samples[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">post_samples[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">post_samples[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+post_samples
+</b>[<i>rw</i>]: Post-trigger samples
+</ul>
+<a name="samples_cnt"></a>
+<h3><a name="sect_3_15">2.15. samples_cnt</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">samples_cnt</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x38</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">samples_cnt</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x38</td></tr>
+</table>
+<p>
+Samples counter
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">samples_cnt[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">samples_cnt[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">samples_cnt[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">samples_cnt[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+samples_cnt
+</b>[<i>ro</i>]: Samples counter
+</ul>
+<a name="ch1_ctl"></a>
+<h3><a name="sect_3_16">2.16. ch1_ctl</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch1_ctl</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x80</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch1_ctl</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x80</td></tr>
+</table>
+<p>
+Channel 1 control register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">ssr[6:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ssr
+</b>[<i>rw</i>]: Solid state relays control for channel 1
+<br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
+</ul>
+<a name="ch1_sta"></a>
+<h3><a name="sect_3_17">2.17. ch1_sta</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch1_sta</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x84</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch1_sta</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x84</td></tr>
+</table>
+<p>
+Channel 1 status register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>ro</i>]: Channel 1 current ADC value
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
+</ul>
+<a name="ch1_calib"></a>
+<h3><a name="sect_3_18">2.18. ch1_calib</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch1_calib</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x88</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch1_calib</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x88</td></tr>
+</table>
+<p>
+Channel 1 calibration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+gain
+</b>[<i>rw</i>]: Gain calibration for channel 1
+<br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+<li><b>
+offset
+</b>[<i>rw</i>]: Offset calibration for channel 1
+<br>Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+</ul>
+<a name="ch1_sat"></a>
+<h3><a name="sect_3_19">2.19. ch1_sat</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch1_sat</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x8c</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch1_sat</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x8c</td></tr>
+</table>
+<p>
+Channel 1 saturation register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">val[14:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Saturation value for channel 1
+<br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+</ul>
+<a name="ch1_trig_thres"></a>
+<h3><a name="sect_3_20">2.20. ch1_trig_thres</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch1_trig_thres</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x90</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch1_trig_thres</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x90</td></tr>
+</table>
+<p>
+Channel 1 trigger threshold configuration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Threshold for internal trigger
+<br>Treated as binary two\'s complement and compared to raw ADC data.
+<li><b>
+hyst
+</b>[<i>rw</i>]: Internal trigger threshold hysteresis
+<br>Configures the internal trigger threshold hysteresis.<br>The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+</ul>
+<a name="ch1_trig_dly"></a>
+<h3><a name="sect_3_21">2.21. ch1_trig_dly</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch1_trig_dly</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x94</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch1_trig_dly</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x94</td></tr>
+</table>
+<p>
+Channel 1 trigger delay
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch1_trig_dly[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch1_trig_dly[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch1_trig_dly[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch1_trig_dly[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ch1_trig_dly
+</b>[<i>rw</i>]: Channel 1 trigger delay
+</ul>
+<a name="ch2_ctl"></a>
+<h3><a name="sect_3_22">2.22. ch2_ctl</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch2_ctl</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xc0</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch2_ctl</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xc0</td></tr>
+</table>
+<p>
+Channel 2 control register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">ssr[6:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ssr
+</b>[<i>rw</i>]: Solid state relays control for channel 2
+<br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
+</ul>
+<a name="ch2_sta"></a>
+<h3><a name="sect_3_23">2.23. ch2_sta</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch2_sta</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xc4</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch2_sta</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xc4</td></tr>
+</table>
+<p>
+Channel 2 status register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>ro</i>]: Channel 2 current ACD value
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
+</ul>
+<a name="ch2_calib"></a>
+<h3><a name="sect_3_24">2.24. ch2_calib</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch2_calib</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xc8</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch2_calib</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xc8</td></tr>
+</table>
+<p>
+Channel 2 calibration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+gain
+</b>[<i>rw</i>]: Gain calibration for channel 2
+<br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+<li><b>
+offset
+</b>[<i>rw</i>]: Offset calibration for channel 2
+<br>Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+</ul>
+<a name="ch2_sat"></a>
+<h3><a name="sect_3_25">2.25. ch2_sat</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch2_sat</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xcc</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch2_sat</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xcc</td></tr>
+</table>
+<p>
+Channel 2 saturation register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">val[14:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Saturation value for channel 2
+<br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+</ul>
+<a name="ch2_trig_thres"></a>
+<h3><a name="sect_3_26">2.26. ch2_trig_thres</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch2_trig_thres</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xd0</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch2_trig_thres</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xd0</td></tr>
+</table>
+<p>
+Channel 2 trigger threshold configuration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Threshold for internal trigger
+<br>Treated as binary two\'s complement and compared to raw ADC data.
+<li><b>
+hyst
+</b>[<i>rw</i>]: Internal trigger threshold hysteresis
+<br>Configures the internal trigger threshold hysteresis.<br>The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+</ul>
+<a name="ch2_trig_dly"></a>
+<h3><a name="sect_3_27">2.27. ch2_trig_dly</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch2_trig_dly</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0xd4</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch2_trig_dly</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0xd4</td></tr>
+</table>
+<p>
+Channel 2 trigger delay
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch2_trig_dly[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch2_trig_dly[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch2_trig_dly[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch2_trig_dly[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ch2_trig_dly
+</b>[<i>rw</i>]: Channel 2 trigger delay
+</ul>
+<a name="ch3_ctl"></a>
+<h3><a name="sect_3_28">2.28. ch3_ctl</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch3_ctl</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x100</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch3_ctl</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x100</td></tr>
+</table>
+<p>
+Channel 3 control register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">ssr[6:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ssr
+</b>[<i>rw</i>]: Solid state relays control for channel 3
+<br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
+</ul>
+<a name="ch3_sta"></a>
+<h3><a name="sect_3_29">2.29. ch3_sta</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch3_sta</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x104</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch3_sta</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x104</td></tr>
+</table>
+<p>
+Channel 3 status register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>ro</i>]: Channel 3 current ADC value
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
+</ul>
+<a name="ch3_calib"></a>
+<h3><a name="sect_3_30">2.30. ch3_calib</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch3_calib</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x108</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch3_calib</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x108</td></tr>
+</table>
+<p>
+Channel 3 calibration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+gain
+</b>[<i>rw</i>]: Gain calibration for channel 3
+<br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+<li><b>
+offset
+</b>[<i>rw</i>]: Offset calibration for channel 3
+<br>Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+</ul>
+<a name="ch3_sat"></a>
+<h3><a name="sect_3_31">2.31. ch3_sat</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch3_sat</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x10c</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch3_sat</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x10c</td></tr>
+</table>
+<p>
+Channel 3 saturation register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">val[14:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Saturation value for channel 3
+<br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+</ul>
+<a name="ch3_trig_thres"></a>
+<h3><a name="sect_3_32">2.32. ch3_trig_thres</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch3_trig_thres</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x110</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch3_trig_thres</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x110</td></tr>
+</table>
+<p>
+Channel 3 trigger threshold configuration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Threshold for internal trigger
+<br>Treated as binary two\'s complement and compared to raw ADC data.
+<li><b>
+hyst
+</b>[<i>rw</i>]: Internal trigger threshold hysteresis
+<br>Configures the internal trigger threshold hysteresis.<br>The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+</ul>
+<a name="ch3_trig_dly"></a>
+<h3><a name="sect_3_33">2.33. ch3_trig_dly</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch3_trig_dly</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x114</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch3_trig_dly</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x114</td></tr>
+</table>
+<p>
+Channel 3 trigger delay
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch3_trig_dly[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch3_trig_dly[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch3_trig_dly[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch3_trig_dly[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ch3_trig_dly
+</b>[<i>rw</i>]: Channel 3 trigger delay
+</ul>
+<a name="ch4_ctl"></a>
+<h3><a name="sect_3_34">2.34. ch4_ctl</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch4_ctl</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x140</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch4_ctl</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x140</td></tr>
+</table>
+<p>
+Channel 4 control register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">ssr[6:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ssr
+</b>[<i>rw</i>]: Solid state relays control for channel 4
+<br>Controls input voltage range, termination and DC offset error calibration<br>0x23: 100mV range<br>0x11: 1V range<br>0x45: 10V range<br>0x00: Open input<br>0x42: 100mV range calibration<br>0x40: 1V range calibration<br>0x44: 10V range calibration<br>Bit3 is indepandant of the others and enables the 50ohms termination.
+</ul>
+<a name="ch4_sta"></a>
+<h3><a name="sect_3_35">2.35. ch4_sta</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch4_sta</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x144</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch4_sta</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x144</td></tr>
+</table>
+<p>
+Channel 4 status register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>ro</i>]: Channel 4 current ADC value
+<br>Current ADC raw value. The format depends on ADC configuration; Upon reset, the ADC is<br>configured for "offset binary". The FMC-ADC driver when loaded, will change this to<br>binary two\'s complement.
+</ul>
+<a name="ch4_calib"></a>
+<h3><a name="sect_3_36">2.36. ch4_calib</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch4_calib</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x148</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch4_calib</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x148</td></tr>
+</table>
+<p>
+Channel 4 gain calibration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">offset[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">gain[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+gain
+</b>[<i>rw</i>]: Gain calibration for channel 4
+<br>Gain applied to all data coming from the ADC.<br>Fixed point format:<br>Bit 15 = 2^0, bit 14 = 2^(-1), bit 13 = 2^(-2), ... , bit 1 = 2^(-14), bit 0 = 2^(-15)
+<li><b>
+offset
+</b>[<i>rw</i>]: Offset calibration for channel 4
+<br>Offset applied to all data coming from the ADC. The format is binary two\'s complement.
+</ul>
+<a name="ch4_sat"></a>
+<h3><a name="sect_3_37">2.37. ch4_sat</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch4_sat</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x14c</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch4_sat</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x14c</td></tr>
+</table>
+<p>
+Channel 4 saturation register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_unused" colspan="1">-</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_unused" colspan="1">-</td>
+ <td class="td_field" colspan="7">val[14:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Saturation value for channel 4
+<br>Saturation applied to all data coming from the offset/gain correction block. The format is 15-bit unsigned.
+</ul>
+<a name="ch4_trig_thres"></a>
+<h3><a name="sect_3_38">2.38. ch4_trig_thres</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch4_trig_thres</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x150</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch4_trig_thres</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x150</td></tr>
+</table>
+<p>
+Channel 4 trigger threshold configuration register
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">hyst[7:0]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">val[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+val
+</b>[<i>rw</i>]: Threshold for internal trigger
+<br>Treated as binary two\'s complement and compared to raw ADC data.
+<li><b>
+hyst
+</b>[<i>rw</i>]: Internal trigger threshold hysteresis
+<br>Configures the internal trigger threshold hysteresis.<br>The value is always unsigned, and the gateware will subtract/add it based on the configured trigger polarity.
+</ul>
+<a name="ch4_trig_dly"></a>
+<h3><a name="sect_3_39">2.39. ch4_trig_dly</a></h3>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr><td><b>HW prefix:</b></td><td class="td_code">ch4_trig_dly</td></tr>
+<tr><td><b>HW address:</b></td><td class="td_code">0x154</td></tr>
+<tr><td><b>C prefix:</b></td><td class="td_code">ch4_trig_dly</td></tr>
+<tr><td><b>C block offset:</b></td><td class="td_code">0x154</td></tr>
+</table>
+<p>
+Channel 4 trigger delay
+</p>
+<table cellpadding=0 cellspacing=0 border=0>
+<tr>
+ <td class="td_bit" colspan="1">31</td>
+ <td class="td_bit" colspan="1">30</td>
+ <td class="td_bit" colspan="1">29</td>
+ <td class="td_bit" colspan="1">28</td>
+ <td class="td_bit" colspan="1">27</td>
+ <td class="td_bit" colspan="1">26</td>
+ <td class="td_bit" colspan="1">25</td>
+ <td class="td_bit" colspan="1">24</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch4_trig_dly[31:24]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">23</td>
+ <td class="td_bit" colspan="1">22</td>
+ <td class="td_bit" colspan="1">21</td>
+ <td class="td_bit" colspan="1">20</td>
+ <td class="td_bit" colspan="1">19</td>
+ <td class="td_bit" colspan="1">18</td>
+ <td class="td_bit" colspan="1">17</td>
+ <td class="td_bit" colspan="1">16</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch4_trig_dly[23:16]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">15</td>
+ <td class="td_bit" colspan="1">14</td>
+ <td class="td_bit" colspan="1">13</td>
+ <td class="td_bit" colspan="1">12</td>
+ <td class="td_bit" colspan="1">11</td>
+ <td class="td_bit" colspan="1">10</td>
+ <td class="td_bit" colspan="1">9</td>
+ <td class="td_bit" colspan="1">8</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch4_trig_dly[15:8]</td>
+</tr>
+<tr>
+ <td class="td_bit" colspan="1">7</td>
+ <td class="td_bit" colspan="1">6</td>
+ <td class="td_bit" colspan="1">5</td>
+ <td class="td_bit" colspan="1">4</td>
+ <td class="td_bit" colspan="1">3</td>
+ <td class="td_bit" colspan="1">2</td>
+ <td class="td_bit" colspan="1">1</td>
+ <td class="td_bit" colspan="1">0</td>
+</tr>
+<tr>
+ <td class="td_field" colspan="8">ch4_trig_dly[7:0]</td>
+</tr>
+</table>
+<ul>
+<li><b>
+ch4_trig_dly
+</b>[<i>rw</i>]: Channel 4 trigger delay
+</ul>
+
+
+</BODY>
+</HTML>

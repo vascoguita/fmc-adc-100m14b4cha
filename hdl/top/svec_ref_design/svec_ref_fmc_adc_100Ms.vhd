@@ -41,8 +41,7 @@ use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
 use work.synthesis_descriptor.all;
-use work.timetag_core_pkg.all;
-use work.carrier_csr_wbgen2_pkg.all;
+use work.svec_carrier_csr_pkg.all;
 use work.wr_xilinx_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_svec_pkg.all;
@@ -476,8 +475,8 @@ architecture rtl of svec_ref_fmc_adc_100Ms is
   signal tm_time_valid : std_logic;
 
   -- IO for CSR registers
-  signal csr_regin  : t_carrier_csr_in_registers;
-  signal csr_regout : t_carrier_csr_out_registers;
+  signal csr_regin  : t_carrier_csr_master_in;
+  signal csr_regout : t_carrier_csr_master_out;
 
 begin
 
@@ -678,39 +677,27 @@ begin
   --    Carrier status (PLL, FMC presence)
   --    Front panel LED manual control
   ------------------------------------------------------------------------------
-  cmp_carrier_csr : entity work.carrier_csr
+  cmp_carrier_csr : entity work.svec_carrier_csr
     port map (
-      rst_n_i    => rst_sys_62m5_n,
-      clk_sys_i  => clk_sys_62m5,
-      wb_adr_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).adr(3 downto 2),
-      wb_dat_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).dat,
-      wb_dat_o   => cnx_slave_out(c_WB_SLAVE_SVEC_CSR).dat,
-      wb_cyc_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).cyc,
-      wb_sel_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).sel,
-      wb_stb_i   => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).stb,
-      wb_we_i    => cnx_slave_in(c_WB_SLAVE_SVEC_CSR).we,
-      wb_ack_o   => cnx_slave_out(c_WB_SLAVE_SVEC_CSR).ack,
-      wb_stall_o => open,
-      regs_i     => csr_regin,
-      regs_o     => csr_regout);
+      rst_n_i       => rst_sys_62m5_n,
+      clk_i         => clk_sys_62m5,
+      wb_i          => cnx_slave_in(c_WB_SLAVE_SVEC_CSR),
+      wb_o          => cnx_slave_out(c_WB_SLAVE_SVEC_CSR),
+      carrier_csr_i => csr_regin,
+      carrier_csr_o => csr_regout);
 
-  csr_regin.carrier_pcb_rev_i    <= pcbrev_i;
-  csr_regin.carrier_reserved_i   <= (others => '0');
-  csr_regin.carrier_type_i       <= c_CARRIER_TYPE;
-  csr_regin.stat_fmc0_pres_i     <= fmc_prsnt_m2c_n_i(0);
-  csr_regin.stat_fmc1_pres_i     <= fmc_prsnt_m2c_n_i(1);
-  csr_regin.stat_sys_pll_lck_i   <= sys_clk_pll_locked;
-  csr_regin.stat_ddr0_cal_done_i <= ddr_calib_done(0);
-  csr_regin.stat_ddr1_cal_done_i <= ddr_calib_done(1);
+  csr_regin.carrier_pcb_rev    <= pcbrev_i;
+  csr_regin.carrier_reserved   <= (others => '0');
+  csr_regin.carrier_type       <= c_CARRIER_TYPE;
+  csr_regin.stat_fmc0_pres     <= fmc_prsnt_m2c_n_i(0);
+  csr_regin.stat_fmc1_pres     <= fmc_prsnt_m2c_n_i(1);
+  csr_regin.stat_sys_pll_lck   <= sys_clk_pll_locked;
+  csr_regin.stat_ddr0_cal_done <= ddr_calib_done(0);
+  csr_regin.stat_ddr1_cal_done <= ddr_calib_done(1);
 
-  led_state_csr <= csr_regout.ctrl_fp_leds_man_o;
-  sw_rst_fmc(0) <= csr_regout.rst_fmc0_o;
-  sw_rst_fmc(1) <= csr_regout.rst_fmc1_o;
-
-  -- Unused wishbone signals
-  cnx_slave_out(c_WB_SLAVE_SVEC_CSR).err   <= '0';
-  cnx_slave_out(c_WB_SLAVE_SVEC_CSR).rty   <= '0';
-  cnx_slave_out(c_WB_SLAVE_SVEC_CSR).stall <= '0';
+  led_state_csr <= csr_regout.ctrl_fp_leds_man;
+  sw_rst_fmc(0) <= csr_regout.rst_fmc0;
+  sw_rst_fmc(1) <= csr_regout.rst_fmc1;
 
   ------------------------------------------------------------------------------
   -- Vectored interrupt controller (VIC)
