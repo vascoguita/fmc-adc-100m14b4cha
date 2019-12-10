@@ -1,5 +1,6 @@
 #ifndef __CHEBY__TIMETAG_CORE_REGS__H__
 #define __CHEBY__TIMETAG_CORE_REGS__H__
+#define TIMETAG_CORE_REGS_SIZE 128
 
 /* Timetag seconds register (upper) */
 #define TIMETAG_CORE_REGS_SECONDS_UPPER 0x0UL
@@ -82,57 +83,60 @@
 struct timetag_core_regs {
   /* [0x0]: REG (rw) Timetag seconds register (upper) */
   uint32_t seconds_upper;
-  
+
   /* [0x4]: REG (rw) Timetag seconds register (lower) */
   uint32_t seconds_lower;
-  
+
   /* [0x8]: REG (rw) Timetag coarse time register, system clock ticks (125MHz) */
   uint32_t coarse;
-  
+
   /* [0xc]: REG (rw) Time trigger seconds register (upper) */
   uint32_t time_trig_seconds_upper;
-  
+
   /* [0x10]: REG (rw) Time trigger seconds register (lower) */
   uint32_t time_trig_seconds_lower;
-  
+
   /* [0x14]: REG (rw) Time trigger coarse time register, system clock ticks (125MHz) */
   uint32_t time_trig_coarse;
-  
+
   /* [0x18]: REG (ro) Trigger time-tag seconds register (upper) */
   uint32_t trig_tag_seconds_upper;
-  
+
   /* [0x1c]: REG (ro) Trigger time-tag seconds register (lower) */
   uint32_t trig_tag_seconds_lower;
-  
+
   /* [0x20]: REG (ro) Trigger time-tag coarse time (system clock ticks 125MHz) register */
   uint32_t trig_tag_coarse;
-  
+
   /* [0x24]: REG (ro) Acquisition start time-tag seconds register (upper) */
   uint32_t acq_start_tag_seconds_upper;
-  
+
   /* [0x28]: REG (ro) Acquisition start time-tag seconds register (lower) */
   uint32_t acq_start_tag_seconds_lower;
-  
+
   /* [0x2c]: REG (ro) Acquisition start time-tag coarse time (system clock ticks 125MHz) register */
   uint32_t acq_start_tag_coarse;
-  
+
   /* [0x30]: REG (ro) Acquisition stop time-tag seconds register (upper) */
   uint32_t acq_stop_tag_seconds_upper;
-  
+
   /* [0x34]: REG (ro) Acquisition stop time-tag seconds register (lower) */
   uint32_t acq_stop_tag_seconds_lower;
-  
+
   /* [0x38]: REG (ro) Acquisition stop time-tag coarse time (system clock ticks 125MHz) register */
   uint32_t acq_stop_tag_coarse;
-  
+
   /* [0x3c]: REG (ro) Acquisition end time-tag seconds register (upper) */
   uint32_t acq_end_tag_seconds_upper;
-  
+
   /* [0x40]: REG (ro) Acquisition end time-tag seconds register (lower) */
   uint32_t acq_end_tag_seconds_lower;
-  
+
   /* [0x44]: REG (ro) Acquisition end time-tag coarse time (system clock ticks 125MHz) register */
   uint32_t acq_end_tag_coarse;
+
+  /* padding to: 17 words */
+  uint32_t __padding_0[14];
 };
 
 #endif /* __CHEBY__TIMETAG_CORE_REGS__H__ */

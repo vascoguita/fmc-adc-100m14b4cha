@@ -130,17 +130,11 @@ end fmc_adc_mezzanine;
 architecture rtl of fmc_adc_mezzanine is
 
   ------------------------------------------------------------------------------
-  -- SDB crossbar constants declaration
+  -- Constants declaration
   ------------------------------------------------------------------------------
-
-  -- Number of masters on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 1;
 
   -- Number of slaves on the wishbone crossbar
   constant c_NUM_WB_SLAVES : integer := 7;
-
-  -- Wishbone master(s)
-  constant c_WB_MASTER : integer := 0;
 
   -- Wishbone slave(s)
   constant c_WB_SLAVE_FMC_ADC     : integer := 0;  -- Mezzanine ADC core
@@ -151,78 +145,13 @@ architecture rtl of fmc_adc_mezzanine is
   constant c_WB_SLAVE_FMC_SPI     : integer := 5;  -- Mezzanine SPI interface
   constant c_WB_SLAVE_TIMETAG     : integer := 6;  -- Mezzanine timetag core
 
-  -- Devices sdb description
-  constant c_wb_adc_csr_sdb : t_sdb_device := (
-    abi_class     => x"0000",                     -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                        -- 32-bit port granularity
-    sdb_component => (
-      addr_first  => x"0000000000000000",
-      addr_last   => x"00000000000001FF",
-      product     => (
-        vendor_id => x"000000000000CE42",         -- CERN
-        device_id => x"00000608",
-        version   => x"00000002",
-        date      => x"20190730",
-        name      => "WB-FMC-ADC-Core    ")));
-
-  constant c_wb_timetag_sdb : t_sdb_device := (
-    abi_class     => x"0000",                     -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                        -- 32-bit port granularity
-    sdb_component => (
-      addr_first  => x"0000000000000000",
-      addr_last   => x"000000000000007F",
-      product     => (
-        vendor_id => x"000000000000CE42",         -- CERN
-        device_id => x"00000604",
-        version   => x"00000001",
-        date      => x"20121116",
-        name      => "WB-Timetag-Core    ")));
-
-  constant c_wb_fmc_adc_eic_sdb : t_sdb_device := (
-    abi_class     => x"0000",                     -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"4",                        -- 32-bit port granularity
-    sdb_component => (
-      addr_first  => x"0000000000000000",
-      addr_last   => x"000000000000000F",
-      product     => (
-        vendor_id => x"000000000000CE42",         -- CERN
-        device_id => x"26ec6086",                 -- "WB-FMC-ADC.EIC     " | md5sum | cut -c1-8
-        version   => x"00000001",
-        date      => x"20131204",
-        name      => "WB-FMC-ADC.EIC     ")));
-
-  -- sdb header address
-  constant c_SDB_ADDRESS : t_wishbone_address := x"00000000";
-
-  -- Wishbone crossbar layout
-  constant c_INTERCONNECT_LAYOUT : t_sdb_record_array(c_NUM_WB_SLAVES - 1 downto 0) :=
-    (
-      c_WB_SLAVE_FMC_ADC     => f_sdb_embed_device(c_wb_adc_csr_sdb, x"00001000"),
-      c_WB_SLAVE_FMC_SYS_I2C => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001400"),
-      c_WB_SLAVE_FMC_EIC     => f_sdb_embed_device(c_wb_fmc_adc_eic_sdb, x"00001500"),
-      c_WB_SLAVE_FMC_I2C     => f_sdb_embed_device(c_xwb_i2c_master_sdb, x"00001600"),
-      c_WB_SLAVE_FMC_ONEWIRE => f_sdb_embed_device(c_xwb_onewire_master_sdb, x"00001700"),
-      c_WB_SLAVE_FMC_SPI     => f_sdb_embed_device(c_xwb_spi_sdb, x"00001800"),
-      c_WB_SLAVE_TIMETAG     => f_sdb_embed_device(c_wb_timetag_sdb, x"00001900")
-      );
-
-
   ------------------------------------------------------------------------------
   -- Signals declaration
   ------------------------------------------------------------------------------
 
   -- Wishbone buse(s) from master(s) to crossbar slave port(s)
-  signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
-  signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
+  signal cnx_master_out : t_wishbone_master_out;
+  signal cnx_master_in  : t_wishbone_master_in;
 
   -- Wishbone buse(s) from crossbar master port(s) to slave(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
@@ -300,26 +229,29 @@ begin
       clk_i    => sys_clk_i,
       slave_i  => wb_csr_out,
       slave_o  => wb_csr_in,
-      master_i => cnx_master_in(c_WB_MASTER),
-      master_o => cnx_master_out(c_WB_MASTER));
+      master_i => cnx_master_in,
+      master_o => cnx_master_out);
 
-  cmp_sdb_crossbar : xwb_sdb_crossbar
-    generic map (
-      g_VERBOSE     => FALSE,
-      g_num_masters => c_NUM_WB_MASTERS,
-      g_num_slaves  => c_NUM_WB_SLAVES,
-      g_registered  => TRUE,
-      g_wraparound  => TRUE,
-      g_layout      => c_INTERCONNECT_LAYOUT,
-      g_sdb_wb_mode => PIPELINED,
-      g_sdb_addr    => c_SDB_ADDRESS)
+  cmp_crossbar : entity work.fmc_adc_mezzanine_mmap
     port map (
-      clk_sys_i => sys_clk_i,
-      rst_n_i   => sys_rst_n_i,
-      slave_i   => cnx_master_out,
-      slave_o   => cnx_master_in,
-      master_i  => cnx_slave_out,
-      master_o  => cnx_slave_in);
+      rst_n_i                  => sys_rst_n_i,
+      clk_i                    => sys_clk_i,
+      wb_i                     => cnx_master_out,
+      wb_o                     => cnx_master_in,
+      fmc_adc_100m_csr_i       => cnx_slave_out(c_WB_SLAVE_FMC_ADC),
+      fmc_adc_100m_csr_o       => cnx_slave_in(c_WB_SLAVE_FMC_ADC),
+      fmc_i2c_master_i         => cnx_slave_out(c_WB_SLAVE_FMC_SYS_I2C),
+      fmc_i2c_master_o         => cnx_slave_in(c_WB_SLAVE_FMC_SYS_I2C),
+      fmc_adc_eic_i            => cnx_slave_out(c_WB_SLAVE_FMC_EIC),
+      fmc_adc_eic_o            => cnx_slave_in(c_WB_SLAVE_FMC_EIC),
+      si570_i2c_master_i       => cnx_slave_out(c_WB_SLAVE_FMC_I2C),
+      si570_i2c_master_o       => cnx_slave_in(c_WB_SLAVE_FMC_I2C),
+      ds18b20_onewire_master_i => cnx_slave_out(c_WB_SLAVE_FMC_ONEWIRE),
+      ds18b20_onewire_master_o => cnx_slave_in(c_WB_SLAVE_FMC_ONEWIRE),
+      fmc_spi_master_i         => cnx_slave_out(c_WB_SLAVE_FMC_SPI),
+      fmc_spi_master_o         => cnx_slave_in(c_WB_SLAVE_FMC_SPI),
+      timetag_core_i           => cnx_slave_out(c_WB_SLAVE_TIMETAG),
+      timetag_core_o           => cnx_slave_in(c_WB_SLAVE_TIMETAG));
 
   ------------------------------------------------------------------------------
   -- Mezzanine system managment I2C master

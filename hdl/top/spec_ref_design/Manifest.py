@@ -1,7 +1,6 @@
 files = [
     "spec_ref_fmc_adc_100Ms.vhd",
-    "spec_carrier_csr.vhd",
-    "dma_eic.vhd",
+    "../../cheby/spec_ref_fmc_adc_100Ms_mmap.vhd",
 ]
 
 fetchto = "../../ip_cores"

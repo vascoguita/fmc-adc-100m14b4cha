@@ -38,7 +38,6 @@ library work;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_mezzanine_pkg.all;
-use work.spec_carrier_csr_pkg.all;
 use work.wr_board_pkg.all;
 
 entity spec_ref_fmc_adc_100Ms is
@@ -206,17 +205,11 @@ end spec_ref_fmc_adc_100Ms;
 architecture arch of spec_ref_fmc_adc_100Ms is
 
   ------------------------------------------------------------------------------
-  -- SDB crossbar constants declaration
+  -- Constants declaration
   ------------------------------------------------------------------------------
-
-  -- Number of masters on the wishbone crossbar
-  constant c_NUM_WB_MASTERS : integer := 1;
 
   -- Number of slaves on the wishbone crossbar
   constant c_NUM_WB_SLAVES : integer := 2;
-
-  -- Wishbone master(s)
-  constant c_WB_MASTER_GENNUM : integer := 0;
 
   -- Wishbone slave(s)
   constant c_WB_SLAVE_METADATA : integer := 0;
@@ -224,17 +217,6 @@ architecture arch of spec_ref_fmc_adc_100Ms is
 
   -- Convention metadata base address
   constant c_METADATA_ADDR : t_wishbone_address := x"0000_2000";
-
-  -- Primary wishbone crossbar layout
-  constant c_WB_LAYOUT_ADDR :
-    t_wishbone_address_array(c_NUM_WB_SLAVES - 1 downto 0) := (
-      c_WB_SLAVE_METADATA => c_METADATA_ADDR,
-      c_WB_SLAVE_FMC_ADC  => x"0000_4000");
-
-  constant c_WB_LAYOUT_MASK :
-    t_wishbone_address_array(c_NUM_WB_SLAVES - 1 downto 0) := (
-      c_WB_SLAVE_METADATA => x"0003_ffc0",  --    0x40 bytes
-      c_WB_SLAVE_FMC_ADC  => x"0003_e000"); --  0x2000 bytes
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -248,8 +230,8 @@ architecture arch of spec_ref_fmc_adc_100Ms is
   signal rst_ref_125m_n  : std_logic := '0';
 
   -- Wishbone buse(s) from master(s) to crossbar slave port(s)
-  signal cnx_master_out : t_wishbone_master_out_array(c_NUM_WB_MASTERS-1 downto 0);
-  signal cnx_master_in  : t_wishbone_master_in_array(c_NUM_WB_MASTERS-1 downto 0);
+  signal cnx_master_out : t_wishbone_master_out;
+  signal cnx_master_in  : t_wishbone_master_in;
 
   -- Wishbone buse(s) from crossbar master port(s) to slave(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
@@ -279,24 +261,7 @@ architecture arch of spec_ref_fmc_adc_100Ms is
   signal wrabbit_en         : std_logic;
   signal pps_led            : std_logic;
 
-  -- IO for CSR registers
-  signal csr_regin  : t_carrier_csr_master_in;
-  signal csr_regout : t_carrier_csr_master_out;
-
 begin  -- architecture arch
-
-  cmp_xwb_metadata : entity work.xwb_metadata
-    generic map (
-      g_VENDOR_ID    => x"0000_10DC",
-      g_DEVICE_ID    => x"4144_4301", -- "ADC1"
-      g_VERSION      => x"0100_0000",
-      g_CAPABILITIES => x"0000_0000",
-      g_COMMIT_ID    => (others => '0'))
-    port map (
-      clk_i   => clk_sys_62m5,
-      rst_n_i => rst_sys_62m5_n,
-      wb_i    => cnx_slave_in(c_WB_SLAVE_METADATA),
-      wb_o    => cnx_slave_out(c_WB_SLAVE_METADATA));
 
   inst_spec_base : entity work.spec_base_wr
     generic map (
@@ -411,8 +376,8 @@ begin  -- architecture arch
       pps_p_o             => open,
       pps_led_o           => pps_led,
       link_ok_o           => wrabbit_en,
-      app_wb_o            => cnx_master_out(c_WB_MASTER_GENNUM),
-      app_wb_i            => cnx_master_in(c_WB_MASTER_GENNUM));
+      app_wb_o            => cnx_master_out,
+      app_wb_i            => cnx_master_in);
 
   fmc_wb_ddr_in.err <= '0';
   fmc_wb_ddr_in.rty <= '0';
@@ -421,21 +386,33 @@ begin  -- architecture arch
   -- Primary wishbone crossbar
   ------------------------------------------------------------------------------
 
-  cmp_crossbar : xwb_crossbar
-    generic map (
-      g_VERBOSE     => FALSE,
-      g_NUM_MASTERS => c_NUM_WB_MASTERS,
-      g_NUM_SLAVES  => c_NUM_WB_SLAVES,
-      g_REGISTERED  => TRUE,
-      g_ADDRESS     => c_WB_LAYOUT_ADDR,
-      g_MASK        => c_WB_LAYOUT_MASK)
+  cmp_crossbar : entity work.spec_ref_fmc_adc_100m_mmap
     port map (
-      clk_sys_i => clk_sys_62m5,
-      rst_n_i   => rst_sys_62m5_n,
-      slave_i   => cnx_master_out,
-      slave_o   => cnx_master_in,
-      master_i  => cnx_slave_out,
-      master_o  => cnx_slave_in);
+      rst_n_i             => rst_sys_62m5_n,
+      clk_i               => clk_sys_62m5,
+      wb_i                => cnx_master_out,
+      wb_o                => cnx_master_in,
+      metadata_i          => cnx_slave_out(c_WB_SLAVE_METADATA),
+      metadata_o          => cnx_slave_in(c_WB_SLAVE_METADATA),
+      fmc_adc_mezzanine_i => cnx_slave_out(c_WB_SLAVE_FMC_ADC),
+      fmc_adc_mezzanine_o => cnx_slave_in(c_WB_SLAVE_FMC_ADC));
+
+  ------------------------------------------------------------------------------
+  -- Application-specific metadata ROM
+  ------------------------------------------------------------------------------
+
+  cmp_xwb_metadata : entity work.xwb_metadata
+    generic map (
+      g_VENDOR_ID    => x"0000_10DC",
+      g_DEVICE_ID    => x"4144_4301", -- "ADC1"
+      g_VERSION      => x"0100_0000",
+      g_CAPABILITIES => x"0000_0000",
+      g_COMMIT_ID    => (others => '0'))
+    port map (
+      clk_i   => clk_sys_62m5,
+      rst_n_i => rst_sys_62m5_n,
+      wb_i    => cnx_slave_in(c_WB_SLAVE_METADATA),
+      wb_o    => cnx_slave_out(c_WB_SLAVE_METADATA));
 
   ------------------------------------------------------------------------------
   -- FMC ADC mezzanines (wb bridge with cross-clocking)
@@ -548,7 +525,7 @@ begin  -- architecture arch
     port map (
       clk_i      => clk_sys_62m5,
       rst_n_i    => rst_sys_62m5_n,
-      pulse_i    => cnx_slave_in(c_WB_MASTER_GENNUM).cyc,
+      pulse_i    => cnx_master_out.cyc,
       extended_o => gn4124_access);
 
   aux_leds_o(0) <= not gn4124_access;
