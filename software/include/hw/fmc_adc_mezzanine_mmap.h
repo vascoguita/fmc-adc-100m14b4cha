@@ -2,6 +2,7 @@
 #define __CHEBY__FMC_ADC_MEZZANINE_MMAP__H__
 
 #include "timetag_core_regs.h"
+#include "wb_ds182x_regs.h"
 #include "fmc_adc_100ms_csr.h"
 #define FMC_ADC_MEZZANINE_MMAP_SIZE 8192
 
@@ -19,7 +20,7 @@
 
 /* DS18B20 OneWire master */
 #define FMC_ADC_MEZZANINE_MMAP_DS18B20_ONEWIRE_MASTER 0x1700UL
-#define FMC_ADC_MEZZANINE_MMAP_DS18B20_ONEWIRE_MASTER_SIZE 256
+#define FMC_ADC_MEZZANINE_MMAP_DS18B20_ONEWIRE_MASTER_SIZE 16
 
 /* Mezzanine SPI master (ADC control + DAC offsets) */
 #define FMC_ADC_MEZZANINE_MMAP_FMC_SPI_MASTER 0x1800UL
@@ -49,19 +50,22 @@ struct fmc_adc_mezzanine_mmap {
   uint32_t si570_i2c_master[64];
 
   /* [0x1700]: SUBMAP DS18B20 OneWire master */
-  uint32_t ds18b20_onewire_master[64];
+  struct wb_ds182x_regs ds18b20_onewire_master;
+
+  /* padding to: 1536 words */
+  uint32_t __padding_3[60];
 
   /* [0x1800]: SUBMAP Mezzanine SPI master (ADC control + DAC offsets) */
   uint32_t fmc_spi_master[8];
 
   /* padding to: 1600 words */
-  uint32_t __padding_3[56];
+  uint32_t __padding_4[56];
 
   /* [0x1900]: SUBMAP Timetag Core */
   struct timetag_core_regs timetag_core;
 
   /* padding to: 1600 words */
-  uint32_t __padding_4[416];
+  uint32_t __padding_5[416];
 };
 
 #endif /* __CHEBY__FMC_ADC_MEZZANINE_MMAP__H__ */

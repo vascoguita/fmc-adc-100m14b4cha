@@ -196,7 +196,7 @@ begin
   ds18b20_onewire_master_o.stb <= ds18b20_onewire_master_tr;
   ds18b20_onewire_master_wack <= ds18b20_onewire_master_i.ack and ds18b20_onewire_master_wt;
   ds18b20_onewire_master_rack <= ds18b20_onewire_master_i.ack and ds18b20_onewire_master_rt;
-  ds18b20_onewire_master_o.adr <= ((23 downto 0 => '0') & wb_i.adr(7 downto 2)) & (1 downto 0 => '0');
+  ds18b20_onewire_master_o.adr <= ((27 downto 0 => '0') & wb_i.adr(3 downto 2)) & (1 downto 0 => '0');
   ds18b20_onewire_master_o.sel <= (others => '1');
   ds18b20_onewire_master_o.we <= ds18b20_onewire_master_wt;
   ds18b20_onewire_master_o.dat <= wb_i.dat;

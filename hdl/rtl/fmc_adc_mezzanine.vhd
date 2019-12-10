@@ -171,10 +171,6 @@ architecture rtl of fmc_adc_mezzanine is
   signal si570_sda_out  : std_logic;
   signal si570_sda_oe_n : std_logic;
 
-  -- Mezzanine 1-wire
-  signal mezz_owr_en : std_logic_vector(0 downto 0);
-  signal mezz_owr_i  : std_logic_vector(0 downto 0);
-
   -- Interrupts (eic)
   signal ddr_wr_fifo_empty_d : std_logic;
   signal ddr_wr_fifo_empty_p : std_logic;
@@ -395,29 +391,17 @@ begin
   --    DS18B20 (thermometer + unique ID)
   ------------------------------------------------------------------------------
 
-  cmp_fmc_onewire : xwb_onewire_master
-    generic map(
-      g_interface_mode      => CLASSIC,
-      g_address_granularity => BYTE,
-      g_num_ports           => 1,
-      g_ow_btp_normal       => "5.0",
-      g_ow_btp_overdrive    => "1.0"
-      )
-    port map(
-      clk_sys_i => sys_clk_i,
+  cmp_fmc_onewine : entity work.xwb_ds182x_readout
+    generic map (
+      g_CLOCK_FREQ_KHZ   => 125000,
+      g_USE_INTERNAL_PPS => TRUE)
+    port map (
+      clk_i     => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
-
-      slave_i => cnx_slave_in(c_WB_SLAVE_FMC_ONEWIRE),
-      slave_o => cnx_slave_out(c_WB_SLAVE_FMC_ONEWIRE),
-      desc_o  => open,
-
-      owr_pwren_o => open,
-      owr_en_o    => mezz_owr_en,
-      owr_i       => mezz_owr_i
-      );
-
-  mezz_one_wire_b <= '0' when mezz_owr_en(0) = '1' else 'Z';
-  mezz_owr_i(0)   <= mezz_one_wire_b;
+      wb_i      => cnx_slave_in(c_WB_SLAVE_FMC_ONEWIRE),
+      wb_o      => cnx_slave_out(c_WB_SLAVE_FMC_ONEWIRE),
+      pps_p_i   => '0',
+      onewire_b => mezz_one_wire_b);
 
   ------------------------------------------------------------------------------
   -- FMC0 interrupt controller
