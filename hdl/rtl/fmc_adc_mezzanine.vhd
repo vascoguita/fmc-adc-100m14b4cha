@@ -134,16 +134,15 @@ architecture rtl of fmc_adc_mezzanine is
   ------------------------------------------------------------------------------
 
   -- Number of slaves on the wishbone crossbar
-  constant c_NUM_WB_SLAVES : integer := 7;
+  constant c_NUM_WB_SLAVES : integer := 6;
 
   -- Wishbone slave(s)
   constant c_WB_SLAVE_FMC_ADC     : integer := 0;  -- Mezzanine ADC core
-  constant c_WB_SLAVE_FMC_SYS_I2C : integer := 1;  -- Mezzanine system I2C interface (EEPROM)
-  constant c_WB_SLAVE_FMC_EIC     : integer := 2;  -- Mezzanine interrupt controller
-  constant c_WB_SLAVE_FMC_I2C     : integer := 3;  -- Mezzanine I2C controller
-  constant c_WB_SLAVE_FMC_ONEWIRE : integer := 4;  -- Mezzanine onewire interface
-  constant c_WB_SLAVE_FMC_SPI     : integer := 5;  -- Mezzanine SPI interface
-  constant c_WB_SLAVE_TIMETAG     : integer := 6;  -- Mezzanine timetag core
+  constant c_WB_SLAVE_FMC_EIC     : integer := 1;  -- Mezzanine interrupt controller
+  constant c_WB_SLAVE_FMC_I2C     : integer := 2;  -- Mezzanine I2C controller
+  constant c_WB_SLAVE_FMC_ONEWIRE : integer := 3;  -- Mezzanine onewire interface
+  constant c_WB_SLAVE_FMC_SPI     : integer := 4;  -- Mezzanine SPI interface
+  constant c_WB_SLAVE_TIMETAG     : integer := 5;  -- Mezzanine timetag core
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -240,8 +239,6 @@ begin
       wb_o                     => cnx_master_in,
       fmc_adc_100m_csr_i       => cnx_slave_out(c_WB_SLAVE_FMC_ADC),
       fmc_adc_100m_csr_o       => cnx_slave_in(c_WB_SLAVE_FMC_ADC),
-      fmc_i2c_master_i         => cnx_slave_out(c_WB_SLAVE_FMC_SYS_I2C),
-      fmc_i2c_master_o         => cnx_slave_in(c_WB_SLAVE_FMC_SYS_I2C),
       fmc_adc_eic_i            => cnx_slave_out(c_WB_SLAVE_FMC_EIC),
       fmc_adc_eic_o            => cnx_slave_in(c_WB_SLAVE_FMC_EIC),
       si570_i2c_master_i       => cnx_slave_out(c_WB_SLAVE_FMC_I2C),
@@ -252,30 +249,6 @@ begin
       fmc_spi_master_o         => cnx_slave_in(c_WB_SLAVE_FMC_SPI),
       timetag_core_i           => cnx_slave_out(c_WB_SLAVE_TIMETAG),
       timetag_core_o           => cnx_slave_in(c_WB_SLAVE_TIMETAG));
-
-  ------------------------------------------------------------------------------
-  -- Mezzanine system managment I2C master
-  --    Access to mezzanine EEPROM
-  ------------------------------------------------------------------------------
-  cmp_fmc_sys_i2c : xwb_i2c_master
-    generic map(
-      g_interface_mode      => CLASSIC,
-      g_address_granularity => BYTE
-      )
-    port map (
-      clk_sys_i => sys_clk_i,
-      rst_n_i   => sys_rst_n_i,
-
-      slave_i => cnx_slave_in(c_WB_SLAVE_FMC_SYS_I2C),
-      slave_o => cnx_slave_out(c_WB_SLAVE_FMC_SYS_I2C),
-      desc_o  => open,
-
-      scl_pad_i(0)    => '1',
-      scl_pad_o(0)    => open,
-      scl_padoen_o(0) => open,
-      sda_pad_i(0)    => '1',
-      sda_pad_o(0)    => open,
-      sda_padoen_o(0) => open);
 
   ------------------------------------------------------------------------------
   -- Mezzanine SPI master

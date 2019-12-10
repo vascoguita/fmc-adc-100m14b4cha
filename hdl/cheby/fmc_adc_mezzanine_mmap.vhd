@@ -17,10 +17,6 @@ entity fmc_adc_mezzanine_mmap is
     fmc_adc_100m_csr_i   : in    t_wishbone_master_in;
     fmc_adc_100m_csr_o   : out   t_wishbone_master_out;
 
-    -- Mezzanine system management I2C master
-    fmc_i2c_master_i     : in    t_wishbone_master_in;
-    fmc_i2c_master_o     : out   t_wishbone_master_out;
-
     -- FMC ADC Embedded Interrupt Controller
     fmc_adc_eic_i        : in    t_wishbone_master_in;
     fmc_adc_eic_o        : out   t_wishbone_master_out;
@@ -58,12 +54,6 @@ architecture syn of fmc_adc_mezzanine_mmap is
   signal fmc_adc_100m_csr_tr            : std_logic;
   signal fmc_adc_100m_csr_wack          : std_logic;
   signal fmc_adc_100m_csr_rack          : std_logic;
-  signal fmc_i2c_master_re              : std_logic;
-  signal fmc_i2c_master_wt              : std_logic;
-  signal fmc_i2c_master_rt              : std_logic;
-  signal fmc_i2c_master_tr              : std_logic;
-  signal fmc_i2c_master_wack            : std_logic;
-  signal fmc_i2c_master_rack            : std_logic;
   signal fmc_adc_eic_re                 : std_logic;
   signal fmc_adc_eic_wt                 : std_logic;
   signal fmc_adc_eic_rt                 : std_logic;
@@ -150,26 +140,6 @@ begin
   fmc_adc_100m_csr_o.sel <= (others => '1');
   fmc_adc_100m_csr_o.we <= fmc_adc_100m_csr_wt;
   fmc_adc_100m_csr_o.dat <= wb_i.dat;
-
-  -- Assignments for submap fmc_i2c_master
-  fmc_i2c_master_tr <= fmc_i2c_master_wt or fmc_i2c_master_rt;
-  process (clk_i) begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        fmc_i2c_master_rt <= '0';
-      else
-        fmc_i2c_master_rt <= (fmc_i2c_master_rt or fmc_i2c_master_re) and not fmc_i2c_master_rack;
-      end if;
-    end if;
-  end process;
-  fmc_i2c_master_o.cyc <= fmc_i2c_master_tr;
-  fmc_i2c_master_o.stb <= fmc_i2c_master_tr;
-  fmc_i2c_master_wack <= fmc_i2c_master_i.ack and fmc_i2c_master_wt;
-  fmc_i2c_master_rack <= fmc_i2c_master_i.ack and fmc_i2c_master_rt;
-  fmc_i2c_master_o.adr <= ((23 downto 0 => '0') & wb_i.adr(7 downto 2)) & (1 downto 0 => '0');
-  fmc_i2c_master_o.sel <= (others => '1');
-  fmc_i2c_master_o.we <= fmc_i2c_master_wt;
-  fmc_i2c_master_o.dat <= wb_i.dat;
 
   -- Assignments for submap fmc_adc_eic
   fmc_adc_eic_tr <= fmc_adc_eic_wt or fmc_adc_eic_rt;
@@ -277,7 +247,6 @@ begin
       if rst_n_i = '0' then
         wr_ack_int <= '0';
         fmc_adc_100m_csr_wt <= '0';
-        fmc_i2c_master_wt <= '0';
         fmc_adc_eic_wt <= '0';
         si570_i2c_master_wt <= '0';
         ds18b20_onewire_master_wt <= '0';
@@ -286,7 +255,6 @@ begin
       else
         wr_ack_int <= '0';
         fmc_adc_100m_csr_wt <= '0';
-        fmc_i2c_master_wt <= '0';
         fmc_adc_eic_wt <= '0';
         si570_i2c_master_wt <= '0';
         ds18b20_onewire_master_wt <= '0';
@@ -298,18 +266,9 @@ begin
           fmc_adc_100m_csr_wt <= (fmc_adc_100m_csr_wt or wr_int) and not fmc_adc_100m_csr_wack;
           wr_ack_int <= fmc_adc_100m_csr_wack;
         when "1010" => 
-          case wb_i.adr(8 downto 8) is
-          when "0" => 
-            -- Submap fmc_i2c_master
-            fmc_i2c_master_wt <= (fmc_i2c_master_wt or wr_int) and not fmc_i2c_master_wack;
-            wr_ack_int <= fmc_i2c_master_wack;
-          when "1" => 
-            -- Submap fmc_adc_eic
-            fmc_adc_eic_wt <= (fmc_adc_eic_wt or wr_int) and not fmc_adc_eic_wack;
-            wr_ack_int <= fmc_adc_eic_wack;
-          when others =>
-            wr_ack_int <= wr_int;
-          end case;
+          -- Submap fmc_adc_eic
+          fmc_adc_eic_wt <= (fmc_adc_eic_wt or wr_int) and not fmc_adc_eic_wack;
+          wr_ack_int <= fmc_adc_eic_wack;
         when "1011" => 
           case wb_i.adr(8 downto 8) is
           when "0" => 
@@ -353,13 +312,6 @@ begin
         case wb_i.adr(12 downto 9) is
         when "1000" => 
         when "1010" => 
-          case wb_i.adr(8 downto 8) is
-          when "0" => 
-          when "1" => 
-          when others =>
-            reg_rdat_int <= (others => 'X');
-            rd_ack1_int <= rd_int;
-          end case;
         when "1011" => 
           case wb_i.adr(8 downto 8) is
           when "0" => 
@@ -385,11 +337,10 @@ begin
   end process;
 
   -- Process for read requests.
-  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int, rd_int, fmc_adc_100m_csr_i.dat, fmc_adc_100m_csr_rack, fmc_adc_100m_csr_rt, rd_int, fmc_i2c_master_i.dat, fmc_i2c_master_rack, fmc_i2c_master_rt, rd_int, fmc_adc_eic_i.dat, fmc_adc_eic_rack, fmc_adc_eic_rt, rd_int, si570_i2c_master_i.dat, si570_i2c_master_rack, si570_i2c_master_rt, rd_int, ds18b20_onewire_master_i.dat, ds18b20_onewire_master_rack, ds18b20_onewire_master_rt, rd_int, fmc_spi_master_i.dat, fmc_spi_master_rack, fmc_spi_master_rt, rd_int, timetag_core_i.dat, timetag_core_rack, timetag_core_rt) begin
+  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int, rd_int, fmc_adc_100m_csr_i.dat, fmc_adc_100m_csr_rack, fmc_adc_100m_csr_rt, rd_int, fmc_adc_eic_i.dat, fmc_adc_eic_rack, fmc_adc_eic_rt, rd_int, si570_i2c_master_i.dat, si570_i2c_master_rack, si570_i2c_master_rt, rd_int, ds18b20_onewire_master_i.dat, ds18b20_onewire_master_rack, ds18b20_onewire_master_rt, rd_int, fmc_spi_master_i.dat, fmc_spi_master_rack, fmc_spi_master_rt, rd_int, timetag_core_i.dat, timetag_core_rack, timetag_core_rt) begin
     -- By default ack read requests
     wb_o.dat <= (others => '0');
     fmc_adc_100m_csr_re <= '0';
-    fmc_i2c_master_re <= '0';
     fmc_adc_eic_re <= '0';
     si570_i2c_master_re <= '0';
     ds18b20_onewire_master_re <= '0';
@@ -402,20 +353,10 @@ begin
       wb_o.dat <= fmc_adc_100m_csr_i.dat;
       rd_ack_int <= fmc_adc_100m_csr_rack;
     when "1010" => 
-      case wb_i.adr(8 downto 8) is
-      when "0" => 
-        -- Submap fmc_i2c_master
-        fmc_i2c_master_re <= rd_int;
-        wb_o.dat <= fmc_i2c_master_i.dat;
-        rd_ack_int <= fmc_i2c_master_rack;
-      when "1" => 
-        -- Submap fmc_adc_eic
-        fmc_adc_eic_re <= rd_int;
-        wb_o.dat <= fmc_adc_eic_i.dat;
-        rd_ack_int <= fmc_adc_eic_rack;
-      when others =>
-        rd_ack_int <= rd_int;
-      end case;
+      -- Submap fmc_adc_eic
+      fmc_adc_eic_re <= rd_int;
+      wb_o.dat <= fmc_adc_eic_i.dat;
+      rd_ack_int <= fmc_adc_eic_rack;
     when "1011" => 
       case wb_i.adr(8 downto 8) is
       when "0" => 

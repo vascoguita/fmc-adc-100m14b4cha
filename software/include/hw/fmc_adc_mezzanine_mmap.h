@@ -9,10 +9,6 @@
 #define FMC_ADC_MEZZANINE_MMAP_FMC_ADC_100M_CSR 0x1000UL
 #define FMC_ADC_MEZZANINE_MMAP_FMC_ADC_100M_CSR_SIZE 512
 
-/* Mezzanine system management I2C master */
-#define FMC_ADC_MEZZANINE_MMAP_FMC_I2C_MASTER 0x1400UL
-#define FMC_ADC_MEZZANINE_MMAP_FMC_I2C_MASTER_SIZE 256
-
 /* FMC ADC Embedded Interrupt Controller */
 #define FMC_ADC_MEZZANINE_MMAP_FMC_ADC_EIC 0x1500UL
 #define FMC_ADC_MEZZANINE_MMAP_FMC_ADC_EIC_SIZE 16
@@ -40,11 +36,8 @@ struct fmc_adc_mezzanine_mmap {
   /* [0x1000]: SUBMAP FMC ADC 100M CSR */
   struct fmc_adc_100ms_csr fmc_adc_100m_csr;
 
-  /* padding to: 1280 words */
-  uint32_t __padding_1[128];
-
-  /* [0x1400]: SUBMAP Mezzanine system management I2C master */
-  uint32_t fmc_i2c_master[64];
+  /* padding to: 1344 words */
+  uint32_t __padding_1[192];
 
   /* [0x1500]: SUBMAP FMC ADC Embedded Interrupt Controller */
   uint32_t fmc_adc_eic[4];
