@@ -105,6 +105,12 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_IRQ_VIC_DISABLE_MASK] =    {0x0C, 0x00000003, 0},
 	[ZFA_IRQ_VIC_MASK_STATUS] =     {0x10, 0x00000003, 0},
 
+	/* DS18B20 UID/Temperature */
+	[ZFA_DS18B20_ID_U] =		{0x00, 0xFFFFFFFF, 0},
+	[ZFA_DS18B20_ID_L] =		{0x04, 0xFFFFFFFF, 0},
+	[ZFA_DS18B20_TEMP] =		{0x08, 0x0000FFFF, 0},
+	[ZFA_DS18B20_STAT] =		{0x0C, 0x00000003, 0},
+
 	/* UTC */
 	[ZFA_UTC_SECONDS_U] =		{0x00, ~0x0, 0},
 	[ZFA_UTC_SECONDS_L] =		{0x04, ~0x0, 0},

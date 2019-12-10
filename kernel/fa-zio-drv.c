@@ -150,7 +150,7 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 };
 
 static struct zio_attribute zfad_dev_ext_zattr[] = {
-	/* Get Mezzanine temperature from onewire */
+	/* Get Mezzanine temperature from the DS18B20 chip */
 	ZIO_PARAM_EXT("temperature", ZIO_RO_PERM, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
 
@@ -355,10 +355,11 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
 		/*
-		 * Onewire returns units of 1/16 degree. We return units
+		 * DS18B20 returns units of 1/16 degree. We return units
 		 * of 1/1000 of a degree instead.
 		 */
-		*usr_val = fa_read_temp(fa, 0);
+		*usr_val = fa_readl(fa, fa->fa_ow_base,
+				    &zfad_regs[ZFA_DS18B20_TEMP]);
 		*usr_val = (*usr_val * 1000 + 8) / 16;
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
