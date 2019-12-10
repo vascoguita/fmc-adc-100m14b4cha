@@ -43,7 +43,7 @@ use work.wr_board_pkg.all;
 entity spec_ref_fmc_adc_100Ms is
   generic(
     g_SIMULATION         : integer := 0;
-    g_MULTISHOT_RAM_SIZE : natural := 4096;
+    g_MULTISHOT_RAM_SIZE : natural := 2048;
     g_CALIB_SOFT_IP      : string  := "TRUE";
     g_WRPC_INITF         : string  := "../../ip_cores/wr-cores/bin/wrpc/wrc_phy8.bram");
   port

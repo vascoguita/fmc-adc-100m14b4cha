@@ -120,7 +120,6 @@ INST "cmp_fmc_adc_mezzanine/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X30Y2
 #----------------------------------------
 INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out"   IOB = FALSE;
 INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"     IOB = FALSE;
-INST "cmp_fmc_adc_mezzanine/cmp_fmc_onewire/*/Wrapped_1wire/owr_oen_1" IOB = FALSE;
 
 #----------------------------------------
 # Clocks
