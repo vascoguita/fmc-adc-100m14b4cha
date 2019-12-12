@@ -202,7 +202,7 @@ begin
   cmp_fmc_wb_slave_adapter_in : wb_slave_adapter
     generic map (
       g_master_use_struct  => TRUE,
-      g_master_mode        => CLASSIC,
+      g_master_mode        => PIPELINED,
       g_master_granularity => BYTE,
       g_slave_use_struct   => TRUE,
       g_slave_mode         => g_WB_MODE,
@@ -218,7 +218,7 @@ begin
   -- Additional register to help timing
   cmp_xwb_register : xwb_register
     generic map (
-      g_WB_MODE  => CLASSIC)
+      g_WB_MODE => PIPELINED)
     port map (
       rst_n_i  => sys_rst_n_i,
       clk_i    => sys_clk_i,
@@ -253,7 +253,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_spi : xwb_spi
     generic map(
-      g_interface_mode      => CLASSIC,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
       )
     port map (
@@ -293,7 +293,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_fmc_i2c : xwb_i2c_master
     generic map(
-      g_interface_mode      => CLASSIC,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
       )
     port map (
@@ -333,7 +333,7 @@ begin
       g_SPARTAN6_USE_PLL   => g_SPARTAN6_USE_PLL,
       g_TRIG_DELAY_EXT     => g_TRIG_DELAY_EXT,
       g_TRIG_DELAY_SW      => g_TRIG_DELAY_SW,
-      g_WB_CSR_MODE        => CLASSIC,
+      g_WB_CSR_MODE        => PIPELINED,
       g_WB_CSR_GRANULARITY => BYTE)
     port map (
       sys_clk_i   => sys_clk_i,

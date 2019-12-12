@@ -424,6 +424,9 @@ begin  -- architecture arch
   ------------------------------------------------------------------------------
 
   cmp_xwb_clock_bridge : xwb_clock_bridge
+    generic map (
+      g_SLAVE_PORT_WB_MODE  => CLASSIC,
+      g_MASTER_PORT_WB_MODE => PIPELINED)
     port map (
       slave_clk_i    => clk_sys_62m5,
       slave_rst_n_i  => rst_sys_62m5_n,
@@ -432,8 +435,7 @@ begin  -- architecture arch
       master_clk_i   => clk_ref_125m,
       master_rst_n_i => rst_ref_125m_n,
       master_i       => cnx_fmc_sync_master_in,
-      master_o       => cnx_fmc_sync_master_out
-      );
+      master_o       => cnx_fmc_sync_master_out);
 
   cmp_tm_time_valid_sync : gc_sync_ffs
     port map (
