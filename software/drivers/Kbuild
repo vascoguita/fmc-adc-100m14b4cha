@@ -11,8 +11,8 @@ ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS)"
 ccflags-y += -DDRV_VERSION=\"$(DRV_VERSION)\"
 ccflags-y += -Wall -Werror
 
-obj-m := fmc-adc-100m-ref-spec.o
-obj-m += fmc-adc-100m-ref-svec.o
+obj-$(CONFIG_FMC_ADC_SPEC) := fmc-adc-100m-ref-spec.o
+obj-$(CONFIG_FMC_ADC_SVEC) := fmc-adc-100m-ref-svec.o
 
 fmc-adc-100m-ref-spec-objs := fmc-adc-100m-ref-spec-core.o
 fmc-adc-100m-ref-svec-objs := fmc-adc-100m-ref-svec-core.o
