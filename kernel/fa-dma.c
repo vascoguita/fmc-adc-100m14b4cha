@@ -451,14 +451,17 @@ static int zfad_dma_start(struct zio_cset *cset)
 		goto err;
 	}
 
-	memset(&sconfig, 0, sizeof(sconfig));
-	sconfig.direction = DMA_DEV_TO_MEM;
-	if (fa->n_shots == 1)
-		sconfig.src_addr = zfad_dev_mem_offset(cset);
-	sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
-	err = dmaengine_slave_config(dchan, &sconfig);
-	if (err)
-		goto err_config;
+	if (fa->pdev->id_entry->driver_data == ADC_VER_SPEC) {
+		memset(&sconfig, 0, sizeof(sconfig));
+		sconfig.direction = DMA_DEV_TO_MEM;
+		if (fa->n_shots == 1)
+			sconfig.src_addr = zfad_dev_mem_offset(cset);
+		sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+		err = dmaengine_slave_config(dchan, &sconfig);
+		if (err)
+			goto err_config;
+	}
+
 	for (i = 0; i < fa->n_shots; ++i) {
 		err = zfad_dma_prep_slave_sg(dchan, cset, &zfad_block[i]);
 		if (err)
