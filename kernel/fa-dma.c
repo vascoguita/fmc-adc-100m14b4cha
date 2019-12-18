@@ -400,7 +400,7 @@ static bool fa_dmaengine_filter(struct dma_chan *dchan, void *arg)
 		break;
 	case ADC_VER_SVEC:
 		/* The channel must be on the VME bus */
-		device_ref = fa->pdev->dev.parent->parent;
+		device_ref = fa->pdev->dev.parent->parent->parent->parent->parent;
 		break;
 	default:
 		dev_warn(&cset->head.dev,
