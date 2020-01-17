@@ -44,7 +44,6 @@ entity spec_ref_fmc_adc_100Ms is
   generic(
     g_SIMULATION         : integer := 0;
     g_MULTISHOT_RAM_SIZE : natural := 2048;
-    g_CALIB_SOFT_IP      : string  := "TRUE";
     g_WRPC_INITF         : string  := "../../ip_cores/wr-cores/bin/wrpc/wrc_phy8.bram");
   port
     (
@@ -246,11 +245,12 @@ architecture arch of spec_ref_fmc_adc_100Ms is
   signal fmc_wb_ddr_out : t_wishbone_master_data64_out;
 
   -- Interrupts and status
-  signal ddr_wr_fifo_empty : std_logic;
-  signal fmc_irq           : std_logic;
-  signal fmc_acq_cfg_ok    : std_logic;
-  signal irq_vector        : std_logic_vector(0 downto 0);
-  signal gn4124_access     : std_logic;
+  signal ddr_wr_fifo_empty      : std_logic;
+  signal ddr_wr_fifo_empty_sync : std_logic;
+  signal fmc_irq                : std_logic;
+  signal fmc_acq_cfg_ok         : std_logic;
+  signal irq_vector             : std_logic_vector(0 downto 0);
+  signal gn4124_access          : std_logic;
 
   -- WR PTP core timing interface
   signal tm_link_up         : std_logic;
@@ -444,6 +444,13 @@ begin  -- architecture arch
       data_i   => tm_time_valid,
       synced_o => tm_time_valid_sync);
 
+  cmp_fmc_ddr_wr_fifo_sync : gc_sync_ffs
+    port map (
+      clk_i    => clk_ref_125m,
+      rst_n_i  => '1',
+      data_i   => ddr_wr_fifo_empty,
+      synced_o => ddr_wr_fifo_empty_sync);
+
   cmp_fmc_irq_sync : gc_sync_ffs
     port map (
       clk_i    => clk_sys_62m5,
@@ -469,7 +476,7 @@ begin  -- architecture arch
       wb_ddr_master_i => fmc_wb_ddr_in,
       wb_ddr_master_o => fmc_wb_ddr_out,
 
-      ddr_wr_fifo_empty_i => ddr_wr_fifo_empty,
+      ddr_wr_fifo_empty_i => ddr_wr_fifo_empty_sync,
       trig_irq_o          => open,
       acq_end_irq_o       => open,
       eic_irq_o           => fmc_irq,
