@@ -1,4 +1,4 @@
-vsim -quiet -L unisim work.main
+vsim -quiet -L unisim work.main -voptargs=+acc
 
 set StdArithNoWarnings 1
 set NumericStdNoWarnings 1

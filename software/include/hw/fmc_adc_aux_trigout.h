@@ -1,5 +1,6 @@
 #ifndef __CHEBY__AUX_TRIGOUT__H__
 #define __CHEBY__AUX_TRIGOUT__H__
+#define AUX_TRIGOUT_SIZE 20
 
 /* Status register */
 #define AUX_TRIGOUT_STATUS 0x0UL
@@ -26,13 +27,13 @@
 struct aux_trigout {
   /* [0x0]: REG (ro) Status register */
   uint32_t status;
-  
+
   /* padding to: 2 words */
   uint32_t __padding_0[1];
-  
+
   /* [0x8]: REG (ro) Time (seconds) of the last event */
   uint64_t ts_mask_sec;
-  
+
   /* [0x10]: REG (ro) Cycles part of timestamp fifo. */
   uint32_t ts_cycles;
 };

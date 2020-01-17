@@ -1,5 +1,6 @@
 #ifndef __CHEBY__FMC_ADC_100MS_CSR__H__
 #define __CHEBY__FMC_ADC_100MS_CSR__H__
+#define FMC_ADC_100MS_CSR_SIZE 512
 
 /* Control register */
 #define FMC_ADC_100MS_CSR_CTL 0x0UL
@@ -215,132 +216,135 @@
 struct fmc_adc_100ms_csr {
   /* [0x0]: REG (rw) Control register */
   uint32_t ctl;
-  
+
   /* [0x4]: REG (ro) Status register */
   uint32_t sta;
-  
+
   /* [0x8]: REG (ro) Trigger status */
   uint32_t trig_stat;
-  
+
   /* [0xc]: REG (rw) Trigger enable */
   uint32_t trig_en;
-  
+
   /* [0x10]: REG (rw) Trigger polarity */
   uint32_t trig_pol;
-  
+
   /* [0x14]: REG (rw) External trigger delay */
   uint32_t ext_trig_dly;
-  
+
   /* [0x18]: REG (wo) Software trigger */
   uint32_t sw_trig;
-  
+
   /* [0x1c]: REG (rw) Number of shots */
   uint32_t shots;
-  
+
   /* [0x20]: REG (ro) Multi-shot sample depth register */
   uint32_t multi_depth;
-  
+
   /* [0x24]: REG (ro) Trigger address register */
   uint32_t trig_pos;
-  
+
   /* [0x28]: REG (ro) Sampling clock frequency */
   uint32_t fs_freq;
-  
+
   /* [0x2c]: REG (rw) Downsampling ratio */
   uint32_t downsample;
-  
+
   /* [0x30]: REG (rw) Pre-trigger samples */
   uint32_t pre_samples;
-  
+
   /* [0x34]: REG (rw) Post-trigger samples */
   uint32_t post_samples;
-  
+
   /* [0x38]: REG (ro) Samples counter */
   uint32_t samples_cnt;
-  
+
   /* padding to: 32 words */
   uint32_t __padding_0[17];
-  
+
   /* [0x80]: REG (rw) Channel 1 control register */
   uint32_t ch1_ctl;
-  
+
   /* [0x84]: REG (ro) Channel 1 status register */
   uint32_t ch1_sta;
-  
+
   /* [0x88]: REG (rw) Channel 1 calibration register */
   uint32_t ch1_calib;
-  
+
   /* [0x8c]: REG (rw) Channel 1 saturation register */
   uint32_t ch1_sat;
-  
+
   /* [0x90]: REG (rw) Channel 1 trigger threshold configuration register */
   uint32_t ch1_trig_thres;
-  
+
   /* [0x94]: REG (rw) Channel 1 trigger delay */
   uint32_t ch1_trig_dly;
-  
+
   /* padding to: 48 words */
   uint32_t __padding_1[10];
-  
+
   /* [0xc0]: REG (rw) Channel 2 control register */
   uint32_t ch2_ctl;
-  
+
   /* [0xc4]: REG (ro) Channel 2 status register */
   uint32_t ch2_sta;
-  
+
   /* [0xc8]: REG (rw) Channel 2 calibration register */
   uint32_t ch2_calib;
-  
+
   /* [0xcc]: REG (rw) Channel 2 saturation register */
   uint32_t ch2_sat;
-  
+
   /* [0xd0]: REG (rw) Channel 2 trigger threshold configuration register */
   uint32_t ch2_trig_thres;
-  
+
   /* [0xd4]: REG (rw) Channel 2 trigger delay */
   uint32_t ch2_trig_dly;
-  
+
   /* padding to: 64 words */
   uint32_t __padding_2[10];
-  
+
   /* [0x100]: REG (rw) Channel 3 control register */
   uint32_t ch3_ctl;
-  
+
   /* [0x104]: REG (ro) Channel 3 status register */
   uint32_t ch3_sta;
-  
+
   /* [0x108]: REG (rw) Channel 3 calibration register */
   uint32_t ch3_calib;
-  
+
   /* [0x10c]: REG (rw) Channel 3 saturation register */
   uint32_t ch3_sat;
-  
+
   /* [0x110]: REG (rw) Channel 3 trigger threshold configuration register */
   uint32_t ch3_trig_thres;
-  
+
   /* [0x114]: REG (rw) Channel 3 trigger delay */
   uint32_t ch3_trig_dly;
-  
+
   /* padding to: 80 words */
   uint32_t __padding_3[10];
-  
+
   /* [0x140]: REG (rw) Channel 4 control register */
   uint32_t ch4_ctl;
-  
+
   /* [0x144]: REG (ro) Channel 4 status register */
   uint32_t ch4_sta;
-  
+
   /* [0x148]: REG (rw) Channel 4 gain calibration register */
   uint32_t ch4_calib;
-  
+
   /* [0x14c]: REG (rw) Channel 4 saturation register */
   uint32_t ch4_sat;
-  
+
   /* [0x150]: REG (rw) Channel 4 trigger threshold configuration register */
   uint32_t ch4_trig_thres;
-  
+
   /* [0x154]: REG (rw) Channel 4 trigger delay */
   uint32_t ch4_trig_dly;
+
+  /* padding to: 85 words */
+  uint32_t __padding_4[42];
 };
 
 #endif /* __CHEBY__FMC_ADC_100MS_CSR__H__ */

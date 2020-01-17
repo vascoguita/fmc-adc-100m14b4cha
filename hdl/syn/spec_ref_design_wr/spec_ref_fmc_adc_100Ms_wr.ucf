@@ -3,292 +3,6 @@
 #===============================================================================
 
 #----------------------------------------
-# GN4124 interface
-#----------------------------------------
-NET "gn_rst_n_i"         LOC = N20;
-NET "gn_p2l_clk_n_i"     LOC = M19;
-NET "gn_p2l_clk_p_i"     LOC = M20;
-NET "gn_p2l_rdy_o"       LOC = J16;
-NET "gn_p2l_dframe_i"    LOC = J22;
-NET "gn_p2l_valid_i"     LOC = L19;
-NET "gn_p2l_data_i[15]"  LOC = H19;
-NET "gn_p2l_data_i[14]"  LOC = F21;
-NET "gn_p2l_data_i[13]"  LOC = F22;
-NET "gn_p2l_data_i[12]"  LOC = E20;
-NET "gn_p2l_data_i[11]"  LOC = E22;
-NET "gn_p2l_data_i[10]"  LOC = J19;
-NET "gn_p2l_data_i[9]"   LOC = H20;
-NET "gn_p2l_data_i[8]"   LOC = K19;
-NET "gn_p2l_data_i[7]"   LOC = K18;
-NET "gn_p2l_data_i[6]"   LOC = G20;
-NET "gn_p2l_data_i[5]"   LOC = G22;
-NET "gn_p2l_data_i[4]"   LOC = K17;
-NET "gn_p2l_data_i[3]"   LOC = L17;
-NET "gn_p2l_data_i[2]"   LOC = H21;
-NET "gn_p2l_data_i[1]"   LOC = H22;
-NET "gn_p2l_data_i[0]"   LOC = K20;
-NET "gn_p_wr_req_i[1]"   LOC = M21;
-NET "gn_p_wr_req_i[0]"   LOC = M22;
-NET "gn_p_wr_rdy_o[1]"   LOC = K16;
-NET "gn_p_wr_rdy_o[0]"   LOC = L15;
-NET "gn_rx_error_o"      LOC = J17;
-NET "gn_l2p_clk_n_o"     LOC = K22;
-NET "gn_l2p_clk_p_o"     LOC = K21;
-NET "gn_l2p_dframe_o"    LOC = U22;
-NET "gn_l2p_valid_o"     LOC = T18;
-NET "gn_l2p_edb_o"       LOC = U20;
-NET "gn_l2p_data_o[15]"  LOC = Y21;
-NET "gn_l2p_data_o[14]"  LOC = W20;
-NET "gn_l2p_data_o[13]"  LOC = V20;
-NET "gn_l2p_data_o[12]"  LOC = V22;
-NET "gn_l2p_data_o[11]"  LOC = T19;
-NET "gn_l2p_data_o[10]"  LOC = T21;
-NET "gn_l2p_data_o[9]"   LOC = R22;
-NET "gn_l2p_data_o[8]"   LOC = P22;
-NET "gn_l2p_data_o[7]"   LOC = Y22;
-NET "gn_l2p_data_o[6]"   LOC = W22;
-NET "gn_l2p_data_o[5]"   LOC = V19;
-NET "gn_l2p_data_o[4]"   LOC = V21;
-NET "gn_l2p_data_o[3]"   LOC = T20;
-NET "gn_l2p_data_o[2]"   LOC = P18;
-NET "gn_l2p_data_o[1]"   LOC = P21;
-NET "gn_l2p_data_o[0]"   LOC = P16;
-NET "gn_l2p_rdy_i"       LOC = U19;
-NET "gn_l_wr_rdy_i[1]"   LOC = T22;
-NET "gn_l_wr_rdy_i[0]"   LOC = R20;
-NET "gn_p_rd_d_rdy_i[1]" LOC = P19;
-NET "gn_p_rd_d_rdy_i[0]" LOC = N16;
-NET "gn_tx_error_i"      LOC = M17;
-NET "gn_vc_rdy_i[1]"     LOC = B22;
-NET "gn_vc_rdy_i[0]"     LOC = B21;
-NET "gn_gpio_b[1]"       LOC = U16;
-NET "gn_gpio_b[0]"       LOC = AB19;
-
-NET "gn_rst_n_i"         IOSTANDARD = "LVCMOS18";
-NET "gn_p2l_clk_?_i"     IOSTANDARD = "DIFF_SSTL18_I";
-NET "gn_p2l_rdy_o"       IOSTANDARD = "SSTL18_I";
-NET "gn_p2l_dframe_i"    IOSTANDARD = "SSTL18_I";
-NET "gn_p2l_valid_i"     IOSTANDARD = "SSTL18_I";
-NET "gn_p2l_data_i[*]"   IOSTANDARD = "SSTL18_I";
-NET "gn_p_wr_req_i[*]"   IOSTANDARD = "SSTL18_I";
-NET "gn_p_wr_rdy_o[*]"   IOSTANDARD = "SSTL18_I";
-NET "gn_rx_error_o"      IOSTANDARD = "SSTL18_I";
-NET "gn_l2p_clk_?_o"     IOSTANDARD = "DIFF_SSTL18_I";
-NET "gn_l2p_dframe_o"    IOSTANDARD = "SSTL18_I";
-NET "gn_l2p_valid_o"     IOSTANDARD = "SSTL18_I";
-NET "gn_l2p_edb_o"       IOSTANDARD = "SSTL18_I";
-NET "gn_l2p_data_o[*]"   IOSTANDARD = "SSTL18_I";
-NET "gn_l2p_rdy_i"       IOSTANDARD = "SSTL18_I";
-NET "gn_l_wr_rdy_i[*]"   IOSTANDARD = "SSTL18_I";
-NET "gn_p_rd_d_rdy_i[*]" IOSTANDARD = "SSTL18_I";
-NET "gn_tx_error_i"      IOSTANDARD = "SSTL18_I";
-NET "gn_vc_rdy_i[*]"     IOSTANDARD = "SSTL18_I";
-NET "gn_gpio_b[*]"       IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# DDR Memory
-#----------------------------------------
-
-# DDR (bank 3)
-NET "ddr_rzq_b"     LOC = K7;
-NET "ddr_we_n_o"    LOC = H2;
-NET "ddr_udqs_p_b"  LOC = V2;
-NET "ddr_udqs_n_b"  LOC = V1;
-NET "ddr_udm_o"     LOC = P3;
-NET "ddr_reset_n_o" LOC = E3;
-NET "ddr_ras_n_o"   LOC = M5;
-NET "ddr_odt_o"     LOC = L6;
-NET "ddr_ldqs_p_b"  LOC = N3;
-NET "ddr_ldqs_n_b"  LOC = N1;
-NET "ddr_ldm_o"     LOC = N4;
-NET "ddr_cke_o"     LOC = F2;
-NET "ddr_ck_p_o"    LOC = K4;
-NET "ddr_ck_n_o"    LOC = K3;
-NET "ddr_cas_n_o"   LOC = M4;
-NET "ddr_dq_b[15]"  LOC = Y1;
-NET "ddr_dq_b[14]"  LOC = Y2;
-NET "ddr_dq_b[13]"  LOC = W1;
-NET "ddr_dq_b[12]"  LOC = W3;
-NET "ddr_dq_b[11]"  LOC = U1;
-NET "ddr_dq_b[10]"  LOC = U3;
-NET "ddr_dq_b[9]"   LOC = T1;
-NET "ddr_dq_b[8]"   LOC = T2;
-NET "ddr_dq_b[7]"   LOC = M1;
-NET "ddr_dq_b[6]"   LOC = M2;
-NET "ddr_dq_b[5]"   LOC = L1;
-NET "ddr_dq_b[4]"   LOC = L3;
-NET "ddr_dq_b[3]"   LOC = P1;
-NET "ddr_dq_b[2]"   LOC = P2;
-NET "ddr_dq_b[1]"   LOC = R1;
-NET "ddr_dq_b[0]"   LOC = R3;
-NET "ddr_ba_o[2]"   LOC = H1;
-NET "ddr_ba_o[1]"   LOC = J1;
-NET "ddr_ba_o[0]"   LOC = J3;
-NET "ddr_a_o[13]"   LOC = J6;
-NET "ddr_a_o[12]"   LOC = F1;
-NET "ddr_a_o[11]"   LOC = E1;
-NET "ddr_a_o[10]"   LOC = J4;
-NET "ddr_a_o[9]"    LOC = G1;
-NET "ddr_a_o[8]"    LOC = G3;
-NET "ddr_a_o[7]"    LOC = K6;
-NET "ddr_a_o[6]"    LOC = L4;
-NET "ddr_a_o[5]"    LOC = M3;
-NET "ddr_a_o[4]"    LOC = H3;
-NET "ddr_a_o[3]"    LOC = M6;
-NET "ddr_a_o[2]"    LOC = K5;
-NET "ddr_a_o[1]"    LOC = K1;
-NET "ddr_a_o[0]"    LOC = K2;
-
-# DDR IO standards and terminations
-NET "ddr_udqs_p_b" IOSTANDARD = "DIFF_SSTL15_II";
-NET "ddr_udqs_n_b" IOSTANDARD = "DIFF_SSTL15_II";
-NET "ddr_ldqs_p_b" IOSTANDARD = "DIFF_SSTL15_II";
-NET "ddr_ldqs_n_b" IOSTANDARD = "DIFF_SSTL15_II";
-NET "ddr_ck_p_o"   IOSTANDARD = "DIFF_SSTL15_II";
-NET "ddr_ck_n_o"   IOSTANDARD = "DIFF_SSTL15_II";
-
-NET "ddr_rzq_b"     IOSTANDARD = "SSTL15_II";
-NET "ddr_we_n_o"    IOSTANDARD = "SSTL15_II";
-NET "ddr_udm_o"     IOSTANDARD = "SSTL15_II";
-NET "ddr_reset_n_o" IOSTANDARD = "SSTL15_II";
-NET "ddr_ras_n_o"   IOSTANDARD = "SSTL15_II";
-NET "ddr_odt_o"     IOSTANDARD = "SSTL15_II";
-NET "ddr_ldm_o"     IOSTANDARD = "SSTL15_II";
-NET "ddr_cke_o"     IOSTANDARD = "SSTL15_II";
-NET "ddr_cas_n_o"   IOSTANDARD = "SSTL15_II";
-NET "ddr_dq_b[*]"   IOSTANDARD = "SSTL15_II";
-NET "ddr_ba_o[*]"   IOSTANDARD = "SSTL15_II";
-NET "ddr_a_o[*]"    IOSTANDARD = "SSTL15_II";
-
-NET "ddr_dq_b[*]"  IN_TERM = NONE;
-NET "ddr_ldqs_p_b" IN_TERM = NONE;
-NET "ddr_ldqs_n_b" IN_TERM = NONE;
-NET "ddr_udqs_p_b" IN_TERM = NONE;
-NET "ddr_udqs_n_b" IN_TERM = NONE;
-
-#----------------------------------------
-# Clock and reset inputs
-#----------------------------------------
-NET "clk_20m_vcxo_i"      LOC = H12;
-NET "clk_125m_pllref_n_i" LOC = F10;
-NET "clk_125m_pllref_p_i" LOC = G9;
-NET "clk_125m_gtp_n_i"    LOC = D11;
-NET "clk_125m_gtp_p_i"    LOC = C11;
-
-NET "clk_20m_vcxo_i"      IOSTANDARD = "LVCMOS25";
-NET "clk_125m_pllref_n_i" IOSTANDARD = "LVDS_25";
-NET "clk_125m_pllref_p_i" IOSTANDARD = "LVDS_25";
-NET "clk_125m_gtp_n_i"    IOSTANDARD = "LVDS_25";
-NET "clk_125m_gtp_p_i"    IOSTANDARD = "LVDS_25";
-
-#----------------------------------------
-# SFP slot
-#----------------------------------------
-NET "sfp_rxn_i"         LOC = C15;
-NET "sfp_rxp_i"         LOC = D15;
-NET "sfp_txn_o"         LOC = A16;
-NET "sfp_txp_o"         LOC = B16;
-NET "sfp_los_i"         LOC = D18;
-NET "sfp_mod_def0_i"    LOC = G15;
-NET "sfp_mod_def1_b"    LOC = C17;
-NET "sfp_mod_def2_b"    LOC = G16;
-NET "sfp_rate_select_o" LOC = H14;
-NET "sfp_tx_disable_o"  LOC = F17;
-NET "sfp_tx_fault_i"    LOC = B18;
-
-NET "sfp_los_i"         IOSTANDARD = "LVCMOS25";
-NET "sfp_mod_def0_i"    IOSTANDARD = "LVCMOS25";
-NET "sfp_mod_def1_b"    IOSTANDARD = "LVCMOS25";
-NET "sfp_mod_def2_b"    IOSTANDARD = "LVCMOS25";
-NET "sfp_rate_select_o" IOSTANDARD = "LVCMOS25";
-NET "sfp_tx_disable_o"  IOSTANDARD = "LVCMOS25";
-NET "sfp_tx_fault_i"    IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# DAC interfaces (for VCXO)
-#----------------------------------------
-NET "pll25dac_sync_n_o" LOC = A3;
-NET "pll20dac_sync_n_o" LOC = B3;
-NET "plldac_din_o"      LOC = C4;
-NET "plldac_sclk_o"     LOC = A4;
-
-NET "pll25dac_sync_n_o" IOSTANDARD = "LVCMOS25";
-NET "pll20dac_sync_n_o" IOSTANDARD = "LVCMOS25";
-NET "plldac_din_o"      IOSTANDARD = "LVCMOS25";
-NET "plldac_sclk_o"     IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# SPI FLASH
-#----------------------------------------
-NET "spi_ncs_o"  LOC = AA3;
-NET "spi_sclk_o" LOC = Y20;
-NET "spi_mosi_o" LOC = AB20;
-NET "spi_miso_i" LOC = AA20;
-
-NET "spi_ncs_o"  IOSTANDARD = "LVCMOS25";
-NET "spi_sclk_o" IOSTANDARD = "LVCMOS25";
-NET "spi_mosi_o" IOSTANDARD = "LVCMOS25";
-NET "spi_miso_i" IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# UART
-#----------------------------------------
-NET "uart_txd_o" LOC = B2;
-NET "uart_rxd_i" LOC = A2;
-
-NET "uart_txd_o" IOSTANDARD = "LVCMOS25";
-NET "uart_rxd_i" IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# 1-wire thermometer + unique ID
-#----------------------------------------
-NET "carrier_onewire_b" LOC = D4;
-
-NET "carrier_onewire_b" IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# Carrier front panel LEDs
-#----------------------------------------
-NET "led_sfp_red_o"   LOC = D5;
-NET "led_sfp_green_o" LOC = E5;
-
-NET "led_sfp_red_o"   IOSTANDARD = "LVCMOS25";
-NET "led_sfp_green_o" IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
-# PCB revision
-#----------------------------------------
-NET "pcbrev_i[0]" LOC = P5;
-NET "pcbrev_i[1]" LOC = P4;
-NET "pcbrev_i[2]" LOC = AA2;
-NET "pcbrev_i[3]" LOC = AA1;
-
-NET "pcbrev_i[*]" IOSTANDARD = "LVCMOS15";
-
-#----------------------------------------
-# PCB Buttons and LEDs
-#----------------------------------------
-NET "button1_n_i"   LOC = C22;
-NET "aux_leds_o[0]" LOC = G19;
-NET "aux_leds_o[1]" LOC = F20;
-NET "aux_leds_o[2]" LOC = F18;
-NET "aux_leds_o[3]" LOC = C20;
-
-NET "button1_n_i"   IOSTANDARD = "LVCMOS18";
-NET "aux_leds_o[*]" IOSTANDARD = "LVCMOS18";
-
-#----------------------------------------
-# FMC slot management
-#----------------------------------------
-NET "fmc_prsnt_m2c_n_i" LOC = AB14;
-NET "fmc_scl_b"         LOC = F7;
-NET "fmc_sda_b"         LOC = F8;
-
-NET "fmc_prsnt_m2c_n_i" IOSTANDARD = "LVCMOS25";
-NET "fmc_scl_b"         IOSTANDARD = "LVCMOS25";
-NET "fmc_sda_b"         IOSTANDARD = "LVCMOS25";
-
-#----------------------------------------
 # FMC slot
 #----------------------------------------
 NET "adc_ext_trigger_n_i"   LOC = AB13;
@@ -381,132 +95,18 @@ NET "adc_si570_sda_b"       IOSTANDARD = "LVCMOS25";
 NET "adc_one_wire_b"        IOSTANDARD = "LVCMOS25";
 
 #----------------------------------------
-# IOBs
+# PCB LEDs
 #----------------------------------------
+NET "aux_leds_o[0]" LOC = G19;
+NET "aux_leds_o[1]" LOC = F20;
+NET "aux_leds_o[2]" LOC = F18;
+NET "aux_leds_o[3]" LOC = C20;
 
-INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out"   IOB = FALSE;
-INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"     IOB = FALSE;
-INST "cmp_fmc_adc_mezzanine/cmp_fmc_onewire/*/Wrapped_1wire/owr_oen_1" IOB = FALSE;
+NET "aux_leds_o[*]" IOSTANDARD = "LVCMOS18";
 
 #===============================================================================
-# Timing Constraints
+# Timing constraints and exceptions
 #===============================================================================
-
-#----------------------------------------
-# Clocks
-#----------------------------------------
-NET "clk_125m_pllref_p_i" TNM_NET = clk_125m_ref;
-NET "clk_125m_pllref_n_i" TNM_NET = clk_125m_ref;
-
-TIMESPEC TS_clk_125m_pllref = PERIOD "clk_125m_ref" 8 ns HIGH 50%;
-
-NET "clk_125m_gtp_p_i" TNM_NET = clk_125m_gtp;
-NET "clk_125m_gtp_n_i" TNM_NET = clk_125m_gtp;
-
-TIMESPEC TS_clk_125m_gtp = PERIOD "clk_125m_gtp" 8 ns HIGH 50%;
-
-NET "clk_20m_vcxo_i" TNM_NET = "clk_20m_vcxo";
-
-TIMESPEC TS_clk_20m_vcxo_i = PERIOD "clk_20m_vcxo" 50 ns HIGH 50%;
-
-NET "cmp_xwrc_board_spec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" TNM_NET = wrc_gtp_clk;
-TIMESPEC TS_wrc_gtp_clk = PERIOD "wrc_gtp_clk" 8 ns HIGH 50%;
-
-NET "adc_dco_p_i" TNM_NET = adc_dco;
-NET "adc_dco_n_i" TNM_NET = adc_dco;
-
-TIMESPEC TS_adc_dco = PERIOD "adc_dco" 2.5 ns HIGH 50%;
-
-NET "gn_p2l_clk_p_i" TNM_NET = "p2l_clk";
-NET "gn_p2l_clk_n_i" TNM_NET = "p2l_clk";
-
-TIMESPEC TS_p2l_clk = PERIOD "p2l_clk" 5 ns HIGH 50%;
-
-#----------------------------------------
-# WR DMTD tweaks
-#----------------------------------------
-
-INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
-INST "*/U_SOFTPLL/U_Wrapped_Softpll/gen_ref_dmtds*/clk_in"      TNM = skew_limit;
-
-TIMESPEC TS_dmtd_skew = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
-
-#----------------------------------------
-# Xilinx MCB tweaks
-#----------------------------------------
-
-# These are suggested by the Xilinx-generated MCB.
-# More info in the UCF file found in the "user_design/par" of the generated core.
-NET "cmp_ddr_ctrl_bank?/*/c?_pll_lock"                                     TIG;
-NET "cmp_ddr_ctrl_bank?/*/memc?_mcb_raw_wrapper_inst/selfrefresh_mcb_mode" TIG;
-NET "cmp_ddr_ctrl_bank?/*/mcb_soft_calibration_inst/DONE_SOFTANDHARD_CAL"  TIG;
-#NET "cmp_ddr_ctrl_bank?/*/mcb_soft_calibration_inst/SELFREFRESH_MCB_REQ"   TIG;
-
-#----------------------------------------
-# Asynchronous resets
-#----------------------------------------
-
-# GN4124
-NET "gn_rst_n_i" TIG;
-
-# Ignore async reset inputs to reset synchronisers
-NET "*/gc_reset_async_in" TIG;
-
-# Ignore async reset to DDR controller
-NET "ddr_rst" TPTHRU = ddr_rst;
-TIMESPEC TS_ddr_rst_tig = FROM FFS THRU ddr_rst TIG;
-
-#----------------------------------------
-# Cross-clock domain sync
-#----------------------------------------
-
-# Declaration of domains
-NET "clk_sys_62m5"                                                       TNM_NET = sys_clk_62_5;
-NET "clk_ref_125m"                                                       TNM_NET = clk_125m_pllref;
-NET "clk_ddr_333m"                                                       TNM_NET = ddr_clk;
-NET "cmp_xwrc_board_spec/clk_pll_dmtd"                                   TNM_NET = clk_dmtd;
-NET "cmp_xwrc_board_spec/phy8_to_wrc_rx_clk"                             TNM_NET = phy_clk;
-NET "cmp_gn4124_core/cmp_wrapped_gn4124/sys_clk"                         TNM_NET = pci_clk;
-NET "cmp_fmc_adc_mezzanine/cmp_fmc_adc_100Ms_core/fs_clk"                TNM_NET = fs_clk;
-NET "cmp_ddr_ctrl_bank3/*/memc3_infrastructure_inst/mcb_drp_clk_bufg_in" TNM_NET = ddr_clk;
-NET "cmp_ddr_ctrl_bank3/*/memc3_mcb_raw_wrapper_inst/ioi_drp_clk"        TNM_NET = ddr_clk;
-
-TIMEGRP "sys_clk" = "sys_clk_62_5" "clk_125m_pllref";
-
-# Exceptions for crossings via gc_sync_ffs
-NET "*/gc_sync_ffs_in" TNM = FFS "sync_ffs";
-
-TIMEGRP "pci_sync_ffs"  = "sync_ffs" EXCEPT "pci_clk";
-TIMEGRP "sys_sync_ffs"  = "sync_ffs" EXCEPT "sys_clk";
-TIMEGRP "dmtd_sync_ffs" = "sync_ffs" EXCEPT "clk_dmtd";
-#TIMEGRP "ddr_sync_ffs"  = "sync_ffs" EXCEPT "ddr_clk";
-TIMEGRP "phy_sync_ffs"  = "sync_ffs" EXCEPT "phy_clk";
-TIMEGRP "adc_sync_ffs"  = "sync_ffs" EXCEPT "fs_clk";
-
-TIMESPEC TS_pci_sync_ffs  = FROM pci_clk  TO "pci_sync_ffs"  TIG;
-TIMESPEC TS_sys_sync_ffs  = FROM sys_clk  TO "sys_sync_ffs"  TIG;
-TIMESPEC TS_dmtd_sync_ffs = FROM clk_dmtd TO "dmtd_sync_ffs" TIG;
-#TIMESPEC TS_ddr_sync_ffs  = FROM ddr_clk  TO "ddr_sync_ffs"  TIG;
-TIMESPEC TS_phy_sync_ffs  = FROM phy_clk  TO "phy_sync_ffs"  TIG;
-TIMESPEC TS_adc_sync_ffs  = FROM fs_clk   TO "adc_sync_ffs"  TIG;
-
-# Exceptions for crossings via gc_sync_register
-NET "*/gc_sync_register_in[*]" TNM = "sync_reg";
-
-TIMEGRP "pci_sync_reg"  = "sync_reg" EXCEPT "pci_clk";
-TIMEGRP "sys_sync_reg"  = "sync_reg" EXCEPT "sys_clk";
-#TIMEGRP "dmtd_sync_reg" = "sync_reg" EXCEPT "clk_dmtd";
-#TIMEGRP "ddr_sync_reg"  = "sync_reg" EXCEPT "ddr_clk";
-TIMEGRP "phy_sync_reg"  = "sync_reg" EXCEPT "phy_clk";
-TIMEGRP "adc_sync_reg"  = "sync_reg" EXCEPT "fs_clk";
-
-TIMESPEC TS_pci_sync_reg      = FROM pci_clk         TO "pci_sync_reg"  5ns  DATAPATHONLY;
-TIMESPEC TS_sys_62m5_sync_reg = FROM sys_clk_62_5    TO "sys_sync_reg"  16ns DATAPATHONLY;
-TIMESPEC TS_sys_125m_sync_reg = FROM clk_125m_pllref TO "sys_sync_reg"  8ns  DATAPATHONLY;
-#TIMESPEC TS_dmtd_sync_reg     = FROM clk_dmtd        TO "dmtd_sync_reg" 16ns DATAPATHONLY;
-#TIMESPEC TS_ddr_sync_reg      = FROM ddr_clk         TO "ddr_sync_reg"  3ns  DATAPATHONLY;
-TIMESPEC TS_phy_sync_reg      = FROM phy_clk         TO "phy_sync_reg"  8ns  DATAPATHONLY;
-TIMESPEC TS_adc_sync_reg      = FROM fs_clk          TO "adc_sync_reg"  10ns DATAPATHONLY;
 
 # Tightly constrain the location and max delay from the external trigger input
 # to its synchroniser. This is needed to have consistent alignment between trigger
@@ -514,3 +114,31 @@ TIMESPEC TS_adc_sync_reg      = FROM fs_clk          TO "adc_sync_reg"  10ns DAT
 # gc_sync_ffs, the synchroniser cannot be placed on the single FF of the IOB.
 NET  "cmp_fmc_adc_mezzanine/*/cmp_ext_trig_sync/gc_sync_ffs_in" MAXDELAY = 1.5 ns;
 INST "cmp_fmc_adc_mezzanine/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X30Y2;
+
+#----------------------------------------
+# IOB exceptions
+#----------------------------------------
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out"   IOB = FALSE;
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"     IOB = FALSE;
+
+#----------------------------------------
+# Clocks
+#----------------------------------------
+NET "adc_dco_p_i"   TNM_NET = adc_dco;
+NET "adc_dco_n_i"   TNM_NET = adc_dco;
+TIMESPEC TS_adc_dco = PERIOD "adc_dco" 2.5 ns HIGH 50%;
+
+#----------------------------------------
+# Cross-clock domain sync
+#----------------------------------------
+NET "cmp_fmc_adc_mezzanine/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs_clk;
+
+TIMEGRP "adc_sync_ffs" = "sync_ffs" EXCEPT "fs_clk";
+
+TIMESPEC TS_adc_sync_ffs = FROM fs_clk TO "adc_sync_ffs" TIG;
+
+TIMEGRP "adc_sync_reg" = "sync_reg" EXCEPT "fs_clk";
+
+TIMESPEC TS_adc_sync_reg = FROM fs_clk TO "adc_sync_reg" 10ns DATAPATHONLY;
+
+TIMESPEC TS_adc_sync_word = FROM sync_word TO fs_clk 30ns DATAPATHONLY;

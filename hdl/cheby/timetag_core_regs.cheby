@@ -2,6 +2,7 @@ memory-map:
   bus: wb-32-be
   name: timetag_core_regs
   description: Time-tagging core registers
+  size: 0x80
   comment: |
     Wishbone slave for registers related to time-tagging core
   x-hdl:

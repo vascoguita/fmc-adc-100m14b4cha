@@ -124,9 +124,6 @@ package fmc_adc_mezzanine_pkg is
 
       mezz_one_wire_b : inout std_logic;  -- Mezzanine 1-wire interface (DS18B20 thermometer + unique ID)
 
-      sys_scl_b : inout std_logic;                -- Mezzanine system I2C clock (EEPROM)
-      sys_sda_b : inout std_logic;                -- Mezzanine system I2C data (EEPROM)
-
       wr_tm_link_up_i    : in std_logic;          -- WR link status bit
       wr_tm_time_valid_i : in std_logic;          -- WR timecode valid status bit
       wr_tm_tai_i        : in std_logic_vector(39 downto 0);  -- WR timecode seconds

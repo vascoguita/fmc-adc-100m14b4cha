@@ -1,6 +1,7 @@
 memory-map:
   bus: wb-32-be
   name: fmc_adc_100ms_csr
+  size: 0x200
   description: FMC ADC 100MS/s core registers
   comment: |
     Wishbone slave for FMC ADC 100MS/s core

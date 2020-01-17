@@ -5,9 +5,8 @@
 `include "fmc_adc_100Ms_csr.v"
 
 `define VME_OFFSET 'h80000000
-`define ADC_OFFSET 'h2000
+`define ADC_OFFSET 'h4000
 
-`define SDB_ADDR `VME_OFFSET + 0
 `define CSR_BASE `VME_OFFSET + `ADC_OFFSET + 'h1000
 `define OWC_BASE `VME_OFFSET + `ADC_OFFSET + 'h1700
 `define TAG_BASE `VME_OFFSET + `ADC_OFFSET + 'h1900
@@ -62,8 +61,7 @@ module main;
 
    svec_ref_fmc_adc_100Ms
      #(
-       .g_SIMULATION(1),
-       .g_CALIB_SOFT_IP("FALSE")
+       .g_SIMULATION(1)
        )
    DUT
      (
@@ -83,7 +81,7 @@ module main;
       .adc_outb_p_i             (adc_dat_even),
       .adc_outb_n_i             (~adc_dat_even),
       .vme_as_n_i               (VME_AS_n),
-      .vme_rst_n_i              (VME_RST_n),
+      .vme_sysreset_n_i         (VME_RST_n),
       .vme_write_n_i            (VME_WRITE_n),
       .vme_am_i                 (VME_AM),
       .vme_ds_n_i               (VME_DS_n),
@@ -105,27 +103,50 @@ module main;
       .vme_data_oe_n_o          (VME_DATA_OE_N),
       .vme_addr_dir_o           (VME_ADDR_DIR),
       .vme_addr_oe_n_o          (VME_ADDR_OE_N),
-      .ddr_reset_n_o            (ddr_reset_n),
-      .ddr_ck_p_o               (ddr_ck_p),
-      .ddr_ck_n_o               (ddr_ck_n),
-      .ddr_cke_o                (ddr_cke),
-      .ddr_ras_n_o              (ddr_ras_n),
-      .ddr_cas_n_o              (ddr_cas_n),
-      .ddr_we_n_o               (ddr_we_n),
-      .ddr_udm_o                (ddr_dm[1]),
-      .ddr_ldm_o                (ddr_dm[0]),
-      .ddr_ba_o                 (ddr_ba),
-      .ddr_a_o                  (ddr_a),
-      .ddr_dq_b                 (ddr_dq),
-      .ddr_udqs_p_b             (ddr_dqs_p[1]),
-      .ddr_udqs_n_b             (ddr_dqs_n[1]),
-      .ddr_ldqs_p_b             (ddr_dqs_p[0]),
-      .ddr_ldqs_n_b             (ddr_dqs_n[0]),
-      .ddr_odt_o                (ddr_odt),
-      .ddr_rzq_b                (ddr_rzq)
+      .ddr4_reset_n_o           (ddr_reset_n[0]),
+      .ddr4_ck_p_o              (ddr_ck_p[0]),
+      .ddr4_ck_n_o              (ddr_ck_n[0]),
+      .ddr4_cke_o               (ddr_cke[0]),
+      .ddr4_ras_n_o             (ddr_ras_n[0]),
+      .ddr4_cas_n_o             (ddr_cas_n[0]),
+      .ddr4_we_n_o              (ddr_we_n[0]),
+      .ddr4_udm_o               (ddr_dm[1][0]),
+      .ddr4_ldm_o               (ddr_dm[0][0]),
+      .ddr4_ba_o                (ddr_ba[2:0]),
+      .ddr4_a_o                 (ddr_a[13:0]),
+      .ddr4_dq_b                (ddr_dq[15:0]),
+      .ddr4_udqs_p_b            (ddr_dqs_p[1][0]),
+      .ddr4_udqs_n_b            (ddr_dqs_n[1][0]),
+      .ddr4_ldqs_p_b            (ddr_dqs_p[0][0]),
+      .ddr4_ldqs_n_b            (ddr_dqs_n[0][0]),
+      .ddr4_odt_o               (ddr_odt[0]),
+      .ddr4_rzq_b               (ddr_rzq[0]),
+      .ddr5_reset_n_o           (ddr_reset_n[1]),
+      .ddr5_ck_p_o              (ddr_ck_p[1]),
+      .ddr5_ck_n_o              (ddr_ck_n[1]),
+      .ddr5_cke_o               (ddr_cke[1]),
+      .ddr5_ras_n_o             (ddr_ras_n[1]),
+      .ddr5_cas_n_o             (ddr_cas_n[1]),
+      .ddr5_we_n_o              (ddr_we_n[1]),
+      .ddr5_udm_o               (ddr_dm[1][1]),
+      .ddr5_ldm_o               (ddr_dm[0][1]),
+      .ddr5_ba_o                (ddr_ba[5:3]),
+      .ddr5_a_o                 (ddr_a[27:14]),
+      .ddr5_dq_b                (ddr_dq[31:16]),
+      .ddr5_udqs_p_b            (ddr_dqs_p[1][1]),
+      .ddr5_udqs_n_b            (ddr_dqs_n[1][1]),
+      .ddr5_ldqs_p_b            (ddr_dqs_p[0][1]),
+      .ddr5_ldqs_n_b            (ddr_dqs_n[0][1]),
+      .ddr5_odt_o               (ddr_odt[1]),
+      .ddr5_rzq_b               (ddr_rzq[1])
       );
 
-   ddr3
+   ddr3 #
+     (
+      .DEBUG(0),
+      .check_strict_timing(0),
+      .check_strict_mrbits(0)
+      )
      cmp_ddr0
        (
 	.rst_n   (ddr_reset_n[0]),
@@ -142,10 +163,16 @@ module main;
 	.dq      (ddr_dq[15:0]),
 	.dqs     ({ddr_dqs_p[1][0],ddr_dqs_p[0][0]}),
 	.dqs_n   ({ddr_dqs_n[1][0],ddr_dqs_n[0][0]}),
-	.odt     (ddr_odt[0])
+	.odt     (ddr_odt[0]),
+	.tdqs_n  ()
 	);
 
-   ddr3
+   ddr3 #
+     (
+      .DEBUG(0),
+      .check_strict_timing(0),
+      .check_strict_mrbits(0)
+      )
      cmp_ddr1
        (
 	.rst_n   (ddr_reset_n[1]),
@@ -162,7 +189,8 @@ module main;
 	.dq      (ddr_dq[31:16]),
 	.dqs     ({ddr_dqs_p[1][1],ddr_dqs_p[0][1]}),
 	.dqs_n   ({ddr_dqs_n[1][1],ddr_dqs_n[0][1]}),
-	.odt     (ddr_odt[1])
+	.odt     (ddr_odt[1]),
+	.tdqs_n  ()
 	);
 
    int adc_div = 0;
@@ -233,6 +261,7 @@ module main;
 
       acc.set_default_modifiers(A32 | D32 | SINGLE);
    endtask // init_vme64x_core
+
    task adc_status_print (input uint64_t val);
       string msg;
       msg = $sformatf ("<%t> ADC STATUS: FSM_STATE=%0d, PLL_LOCKED=%0d, PLL_SYNCED=%0d, CFG_OK=%0d",
@@ -261,18 +290,6 @@ module main;
       init_vme64x_core(acc);
 
       #1us;
-
-      expected = 'h5344422d;
-      acc.read(`SDB_ADDR, val);
-      if (val != expected)
-	$fatal (1, "Unable to detect SDB header at offset 0x%8x (got 0x%8x, expected 0x%8x).",
-		`SDB_ADDR, val , expected);
-
-      expected = 'h5344422d;
-      acc.read(`ADC_OFFSET+`SDB_ADDR, val);
-      if (val != expected)
-	$fatal (1, "Unable to detect SDB header at offset 0x%8x (got 0x%8x, expected 0x%8x).",
-		`ADC_OFFSET+`SDB_ADDR, val , expected);
 
       expected = 'h19;
       acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_STA, val);
@@ -383,7 +400,7 @@ module main;
       // set time trigger
       acc.write(`TAG_BASE + 'h0c, 'h00000032); // timetag core seconds high
       acc.write(`TAG_BASE + 'h10, 'h00005a34); // timetag core seconds low
-      acc.write(`TAG_BASE + 'h14, 'h00001000); // timetag core ticks
+      acc.write(`TAG_BASE + 'h14, 'h00001100); // timetag core ticks
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000010);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000080);
@@ -432,5 +449,17 @@ module main;
 
    end
 
+   initial begin
+      // Silence Xilinx unisim DSP48A1 warnings about invalid OPMODE
+      force DUT.inst_svec_base.gen_wr.cmp_xwrc_board_svec.cmp_board_common.cmp_xwr_core.
+        WRPC.LM32_CORE.gen_profile_medium_icache.U_Wrapped_LM32.cpu.
+          multiplier.D1.OPMODE_dly = 0;
+      force DUT.inst_svec_base.gen_wr.cmp_xwrc_board_svec.cmp_board_common.cmp_xwr_core.
+        WRPC.LM32_CORE.gen_profile_medium_icache.U_Wrapped_LM32.cpu.
+          multiplier.D2.OPMODE_dly = 0;
+      force DUT.inst_svec_base.gen_wr.cmp_xwrc_board_svec.cmp_board_common.cmp_xwr_core.
+        WRPC.LM32_CORE.gen_profile_medium_icache.U_Wrapped_LM32.cpu.
+          multiplier.D3.OPMODE_dly = 0;
+   end // initial begin
 
 endmodule // main
