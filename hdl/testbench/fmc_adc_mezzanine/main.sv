@@ -92,8 +92,6 @@ module main;
 	      .si570_scl_b         (),
 	      .si570_sda_b         (),
 	      .mezz_one_wire_b     (),
-	      .sys_scl_b           (),
-	      .sys_sda_b           (),
 	      .wr_tm_link_up_i     (),
 	      .wr_tm_time_valid_i  (),
 	      .wr_tm_tai_i         (),
@@ -179,12 +177,6 @@ module main;
       trigout_acc = Trigout.get_accessor();
 
       #1us;
-
-      //  Check SDB
-      expected = 'h5344422d;
-      acc.read(`SDB_ADDR, val);
-      if (val != expected)
-	$fatal (1, "Unable to detect SDB header at offset 0x%8x.", `SDB_ADDR);
 
       //  Check status after reset
       expected = 'h19;
