@@ -1,5 +1,5 @@
 memory-map:
-  name: spec_ref_fmc_adc_100m_mmap
+  name: svec_ref_fmc_adc_100m_mmap
   bus: wb-32-be
   description: SPEC FMC-ADC-100M memory map
   size: 0x8000

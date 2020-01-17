@@ -465,7 +465,7 @@ begin -- architecture arch
   ------------------------------------------------------------------------------
   -- Primary wishbone crossbar
   ------------------------------------------------------------------------------
-  cmp_crossbar : entity work.spec_ref_fmc_adc_100m_mmap
+  cmp_crossbar : entity work.svec_ref_fmc_adc_100m_mmap
     port map (
       rst_n_i              => rst_sys_62m5_n,
       clk_i                => clk_sys_62m5,

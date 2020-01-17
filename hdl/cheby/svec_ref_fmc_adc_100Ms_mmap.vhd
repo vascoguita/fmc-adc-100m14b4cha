@@ -6,7 +6,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 
-entity spec_ref_fmc_adc_100m_mmap is
+entity svec_ref_fmc_adc_100m_mmap is
   port (
     rst_n_i              : in    std_logic;
     clk_i                : in    std_logic;
@@ -25,9 +25,9 @@ entity spec_ref_fmc_adc_100m_mmap is
     fmc2_adc_mezzanine_i : in    t_wishbone_master_in;
     fmc2_adc_mezzanine_o : out   t_wishbone_master_out
   );
-end spec_ref_fmc_adc_100m_mmap;
+end svec_ref_fmc_adc_100m_mmap;
 
-architecture syn of spec_ref_fmc_adc_100m_mmap is
+architecture syn of svec_ref_fmc_adc_100m_mmap is
   signal rd_int                         : std_logic;
   signal wr_int                         : std_logic;
   signal rd_ack_int                     : std_logic;
