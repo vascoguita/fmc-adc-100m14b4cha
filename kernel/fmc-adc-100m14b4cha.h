@@ -11,10 +11,9 @@
 #include <linux/types.h>
 #else
 #include <stdint.h>
-#endif
-
 #ifndef BIT
 #define BIT(nr) (1UL << (nr))
+#endif
 #endif
 
 /* Trigger sources */
