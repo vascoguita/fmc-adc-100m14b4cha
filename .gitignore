@@ -6,6 +6,7 @@
 *.order
 *.symvers
 *.mod.c
+*.mod
 *.o.d
 *.tmp
 *.lof
