@@ -391,7 +391,7 @@ begin
   --    DS18B20 (thermometer + unique ID)
   ------------------------------------------------------------------------------
 
-  cmp_fmc_onewine : entity work.xwb_ds182x_readout
+  cmp_fmc_onewire : entity work.xwb_ds182x_readout
     generic map (
       g_CLOCK_FREQ_KHZ   => 125000,
       g_USE_INTERNAL_PPS => TRUE)
