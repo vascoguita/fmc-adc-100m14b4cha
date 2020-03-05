@@ -176,6 +176,8 @@ INST "gen_fmc_mezzanine[1].*/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X69Y
 #----------------------------------------
 INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"   IOB = FALSE;
 INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out" IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_i2c/U_Wrapped_I2C/*"             IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_onewire/*"                       IOB = FALSE;
 
 #----------------------------------------
 # Clocks

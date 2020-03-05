@@ -27,7 +27,7 @@ xilinx::project set "Register Duplication Map" "On"
 #xilinx::project set "Placer Extra Effort Map" "Normal"
 #xilinx::project set "Extra Effort (Highest PAR level only)" "Normal"
 
-xilinx::project set "Keep Hierarchy" "Yes"
+#xilinx::project set "Keep Hierarchy" "Yes"
 
 xilinx::project save
 
