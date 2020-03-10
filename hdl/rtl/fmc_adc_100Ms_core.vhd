@@ -186,7 +186,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal ext_trig_delay             : std_logic_vector(31 downto 0);
   signal ext_trig_delay_cnt         : unsigned(31 downto 0);
   signal ext_trig_delay_bsy         : std_logic;
-  signal ext_trig_en                : std_logic;
+  signal ext_trig_en, ext_trig_sync : std_logic;
   signal ext_trig_fixed_delay       : std_logic_vector(g_TRIG_DELAY_EXT+2 downto 0);
   signal ext_trig_p, ext_trig_n     : std_logic;
   signal ext_trig_pol               : std_logic;
@@ -209,10 +209,11 @@ architecture rtl of fmc_adc_100Ms_core is
   signal sw_trig_fixed_delay        : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal sw_trig_in                 : std_logic := '0';
   signal sw_trig_sync_ack           : std_logic := '0';
-  signal time_trig                  : std_logic;
+  signal time_trig, time_trig_sync  : std_logic;
   signal time_trig_en               : std_logic;
   signal time_trig_fixed_delay      : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal aux_time_trig              : std_logic;
+  signal aux_time_trig_sync         : std_logic;
   signal aux_time_trig_fixed_delay  : std_logic_vector(g_TRIG_DELAY_SW+2 downto 0);
   signal trig                       : std_logic;
   signal trig_align                 : std_logic_vector(8 downto 0);
@@ -392,12 +393,12 @@ begin
   -- Resets
   ------------------------------------------------------------------------------
 
-  cmp_sys_rst_fs_resync : gc_sync_ffs
+  cmp_sys_rst_fs_resync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => sys_rst_n_i,
-      synced_o => fs_rst_n);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => sys_rst_n_i,
+      q_o       => fs_rst_n);
 
   serdes_arst <= not fs_rst_n;
 
@@ -433,12 +434,12 @@ begin
   ------------------------------------------------------------------------------
   -- ADC SerDes
   ------------------------------------------------------------------------------
-  cmp_man_bitslip_sync : gc_sync_ffs
+  cmp_man_bitslip_sync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => serdes_man_bitslip,
-      synced_o => serdes_man_bitslip_sync);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => serdes_man_bitslip,
+      q_o       => serdes_man_bitslip_sync);
 
   cmp_adc_serdes : entity work.ltc2174_2l16b_receiver
     generic map (
@@ -458,12 +459,12 @@ begin
       adc_data_o      => serdes_out_data,
       adc_clk_o       => fs_clk);
 
-  cmp_serdes_synced_sync : gc_sync_ffs
+  cmp_serdes_synced_sync : gc_sync
     port map (
-      clk_i    => sys_clk_i,
-      rst_n_i  => '1',
-      data_i   => serdes_synced,
-      synced_o => serdes_synced_sync);
+      clk_i     => sys_clk_i,
+      rst_n_a_i => '1',
+      d_i       => serdes_synced,
+      q_o       => serdes_synced_sync);
 
   ------------------------------------------------------------------------------
   -- ADC core control and status registers (CSR)
@@ -553,26 +554,26 @@ begin
     end if;
   end process p_delay_gpio_ssr;
 
-  cmp_ext_trig_en_sync : gc_sync_ffs
+  cmp_ext_trig_en_sync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => csr_regout.trig_en_ext,
-      synced_o => ext_trig_en);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => csr_regout.trig_en_ext,
+      q_o       => ext_trig_en);
 
-  cmp_ext_trig_pol_sync : gc_sync_ffs
+  cmp_ext_trig_pol_sync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => csr_regout.trig_pol_ext,
-      synced_o => ext_trig_pol);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => csr_regout.trig_pol_ext,
+      q_o       => ext_trig_pol);
 
-  cmp_time_trig_en_sync : gc_sync_ffs
+  cmp_time_trig_en_sync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => csr_regout.trig_en_time,
-      synced_o => time_trig_en);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => csr_regout.trig_en_time,
+      q_o       => time_trig_en);
 
   cmp_downsample_sync : gc_sync_word_wr
     generic map (
@@ -612,19 +613,19 @@ begin
 
   gen_ch_reg_sync : for I in 1 to 4 generate
 
-    cmp_int_trig_en_sync : gc_sync_ffs
+    cmp_int_trig_en_sync : gc_sync
       port map (
-        clk_i    => fs_clk,
-        rst_n_i  => '1',
-        data_i   => int_trig_en_in(I),
-        synced_o => int_trig_en(I));
+        clk_i     => fs_clk,
+        rst_n_a_i => '1',
+        d_i       => int_trig_en_in(I),
+        q_o       => int_trig_en(I));
 
-    cmp_int_trig_pol_sync : gc_sync_ffs
+    cmp_int_trig_pol_sync : gc_sync
       port map (
-        clk_i    => fs_clk,
-        rst_n_i  => '1',
-        data_i   => int_trig_pol_in(I),
-        synced_o => int_trig_pol(I));
+        clk_i     => fs_clk,
+        rst_n_a_i => '1',
+        d_i       => int_trig_pol_in(I),
+        q_o       => int_trig_pol(I));
 
     cmp_ch_trig_thres_sync : gc_sync_word_wr
       generic map (
@@ -741,14 +742,26 @@ begin
       );
 
   -- External hardware trigger synchronization
-  cmp_ext_trig_sync : gc_sync_ffs
+  cmp_ext_trig_sync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => ext_trig_a,
-      synced_o => open,
-      npulse_o => ext_trig_n,
-      ppulse_o => ext_trig_p);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => ext_trig_a,
+      q_o       => ext_trig_sync);
+
+  cmp_ext_trig_negedge : gc_negedge
+    port map (
+      clk_i   => fs_clk,
+      rst_n_i => '1',
+      data_i  => ext_trig_sync,
+      pulse_o => ext_trig_n);
+
+  cmp_ext_trig_posedge : gc_posedge
+    port map (
+      clk_i   => fs_clk,
+      rst_n_i => '1',
+      data_i  => ext_trig_sync,
+      pulse_o => ext_trig_p);
 
   -- select external trigger pulse polarity
   with ext_trig_pol select
@@ -803,23 +816,33 @@ begin
   end process p_ext_trig_delay;
 
   -- Time trigger synchronization (from 125MHz timetag core)
-  cmp_time_trig_sync : gc_sync_ffs
+  cmp_time_trig_sync : gc_sync
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => time_trig_i,
-      synced_o => open,
-      npulse_o => open,
-      ppulse_o => time_trig);
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => time_trig_i,
+      q_o       => time_trig_sync);
 
-  cmp_aux_time_trig_sync : gc_sync_ffs
+  cmp_time_trig_posedge : gc_posedge
     port map (
-      clk_i    => fs_clk,
-      rst_n_i  => '1',
-      data_i   => aux_time_trig_i,
-      synced_o => open,
-      npulse_o => open,
-      ppulse_o => aux_time_trig);
+      clk_i   => fs_clk,
+      rst_n_i => '1',
+      data_i  => time_trig_sync,
+      pulse_o => time_trig);
+
+  cmp_aux_time_trig_sync : gc_sync
+    port map (
+      clk_i     => fs_clk,
+      rst_n_a_i => '1',
+      d_i       => aux_time_trig_i,
+      q_o       => aux_time_trig_sync);
+
+  cmp_aux_time_trig_posedge : gc_posedge
+    port map (
+      clk_i   => fs_clk,
+      rst_n_i => '1',
+      data_i  => aux_time_trig_sync,
+      pulse_o => aux_time_trig);
 
   -- Internal hardware trigger
   g_int_trig : for I in 1 to 4 generate

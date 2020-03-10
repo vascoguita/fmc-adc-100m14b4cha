@@ -504,12 +504,12 @@ begin -- architecture arch
   --    Mezzanine 1-wire master
   ------------------------------------------------------------------------------
 
-  cmp_tm_time_valid_sync : gc_sync_ffs
+  cmp_tm_time_valid_sync : gc_sync
     port map (
-      clk_i    => clk_ref_125m,
-      rst_n_i  => '1',
-      data_i   => tm_time_valid,
-      synced_o => tm_time_valid_sync);
+      clk_i     => clk_ref_125m,
+      rst_n_a_i => '1',
+      d_i       => tm_time_valid,
+      q_o       => tm_time_valid_sync);
 
   gen_fmc_mezzanine : for I in 0 to g_NB_FMC_SLOTS - 1 generate
 
@@ -527,19 +527,19 @@ begin -- architecture arch
         master_i       => cnx_fmc_sync_master_in(I),
         master_o       => cnx_fmc_sync_master_out(I));
 
-    cmp_fmc_ddr_wr_fifo_sync : gc_sync_ffs
+    cmp_fmc_ddr_wr_fifo_sync : gc_sync
       port map (
-        clk_i    => clk_ref_125m,
-        rst_n_i  => '1',
-        data_i   => ddr_wr_fifo_empty(I),
-        synced_o => ddr_wr_fifo_empty_sync(I));
+        clk_i     => clk_ref_125m,
+        rst_n_a_i => '1',
+        d_i       => ddr_wr_fifo_empty(I),
+        q_o       => ddr_wr_fifo_empty_sync(I));
 
-    cmp_fmc_irq_sync : gc_sync_ffs
+    cmp_fmc_irq_sync : gc_sync
       port map (
-        clk_i    => clk_sys_62m5,
-        rst_n_i  => '1',
-        data_i   => fmc_irq(I),
-        synced_o => irq_vector(I));
+        clk_i     => clk_sys_62m5,
+        rst_n_a_i => '1',
+        d_i       => fmc_irq(I),
+        q_o       => irq_vector(I));
 
     cmp_fmc_adc_mezzanine : fmc_adc_mezzanine
       generic map (
@@ -637,19 +637,19 @@ begin -- architecture arch
 
   gen_fmc_led : for I in 0 to g_NB_FMC_SLOTS - 1 generate
 
-    cmp_fmc_cfg_ok_sync : gc_sync_ffs
+    cmp_fmc_cfg_ok_sync : gc_sync
       port map (
-        clk_i    => clk_sys_62m5,
-        rst_n_i  => '1',
-        data_i   => fmc_acq_cfg_ok(I),
-        synced_o => fmc_acq_cfg_ok_sync(I));
+        clk_i     => clk_sys_62m5,
+        rst_n_a_i => '1',
+        d_i       => fmc_acq_cfg_ok(I),
+        q_o       => fmc_acq_cfg_ok_sync(I));
 
-    cmp_fmc_trig_sync : gc_sync_ffs
+    cmp_fmc_trig_sync : gc_sync
       port map (
-        clk_i    => clk_sys_62m5,
-        rst_n_i  => '1',
-        data_i   => fmc_acq_trig(I),
-        synced_o => fmc_acq_trig_sync(I));
+        clk_i     => clk_sys_62m5,
+        rst_n_a_i => '1',
+        d_i       => fmc_acq_trig(I),
+        q_o       => fmc_acq_trig_sync(I));
 
     p_fmc_acq_led: process (fmc_acq_cfg_ok_sync) is
     begin
