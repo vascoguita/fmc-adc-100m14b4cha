@@ -61,6 +61,9 @@ entity ltc2174_2l16b_receiver is
     serdes_arst_i   : in  std_logic := '0';
     -- Manual bitslip command (optional)
     serdes_bslip_i  : in  std_logic := '0';
+    -- SERDES BUFPLL lock status flag
+    -- (used when g_USE_PLL=TRUE, otherwise it is tied to '1')
+    serdes_locked_o : out std_logic;
     -- Indication that SERDES is ok and locked to
     -- frame start pattern
     serdes_synced_o : out std_logic;
@@ -81,7 +84,6 @@ architecture arch of ltc2174_2l16b_receiver is
   signal adc_outb          : std_logic_vector(3 downto 0);
   signal clk_serdes_p      : std_logic;
   signal clk_serdes_n      : std_logic;
-  signal bufpll_locked     : std_logic;
   signal clk_div_buf       : std_logic;
   signal serdes_strobe     : std_logic                    := '0';
   signal serdes_auto_bslip : std_logic                    := '0';
@@ -232,7 +234,7 @@ begin  -- architecture arch
         DIVIDE => 8)
       port map (
         IOCLK        => clk_serdes_p,
-        LOCK         => bufpll_locked,
+        LOCK         => serdes_locked_o,
         SERDESSTROBE => serdes_strobe,
         GCLK         => clk_div_buf,
         LOCKED       => l_pll_locked,
@@ -282,7 +284,7 @@ begin  -- architecture arch
         O => clk_div_buf);
 
     -- not used in this case
-    bufpll_locked <= '1';
+    serdes_locked_o <= '1';
 
   end generate gen_dual_bufio2;
 
@@ -316,7 +318,7 @@ begin  -- architecture arch
   end process p_auto_bitslip;
 
   serdes_bitslip  <= serdes_auto_bslip or serdes_bslip_i;
-  serdes_synced_o <= serdes_synced and bufpll_locked;
+  serdes_synced_o <= serdes_synced;
 
   ------------------------------------------------------------------------------
   -- Data deserializer

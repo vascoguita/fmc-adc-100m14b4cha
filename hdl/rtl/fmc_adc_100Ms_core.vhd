@@ -177,6 +177,8 @@ architecture rtl of fmc_adc_100Ms_core is
   signal serdes_out_data_synced  : std_logic_vector(63 downto 0);
   signal serdes_man_bitslip      : std_logic;
   signal serdes_man_bitslip_sync : std_logic;
+  signal serdes_locked           : std_logic;
+  signal serdes_locked_sync      : std_logic;
   signal serdes_synced           : std_logic;
   signal serdes_synced_sync      : std_logic;
 
@@ -455,6 +457,7 @@ begin
       adc_outb_n_i    => adc_outb_n_i,
       serdes_arst_i   => serdes_arst,
       serdes_bslip_i  => serdes_man_bitslip_sync,
+      serdes_locked_o => serdes_locked,
       serdes_synced_o => serdes_synced,
       adc_data_o      => serdes_out_data,
       adc_clk_o       => fs_clk);
@@ -465,6 +468,13 @@ begin
       rst_n_a_i => '1',
       d_i       => serdes_synced,
       q_o       => serdes_synced_sync);
+
+  cmp_serdes_locked_sync : gc_sync
+    port map (
+      clk_i     => sys_clk_i,
+      rst_n_a_i => '1',
+      d_i       => serdes_locked,
+      q_o       => serdes_locked_sync);
 
   ------------------------------------------------------------------------------
   -- ADC core control and status registers (CSR)
@@ -479,7 +489,7 @@ begin
       fmc_adc_100Ms_csr_o => csr_regout);
 
   csr_regin.sta_fsm           <= acq_fsm_state;
-  csr_regin.sta_serdes_pll    <= '1';
+  csr_regin.sta_serdes_pll    <= serdes_locked_sync;
   csr_regin.sta_serdes_synced <= serdes_synced_sync;
   csr_regin.sta_acq_cfg       <= acq_config_ok;
   csr_regin.trig_stat_ext     <= trig_storage(0);
