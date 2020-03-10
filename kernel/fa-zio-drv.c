@@ -150,7 +150,7 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 };
 
 static struct zio_attribute zfad_dev_ext_zattr[] = {
-	/* Get Mezzanine temperature from onewire */
+	/* Get Mezzanine temperature from the DS18B20 chip */
 	ZIO_PARAM_EXT("temperature", ZIO_RO_PERM, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
 
@@ -193,10 +193,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH2_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH3_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
 
@@ -223,10 +226,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
 
@@ -252,9 +258,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH2_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH3_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH4_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_TERM:
 		if (usr_val > 1)
 			usr_val = 1;
@@ -263,10 +273,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_CTL_RANGE:
 		i--;
 		range = zfad_convert_user_range(usr_val);
@@ -336,10 +349,13 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
 		*usr_val = fa->user_offset[i];
@@ -349,30 +365,38 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
 		return 0;
 	case ZFAT_ADC_TST_PATTERN:
+		/*fallthrough*/
 	case ZFA_SW_R_NOADDRES_NBIT:
+		/*fallthrough*/
 	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
 		/*
-		 * Onewire returns units of 1/16 degree. We return units
+		 * DS18B20 returns units of 1/16 degree. We return units
 		 * of 1/1000 of a degree instead.
 		 */
-		*usr_val = fa_read_temp(fa, 0);
+		*usr_val = fa_readl(fa, fa->fa_ow_base,
+				    &zfad_regs[ZFA_DS18B20_TEMP]);
 		*usr_val = (*usr_val * 1000 + 8) / 16;
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH2_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH3_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
 		*usr_val = fa->zero_offset[i];
 		return 0;
 	case ZFA_CHx_SAT:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_RANGE:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		break;

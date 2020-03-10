@@ -9,8 +9,9 @@
 #include <linux/init.h>
 #include <linux/version.h>
 #include <linux/dmaengine.h>
-#include <linux/ipmi-fru.h>
-#include <linux/fmc.h>
+#include <linux/mod_devicetable.h>
+#include "linux/ipmi-fru.h"
+#include "linux/fmc.h"
 
 #include "fmc-adc-100m14b4cha.h"
 
@@ -443,7 +444,6 @@ struct fa_modlist {
 
 static struct fa_modlist mods[] = {
 	{"spi", fa_spi_init, fa_spi_exit},
-	{"onewire", fa_onewire_init, fa_onewire_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
 	{"debug", fa_debug_init, fa_debug_exit},
 	{"calibration", fa_calib_init, fa_calib_exit},

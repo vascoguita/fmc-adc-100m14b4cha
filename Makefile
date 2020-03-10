@@ -11,21 +11,21 @@ SVEC_SW ?= svec-sw
 VMEBUS ?= $(REPO_PARENT)/vmebridge
 
 # Use the absolute path so it can be used by submodule
-# FMC_BUS_ABS and ZIO_ABS has to be absolut path,
+# FMC_ABS and ZIO_ABS has to be absolut path,
 # due to beeing passed to the Kbuild
-FMC_BUS_ABS ?= $(abspath $(FMC_BUS) )
+FMC_ABS ?= $(abspath $(FMC) )
 ZIO_ABS ?= $(abspath $(ZIO) )
 SVEC_SW_ABS ?= $(abspath $(SVEC_SW) )
 VMEBUS_ABS ?= $(abspath $(VMEBUS) )
 
-export FMC_BUS_ABS
+export FMC_ABS
 export ZIO_ABS
 export SVEC_SW_ABS
 export VMEBUS_ABS
 
-DIRS = $(FMC_BUS_ABS) $(ZIO_ABS) kernel tools
+DIRS = $(FMC_ABS) $(ZIO_ABS) kernel tools
 
-kernel: $(FMC_BUS_ABS) $(ZIO_ABS)
+kernel: $(FMC_ABS) $(ZIO_ABS)
 
 .PHONY: all clean modules install modules_install $(DIRS)
 .PHONY: gitmodules prereq_install prereq_install_warn
@@ -58,4 +58,4 @@ $(ZIO_ABS): zio-init_repo
 
 # init submodule if missing
 zio-init_repo:
-	@test -d $(ZIO_ABS)/doc || ( echo "Checking out submodule $(ZIO_ABS)" && git submodule update --init $(ZIO_ABS) )
+	@test -d $(ZIO_ABS)/Documentation || ( echo "Checking out submodule $(ZIO_ABS)" && git submodule update --init $(ZIO_ABS) )

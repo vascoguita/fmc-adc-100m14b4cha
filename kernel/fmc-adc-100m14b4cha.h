@@ -11,10 +11,9 @@
 #include <linux/types.h>
 #else
 #include <stdint.h>
-#endif
-
 #ifndef BIT
 #define BIT(nr) (1UL << (nr))
+#endif
 #endif
 
 /* Trigger sources */
@@ -160,7 +159,7 @@ struct fa_calib {
 #include <linux/workqueue.h>
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
-#include <linux/fmc.h>
+#include "linux/fmc.h"
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
@@ -172,7 +171,7 @@ struct fa_calib {
 
 #define ADC_CSR_OFF 0x1000
 #define ADC_EIC_OFF 0x1500
-#define ADC_OW_OFF 0x1700
+#define ADC_OW_OFF  0x1700
 #define ADC_SPI_OFF 0x1800
 #define ADC_UTC_OFF 0x1900
 
@@ -317,6 +316,11 @@ enum zfadc_dregs_enum {
 	ZFA_IRQ_VIC_DISABLE_MASK,
 	ZFA_IRQ_VIC_ENABLE_MASK,
 	ZFA_IRQ_VIC_MASK_STATUS,
+	/* DS18B20 UID/Temperature */
+	ZFA_DS18B20_ID_U,
+	ZFA_DS18B20_ID_L,
+	ZFA_DS18B20_TEMP,
+	ZFA_DS18B20_STAT,
 	/* UTC core */
 	ZFA_UTC_SECONDS_U,
 	ZFA_UTC_SECONDS_L,
@@ -402,7 +406,7 @@ struct fa_dev {
 	struct fmc_slot	*slot;
 	struct fa_memory_ops	memops;
 
-	/* carrier common base offset addresses obtained from SDB */
+	/* carrier common base offset addresses */
 	void *fa_adc_csr_base;
 	void *fa_spi_base;
 	void *fa_ow_base;
@@ -576,7 +580,7 @@ extern struct bin_attribute dev_attr_calibration;
 /* Global variable exported by fa-core.c */
 extern struct workqueue_struct *fa_workqueue;
 
-/* Global variable exported by fa-regfield.c */
+/* Global variable exported by fa-regtable.c */
 extern const struct zfa_field_desc zfad_regs[];
 
 /* Functions exported by fa-core.c */
@@ -610,11 +614,6 @@ extern int fa_setup_irqs(struct fa_dev *fa);
 extern int fa_free_irqs(struct fa_dev *fa);
 extern int fa_enable_irqs(struct fa_dev *fa);
 extern int fa_disable_irqs(struct fa_dev *fa);
-
-/* Functions exported by onewire.c */
-extern int fa_onewire_init(struct fa_dev *fa);
-extern void fa_onewire_exit(struct fa_dev *fa);
-extern int fa_read_temp(struct fa_dev *fa, int verbose);
 
 /* functions exported by spi.c */
 extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
