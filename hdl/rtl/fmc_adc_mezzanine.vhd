@@ -172,7 +172,6 @@ architecture rtl of fmc_adc_mezzanine is
   signal si570_sda_oe_n : std_logic;
 
   -- Interrupts (eic)
-  signal ddr_wr_fifo_empty_d : std_logic;
   signal ddr_wr_fifo_empty_p : std_logic;
   signal acq_end_irq_p       : std_logic;
   signal acq_end_extend      : std_logic;
@@ -418,14 +417,12 @@ begin
       int_o         => eic_irq_o);
 
   -- Detects end of adc core writing to ddr
-  p_ddr_wr_fifo_empty : process (sys_clk_i)
-  begin
-    if rising_edge(sys_clk_i) then
-      ddr_wr_fifo_empty_d <= ddr_wr_fifo_empty_i;
-    end if;
-  end process p_ddr_wr_fifo_empty;
-
-  ddr_wr_fifo_empty_p <= ddr_wr_fifo_empty_i and not(ddr_wr_fifo_empty_d);
+  cmp_ddr_wr_fifo_empty_posedge : entity work.gc_posedge
+    port map (
+      clk_i   => sys_clk_i,
+      rst_n_i => '1',
+      data_i  => ddr_wr_fifo_empty_i,
+      pulse_o => ddr_wr_fifo_empty_p);
 
   -- End of acquisition interrupt generation
   p_acq_end_extend : process (sys_clk_i)
