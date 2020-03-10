@@ -159,7 +159,7 @@ struct fa_calib {
 #include <linux/workqueue.h>
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
-#include "linux/fmc.h"
+#include <linux/fmc.h>
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
