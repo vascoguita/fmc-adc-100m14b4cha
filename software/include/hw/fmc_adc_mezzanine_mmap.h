@@ -2,6 +2,7 @@
 #define __CHEBY__FMC_ADC_MEZZANINE_MMAP__H__
 
 #include "timetag_core_regs.h"
+#include "fmc_adc_eic_regs.h"
 #include "wb_ds182x_regs.h"
 #include "fmc_adc_100ms_csr.h"
 #define FMC_ADC_MEZZANINE_MMAP_SIZE 8192
@@ -41,7 +42,7 @@ struct fmc_adc_mezzanine_mmap {
   uint32_t __padding_1[192];
 
   /* [0x1500]: SUBMAP FMC ADC Embedded Interrupt Controller */
-  uint32_t fmc_adc_eic[4];
+  struct fmc_adc_eic_regs fmc_adc_eic;
 
   /* padding to: 1408 words */
   uint32_t __padding_2[60];

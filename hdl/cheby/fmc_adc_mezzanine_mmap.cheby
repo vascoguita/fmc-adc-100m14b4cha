@@ -14,11 +14,8 @@ memory-map:
     - submap:
         name: fmc_adc_eic
         address: 0x1500
-        size: 0x10
-        interface: wb-32-be
-        x-hdl:
-          busgroup: True
         description: FMC ADC Embedded Interrupt Controller
+        filename: fmc_adc_eic_regs.cheby
     - submap:
         name: si570_i2c_master
         address: 0x1600

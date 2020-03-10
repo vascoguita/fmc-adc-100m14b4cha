@@ -8,6 +8,7 @@ files = [
     "timetag_core.vhd",
     "../cheby/fmc_adc_mezzanine_mmap.vhd",
     "../cheby/fmc_adc_100Ms_csr.vhd",
+    "../cheby/fmc_adc_eic_regs.vhd",
     "../cheby/fmc_adc_aux_trigin.vhd",
     "../cheby/fmc_adc_aux_trigout.vhd",
     "../cheby/timetag_core_regs.vhd",

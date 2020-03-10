@@ -406,27 +406,16 @@ begin
   ------------------------------------------------------------------------------
   -- FMC0 interrupt controller
   ------------------------------------------------------------------------------
-  cmp_fmc0_eic : entity work.fmc_adc_eic
-    port map(
-      rst_n_i       => sys_rst_n_i,
-      clk_sys_i     => sys_clk_i,
-      wb_adr_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).adr(3 downto 2),  -- cnx_slave_in.adr is byte address
-      wb_dat_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).dat,
-      wb_dat_o      => cnx_slave_out(c_WB_SLAVE_FMC_EIC).dat,
-      wb_cyc_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).cyc,
-      wb_sel_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).sel,
-      wb_stb_i      => cnx_slave_in(c_WB_SLAVE_FMC_EIC).stb,
-      wb_we_i       => cnx_slave_in(c_WB_SLAVE_FMC_EIC).we,
-      wb_ack_o      => cnx_slave_out(c_WB_SLAVE_FMC_EIC).ack,
-      wb_stall_o    => cnx_slave_out(c_WB_SLAVE_FMC_EIC).stall,
-      wb_int_o      => eic_irq_o,
-      irq_trig_i    => trigger_p,
-      irq_acq_end_i => acq_end_irq_p
-      );
 
-  -- Unused wishbone signals
-  cnx_slave_out(c_WB_SLAVE_FMC_EIC).err <= '0';
-  cnx_slave_out(c_WB_SLAVE_FMC_EIC).rty <= '0';
+  cmp_fmc_adc_eic : entity work.fmc_adc_eic
+    port map (
+      rst_n_i       => sys_rst_n_i,
+      clk_i         => sys_clk_i,
+      wb_i          => cnx_slave_in(c_WB_SLAVE_FMC_EIC),
+      wb_o          => cnx_slave_out(c_WB_SLAVE_FMC_EIC),
+      irq_trig_i    => trigger_p,
+      irq_acq_end_i => acq_end_irq_p,
+      int_o         => eic_irq_o);
 
   -- Detects end of adc core writing to ddr
   p_ddr_wr_fifo_empty : process (sys_clk_i)
