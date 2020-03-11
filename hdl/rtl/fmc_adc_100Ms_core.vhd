@@ -318,7 +318,6 @@ architecture rtl of fmc_adc_100Ms_core is
   signal wb_ddr_fifo_wr    : std_logic;
   signal wb_ddr_fifo_rd    : std_logic;
   signal wb_ddr_fifo_valid : std_logic;
-  signal wb_ddr_fifo_dreq  : std_logic;
   signal wb_ddr_fifo_wr_en : std_logic;
 
   -- RAM address counter
@@ -1561,8 +1560,7 @@ begin
 
   wb_ddr_fifo_wr <= wb_ddr_fifo_wr_en and not(wb_ddr_fifo_full);
 
-  wb_ddr_fifo_rd   <= wb_ddr_fifo_dreq and not(wb_ddr_fifo_empty) and not(wb_ddr_stall_t);
-  wb_ddr_fifo_dreq <= '1';
+  wb_ddr_fifo_rd <= not(wb_ddr_fifo_empty or wb_ddr_stall_t);
 
   ------------------------------------------------------------------------------
   -- RAM address counter (32-bit word address)
