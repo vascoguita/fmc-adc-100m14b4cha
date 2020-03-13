@@ -116,22 +116,6 @@ end fmc_adc_100Ms_core;
 architecture rtl of fmc_adc_100Ms_core is
 
   ------------------------------------------------------------------------------
-  -- Components declaration
-  ------------------------------------------------------------------------------
-
-  component offset_gain_s
-    port (
-      rst_n_i  : in  std_logic;                      --! Reset (active low)
-      clk_i    : in  std_logic;                      --! Clock
-      offset_i : in  std_logic_vector(15 downto 0);  --! Signed offset input (two's complement)
-      gain_i   : in  std_logic_vector(15 downto 0);  --! Unsigned gain input
-      sat_i    : in  std_logic_vector(14 downto 0);  --! Unsigned saturation value input
-      data_i   : in  std_logic_vector(15 downto 0);  --! Signed data input (two's complement)
-      data_o   : out std_logic_vector(15 downto 0)   --! Signed data output (two's complement)
-      );
-  end component offset_gain_s;
-
-  ------------------------------------------------------------------------------
   -- Constants declaration
   ------------------------------------------------------------------------------
   constant c_DPRAM_DEPTH : integer := f_log2_size(g_MULTISHOT_RAM_SIZE);
@@ -724,7 +708,7 @@ begin
   -- Offset and gain calibration
   ------------------------------------------------------------------------------
   l_offset_gain_calibr : for I in 0 to 3 generate
-    cmp_offset_gain_calibr : offset_gain_s
+    cmp_offset_gain_calibr : entity work.offset_gain_s
       port map(
         rst_n_i  => fs_rst_n,
         clk_i    => fs_clk,
