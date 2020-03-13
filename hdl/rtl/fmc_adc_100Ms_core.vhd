@@ -134,13 +134,13 @@ architecture rtl of fmc_adc_100Ms_core is
   ------------------------------------------------------------------------------
   -- Constants declaration
   ------------------------------------------------------------------------------
-  constant c_dpram_depth : integer := f_log2_size(g_multishot_ram_size);
+  constant c_DPRAM_DEPTH : integer := f_log2_size(g_MULTISHOT_RAM_SIZE);
 
   -- Calculate the maximum number of available samples per multishot trigger
   -- Note: we subtract 2 for the timetag, and 1 more because of bug when number
   -- of samples equals the size of the dpram
   constant c_MULTISHOT_SAMPLE_DEPTH : std_logic_vector(31 downto 0) :=
-    std_logic_vector(to_unsigned(g_multishot_ram_size - 3, 32));
+    std_logic_vector(to_unsigned(g_MULTISHOT_RAM_SIZE - 3, 32));
 
   ------------------------------------------------------------------------------
   -- Types declaration
@@ -290,24 +290,24 @@ architecture rtl of fmc_adc_100Ms_core is
   signal multishot_buffer_sel : std_logic;
 
   -- Multi-shot mode
-  signal dpram_addra_cnt       : unsigned(c_dpram_depth-1 downto 0);
-  signal dpram_addra_trig      : unsigned(c_dpram_depth-1 downto 0);
-  signal dpram_addra_post_done : unsigned(c_dpram_depth-1 downto 0);
-  signal dpram_addrb_cnt       : unsigned(c_dpram_depth-1 downto 0);
+  signal dpram_addra_cnt       : unsigned(c_DPRAM_DEPTH-1 downto 0);
+  signal dpram_addra_trig      : unsigned(c_DPRAM_DEPTH-1 downto 0);
+  signal dpram_addra_post_done : unsigned(c_DPRAM_DEPTH-1 downto 0);
+  signal dpram_addrb_cnt       : unsigned(c_DPRAM_DEPTH-1 downto 0);
   signal dpram_dout            : std_logic_vector(63 downto 0);
   signal dpram_valid           : std_logic;
   signal dpram_valid_t         : std_logic;
 
   signal dpram0_dina  : std_logic_vector(63 downto 0);
-  signal dpram0_addra : std_logic_vector(c_dpram_depth-1 downto 0);
+  signal dpram0_addra : std_logic_vector(c_DPRAM_DEPTH-1 downto 0);
   signal dpram0_wea   : std_logic;
-  signal dpram0_addrb : std_logic_vector(c_dpram_depth-1 downto 0);
+  signal dpram0_addrb : std_logic_vector(c_DPRAM_DEPTH-1 downto 0);
   signal dpram0_doutb : std_logic_vector(63 downto 0);
 
   signal dpram1_dina  : std_logic_vector(63 downto 0);
-  signal dpram1_addra : std_logic_vector(c_dpram_depth-1 downto 0);
+  signal dpram1_addra : std_logic_vector(c_DPRAM_DEPTH-1 downto 0);
   signal dpram1_wea   : std_logic;
-  signal dpram1_addrb : std_logic_vector(c_dpram_depth-1 downto 0);
+  signal dpram1_addrb : std_logic_vector(c_DPRAM_DEPTH-1 downto 0);
   signal dpram1_doutb : std_logic_vector(63 downto 0);
 
   -- Wishbone to DDR flowcontrol FIFO
@@ -351,12 +351,12 @@ begin
 
   cmp_csr_wb_slave_adapter : wb_slave_adapter
     generic map (
-      g_master_use_struct  => TRUE,
-      g_master_mode        => PIPELINED,
-      g_master_granularity => BYTE,
-      g_slave_use_struct   => TRUE,
-      g_slave_mode         => g_WB_CSR_MODE,
-      g_slave_granularity  => g_WB_CSR_GRANULARITY)
+      g_MASTER_USE_STRUCT  => TRUE,
+      g_MASTER_MODE        => PIPELINED,
+      g_MASTER_GRANULARITY => BYTE,
+      g_SLAVE_USE_STRUCT   => TRUE,
+      g_SLAVE_MODE         => g_WB_CSR_MODE,
+      g_SLAVE_GRANULARITY  => g_WB_CSR_GRANULARITY)
     port map (
       clk_sys_i => sys_clk_i,
       rst_n_i   => sys_rst_n_i,
@@ -370,7 +370,7 @@ begin
   ------------------------------------------------------------------------------
   cmp_acq_led: gc_extend_pulse
     generic map (
-      g_width => 12500000)
+      g_WIDTH => 12500000)
     port map (
       clk_i      => sys_clk_i,
       rst_n_i    => sys_rst_n_i,
@@ -381,7 +381,7 @@ begin
 
   cmp_trig_led: gc_extend_pulse
     generic map (
-      g_width => 12500000)
+      g_WIDTH => 12500000)
     port map (
       clk_i      => sys_clk_i,
       rst_n_i    => sys_rst_n_i,
@@ -854,7 +854,7 @@ begin
       pulse_o => aux_time_trig);
 
   -- Internal hardware trigger
-  g_int_trig : for I in 1 to 4 generate
+  gen_int_trig : for I in 1 to 4 generate
     int_trig_data(I) <= data_calibr_out(16*I-1 downto 16*I-16);
 
     cmp_gc_comparator: gc_comparator
@@ -914,7 +914,7 @@ begin
       end if;
     end process p_int_trig_delay;
 
-  end generate g_int_trig;
+  end generate gen_int_trig;
 
   -- Due to the comparator, configurable trigger delay and trigger align logic,
   -- internal threshold triggers are misaligned with respect to the incoming
@@ -1018,10 +1018,10 @@ begin
 
   cmp_adc_sync_fifo : generic_async_fifo_dual_rst
     generic map (
-      g_data_width             => 73,
-      g_size                   => 16,
-      g_show_ahead             => TRUE)
-    port map(
+      g_DATA_WIDTH => 73,
+      g_SIZE       => 16,
+      g_SHOW_AHEAD => TRUE)
+     port map(
       rst_wr_n_i        => fs_rst_n,
       clk_wr_i          => fs_clk,
       d_i               => sync_fifo_din,
@@ -1192,7 +1192,7 @@ begin
       elsif unsigned(shots_value) = to_unsigned(0, shots_value'length) then
         acq_config_ok <= '0';
       elsif single_shot = '0' and
-        unsigned(pre_trig_value) + unsigned(post_trig_value) + 3 >= to_unsigned(g_multishot_ram_size, pre_trig_value'length) then
+        unsigned(pre_trig_value) + unsigned(post_trig_value) + 3 >= to_unsigned(g_MULTISHOT_RAM_SIZE, pre_trig_value'length) then
         acq_config_ok <= '0';
       else
         acq_config_ok <= '1';
@@ -1414,11 +1414,11 @@ begin
   cmp_multishot_dpram0 : generic_dpram
     generic map
     (
-      g_data_width               => 64,
-      g_size                     => g_multishot_ram_size,
-      g_with_byte_enable         => FALSE,
-      g_addr_conflict_resolution => "read_first",
-      g_dual_clock               => FALSE
+      g_DATA_WIDTH               => 64,
+      g_SIZE                     => g_MULTISHOT_RAM_SIZE,
+      g_WITH_BYTE_ENABLE         => FALSE,
+      g_ADDR_CONFLICT_RESOLUTION => "read_first",
+      g_DUAL_CLOCK               => FALSE
       -- default values for the rest of the generics are okay
       )
     port map
@@ -1441,11 +1441,11 @@ begin
   cmp_multishot_dpram1 : generic_dpram
     generic map
     (
-      g_data_width               => 64,
-      g_size                     => g_multishot_ram_size,
-      g_with_byte_enable         => FALSE,
-      g_addr_conflict_resolution => "read_first",
-      g_dual_clock               => FALSE
+      g_DATA_WIDTH               => 64,
+      g_SIZE                     => g_MULTISHOT_RAM_SIZE,
+      g_WITH_BYTE_ENABLE         => FALSE,
+      g_ADDR_CONFLICT_RESOLUTION => "read_first",
+      g_DUAL_CLOCK               => FALSE
       -- default values for the rest of the generics are okay
       )
     port map
@@ -1475,7 +1475,7 @@ begin
         dpram_valid     <= '0';
       else
         if trig_tag_done = '1' then
-          dpram_addrb_cnt <= dpram_addra_trig - unsigned(pre_trig_value(c_dpram_depth-1 downto 0));
+          dpram_addrb_cnt <= dpram_addra_trig - unsigned(pre_trig_value(c_DPRAM_DEPTH-1 downto 0));
           dpram_valid_t   <= '1';
         elsif (dpram_addrb_cnt = dpram_addra_post_done + 2) then  -- reads 2 extra addresses -> trigger time-tag
           dpram_valid_t <= '0';
@@ -1497,16 +1497,16 @@ begin
   ------------------------------------------------------------------------------
   cmp_wb_ddr_fifo : generic_sync_fifo
     generic map (
-      g_data_width             => 65,
-      g_size                   => 256,
-      g_show_ahead             => FALSE,
-      g_with_empty             => TRUE,
-      g_with_full              => TRUE,
-      g_with_almost_empty      => FALSE,
-      g_with_almost_full       => FALSE,
-      g_with_count             => FALSE,
-      g_almost_empty_threshold => 0,
-      g_almost_full_threshold  => 0
+      g_DATA_WIDTH             => 65,
+      g_SIZE                   => 256,
+      g_SHOW_AHEAD             => FALSE,
+      g_WITH_EMPTY             => TRUE,
+      g_WITH_FULL              => TRUE,
+      g_WITH_ALMOST_EMPTY      => FALSE,
+      g_WITH_ALMOST_FULL       => FALSE,
+      g_WITH_COUNT             => FALSE,
+      g_ALMOST_EMPTY_THRESHOLD => 0,
+      g_ALMOST_FULL_THRESHOLD  => 0
       )
     port map(
       rst_n_i        => sys_rst_n_i,
@@ -1702,16 +1702,16 @@ begin
 
     cmp_trigout_fifo : generic_sync_fifo
       generic map (
-        g_data_width             => t_trigout_data'length,
-        g_size                   => 16,
-        g_show_ahead             => TRUE,
-        g_with_empty             => TRUE,
-        g_with_full              => TRUE,
-        g_with_almost_empty      => FALSE,
-        g_with_almost_full       => FALSE,
-        g_with_count             => FALSE,
-        g_almost_empty_threshold => 0,
-        g_almost_full_threshold  => 0
+        g_DATA_WIDTH             => t_trigout_data'length,
+        g_SIZE                   => 16,
+        g_SHOW_AHEAD             => TRUE,
+        g_WITH_EMPTY             => TRUE,
+        g_WITH_FULL              => TRUE,
+        g_WITH_ALMOST_EMPTY      => FALSE,
+        g_WITH_ALMOST_FULL       => FALSE,
+        g_WITH_COUNT             => FALSE,
+        g_ALMOST_EMPTY_THRESHOLD => 0,
+        g_ALMOST_FULL_THRESHOLD  => 0
         )
       port map(
         rst_n_i        => sys_rst_n_i,
