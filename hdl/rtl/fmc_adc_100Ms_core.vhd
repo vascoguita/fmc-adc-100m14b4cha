@@ -301,17 +301,13 @@ architecture rtl of fmc_adc_100Ms_core is
   signal wb_ddr_fifo_full  : std_logic;
   signal wb_ddr_fifo_wr    : std_logic;
   signal wb_ddr_fifo_rd    : std_logic;
-  signal wb_ddr_fifo_valid : std_logic;
   signal wb_ddr_fifo_wr_en : std_logic;
 
   -- RAM address counter
-  signal ram_addr_cnt : unsigned(24 downto 0);
+  signal ram_addr_cnt : unsigned(28 downto 0);
   signal test_data_en : std_logic;
   signal trig_addr    : std_logic_vector(31 downto 0);
   signal mem_ovr      : std_logic;
-
-  -- Wishbone interface to DDR
-  signal wb_ddr_stall_t : std_logic;
 
   -- IO from CSR registers
   signal csr_regin  : t_fmc_adc_100ms_csr_master_in;
@@ -1064,7 +1060,7 @@ begin
     end if;
   end process p_shots_cnt;
 
-  multishot_buffer_sel <= std_logic(shots_cnt(0));
+  multishot_buffer_sel <= not std_logic(shots_cnt(0));
   shots_done           <= '1' when shots_cnt = to_unsigned(1, shots_cnt'length) else '0';
   remaining_shots      <= std_logic_vector(shots_cnt);
 
@@ -1366,7 +1362,7 @@ begin
   p_dpram_addra_cnt : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
-      if sys_rst_n_i = '0' then
+      if sys_rst_n_i = '0' or single_shot = '1' then
         dpram_addra_cnt       <= (others => '0');
         dpram_addra_trig      <= (others => '0');
         dpram_addra_post_done <= (others => '0');
@@ -1389,10 +1385,14 @@ begin
   -- DPRAM inputs
   dpram0_addra <= std_logic_vector(dpram_addra_cnt);
   dpram1_addra <= std_logic_vector(dpram_addra_cnt);
-  dpram0_dina  <= sync_fifo_dout(63 downto 0)                            when acq_in_trig_tag = '0'      else trig_tag_data;
-  dpram1_dina  <= sync_fifo_dout(63 downto 0)                            when acq_in_trig_tag = '0'      else trig_tag_data;
-  dpram0_wea   <= (samples_wr_en and sync_fifo_valid) or acq_in_trig_tag when multishot_buffer_sel = '0' else '0';
-  dpram1_wea   <= (samples_wr_en and sync_fifo_valid) or acq_in_trig_tag when multishot_buffer_sel = '1' else '0';
+  dpram0_dina  <= sync_fifo_dout(63 downto 0)
+                 when acq_in_trig_tag = '0' else trig_tag_data;
+  dpram1_dina <= sync_fifo_dout(63 downto 0)
+                 when acq_in_trig_tag = '0' else trig_tag_data;
+  dpram0_wea <= not single_shot and ((samples_wr_en and sync_fifo_valid) or acq_in_trig_tag)
+                when multishot_buffer_sel = '0' else '0';
+  dpram1_wea <= not single_shot and ((samples_wr_en and sync_fifo_valid) or acq_in_trig_tag)
+                when multishot_buffer_sel = '1' else '0';
 
   -- DPRAMs
   cmp_multishot_dpram0 : generic_dpram
@@ -1453,10 +1453,9 @@ begin
   p_dpram_addrb_cnt : process (sys_clk_i)
   begin
     if rising_edge(sys_clk_i) then
-      if sys_rst_n_i = '0' then
-        dpram_addrb_cnt <= (others => '0');
-        dpram_valid_t   <= '0';
-        dpram_valid     <= '0';
+      if sys_rst_n_i = '0' or single_shot = '1' then
+        dpram_valid_t <= '0';
+        dpram_valid   <= '0';
       else
         if trig_tag_done = '1' then
           dpram_addrb_cnt <= dpram_addra_trig - unsigned(pre_trig_value(c_DPRAM_DEPTH-1 downto 0));
@@ -1483,7 +1482,7 @@ begin
     generic map (
       g_DATA_WIDTH             => 65,
       g_SIZE                   => 256,
-      g_SHOW_AHEAD             => FALSE,
+      g_SHOW_AHEAD             => TRUE,
       g_WITH_EMPTY             => TRUE,
       g_WITH_FULL              => TRUE,
       g_WITH_ALMOST_EMPTY      => FALSE,
@@ -1509,15 +1508,15 @@ begin
   -- One clock cycle delay for the FIFO's VALID signal. Since the General Cores
   -- package does not offer the possibility to use the FWFT feature of the FIFOs,
   -- we simulate the valid flag here according to Figure 4-7 in ref. [1].
-  p_wb_ddr_fifo_valid : process (sys_clk_i) is
-  begin
-    if rising_edge(sys_clk_i) then
-      wb_ddr_fifo_valid <= wb_ddr_fifo_rd;
-      if (wb_ddr_fifo_empty = '1') then
-        wb_ddr_fifo_valid <= '0';
-      end if;
-    end if;
-  end process;
+  -- p_wb_ddr_fifo_valid : process (sys_clk_i) is
+  -- begin
+  --   if rising_edge(sys_clk_i) then
+  --     wb_ddr_fifo_valid <= wb_ddr_fifo_rd;
+  --     if (wb_ddr_fifo_empty = '1') then
+  --       wb_ddr_fifo_valid <= '0';
+  --     end if;
+  --   end if;
+  -- end process;
 
   p_wb_ddr_fifo_input : process (sys_clk_i)
   begin
@@ -1544,11 +1543,13 @@ begin
 
   wb_ddr_fifo_wr <= wb_ddr_fifo_wr_en and not(wb_ddr_fifo_full);
 
-  wb_ddr_fifo_rd <= not(wb_ddr_fifo_empty or wb_ddr_stall_t);
+  wb_ddr_fifo_rd <= not(wb_ddr_fifo_empty or wb_ddr_master_i.stall);
 
   ------------------------------------------------------------------------------
-  -- RAM address counter (32-bit word address)
+  -- Wishbone master (to DDR)
   ------------------------------------------------------------------------------
+
+  -- RAM address counter (64-bit word address)
   p_ram_addr_cnt : process (wb_ddr_clk_i)
   begin
     if rising_edge(wb_ddr_clk_i) then
@@ -1557,70 +1558,81 @@ begin
       else
         if acq_start = '1' then
           ram_addr_cnt <= (others => '0');
-        elsif wb_ddr_fifo_valid = '1' then
+        elsif wb_ddr_fifo_empty = '0' and wb_ddr_master_i.stall = '0' then
           ram_addr_cnt <= ram_addr_cnt + 1;
         end if;
       end if;
     end if;
   end process p_ram_addr_cnt;
 
-  ------------------------------------------------------------------------------
+  with acq_fsm_state select
+    wb_ddr_master_o.cyc <=
+    dpram_valid or not wb_ddr_fifo_empty when "001",
+    '1'         when others;
+
+  wb_ddr_master_o.stb <= not wb_ddr_fifo_empty;
+  -- Convert to 32-bit word addressing for Wishbone
+  wb_ddr_master_o.adr <= "00" & std_logic_vector(ram_addr_cnt) & "0";
+  wb_ddr_master_o.we  <= '1';
+  wb_ddr_master_o.sel <= X"FF";
+
+  with test_data_en select
+    wb_ddr_master_o.dat <=
+    x"00000000" & "000" & std_logic_vector(ram_addr_cnt) when '1',
+    wb_ddr_fifo_dout(63 downto 0)                        when others;
+
   -- Store trigger DDR address (byte address)
-  ------------------------------------------------------------------------------
   p_trig_addr : process (wb_ddr_clk_i)
   begin
     if rising_edge(wb_ddr_clk_i) then
       if wb_ddr_rst_n_i = '0' then
         trig_addr <= (others => '0');
       else
-        if wb_ddr_fifo_dout(64) = '1' and wb_ddr_fifo_valid = '1' then
-          trig_addr <= "0000" & std_logic_vector(ram_addr_cnt) & "000";
+        if wb_ddr_fifo_dout(64) = '1' and wb_ddr_fifo_empty = '0' then
+          -- Convert to byte addressing
+          trig_addr <= std_logic_vector(ram_addr_cnt) & "000";
         end if;
       end if;
     end if;
   end process p_trig_addr;
 
-  ------------------------------------------------------------------------------
-  -- Wishbone master (to DDR)
-  ------------------------------------------------------------------------------
-  p_wb_master : process (wb_ddr_clk_i)
-  begin
-    if rising_edge(wb_ddr_clk_i) then
-      if wb_ddr_rst_n_i = '0' then
-        wb_ddr_master_o.cyc <= '0';
-        wb_ddr_master_o.we  <= '0';
-        wb_ddr_master_o.stb <= '0';
-        wb_ddr_master_o.adr <= (others => '0');
-        wb_ddr_master_o.dat <= (others => '0');
-        wb_ddr_stall_t      <= '0';
-      else
-        if wb_ddr_fifo_valid = '1' then
-          wb_ddr_master_o.stb <= '1';
-          wb_ddr_master_o.adr <= "0000000" & std_logic_vector(ram_addr_cnt);
-          if test_data_en = '1' then
-            wb_ddr_master_o.dat <= x"00000000" & "0000000" & std_logic_vector(ram_addr_cnt);
-          else
-            wb_ddr_master_o.dat <= wb_ddr_fifo_dout(63 downto 0);
-          end if;
-        else
-          wb_ddr_master_o.stb <= '0';
-        end if;
+  -- p_wb_master : process (wb_ddr_clk_i)
+  -- begin
+  --   if rising_edge(wb_ddr_clk_i) then
+  --     if wb_ddr_rst_n_i = '0' then
+  --       wb_ddr_master_o.cyc <= '0';
+  --       wb_ddr_master_o.we  <= '0';
+  --       wb_ddr_master_o.stb <= '0';
+  --       wb_ddr_master_o.adr <= (others => '0');
+  --       wb_ddr_master_o.dat <= (others => '0');
+  --       wb_ddr_stall_t      <= '0';
+  --     else
+  --       if wb_ddr_fifo_valid = '1' then
+  --         wb_ddr_master_o.stb <= '1';
+  --         wb_ddr_master_o.adr <= "0000000" & std_logic_vector(ram_addr_cnt);
+  --         if test_data_en = '1' then
+  --           wb_ddr_master_o.dat <= x"00000000" & "0000000" & std_logic_vector(ram_addr_cnt);
+  --         else
+  --           wb_ddr_master_o.dat <= wb_ddr_fifo_dout(63 downto 0);
+  --         end if;
+  --       else
+  --         wb_ddr_master_o.stb <= '0';
+  --       end if;
 
-        if wb_ddr_fifo_valid = '1' then
-          wb_ddr_master_o.cyc <= '1';
-          wb_ddr_master_o.we  <= '1';
-        elsif (wb_ddr_fifo_empty = '1') and (acq_fsm_state = "001") then
-          wb_ddr_master_o.cyc <= '0';
-          wb_ddr_master_o.we  <= '0';
-        end if;
+  --       if wb_ddr_fifo_valid = '1' then
+  --         wb_ddr_master_o.cyc <= '1';
+  --         wb_ddr_master_o.we  <= '1';
+  --       elsif (wb_ddr_fifo_empty = '1') and (acq_fsm_state = "001") then
+  --         wb_ddr_master_o.cyc <= '0';
+  --         wb_ddr_master_o.we  <= '0';
+  --       end if;
 
-        wb_ddr_stall_t <= wb_ddr_master_i.stall;
+  --       wb_ddr_stall_t <= wb_ddr_master_i.stall;
 
-      end if;
-    end if;
-  end process p_wb_master;
+  --     end if;
+  --   end if;
+  -- end process p_wb_master;
 
-  wb_ddr_master_o.sel <= X"FF";
 
   -- Trigout
 
