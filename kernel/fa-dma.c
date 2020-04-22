@@ -425,6 +425,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	struct dma_chan *dchan;
 	struct dma_slave_config sconfig;
 	dma_cap_mask_t dma_mask;
+	unsigned int data_offset;
 	int err, i;
 
 	err = zfad_wait_idle(cset, 5, 1);
@@ -451,18 +452,29 @@ static int zfad_dma_start(struct zio_cset *cset)
 		goto err;
 	}
 
-	if (fa->pdev->id_entry->driver_data == ADC_VER_SPEC) {
-		memset(&sconfig, 0, sizeof(sconfig));
-		sconfig.direction = DMA_DEV_TO_MEM;
-		if (fa->n_shots == 1)
+	memset(&sconfig, 0, sizeof(sconfig));
+	sconfig.direction = DMA_DEV_TO_MEM;
+	sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+	data_offset = (cset->interleave->current_ctrl->ssize * cset->ti->nsamples) + FA_TRIG_TIMETAG_BYTES;
+	for (i = 0; i < fa->n_shots; ++i) {
+		/*
+		 * TODO
+		 * Let's see what to do with SVEC. SVEC need to set
+		 * the DMA_DDR_ADDR in hardware before starting the DMA
+		 * (it configures the DMA window).
+		 * In single shot is not a big deal, in multishot we may have
+		 * to issue_pending many time since we can't update the
+		 * DMA_DDR_ADDR for each block submitted to the dma engine.
+		 * But sice the blocks are contigous, perhaps there is no need
+		 * because the address of shot 2 is exactly after shot 1
+		 */
+		if (fa->pdev->id_entry->driver_data == ADC_VER_SPEC && fa->n_shots == 1)
 			sconfig.src_addr = zfad_dev_mem_offset(cset);
-		sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+		else
+			sconfig.src_addr = i * data_offset;
 		err = dmaengine_slave_config(dchan, &sconfig);
 		if (err)
 			goto err_config;
-	}
-
-	for (i = 0; i < fa->n_shots; ++i) {
 		err = zfad_dma_prep_slave_sg(dchan, cset, &zfad_block[i]);
 		if (err)
 			goto err_prep;
