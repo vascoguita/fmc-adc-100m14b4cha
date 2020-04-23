@@ -2,16 +2,18 @@
 # include parent_common.mk for buildsystem's defines
 # use absolute path for REPO_PARENT
 CURDIR:=$(shell /bin/pwd)
-REPO_PARENT ?= $(CURDIR)/../..
 -include $(REPO_PARENT)/parent_common.mk
 
 DKMS ?= 0
 
 KVERSION ?= $(shell uname -r)
 LINUX ?= /lib/modules/$(KVERSION)/build
+
+ifdef REPO_PARENT
 ZIO ?= $(REPO_PARENT)/fmc/zio
 FMC ?= $(REPO_PARENT)/fmc-sw
 VMEBUS ?= $(REPO_PARENT)/vmebridge-ng
+endif
 
 ifeq ($(DKMS), 1)
 # Take last installed version (if installed using RPM it should be OK)
@@ -19,6 +21,17 @@ ZIO_VERSION ?= $(shell basename $(shell ls -d $(DKMSTREE)/zio/* | grep -E "\/[0-
 ZIO_ABS ?= $(DKMSTREE)/zio/$(ZIO_VERSION)/source
 ZIO_EXTRA_SYMBOLS-y = $(DKMSTREE)/zio/kernel-$(KVERSION)-$(shell uname -p)/module/Module.symvers
 else
+
+ifndef ZIO
+$(error "Missing ZIO environment variable")
+endif
+ifndef FMC
+$(error "Missing FMC environment variable")
+endif
+ifndef VMEBUS
+$(error "Missing VMEBUS environment variable")
+endif
+
 ZIO_ABS ?= $(abspath $(ZIO))
 ZIO_EXTRA_SYMBOLS-y = $(ZIO_ABS)/drivers/zio/Module.symvers
 ZIO_VERSION ?= $(shell cd $(ZIO_ABS); git describe --always --dirty --long --tags)
