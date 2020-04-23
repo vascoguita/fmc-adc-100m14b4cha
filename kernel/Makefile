@@ -9,9 +9,9 @@ DKMS ?= 0
 
 KVERSION ?= $(shell uname -r)
 LINUX ?= /lib/modules/$(KVERSION)/build
-ZIO ?= ../zio
-FMC ?=
-VMEBUS ?= $(REPO_PARENT)/../vmebridge
+ZIO ?= $(REPO_PARENT)/fmc/zio
+FMC ?= $(REPO_PARENT)/fmc-sw
+VMEBUS ?= $(REPO_PARENT)/vmebridge-ng
 
 ifeq ($(DKMS), 1)
 # Take last installed version (if installed using RPM it should be OK)
