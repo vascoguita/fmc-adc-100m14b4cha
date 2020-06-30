@@ -4,6 +4,7 @@
 CURDIR:=$(shell /bin/pwd)
 -include $(REPO_PARENT)/parent_common.mk
 
+CPPCHECK ?= cppcheck
 DKMS ?= 0
 
 KVERSION ?= $(shell uname -r)
@@ -58,3 +59,6 @@ install modules_install: modules
 clean:
 	rm -rf *.o *~  .*.cmd *.ko *.mod.c .tmp_versions Module.symvers \
 		Module.markers modules.order
+
+cppcheck:
+	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --enable=all *.c *.h
