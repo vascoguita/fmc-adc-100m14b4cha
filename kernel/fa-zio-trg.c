@@ -77,6 +77,19 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	[FA100M14B4C_TATTR_CH4_DLY] = ZIO_ATTR_EXT("ch3-delay",
 						    ZIO_RW_PERM,
 						    ZFA_CH4_DLY, 0),
+	/* Time Trigger */
+	[FA100M14B4C_TATTR_TRG_TIM_SU] = ZIO_ATTR_EXT("trg-time-su",
+						      ZIO_RW_PERM,
+						      ZFA_UTC_TRIG_TIME_SECONDS_U,
+						      0),
+	[FA100M14B4C_TATTR_TRG_TIM_SL] = ZIO_ATTR_EXT("trg-time-sl",
+						      ZIO_RW_PERM,
+						      ZFA_UTC_TRIG_TIME_SECONDS_L,
+						      0),
+	[FA100M14B4C_TATTR_TRG_TIM_C] = ZIO_ATTR_EXT("trg-time-t",
+						     ZIO_RW_PERM,
+						     ZFA_UTC_TRIG_TIME_COARSE,
+						     0),
 
 	/*
 	 * Delay to apply on the trigger in sampling clock period. The default
@@ -90,14 +103,26 @@ static struct zio_attribute zfat_ext_zattr[] = {
 							ZFAT_SW, 0),
 
 	/* last trigger time stamp */
-	[FA100M14B4C_TATTR_TRG_S] = ZIO_PARAM_EXT("tstamp-trg-lst-s",
-					ZIO_RO_PERM, ZFA_UTC_TRIG_SECONDS, 0),
+	[FA100M14B4C_TATTR_TRG_SU] = ZIO_PARAM_EXT("tstamp-trg-lst-su",
+						   ZIO_RO_PERM,
+						   ZFA_UTC_TRIG_SECONDS_U, 0),
+	[FA100M14B4C_TATTR_TRG_SL] = ZIO_PARAM_EXT("tstamp-trg-lst-sl",
+						   ZIO_RO_PERM,
+						   ZFA_UTC_TRIG_SECONDS_L, 0),
 	[FA100M14B4C_TATTR_TRG_C] = ZIO_PARAM_EXT("tstamp-trg-lst-t",
-					ZIO_RO_PERM, ZFA_UTC_TRIG_COARSE, 0),
-	[FA100M14B4C_TATTR_TRG_F] = ZIO_PARAM_EXT("tstamp-trg-lst-b",
-					ZIO_RO_PERM, ZFA_UTC_TRIG_FINE, 0),
+						  ZIO_RO_PERM,
+						  ZFA_UTC_TRIG_COARSE, 0),
 };
 
+/*
+ * Reset to default value
+ */
+void zfat_trigger_source_reset(struct fa_dev *fa)
+{
+	fa_writel(fa, fa->fa_adc_csr_base,
+		  &zfad_regs[ZFAT_CFG_SRC],
+		  FA100M14B4C_TRG_SRC_SW | FA100M14B4C_TRG_SRC_ALT);
+}
 
 /*
  * zfat_conf_set
@@ -109,7 +134,12 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 {
 	struct fa_dev *fa = get_zfadc(dev);
 	struct zio_ti *ti = to_zio_ti(dev);
+	void *baseoff = fa->fa_adc_csr_base;
 	uint32_t tmp_val = usr_val;
+
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
+		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	case ZFAT_SHOTS_NB:
@@ -155,7 +185,7 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	}
 
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id], tmp_val);
+	fa_writel(fa, baseoff, &zfad_regs[zattr->id], tmp_val);
 	return 0;
 }
 
@@ -168,6 +198,11 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
+	void *baseoff = fa->fa_adc_csr_base;
+
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
+		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	case ZFAT_CFG_SRC:
@@ -178,7 +213,7 @@ static int zfat_info_get(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	}
 
-	*usr_val = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[zattr->id]);
+	*usr_val = fa_readl(fa, baseoff, &zfad_regs[zattr->id]);
 	switch (zattr->id) {
 	case ZFAT_POST:
 		(*usr_val)++; /* add the trigger sample */
@@ -296,6 +331,12 @@ static int zfat_data_done(struct zio_cset *cset)
 	kfree(zfad_block);
 	cset->interleave->priv_d = NULL;
 
+	/*
+	 * Reset trigger source to avoid clean up the register for the next
+	 * acquisition
+	 */
+	zfat_trigger_source_reset(fa);
+
 	return 0;
 }
 
@@ -313,7 +354,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	struct zio_block *block;
 	struct zfad_block *zfad_block;
 	unsigned int size;
-	uint32_t dev_mem_off, trg_src;
+	uint32_t dev_mem_off;
 	int i, err = 0;
 
 	dev_dbg(fa->msgdev, "Arming trigger\n");
@@ -378,19 +419,12 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		       zio_control_size(interleave));
 		/* Add to the vector of prepared blocks */
 		zfad_block[i].block = block;
-		zfad_block[i].dev_mem_off = dev_mem_off;
-		dev_mem_off += size;
-		dev_dbg(fa->msgdev, "next dev_mem_off 0x%x (+%d)\n",
-			dev_mem_off, size);
+		zfad_block[i].cset = ti->cset;
 	}
 
 	err = ti->cset->raw_io(ti->cset);
 	if (err != -EAGAIN && err != 0)
 		goto out_allocate;
-
-	/* Everything looks fine for the time being, enable the trigger sources */
-	trg_src = ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value;
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], trg_src);
 
 	return err;
 

@@ -67,16 +67,16 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("ch3-50ohm-term", ZIO_RW_PERM, ZFA_CH4_CTL_TERM, 0),
 
 	/* last acquisition start time stamp */
-	ZIO_ATTR_EXT("tstamp-acq-str-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_SECONDS, 0),
+	ZIO_ATTR_EXT("tstamp-acq-str-su", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_SECONDS_U, 0),
+	ZIO_ATTR_EXT("tstamp-acq-str-sl", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_SECONDS_L, 0),
 	ZIO_ATTR_EXT("tstamp-acq-str-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_START_COARSE, 0),
-	ZIO_ATTR_EXT("tstamp-acq-str-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_FINE, 0),
 
 	/* Timing base */
-	ZIO_ATTR_EXT("tstamp-base-s", ZIO_RW_PERM, ZFA_UTC_SECONDS, 0),
-
+	ZIO_ATTR_EXT("tstamp-base-su", ZIO_RW_PERM, ZFA_UTC_SECONDS_U, 0),
+	ZIO_ATTR_EXT("tstamp-base-sl", ZIO_RW_PERM, ZFA_UTC_SECONDS_L, 0),
 	ZIO_ATTR_EXT("tstamp-base-t", ZIO_RW_PERM, ZFA_UTC_COARSE, 0),
 
 	/* Parameters (not attributes) follow */
@@ -104,19 +104,19 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * */
 	ZIO_PARAM_EXT("fsm-state", ZIO_RO_PERM, ZFA_STA_FSM, 0),
 	/* last acquisition end time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-end-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_END_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-su", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_SECONDS_U, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-sl", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_SECONDS_L, 0),
 	ZIO_PARAM_EXT("tstamp-acq-end-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_END_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-end-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_END_FINE, 0),
 	/* last acquisition stop time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-stp-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_STOP_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-su", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_SECONDS_U, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-sl", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_SECONDS_L, 0),
 	ZIO_PARAM_EXT("tstamp-acq-stp-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_STOP_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-stp-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_STOP_FINE, 0),
 	/* Reset all channel offset */
 	ZIO_PARAM_EXT("rst-ch-offset", ZIO_WO_PERM, ZFA_CTL_DAC_CLR_N, 1),
 
@@ -150,7 +150,7 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 };
 
 static struct zio_attribute zfad_dev_ext_zattr[] = {
-	/* Get Mezzanine temperature from onewire */
+	/* Get Mezzanine temperature from the DS18B20 chip */
 	ZIO_PARAM_EXT("temperature", ZIO_RO_PERM, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
 
@@ -169,14 +169,15 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	unsigned int baseoff = fa->fa_adc_csr_base;
+	void *baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
 	int i, range, err = 0, reg_index;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
 
-	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
 		baseoff = fa->fa_utc_base;
 
 	switch (reg_index) {
@@ -192,10 +193,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH2_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH3_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
 
@@ -222,10 +226,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
 
@@ -251,9 +258,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH2_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH3_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH4_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_TERM:
 		if (usr_val > 1)
 			usr_val = 1;
@@ -262,10 +273,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_CTL_RANGE:
 		i--;
 		range = zfad_convert_user_range(usr_val);
@@ -322,22 +336,26 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	unsigned int baseoff = fa->fa_adc_csr_base;
+	void *baseoff = fa->fa_adc_csr_base;
 	int i, reg_index;
 
 	i = FA100M14B4C_NCHAN;
 
-	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
 		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
 		*usr_val = fa->user_offset[i];
@@ -347,30 +365,38 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
 		return 0;
 	case ZFAT_ADC_TST_PATTERN:
+		/*fallthrough*/
 	case ZFA_SW_R_NOADDRES_NBIT:
+		/*fallthrough*/
 	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
 		/*
-		 * Onewire returns units of 1/16 degree. We return units
+		 * DS18B20 returns units of 1/16 degree. We return units
 		 * of 1/1000 of a degree instead.
 		 */
-		*usr_val = fa_read_temp(fa, 0);
+		*usr_val = fa_readl(fa, fa->fa_ow_base,
+				    &zfad_regs[ZFA_DS18B20_TEMP]);
 		*usr_val = (*usr_val * 1000 + 8) / 16;
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH2_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH3_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
 		*usr_val = fa->zero_offset[i];
 		return 0;
 	case ZFA_CHx_SAT:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_RANGE:
 		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
 		break;
@@ -450,7 +476,6 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 		return -ENOMEM;
 	tmp->block = cset->interleave->active_block;
 	cset->interleave->priv_d = tmp;
-	tmp->dev_mem_off = 0; /* Always the first block */
 
 	/* Configure post samples */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_POST],
@@ -677,7 +702,7 @@ int fa_zio_init(struct fa_dev *fa)
 
 	/* Register the hardware zio_device */
 	err = zio_register_device(fa->hwzdev, "adc-100m14b",
-				  fa->fmc->device_id);
+				  fa->pdev->id);
 	if (err) {
 		dev_err(fa->msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
 		zio_free_device(fa->hwzdev);
