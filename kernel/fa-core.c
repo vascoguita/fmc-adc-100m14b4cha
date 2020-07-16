@@ -468,25 +468,6 @@ static int fa_resource_validation(struct platform_device *pdev)
 		return -ENXIO;
 	}
 
-	/* Special Configurations */
-	switch (pdev->id_entry->driver_data) {
-	case ADC_VER_SPEC:
-		break;
-#ifdef CONFIG_FMC_ADC_SVEC
-	case ADC_VER_SVEC:
-		r = platform_get_resource(pdev, IORESOURCE_BUS,
-					  ADC_CARR_VME_ADDR);
-		if (!r) {
-			dev_err(&pdev->dev,
-				"The ADC needs a DMA ADDR register\n");
-			return -ENXIO;
-		}
-		break;
-#endif
-	default:
-		break;
-	}
-
 	return 0;
 }
 
