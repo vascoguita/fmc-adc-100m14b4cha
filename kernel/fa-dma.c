@@ -186,7 +186,7 @@ static void zfad_dma_context_exit(struct zio_cset *cset,
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	if (fa->pdev->id_entry->driver_data == ADC_VER_SVEC) {
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC)) {
 		__endianness(zfad_block->block->datalen,
 			     zfad_block->block->data);
 
@@ -204,7 +204,7 @@ static int zfad_dma_context_init(struct zio_cset *cset,
 #ifdef CONFIG_FMC_ADC_SVEC
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	if (fa->pdev->id_entry->driver_data == ADC_VER_SVEC) {
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))) {
 		struct fa_svec_data *svec_data = fa->carrier_data;
 		unsigned long vme_addr;
 		struct vme_dma *desc;
@@ -384,31 +384,11 @@ err_alloc_pages:
  */
 static bool fa_dmaengine_filter(struct dma_chan *dchan, void *arg)
 {
-	struct zio_cset *cset = arg;
-	struct fa_dev *fa = cset->zdev->priv_d;
-	struct device *device_ref = NULL;
+	struct dma_device *ddev = dchan->device;
+	int dev_id = (*((int *)arg) >> 16) & 0xFFFF;
+	int chan_id = *((int *)arg) & 0xFFFF;
 
-	switch (fa->pdev->id_entry->driver_data) {
-	case ADC_VER_SPEC:
-		/*
-		 *The DMA channel and the ADC must be on the same carrier
-		 * dev - current device
-		 * parent - the application top level design
-		 * parent - the SPEC device
-		 */
-		device_ref = fa->pdev->dev.parent->parent->parent;
-		break;
-	case ADC_VER_SVEC:
-		/* The channel must be on the VME bus */
-		device_ref = fa->pdev->dev.parent->parent->parent->parent->parent;
-		break;
-	default:
-		dev_warn(&cset->head.dev,
-			"Carrier not recognized. Accept the first available DMA channel\n");
-		return -ENODEV;
-	}
-
-	return (dchan->device->dev == device_ref);
+	return ddev->dev_id == dev_id && dchan->chan_id == chan_id;
 }
 
 
@@ -468,7 +448,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 		 * But sice the blocks are contigous, perhaps there is no need
 		 * because the address of shot 2 is exactly after shot 1
 		 */
-		if (fa->pdev->id_entry->driver_data == ADC_VER_SPEC && fa->n_shots == 1)
+		if (!fa_is_flag_set(fa, FMC_ADC_SVEC) && fa->n_shots == 1)
 			sconfig.src_addr = zfad_dev_mem_offset(cset);
 		else
 			sconfig.src_addr = i * data_offset;

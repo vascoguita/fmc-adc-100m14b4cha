@@ -14,7 +14,7 @@
 #include <linux/fmc.h>
 
 #include "fmc-adc-100m14b4cha.h"
-
+#include <platform_data/fmc-adc-100m14b4cha.h>
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
@@ -513,6 +513,30 @@ err:
 	return false;
 }
 
+static void fa_memops_detect(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_BIG_ENDIAN)) {
+		fa->memops.read = ioread32be;
+		fa->memops.write = iowrite32be;
+	} else {
+		fa->memops.read = ioread32;
+		fa->memops.write = iowrite32;
+	}
+}
+
+static void fa_sg_alloc_table_init(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_NOSQUASH_SCATTERLIST))
+		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
+	else
+		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
+
+}
+
+static struct fmc_adc_platform_data fmc_adc_pdata_default = {
+	.flags = 0,
+};
+
 /* probe and remove are called by fa-spec.c */
 int fa_probe(struct platform_device *pdev)
 {
@@ -533,24 +557,13 @@ int fa_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, fa);
 	fa->pdev = pdev;
 	fa->msgdev = &fa->pdev->dev;
-
-	/* Assign IO operation */
-	switch (pdev->id_entry->driver_data) {
-	case ADC_VER_SPEC:
-		fa->memops.read = ioread32;
-		fa->memops.write = iowrite32;
-		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
-		break;
-	case ADC_VER_SVEC:
-		fa->memops.read = ioread32be;
-		fa->memops.write = iowrite32be;
-		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
-		break;
-	default:
-		dev_err(fa->msgdev, "Unknow version %lu\n",
-			pdev->id_entry->driver_data);
-		goto out_ops;
+	if (!pdev->dev.platform_data) {
+		dev_err(fa->msgdev, "Missing platform data, use default\n");
+		pdev->dev.platform_data = &fmc_adc_pdata_default;
 	}
+
+	fa_memops_detect(fa);
+	fa_sg_alloc_table_init(fa);
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
 	fa->fa_top_level = ioremap(r->start, resource_size(r));
@@ -621,7 +634,6 @@ out_fmc_eeprom:
 out_fmc_pre:
 	fmc_slot_put(fa->slot);
 out_fmc:
-out_ops:
 	devm_kfree(&pdev->dev, fa);
 	platform_set_drvdata(pdev, NULL);
 	return err;
@@ -654,13 +666,9 @@ int fa_remove(struct platform_device *pdev)
 
 static const struct platform_device_id fa_id[] = {
 	{
-		.name = "adc-100m-spec",
-		.driver_data = ADC_VER_SPEC,
-	},
-	{
-		.name = "adc-100m-svec",
-		.driver_data = ADC_VER_SVEC,
-	},
+		.name = "fmc-adc-100m",
+		.driver_data = ADC_VER,
+	}
 	/* TODO we should support different version */
 };
 
@@ -729,6 +737,6 @@ module_exit(fa_exit);
 MODULE_AUTHOR("Federico Vaga");
 MODULE_DESCRIPTION("FMC-ADC-100MS-14b Linux Driver");
 MODULE_LICENSE("GPL");
-MODULE_VERSION(GIT_VERSION);
+MODULE_VERSION(VERSION);
 
 ADDITIONAL_VERSIONS;

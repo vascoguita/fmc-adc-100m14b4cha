@@ -36,8 +36,7 @@
 #define FA100M14B4C_TRG_POL_CHx(_x) (FA100M14B4C_TRG_POL_CH1 << ((_x) - 1))
 
 enum fa_versions {
-	ADC_VER_SPEC = 0,
-	ADC_VER_SVEC,
+	ADC_VER = 0,
 };
 
 /*
@@ -168,6 +167,7 @@ struct fa_calib {
 #include <linux/zio-trigger.h>
 
 #include "field-desc.h"
+#include <platform_data/fmc-adc-100m14b4cha.h>
 
 #define ADC_CSR_OFF 0x1000
 #define ADC_EIC_OFF 0x1500
@@ -573,6 +573,15 @@ static inline void fa_writel(struct fa_dev *fa,
 		val |= cur;
 	}
 	fa_iowrite(fa, val, base_off + field->offset);
+}
+
+static inline int fa_is_flag_set(struct fa_dev *fa, unsigned long flag)
+{
+	const struct fmc_adc_platform_data *fmc_adc_pdata;
+
+        fmc_adc_pdata = fa->pdev->dev.platform_data;
+
+        return !!(fmc_adc_pdata->flags & flag);
 }
 
 extern struct bin_attribute dev_attr_calibration;
