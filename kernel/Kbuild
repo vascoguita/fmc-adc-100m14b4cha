@@ -2,9 +2,25 @@ CONFIG_FMC_ADC_SVEC ?= CONFIG_VME
 
 VMEBUS_EXTRA_SYMBOLS-$(CONFIG_FMC_ADC_SVEC) := $(VMEBUS_ABS)/driver/Module.symvers
 
+ZIO_VERSION = $(shell cd $(ZIO_ABS); git describe --always --dirty --long --tags)
+VERSION = $(shell cd $(src); git describe --always --dirty --long --tags)
+
 KBUILD_EXTRA_SYMBOLS += $(ZIO_EXTRA_SYMBOLS-y)
 KBUILD_EXTRA_SYMBOLS += $(FMC_EXTRA_SYMBOLS-y)
 KBUILD_EXTRA_SYMBOLS += $(VMEBUS_EXTRA_SYMBOLS-y)
+
+ccflags-y = -DVERSION=\"$(VERSION)\"
+ccflags-y += -I$(src)
+ccflags-y += -I$(ZIO_ABS)/include
+ccflags-y += -I$(FMC_ABS)/include
+ccflags-y += -I$(VMEBUS_ABS)/driver
+
+ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(VMEBUS_ABS)/include
+ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
+
+# Extract ZIO minimum compatible version
+ccflags-y += -D__ZIO_MIN_MAJOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 1 | cut -d '.' -f 1 | tr -d 'v'; )
+ccflags-y += -D__ZIO_MIN_MINOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 1 | cut -d '.' -f 2; )
 
 # add versions of supermodule. It is useful when fine-delay-sw is included as sub-module
 # of a bigger project that we want to track
@@ -16,26 +32,16 @@ endif
 # add versions of used submodules
 SUBMODULE_VERSIONS-y += MODULE_INFO(version_zio,\"$(ZIO_VERSION)\");
 
-ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS-y)"
-ccflags-y += -DGIT_VERSION=\"$(GIT_VERSION)\" \
-	-I$(ZIO_ABS)/include \
-	-I$(FMC_ABS)/include \
-	-I $(VMEBUS_ABS)/driver \
-	-I$(src)
-
-ccflags-$(CONFIG_FMC_ADC_SVEC) += -I$(VMEBUS_ABS)/include
-ccflags-$(CONFIG_FMC_ADC_DEBUG) += -DDEBUG
-
 # include our header before to avoid conflicts with the kernel
 LINUXINCLUDE := -I$(FMC_ABS)/include  $(LINUXINCLUDE)
 
-# Extract ZIO minimum compatible version
-ccflags-y += -D__ZIO_MIN_MAJOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 1 | cut -d '.' -f 1 | tr -d 'v'; )
-ccflags-y += -D__ZIO_MIN_MINOR_VERSION=$(shell echo $(ZIO_VERSION) | cut -d '-' -f 1 | cut -d '.' -f 2; )
+ccflags-y += -DADDITIONAL_VERSIONS="$(SUBMODULE_VERSIONS-y)"
 
 subdirs-ccflags-y = $(ccflags-y)
 
 obj-m := fmc-adc-100m14b4ch.o
+obj-m += fmc-adc-100m14b4ch-spec.o
+
 fmc-adc-100m14b4ch-y =  fa-core.o
 fmc-adc-100m14b4ch-y += fa-zio-drv.o
 fmc-adc-100m14b4ch-y += fa-calibration.o
@@ -45,3 +51,5 @@ fmc-adc-100m14b4ch-y += fa-irq.o
 fmc-adc-100m14b4ch-y += fa-debug.o
 fmc-adc-100m14b4ch-y += fa-dma.o
 fmc-adc-100m14b4ch-y += spi.o
+
+fmc-adc-100m14b4ch-spec-objs := fmc-adc-100m14b4ch-spec-core.o
