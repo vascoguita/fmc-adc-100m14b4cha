@@ -472,7 +472,7 @@ err_config:
 err:
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
 		  cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
-	dev_err(fa->msgdev, "Failed to run a DMA transfer\n");
+	dev_err(fa->msgdev, "Failed to run a DMA transfer (%d)\n", err);
 	return err;
 }
 
