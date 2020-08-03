@@ -177,6 +177,8 @@ struct fa_calib {
 
 extern int fa_enable_test_data_adc;
 
+#define ADC_DMA 0
+
 enum fa_irq_resource {
 	ADC_IRQ_TRG = 0,
 };

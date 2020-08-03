@@ -406,7 +406,15 @@ static int zfad_dma_start(struct zio_cset *cset)
 	struct dma_slave_config sconfig;
 	dma_cap_mask_t dma_mask;
 	unsigned int data_offset;
-	int err, i;
+	int err, i, dma_dev_id;
+	struct resource *r;
+
+	r = platform_get_resource(fa->pdev, IORESOURCE_DMA, ADC_DMA);
+	if (!r) {
+		dev_err(&fa->pdev->dev, "Can't set find DMA channel\n");
+		return -ENODEV;
+	}
+	dma_dev_id = r->start;
 
 	err = zfad_wait_idle(cset, 5, 1);
 	if (err) {
@@ -426,7 +434,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	dma_cap_zero(dma_mask);
 	dma_cap_set(DMA_SLAVE, dma_mask);
 	dma_cap_set(DMA_PRIVATE, dma_mask);
-	dchan = dma_request_channel(dma_mask, fa_dmaengine_filter, cset);
+	dchan = dma_request_channel(dma_mask, fa_dmaengine_filter, &dma_dev_id);
 	if (!dchan) {
 		err = -ENODEV;
 		goto err;
