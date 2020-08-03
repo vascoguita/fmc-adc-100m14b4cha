@@ -535,6 +535,9 @@ static void fa_sg_alloc_table_init(struct fa_dev *fa)
 
 static struct fmc_adc_platform_data fmc_adc_pdata_default = {
 	.flags = 0,
+	.calib_trig_time = 0,
+	.calib_trig_threshold = 0,
+	.calib_trig_internal = 0,
 };
 
 /* probe and remove are called by fa-spec.c */
