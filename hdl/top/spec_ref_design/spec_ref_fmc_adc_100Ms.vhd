@@ -11,7 +11,7 @@
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple PCIe FMC
 -- Carrier (SPEC). See also: http://www.ohwr.org/projects/spec
 -------------------------------------------------------------------------------
--- Copyright (c) 2011-2018 CERN (BE-CO-HT)
+-- Copyright (c) 2011-2020 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -462,6 +462,7 @@ begin  -- architecture arch
     generic map (
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
       g_SPARTAN6_USE_PLL   => FALSE,
+      g_FMC_ADC_NR         => 0,
       g_WB_MODE            => PIPELINED,
       g_WB_GRANULARITY     => BYTE)
     port map (

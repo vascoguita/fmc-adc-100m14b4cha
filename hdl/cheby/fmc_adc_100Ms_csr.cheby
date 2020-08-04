@@ -124,6 +124,12 @@ memory-map:
             - Shot number > 0
             - Post-trigger sample > 0
       - field:
+          name: fmc_nr
+          range: 7-6
+          description: FMC identification number
+          comment: |
+            Used to identify the FMC-ADC in case of a carrier with more than one FMC slot.
+      - field:
           name: calib_busy
           range: 15
           description: Calibration busy flag

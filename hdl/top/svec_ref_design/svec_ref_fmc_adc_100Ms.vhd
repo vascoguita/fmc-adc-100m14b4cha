@@ -11,7 +11,7 @@
 -- Description: Top entity of FMC ADC 100Ms/s design for Simple VME FMC
 -- Carrier (SVEC). See also: http://www.ohwr.org/projects/svec
 -------------------------------------------------------------------------------
--- Copyright (c) 2013-2018 CERN (BE-CO-HT)
+-- Copyright (c) 2013-2020 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -545,6 +545,7 @@ begin -- architecture arch
       generic map (
         g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
         g_SPARTAN6_USE_PLL   => TRUE,
+        g_FMC_ADC_NR         => I,
         g_WB_MODE            => PIPELINED,
         g_WB_GRANULARITY     => BYTE)
       port map (

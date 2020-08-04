@@ -48,6 +48,8 @@ entity fmc_adc_100Ms_core is
     g_TRIG_DELAY_EXT     : natural                        := 7;
     -- Software and time trigger delay calibration value
     g_TRIG_DELAY_SW      : natural                        := 9;
+    -- FMC-ADC identification number
+    g_FMC_ADC_NR         : natural                        := 0;
     -- WB interface configuration
     g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
     g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);
@@ -473,6 +475,7 @@ begin
   csr_regin.sta_serdes_pll    <= serdes_locked_sync;
   csr_regin.sta_serdes_synced <= serdes_synced_sync;
   csr_regin.sta_acq_cfg       <= acq_config_ok;
+  csr_regin.sta_fmc_nr        <= std_logic_vector(to_unsigned(g_FMC_ADC_NR, 2));
   csr_regin.sta_calib_busy    <= sync_calib_busy;
   csr_regin.trig_stat_ext     <= trig_storage(0);
   csr_regin.trig_stat_sw      <= trig_storage(1);

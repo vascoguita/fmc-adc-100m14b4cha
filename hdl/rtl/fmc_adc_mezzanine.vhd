@@ -50,6 +50,8 @@ entity fmc_adc_mezzanine is
     -- This is useful if you know that the system introduces
     -- some systematic delay wrt the actual trigger time
     g_TAG_ADJUST         : natural                        := 24;
+    -- FMC-ADC identification number
+    g_FMC_ADC_NR         : natural                        := 0;
     -- WB interface configuration
     g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
     g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
@@ -332,6 +334,7 @@ begin
       g_SPARTAN6_USE_PLL   => g_SPARTAN6_USE_PLL,
       g_TRIG_DELAY_EXT     => g_TRIG_DELAY_EXT,
       g_TRIG_DELAY_SW      => g_TRIG_DELAY_SW,
+      g_FMC_ADC_NR         => g_FMC_ADC_NR,
       g_WB_CSR_MODE        => PIPELINED,
       g_WB_CSR_GRANULARITY => BYTE)
     port map (

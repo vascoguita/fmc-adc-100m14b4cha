@@ -57,6 +57,8 @@ package fmc_adc_100Ms_core_pkg is
       g_TRIG_DELAY_EXT     : natural                        := 7;
       -- Software and time trigger delay calibration value
       g_TRIG_DELAY_SW      : natural                        := 9;
+      -- FMC-ADC identification number
+      g_FMC_ADC_NR         : natural                        := 0;
       -- WB interface configuration
       g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
       g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);

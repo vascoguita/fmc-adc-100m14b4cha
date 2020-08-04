@@ -55,6 +55,8 @@ package fmc_adc_mezzanine_pkg is
       -- This is useful if you know that the system introduces
       -- some systematic delay wrt the actual trigger time
       g_TAG_ADJUST         : natural                        := 24;
+      -- FMC-ADC identification number
+      g_FMC_ADC_NR         : natural                        := 0;
       -- WB interface configuration
       g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
       g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);

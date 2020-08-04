@@ -79,6 +79,7 @@ package fmc_adc_100ms_csr_pkg is
     sta_serdes_pll   : std_logic;
     sta_serdes_synced : std_logic;
     sta_acq_cfg      : std_logic;
+    sta_fmc_nr       : std_logic_vector(1 downto 0);
     sta_calib_busy   : std_logic;
     trig_stat_ext    : std_logic;
     trig_stat_sw     : std_logic;
@@ -583,6 +584,7 @@ begin
           reg_rdat_int(3) <= fmc_adc_100ms_csr_i.sta_serdes_pll;
           reg_rdat_int(4) <= fmc_adc_100ms_csr_i.sta_serdes_synced;
           reg_rdat_int(5) <= fmc_adc_100ms_csr_i.sta_acq_cfg;
+          reg_rdat_int(7 downto 6) <= fmc_adc_100ms_csr_i.sta_fmc_nr;
           reg_rdat_int(15) <= fmc_adc_100ms_csr_i.sta_calib_busy;
           rd_ack1_int <= rd_int;
         when "0000010" => 
