@@ -3,8 +3,12 @@
 /*
  * EEPROM calibration block retreival code for fa-dev
  */
-
-#include "fmc-adc-100m14b4cha.h"
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/byteorder/generic.h>
+#include <linux/device.h>
+#include <fmc-adc-100m14b4cha.h>
 
 /* This identity calibration is used as default */
 static const struct fa_calib_stanza fa_identity_calib = {
