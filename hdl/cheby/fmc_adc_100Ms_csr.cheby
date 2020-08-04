@@ -68,6 +68,16 @@ memory-map:
             Write 1 to clear the last trigger status register. Auto-resets to zero.
           x-hdl:
             type: wire
+      - field:
+          name: calib_apply
+          range: 15
+          description: Apply the new calibration values
+          comment: |
+            Write 1 to apply the new calibration values (Gain and Offset) already
+            loaded in the chX_calib registers, in an atomic way (all channels at
+            once). Auto-resets to zero.
+          x-hdl:
+            type: wire
   - reg:
       name: sta
       address: 0x00000004
@@ -113,6 +123,13 @@ memory-map:
             1: Valid acquisition configuration
             - Shot number > 0
             - Post-trigger sample > 0
+      - field:
+          name: calib_busy
+          range: 15
+          description: Calibration busy flag
+          comment: |
+            0: ready to accept new values
+            1: busy applying previous values (should never be detected by software, error condition)
   - reg:
       name: trig_stat
       address: 0x00000008

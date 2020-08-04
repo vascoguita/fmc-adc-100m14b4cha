@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------
 -- Description: FMC ADC 100Ms/s core.
 -------------------------------------------------------------------------------
--- Copyright (c) 2011-2018 CERN (BE-CO-HT)
+-- Copyright (c) 2011-2020 CERN (BE-CO-HT)
 -------------------------------------------------------------------------------
 -- GNU LESSER GENERAL PUBLIC LICENSE
 -------------------------------------------------------------------------------
@@ -222,10 +222,12 @@ architecture rtl of fmc_adc_100Ms_core is
   signal sync_fifo_valid : std_logic;
 
   -- Gain/offset calibration and saturation value
+  signal sync_calib_apply   : std_logic;
+  signal sync_calib_busy    : std_logic;
   signal gain_calibr        : std_logic_vector(63 downto 0);
   signal offset_calibr      : std_logic_vector(63 downto 0);
-  signal gain_calibr_in     : std_logic_vector(63 downto 0);
-  signal offset_calibr_in   : std_logic_vector(63 downto 0);
+  signal sync_calib_in      : std_logic_vector(127 downto 0);
+  signal sync_calib_out     : std_logic_vector(127 downto 0);
   signal data_calibr_in     : std_logic_vector(63 downto 0);
   signal data_calibr_out    : std_logic_vector(63 downto 0);
   signal data_calibr_out_d1 : std_logic_vector(63 downto 0);
@@ -471,6 +473,7 @@ begin
   csr_regin.sta_serdes_pll    <= serdes_locked_sync;
   csr_regin.sta_serdes_synced <= serdes_synced_sync;
   csr_regin.sta_acq_cfg       <= acq_config_ok;
+  csr_regin.sta_calib_busy    <= sync_calib_busy;
   csr_regin.trig_stat_ext     <= trig_storage(0);
   csr_regin.trig_stat_sw      <= trig_storage(1);
   csr_regin.trig_stat_time    <= trig_storage(4);
@@ -497,6 +500,7 @@ begin
   trig_led_man              <= csr_regout.ctl_trig_led;
   acq_led_man               <= csr_regout.ctl_acq_led;
   trig_storage_clear        <= csr_regout.ctl_clear_trig_stat and ctl_reg_wr;
+  sync_calib_apply          <= csr_regout.ctl_calib_apply and ctl_reg_wr;
   int_trig_delay_in(1)      <= csr_regout.ch1_trig_dly;
   int_trig_delay_in(2)      <= csr_regout.ch2_trig_dly;
   int_trig_delay_in(3)      <= csr_regout.ch3_trig_dly;
@@ -521,11 +525,10 @@ begin
   pre_trig_value            <= csr_regout.pre_samples;
   post_trig_value           <= csr_regout.post_samples;
 
-  gain_calibr_in <= csr_regout.ch4_calib_gain & csr_regout.ch3_calib_gain &
-                    csr_regout.ch2_calib_gain & csr_regout.ch1_calib_gain;
-
-  offset_calibr_in <= csr_regout.ch4_calib_offset & csr_regout.ch3_calib_offset &
-                      csr_regout.ch2_calib_offset & csr_regout.ch1_calib_offset;
+  sync_calib_in <= csr_regout.ch4_calib_offset & csr_regout.ch3_calib_offset &
+                   csr_regout.ch2_calib_offset & csr_regout.ch1_calib_offset &
+                   csr_regout.ch4_calib_gain & csr_regout.ch3_calib_gain &
+                   csr_regout.ch2_calib_gain & csr_regout.ch1_calib_gain;
 
   sat_val_in <= csr_regout.ch4_sat_val & csr_regout.ch3_sat_val &
                 csr_regout.ch2_sat_val & csr_regout.ch1_sat_val;
@@ -642,30 +645,6 @@ begin
         data_i      => sat_val_in(15*I-1 downto 15*(I-1)),
         data_o      => sat_val(15*I-1 downto 15*(I-1)));
 
-    cmp_ch_gain_sync : gc_sync_word_wr
-      generic map (
-        g_AUTO_WR => TRUE,
-        g_WIDTH   => 16)
-      port map (
-        clk_in_i    => sys_clk_i,
-        rst_in_n_i  => '1',
-        clk_out_i   => fs_clk,
-        rst_out_n_i => '1',
-        data_i      => gain_calibr_in(16*I-1 downto 16*(I-1)),
-        data_o      => gain_calibr(16*I-1 downto 16*(I-1)));
-
-    cmp_ch_offset_sync : gc_sync_word_wr
-      generic map (
-        g_AUTO_WR => TRUE,
-        g_WIDTH   => 16)
-      port map (
-        clk_in_i    => sys_clk_i,
-        rst_in_n_i  => '1',
-        clk_out_i   => fs_clk,
-        rst_out_n_i => '1',
-        data_i      => offset_calibr_in(16*I-1 downto 16*(I-1)),
-        data_o      => offset_calibr(16*I-1 downto 16*(I-1)));
-
     cmp_ch_trig_delay_sync : gc_sync_word_wr
       generic map (
         g_AUTO_WR => TRUE,
@@ -678,6 +657,23 @@ begin
         data_i      => int_trig_delay_in(I),
         data_o      => int_trig_delay(I));
   end generate gen_ch_reg_sync;
+
+  cmp_ch_calib_sync : gc_sync_word_wr
+    generic map (
+      g_AUTO_WR => FALSE,
+      g_WIDTH   => 128)
+    port map (
+      clk_in_i    => sys_clk_i,
+      rst_in_n_i  => '1',
+      clk_out_i   => fs_clk,
+      rst_out_n_i => '1',
+      data_i      => sync_calib_in,
+      wr_i        => sync_calib_apply,
+      busy_o      => sync_calib_busy,
+      data_o      => sync_calib_out);
+
+  offset_calibr <= sync_calib_out(127 downto 64);
+  gain_calibr   <= sync_calib_out(63 downto 0);
 
   cmp_sw_trig_sync : gc_pulse_synchronizer2
     port map (

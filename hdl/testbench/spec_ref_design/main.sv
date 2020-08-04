@@ -246,6 +246,7 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_CALIB, 'h00008000);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_CALIB, 'h00008000);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_CALIB, 'h00008000);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL,       'h00008000); // apply calibration
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_SAT,   'h00007fff);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_SAT,   'h00007fff);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_SAT,   'h00007fff);

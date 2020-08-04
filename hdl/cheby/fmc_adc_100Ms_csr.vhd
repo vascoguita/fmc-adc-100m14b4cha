@@ -16,6 +16,7 @@ package fmc_adc_100ms_csr_pkg is
     ctl_trig_led     : std_logic;
     ctl_acq_led      : std_logic;
     ctl_clear_trig_stat : std_logic;
+    ctl_calib_apply  : std_logic;
     ctl_wr           : std_logic;
     trig_en_ext      : std_logic;
     trig_en_sw       : std_logic;
@@ -73,10 +74,12 @@ package fmc_adc_100ms_csr_pkg is
     ctl_fsm_cmd      : std_logic_vector(1 downto 0);
     ctl_man_bitslip  : std_logic;
     ctl_clear_trig_stat : std_logic;
+    ctl_calib_apply  : std_logic;
     sta_fsm          : std_logic_vector(2 downto 0);
     sta_serdes_pll   : std_logic;
     sta_serdes_synced : std_logic;
     sta_acq_cfg      : std_logic;
+    sta_calib_busy   : std_logic;
     trig_stat_ext    : std_logic;
     trig_stat_sw     : std_logic;
     trig_stat_time   : std_logic;
@@ -335,6 +338,7 @@ begin
             ctl_trig_led_reg <= wb_i.dat(6);
             ctl_acq_led_reg <= wb_i.dat(7);
             fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wb_i.dat(8);
+            fmc_adc_100ms_csr_o.ctl_calib_apply <= wb_i.dat(15);
           end if;
           wr_ack_int <= wr_int;
         when "0000001" => 
@@ -571,6 +575,7 @@ begin
           reg_rdat_int(6) <= ctl_trig_led_reg;
           reg_rdat_int(7) <= ctl_acq_led_reg;
           reg_rdat_int(8) <= fmc_adc_100ms_csr_i.ctl_clear_trig_stat;
+          reg_rdat_int(15) <= fmc_adc_100ms_csr_i.ctl_calib_apply;
           rd_ack1_int <= rd_int;
         when "0000001" => 
           -- sta
@@ -578,6 +583,7 @@ begin
           reg_rdat_int(3) <= fmc_adc_100ms_csr_i.sta_serdes_pll;
           reg_rdat_int(4) <= fmc_adc_100ms_csr_i.sta_serdes_synced;
           reg_rdat_int(5) <= fmc_adc_100ms_csr_i.sta_acq_cfg;
+          reg_rdat_int(15) <= fmc_adc_100ms_csr_i.sta_calib_busy;
           rd_ack1_int <= rd_int;
         when "0000010" => 
           -- trig_stat
