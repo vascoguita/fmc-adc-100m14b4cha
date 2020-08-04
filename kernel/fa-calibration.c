@@ -8,6 +8,8 @@
 #include <linux/types.h>
 #include <linux/byteorder/generic.h>
 #include <linux/device.h>
+#include <linux/delay.h>
+#include <linux/zio.h>
 #include <fmc-adc-100m14b4cha.h>
 
 /* This identity calibration is used as default */
@@ -20,6 +22,79 @@ static const struct fa_calib_stanza fa_identity_calib = {
 #define FA_CALIB_MAX_DELTA_OFFSET	0x1000
 #define FA_CALIB_MAX_DELTA_GAIN		0x1000
 #define FA_CALIB_MAX_DELTA_TEMP		(40 * 100) /* 10-90 celsius */
+
+static bool fa_calib_is_busy(struct fa_dev *fa)
+{
+	return !!fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_STA_CALIB_BUSY]);
+}
+
+static int fa_calib_apply(struct fa_dev *fa)
+{
+	if (fa_calib_is_busy(fa))
+		return -EBUSY;
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CALIB_APPLY], 1);
+        ndelay(100);
+	if (fa_calib_is_busy(fa))
+		return -EBUSY;
+
+	return 0;
+}
+
+static void fa_calib_gain_set(struct fa_dev *fa, unsigned int chan, int val)
+{
+	int attr_idx;
+
+	attr_idx = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[attr_idx], val);
+}
+
+static void fa_calib_offset_set(struct fa_dev *fa, unsigned int chan, int val)
+{
+	int attr_idx;
+
+	attr_idx = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[attr_idx],
+		  val & 0xFFFF /* prevent warning */);
+}
+
+static int fa_calib_adc_offset_fix(struct fa_dev *fa, int range, int offset)
+{
+        return offset;
+}
+
+static int fa_calib_adc_gain_fix(struct fa_dev *fa, int range, int gain)
+{
+        return gain;
+}
+
+static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan)
+{
+	int range = fa->range[chan];
+	int offset = fa->calib.adc[range].offset[chan];
+	int gain = fa->calib.adc[range].gain[chan];
+
+	dev_dbg(&fa->pdev->dev, "%s: orig:  {range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, range, gain, offset);
+
+	offset = fa_calib_adc_offset_fix(fa, range, offset);
+	gain = fa_calib_adc_gain_fix(fa, range, gain);
+
+	dev_dbg(&fa->pdev->dev, "%s: fixed: {range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, range, gain, offset);
+
+	fa_calib_gain_set(fa, chan, gain);
+	fa_calib_offset_set(fa, chan, offset);
+}
+
+int fa_calib_adc_config(struct fa_dev *fa)
+{
+	int i;
+
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
+		fa_calib_adc_config_chan(fa, i);
+
+        return fa_calib_apply(fa);
+}
 
 /* Actual verification code */
 static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,

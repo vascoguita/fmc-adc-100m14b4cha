@@ -155,7 +155,7 @@ static struct zio_attribute zfad_dev_ext_zattr[] = {
 };
 
 /* Temporarily, user values are the same as hardware values */
-static int zfad_convert_user_range(uint32_t user_val)
+int zfad_convert_user_range(uint32_t user_val)
 {
 	return zfad_convert_hw_range(user_val);
 }

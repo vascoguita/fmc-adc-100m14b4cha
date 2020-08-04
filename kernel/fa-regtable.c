@@ -18,11 +18,13 @@ const struct zfa_field_desc zfad_regs[] = {
 	[ZFA_CTL_TRIG_LED] =		{0x00, 0x00000040, 1},
 	[ZFA_CTL_ACQ_LED] =		{0x00, 0x00000080, 1},
 	[ZFA_CTL_RST_TRG_STA] =	{0x00, 0x00000100, 1},
+	[ZFA_CTL_CALIB_APPLY] =		{0x00, 0x00008000, 1},
 	/* Status registers */
 	[ZFA_STA_FSM] =		{0x04, 0x00000007, 1},
 	[ZFA_STA_SERDES_PLL] =		{0x04, 0x00000008, 1},
 	[ZFA_STA_SERDES_SYNCED] =	{0x04, 0x00000010, 1},
 	[ZFA_STA_FMC_NR] =		{0x04, 0x000000c0, 1},
+	[ZFA_STA_CALIB_BUSY] =		{0x04, 0x00008000, 1},
 	/* Trigger */
 		/* Config register */
 	[ZFAT_CFG_STA] =		{0x08, 0xFFFFFFFF, 0},

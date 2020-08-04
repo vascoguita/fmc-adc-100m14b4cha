@@ -214,11 +214,13 @@ enum zfadc_dregs_enum {
 	ZFA_CTL_TRIG_LED,
 	ZFA_CTL_ACQ_LED,
 	ZFA_CTL_RST_TRG_STA,
+	ZFA_CTL_CALIB_APPLY,
 	/* Status registers */
 	ZFA_STA_FSM,
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
 	ZFA_STA_FMC_NR,
+	ZFA_STA_CALIB_BUSY,
 	/* Configuration register */
 	ZFAT_CFG_STA,
 	ZFAT_CFG_SRC,
@@ -447,6 +449,7 @@ struct fa_dev {
 
 	/* Calibration Data */
 	struct fa_calib calib;
+	int32_t range[FA100M14B4C_NCHAN];
 
 	/* flag  */
 	int enable_auto_start;
@@ -599,6 +602,9 @@ extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 extern int zfad_apply_offset(struct zio_channel *chan);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
+
+/* Temporarily, user values are the same as hardware values */
+extern int zfad_convert_user_range(uint32_t user_val);
 extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 			  int range);
 extern int zfad_get_chx_index(unsigned long addr, unsigned int chan);
@@ -635,6 +641,7 @@ extern void fa_spi_exit(struct fa_dev *fd);
 /* function exporetd by fa-calibration.c */
 extern int fa_calib_init(struct fa_dev *fa);
 extern void fa_calib_exit(struct fa_dev *fa);
+extern int fa_calib_adc_config(struct fa_dev *fa);
 
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);

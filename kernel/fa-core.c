@@ -248,7 +248,7 @@ void zfad_init_saturation(struct fa_dev *fa)
 int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 			  int range)
 {
-	int i, offset, gain;
+	int i;
 
 	/* Actually set the range */
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
@@ -258,6 +258,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		range = FA100M14B4C_RANGE_1V;
 	else if (range >= FA100M14B4C_RANGE_10V_CAL)
 		range -= FA100M14B4C_RANGE_10V_CAL;
+	fa->range[chan->index] = range;
 
 	if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
 		dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
@@ -265,19 +266,9 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		return -EINVAL;
 	}
 
-	offset = fa->calib.adc[range].offset[chan->index];
-	gain = fa->calib.adc[range].gain[chan->index];
-
-	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan->index);
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
-		  offset & 0xffff /* prevent warning */);
-	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan->index);
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
-
 	/* recalculate user offset for the new range */
 	zfad_apply_offset(chan);
-
-	return 0;
+	return fa_calib_adc_config(fa);
 }
 
 /*
