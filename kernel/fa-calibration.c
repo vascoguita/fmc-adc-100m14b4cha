@@ -119,7 +119,7 @@ static void fa_apply_calib(struct fa_dev *fa)
 
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
 		struct zio_channel *chan = &fa->zdev->cset->chan[i];
-		int reg = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+		int reg = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 		int range = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg]);
 
 		zfad_set_range(fa, chan, range);

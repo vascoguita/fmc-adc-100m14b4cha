@@ -601,7 +601,7 @@ extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 			  int range);
-extern int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan);
+extern int zfad_get_chx_index(unsigned long addr, unsigned int chan);
 extern int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
 				    unsigned int enable);
 

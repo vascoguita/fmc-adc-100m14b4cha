@@ -398,10 +398,10 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_CTL_TERM:
 		/*fallthrough*/
 	case ZFA_CHx_CTL_RANGE:
-		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
+		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev)->index);
 		break;
 	case ZFA_CHx_STA:
-		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
+		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev)->index);
 		*usr_val = fa_readl(fa, fa->fa_adc_csr_base,
 				    &zfad_regs[reg_index]);
 		i = (int16_t)(*usr_val); /* now signed integer */

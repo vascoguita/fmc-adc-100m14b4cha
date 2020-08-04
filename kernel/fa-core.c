@@ -88,11 +88,11 @@ int zfad_convert_hw_range(uint32_t bitmask)
 }
 
 /* Calculate correct index in fa_regfield array for channel from CHx indexes */
-int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan)
+int zfad_get_chx_index(unsigned long addr, unsigned int chan)
 {
 	int offset;
 
-	offset = ZFA_CHx_MULT  * (FA100M14B4C_NCHAN - chan->index);
+	offset = ZFA_CHx_MULT  * (FA100M14B4C_NCHAN - chan);
 
 	return addr - offset;
 }
@@ -188,7 +188,7 @@ int zfad_apply_offset(struct zio_channel *chan)
 	if (off_uv < -5000000 || off_uv > 5000000)
 		return -EINVAL;
 
-	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 	range_reg = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[i]);
 
 	range = zfad_convert_hw_range(range_reg);
@@ -251,7 +251,7 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	int i, offset, gain;
 
 	/* Actually set the range */
-	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
 	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
@@ -268,10 +268,10 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	offset = fa->calib.adc[range].offset[chan->index];
 	gain = fa->calib.adc[range].gain[chan->index];
 
-	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
+	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan->index);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
 		  offset & 0xffff /* prevent warning */);
-	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
+	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan->index);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
 
 	/* recalculate user offset for the new range */
@@ -399,7 +399,7 @@ static int __fa_init(struct fa_dev *fa)
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
 		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
-						&zdev->cset->chan[i]);
+					  zdev->cset->chan[i].index);
 		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
 			  FA100M14B4C_RANGE_1V);
 		zfad_set_range(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
