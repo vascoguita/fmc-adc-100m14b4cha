@@ -450,6 +450,7 @@ struct fa_dev {
 	/* Calibration Data */
 	struct fa_calib calib;
 	int32_t range[FA100M14B4C_NCHAN];
+	struct timer_list calib_timer;
 
 	/* flag  */
 	int enable_auto_start;

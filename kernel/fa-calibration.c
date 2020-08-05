@@ -10,7 +10,12 @@
 #include <linux/device.h>
 #include <linux/delay.h>
 #include <linux/zio.h>
+#include <linux/moduleparam.h>
+#include <linux/jiffies.h>
 #include <fmc-adc-100m14b4cha.h>
+
+static int fa_calib_period_s = 60;
+module_param_named(calib_s, fa_calib_period_s, int, 0444);
 
 /* This identity calibration is used as default */
 static const struct fa_calib_stanza fa_identity_calib = {
@@ -94,6 +99,23 @@ int fa_calib_adc_config(struct fa_dev *fa)
 		fa_calib_adc_config_chan(fa, i);
 
         return fa_calib_apply(fa);
+}
+
+/**
+ * Periodically update gain calibration values
+ * @fa: FMC ADC device
+ *
+ * In the ADC we have a calibration value that is good for a small
+ * temperature range. We proved empirically that the gain error has a
+ * linear behavior with respect to the temperature.
+ *
+ */
+static void fa_calib_gain_update(unsigned long arg)
+{
+	struct fa_dev *fa = (void *)arg;
+
+	fa_calib_adc_config(fa);
+	mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
 }
 
 /* Actual verification code */
@@ -280,11 +302,17 @@ int fa_calib_init(struct fa_dev *fa)
 
 	fa_calib_write(fa, &calib);
 
+	/* Prepare the timely recalibration */
+	fa_calib_adc_config(fa);
+	setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
+	if (fa_calib_period_s)
+		mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
+
 out:
 	return 0;
 }
 
 void fa_calib_exit(struct fa_dev *fa)
 {
-
+	del_timer_sync(&fa->calib_timer);
 }
