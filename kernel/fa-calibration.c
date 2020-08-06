@@ -183,20 +183,18 @@ static int64_t fa_dac_offset_raw_calibrate(int32_t raw_offset,
 	return hwval;
 }
 
-#define DAC_SAT_LOW -5000000
-#define DAC_SAT_UP 5000000
 static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
 {
 	int32_t off_uv = fa->user_offset[chan] + fa->zero_offset[chan];
 
-	if (off_uv < DAC_SAT_LOW) {
-		dev_warn(&fa->pdev->dev, "DAC lower saturation %d\n",
-			 DAC_SAT_LOW);
+	if (WARN(off_uv < DAC_SAT_LOW,
+		 "DAC lower saturation %d < %d\n",
+		 off_uv, DAC_SAT_LOW)) {
 		off_uv = DAC_SAT_LOW;
 	}
-	if (off_uv > DAC_SAT_UP) {
-		dev_warn(&fa->pdev->dev, "DAC upper saturation %d\n",
-			 DAC_SAT_UP);
+	if (WARN(off_uv > DAC_SAT_UP,
+		 "DAC upper saturation %d > %d\n",
+		 off_uv, DAC_SAT_UP)) {
 		off_uv = DAC_SAT_UP;
 	}
 

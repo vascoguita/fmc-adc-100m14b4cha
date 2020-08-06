@@ -175,6 +175,9 @@ struct fa_calib {
 #define ADC_SPI_OFF 0x1800
 #define ADC_UTC_OFF 0x1900
 
+#define DAC_SAT_LOW -5000000
+#define DAC_SAT_UP 5000000
+
 extern int fa_enable_test_data_adc;
 
 #define ADC_DMA 0
