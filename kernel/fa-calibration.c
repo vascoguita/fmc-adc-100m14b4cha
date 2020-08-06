@@ -62,10 +62,36 @@ static void fa_calib_offset_set(struct fa_dev *fa, unsigned int chan, int val)
 		  val & 0xFFFF /* prevent warning */);
 }
 
-static int fa_calib_adc_offset_fix(struct fa_dev *fa, int range, int offset,
-				   uint32_t temperature)
+/*
+ * Empirical values for the gain error slope
+ *   10V  0.0012500
+ *    1V -0.0000233
+ * 100mV -0.0000163
+ * To do integer math I store the value multiplied by 10000000
+ */
+static const int gain_adc_error_slope_fix[] = {
+	[FA100M14B4C_RANGE_10V] = 12500,
+	[FA100M14B4C_RANGE_1V] = -233,
+	[FA100M14B4C_RANGE_100mV] = -163,
+};
+
+/**
+ * Compute the correct gain
+ * @range: voltage range
+ * @gain_c: calibration value
+ * @delta_temp: temperature difference: (current temp. - calibration temp.)
+ *              the unit must be milli-degree
+ */
+static int fa_calib_adc_gain_fix(int range, int gain_c, int32_t delta_temp)
 {
-        return offset;
+	int error;
+
+	error = gain_adc_error_slope_fix[range] * delta_temp;
+
+	error /= 10000000; /* the slope was multiplied by 10000000 */
+	error /= 1000; /* the temperature is in milli-degree */
+
+	return gain_c - error;
 }
 
 static int fa_calib_adc_gain_fix(struct fa_dev *fa, int range, int gain,
@@ -78,11 +104,11 @@ static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 				     uint32_t temperature)
 {
 	int range = fa->range[chan];
-	int offset = fa->calib.adc[range].offset[chan];
-	int gain = fa->calib.adc[range].gain[chan];
-
-	offset = fa_calib_adc_offset_fix(fa, range, offset, temperature);
-	gain = fa_calib_adc_gain_fix(fa, range, gain, temperature);
+	struct fa_calib_stanza *cal = &fa->calib.adc[range];
+	int32_t delta_temp = temperature - cal->temperature;
+	int offset = cal->offset[chan];
+	int gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
+					 delta_temp);
 
 	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
 		__func__, chan, range, gain, offset);
@@ -98,8 +124,10 @@ int fa_calib_adc_config(struct fa_dev *fa)
 
 	temperature = fa_temperature_read(fa);
 	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n", __func__, temperature);
+	spin_lock(&fa->zdev->cset->lock);
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
 		fa_calib_adc_config_chan(fa, i, temperature);
+	spin_unlock(&fa->zdev->cset->lock);
 
         return fa_calib_apply(fa);
 }

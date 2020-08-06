@@ -274,7 +274,6 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		range = FA100M14B4C_RANGE_1V;
 	else if (range >= FA100M14B4C_RANGE_10V_CAL)
 		range -= FA100M14B4C_RANGE_10V_CAL;
-	fa->range[chan->index] = range;
 
 	if (range < 0 || range > ARRAY_SIZE(fa->calib.adc)) {
 		dev_info(fa->msgdev, "Invalid range %i or ch %i\n",
@@ -282,6 +281,9 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		return -EINVAL;
 	}
 
+	spin_lock(&fa->zdev->cset->lock);
+	fa->range[chan->index] = range;
+	spin_unlock(&fa->zdev->cset->lock);
 	/* recalculate user offset for the new range */
 	zfad_apply_offset(chan);
 	return fa_calib_adc_config(fa);
