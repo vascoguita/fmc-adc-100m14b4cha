@@ -204,10 +204,10 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 
 		chan = to_zio_cset(dev)->chan + i;
+		spin_lock(&fa->zdev->cset->lock);
 		fa->zero_offset[i] = usr_val;
-		err = zfad_apply_offset(chan);
-		if (err == -EIO)
-			fa->zero_offset[chan->index] = 0;
+		spin_unlock(&fa->zdev->cset->lock);
+		fa_calib_dac_config(fa, ~0);
 		return err;
 	case ZFA_CHx_SAT:
 		/* TODO when TLV */
@@ -237,18 +237,18 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		i--;
 
 		chan = to_zio_cset(dev)->chan + i;
+		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
-		err = zfad_apply_offset(chan);
-		if (err == -EIO)
-			fa->user_offset[chan->index] = 0;
-		return err;
+		spin_unlock(&fa->zdev->cset->lock);
+		fa_calib_dac_config(fa, ~0);
+		return 0;
 	case ZFA_CHx_OFFSET:
-		chan = to_zio_chan(dev),
+		chan = to_zio_chan(dev);
+		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
-		err = zfad_apply_offset(chan);
-		if (err == -EIO)
-			fa->user_offset[chan->index] = 0;
-		return err;
+		spin_unlock(&fa->zdev->cset->lock);
+		fa_calib_dac_config(fa, ~0);
+		return 0;
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
