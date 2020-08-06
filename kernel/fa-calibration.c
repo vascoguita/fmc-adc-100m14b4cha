@@ -23,6 +23,7 @@ static const struct fa_calib_stanza fa_identity_calib = {
 	.gain = {0x8000, 0x8000, 0x8000, 0x8000},
 	.temperature = 50 * 100, /* 50 celsius degrees */
 };
+
 /* Max difference from identity thing */
 #define FA_CALIB_MAX_DELTA_OFFSET	0x1000
 #define FA_CALIB_MAX_DELTA_GAIN		0x1000
@@ -94,6 +95,19 @@ static int fa_calib_adc_gain_fix(int range, int gain_c, int32_t delta_temp)
 	return gain_c - error;
 }
 
+/*
+ * Empirical values for the gain error slope
+ *   10V  0.0012500
+ *    1V -0.0000233
+ * 100mV -0.0000163
+ * To do integer math I store the value multiplied by 100000000
+ */
+static const int gain_dac_error_slope_fix[] = {
+	[FA100M14B4C_RANGE_10V] = 17100,
+	[FA100M14B4C_RANGE_1V] = -349,
+	[FA100M14B4C_RANGE_100mV] = 1540,
+};
+
 /**
  * Compute the correct gain
  * @range: voltage range
@@ -103,7 +117,14 @@ static int fa_calib_adc_gain_fix(int range, int gain_c, int32_t delta_temp)
  */
 static int fa_calib_dac_gain_fix(int range, int gain_c, int32_t delta_temp)
 {
-	return gain_c;
+	int error;
+
+	error = gain_adc_error_slope_fix[range] * delta_temp;
+
+	error /= 100000000; /* the slope was multiplied by 100000000 */
+	error /= 1000; /* the temperature is in milli-degree */
+
+	return gain_c - error;
 }
 
 static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
@@ -194,6 +215,8 @@ static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	int gain = fa_calib_dac_gain_fix(range, cal->gain[chan], delta_temp);
 	int hwval;
 
+	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, chan, range, gain, offset);
 	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain, offset);
 
         return  fa_dac_offset_set(fa, chan, hwval);
