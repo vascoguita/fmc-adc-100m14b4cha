@@ -62,30 +62,30 @@ static void fa_calib_offset_set(struct fa_dev *fa, unsigned int chan, int val)
 		  val & 0xFFFF /* prevent warning */);
 }
 
-static int fa_calib_adc_offset_fix(struct fa_dev *fa, int range, int offset)
+static int fa_calib_adc_offset_fix(struct fa_dev *fa, int range, int offset,
+				   uint32_t temperature)
 {
         return offset;
 }
 
-static int fa_calib_adc_gain_fix(struct fa_dev *fa, int range, int gain)
+static int fa_calib_adc_gain_fix(struct fa_dev *fa, int range, int gain,
+				 uint32_t temperature)
 {
         return gain;
 }
 
-static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan)
+static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
+				     uint32_t temperature)
 {
 	int range = fa->range[chan];
 	int offset = fa->calib.adc[range].offset[chan];
 	int gain = fa->calib.adc[range].gain[chan];
 
-	dev_dbg(&fa->pdev->dev, "%s: orig:  {range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, range, gain, offset);
+	offset = fa_calib_adc_offset_fix(fa, range, offset, temperature);
+	gain = fa_calib_adc_gain_fix(fa, range, gain, temperature);
 
-	offset = fa_calib_adc_offset_fix(fa, range, offset);
-	gain = fa_calib_adc_gain_fix(fa, range, gain);
-
-	dev_dbg(&fa->pdev->dev, "%s: fixed: {range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, range, gain, offset);
+	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, chan, range, gain, offset);
 
 	fa_calib_gain_set(fa, chan, gain);
 	fa_calib_offset_set(fa, chan, offset);
@@ -94,9 +94,12 @@ static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan)
 int fa_calib_adc_config(struct fa_dev *fa)
 {
 	int i;
+	uint32_t temperature;
 
+	temperature = fa_temperature_read(fa);
+	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n", __func__, temperature);
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
-		fa_calib_adc_config_chan(fa, i);
+		fa_calib_adc_config_chan(fa, i, temperature);
 
         return fa_calib_apply(fa);
 }
