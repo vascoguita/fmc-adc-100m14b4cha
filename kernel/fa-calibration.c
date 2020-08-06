@@ -23,6 +23,7 @@ static const struct fa_calib_stanza fa_identity_calib = {
 	.gain = {0x8000, 0x8000, 0x8000, 0x8000},
 	.temperature = 50 * 100, /* 50 celsius degrees */
 };
+
 /* Max difference from identity thing */
 #define FA_CALIB_MAX_DELTA_OFFSET	0x1000
 #define FA_CALIB_MAX_DELTA_GAIN		0x1000
@@ -62,27 +63,79 @@ static void fa_calib_offset_set(struct fa_dev *fa, unsigned int chan, int val)
 		  val & 0xFFFF /* prevent warning */);
 }
 
-static int fa_calib_adc_offset_fix(struct fa_dev *fa, int range, int offset,
-				   uint32_t temperature)
+/*
+ * Empirical values for the gain error slope
+ *   10V  0.0012500
+ *    1V -0.0000233
+ * 100mV -0.0000163
+ * To do integer math I store the value multiplied by 10000000
+ */
+static const int gain_adc_error_slope_fix[] = {
+	[FA100M14B4C_RANGE_10V] = 12500,
+	[FA100M14B4C_RANGE_1V] = -233,
+	[FA100M14B4C_RANGE_100mV] = -163,
+};
+
+/**
+ * Compute the correct gain
+ * @range: voltage range
+ * @gain_c: calibration value
+ * @delta_temp: temperature difference: (current temp. - calibration temp.)
+ *              the unit must be milli-degree
+ */
+static int fa_calib_adc_gain_fix(int range, int gain_c, int32_t delta_temp)
 {
-        return offset;
+	int error;
+
+	error = gain_adc_error_slope_fix[range] * delta_temp;
+
+	error /= 10000000; /* the slope was multiplied by 10000000 */
+	error /= 1000; /* the temperature is in milli-degree */
+
+	return gain_c - error;
 }
 
-static int fa_calib_adc_gain_fix(struct fa_dev *fa, int range, int gain,
-				 uint32_t temperature)
+/*
+ * Empirical values for the gain error slope
+ *   10V  0.0012500
+ *    1V -0.0000233
+ * 100mV -0.0000163
+ * To do integer math I store the value multiplied by 100000000
+ */
+static const int gain_dac_error_slope_fix[] = {
+	[FA100M14B4C_RANGE_10V] = 17100,
+	[FA100M14B4C_RANGE_1V] = -349,
+	[FA100M14B4C_RANGE_100mV] = 1540,
+};
+
+/**
+ * Compute the correct gain
+ * @range: voltage range
+ * @gain_c: calibration value
+ * @delta_temp: temperature difference: (current temp. - calibration temp.)
+ *              the unit must be milli-degree
+ */
+static int fa_calib_dac_gain_fix(int range, int gain_c, int32_t delta_temp)
 {
-        return gain;
+	int error;
+
+	error = gain_adc_error_slope_fix[range] * delta_temp;
+
+	error /= 100000000; /* the slope was multiplied by 100000000 */
+	error /= 1000; /* the temperature is in milli-degree */
+
+	return gain_c - error;
 }
 
 static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 				     uint32_t temperature)
 {
 	int range = fa->range[chan];
-	int offset = fa->calib.adc[range].offset[chan];
-	int gain = fa->calib.adc[range].gain[chan];
-
-	offset = fa_calib_adc_offset_fix(fa, range, offset, temperature);
-	gain = fa_calib_adc_gain_fix(fa, range, gain, temperature);
+	struct fa_calib_stanza *cal = &fa->calib.adc[range];
+	int32_t delta_temp = temperature - cal->temperature;
+	int offset = cal->offset[chan];
+	int gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
+					 delta_temp);
 
 	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
 		__func__, chan, range, gain, offset);
@@ -91,19 +144,125 @@ static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	fa_calib_offset_set(fa, chan, offset);
 }
 
-int fa_calib_adc_config(struct fa_dev *fa)
+/**
+ * It sets the DAC voltage to apply an offset on the input channel
+ * @fa ADC device
+ * @chan channel number
+ * @val DAC values (-5V: 0x0000, 0V: 0x8000, +5V: 0x7FFF)
+ *
+ * Return: 0 on success, otherwise a negative error number
+ */
+static int fa_dac_offset_set(struct fa_dev *fa, unsigned int chan,
+			     uint32_t val)
+{
+	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan), 16, val, NULL);
+}
+
+static int64_t fa_dac_offset_raw_get(int32_t offset)
+{
+	int64_t hwval;
+
+	hwval = offset * 0x8000LL / 5000000;
+	if (hwval == 0x8000)
+		hwval = 0x7fff; /* -32768 .. 32767 */
+	return hwval;
+}
+
+static int64_t fa_dac_offset_raw_calibrate(int32_t raw_offset,
+					   int gain, int offset)
+{
+	int64_t hwval;
+
+	hwval = ((raw_offset + offset) * gain) >> 15; /* signed */
+        hwval += 0x8000; /* offset binary */
+	if (hwval < 0)
+		hwval = 0;
+	if (hwval > 0xffff)
+		hwval = 0xffff;
+
+	return hwval;
+}
+
+static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
+{
+	int32_t off_uv = fa->user_offset[chan] + fa->zero_offset[chan];
+
+	if (WARN(off_uv < DAC_SAT_LOW,
+		 "DAC lower saturation %d < %d\n",
+		 off_uv, DAC_SAT_LOW)) {
+		off_uv = DAC_SAT_LOW;
+	}
+	if (WARN(off_uv > DAC_SAT_UP,
+		 "DAC upper saturation %d > %d\n",
+		 off_uv, DAC_SAT_UP)) {
+		off_uv = DAC_SAT_UP;
+	}
+
+        return off_uv;
+}
+
+static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
+				    uint32_t temperature)
+{
+	int range = fa->range[chan];
+	int32_t off_uv = fa_dac_offset_get(fa, chan);
+	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
+	struct fa_calib_stanza *cal = &fa->calib.dac[range];
+	int32_t delta_temp = temperature - cal->temperature;
+	int offset = cal->offset[chan];
+	int gain = fa_calib_dac_gain_fix(range, cal->gain[chan], delta_temp);
+	int hwval;
+
+	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, chan, range, gain, offset);
+	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain, offset);
+
+        return  fa_dac_offset_set(fa, chan, hwval);
+}
+
+void fa_calib_dac_config(struct fa_dev *fa, uint32_t temperature)
 {
 	int i;
+
+	if (temperature == 0xFFFFFFFF)
+	    temperature = fa_temperature_read(fa);
+	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n",
+		__func__, temperature);
+
+	spin_lock(&fa->zdev->cset->lock);
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
+		fa_calib_dac_config_chan(fa, i, temperature);
+	spin_unlock(&fa->zdev->cset->lock);
+}
+
+static void fa_calib_adc_config(struct fa_dev *fa, uint32_t temperature)
+{
+	int err;
+	int i;
+
+	if (temperature == 0xFFFFFFFF)
+	    temperature = fa_temperature_read(fa);
+	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n",
+		__func__, temperature);
+
+	spin_lock(&fa->zdev->cset->lock);
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
+		fa_calib_adc_config_chan(fa, i, temperature);
+	spin_unlock(&fa->zdev->cset->lock);
+
+        err = fa_calib_apply(fa);
+	if (err)
+		dev_err(&fa->pdev->dev, "Can't apply calibration values\n");
+}
+
+void fa_calib_config(struct fa_dev *fa)
+{
 	uint32_t temperature;
 
 	temperature = fa_temperature_read(fa);
-	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n", __func__, temperature);
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
-		fa_calib_adc_config_chan(fa, i, temperature);
-
-        return fa_calib_apply(fa);
+	fa_calib_adc_config(fa, temperature);
+	fa_calib_dac_config(fa, temperature);
 }
-
 /**
  * Periodically update gain calibration values
  * @fa: FMC ADC device
@@ -117,7 +276,7 @@ static void fa_calib_gain_update(unsigned long arg)
 {
 	struct fa_dev *fa = (void *)arg;
 
-	fa_calib_adc_config(fa);
+	fa_calib_config(fa);
 	mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
 }
 
@@ -223,7 +382,6 @@ static void fa_apply_calib(struct fa_dev *fa)
 		int range = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg]);
 
 		zfad_set_range(fa, chan, zfad_convert_hw_range(range));
-		zfad_apply_offset(chan);
 	}
 }
 
@@ -306,7 +464,7 @@ int fa_calib_init(struct fa_dev *fa)
 	fa_calib_write(fa, &calib);
 
 	/* Prepare the timely recalibration */
-	fa_calib_adc_config(fa);
+	fa_calib_config(fa);
 	setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
 	if (fa_calib_period_s)
 		mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
