@@ -183,6 +183,8 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 	return hwval;
 }
 
+#define DAC_SAT_LOW -5000000
+#define DAC_SAT_UP 5000000
 /*
  * zfad_apply_user_offset
  * @chan: the channel where apply offset
@@ -196,25 +198,17 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 int zfad_apply_offset(struct zio_channel *chan)
 {
 	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-	uint32_t range_reg;
 	int32_t off_uv;
-	int hwval, i, range;
+	int hwval;
+	int range;
 
 	off_uv = fa->user_offset[chan->index] + fa->zero_offset[chan->index];
-	if (off_uv < -5000000 || off_uv > 5000000)
+	if (off_uv < DAC_SAT_LOW || off_uv > DAC_SAT_UP)
 		return -EINVAL;
 
-	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
-	range_reg = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[i]);
-
-	range = zfad_convert_hw_range(range_reg);
-	if (range < 0)
-		return range;
-
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
-		range = FA100M14B4C_RANGE_1V;
-	else if (range >= FA100M14B4C_RANGE_10V_CAL)
-		range -= FA100M14B4C_RANGE_10V_CAL;
+	spin_lock(&fa->zdev->cset->lock);
+	range = fa->range[chan->index];
+	spin_unlock(&fa->zdev->cset->lock);
 
 	hwval = zfad_offset_to_dac(chan, off_uv, range);
 	return zfad_dac_set(chan, hwval);
