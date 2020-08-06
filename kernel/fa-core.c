@@ -190,13 +190,13 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
 	int32_t off_uv = fa->user_offset[chan] + fa->zero_offset[chan];
 
 	if (off_uv < DAC_SAT_LOW) {
-		dev_err(&fa->pdev->dev, "DAC lower saturation %d\n",
-			DAC_SAT_LOW);
+		dev_warn(&fa->pdev->dev, "DAC lower saturation %d\n",
+			 DAC_SAT_LOW);
 		off_uv = DAC_SAT_LOW;
 	}
 	if (off_uv > DAC_SAT_UP) {
-		dev_err(&fa->pdev->dev, "DAC upper saturation %d\n",
-			DAC_SAT_UP);
+		dev_warn(&fa->pdev->dev, "DAC upper saturation %d\n",
+			 DAC_SAT_UP);
 		off_uv = DAC_SAT_UP;
 	}
 
