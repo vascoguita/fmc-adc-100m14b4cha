@@ -185,6 +185,23 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 
 #define DAC_SAT_LOW -5000000
 #define DAC_SAT_UP 5000000
+static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
+{
+	int32_t off_uv = fa->user_offset[chan] + fa->zero_offset[chan];
+
+	if (off_uv < DAC_SAT_LOW) {
+		dev_err(&fa->pdev->dev, "DAC lower saturation %d\n",
+			DAC_SAT_LOW);
+		off_uv = DAC_SAT_LOW;
+	}
+	if (off_uv > DAC_SAT_UP) {
+		dev_err(&fa->pdev->dev, "DAC upper saturation %d\n",
+			DAC_SAT_UP);
+		off_uv = DAC_SAT_UP;
+	}
+
+        return off_uv;
+}
 /*
  * zfad_apply_user_offset
  * @chan: the channel where apply offset
@@ -198,13 +215,9 @@ static int zfad_offset_to_dac(struct zio_channel *chan,
 int zfad_apply_offset(struct zio_channel *chan)
 {
 	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-	int32_t off_uv;
+	int32_t off_uv = fa_dac_offset_get(fa, chan->index);
 	int hwval;
 	int range;
-
-	off_uv = fa->user_offset[chan->index] + fa->zero_offset[chan->index];
-	if (off_uv < DAC_SAT_LOW || off_uv > DAC_SAT_UP)
-		return -EINVAL;
 
 	spin_lock(&fa->zdev->cset->lock);
 	range = fa->range[chan->index];
