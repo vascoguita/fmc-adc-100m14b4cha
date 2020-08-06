@@ -158,23 +158,23 @@ static int zfad_dac_set(struct zio_channel *chan, uint32_t val)
 	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, val, NULL);
 }
 
-static int zfad_offset_to_dac(struct zio_channel *chan,
-			      int32_t uval,
-			      enum fa100m14b4c_input_range range)
+static int64_t fa_dac_offset_raw_get(int32_t offset)
 {
-	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-	int offset, gain;
 	int64_t hwval;
 
-	hwval = uval * 0x8000LL / 5000000;
+	hwval = offset * 0x8000LL / 5000000;
 	if (hwval == 0x8000)
 		hwval = 0x7fff; /* -32768 .. 32767 */
+	return hwval;
+}
 
-	offset = fa->calib.dac[range].offset[chan->index];
-	gain = fa->calib.dac[range].gain[chan->index];
+static int64_t fa_dac_offset_raw_calibrate(int32_t raw_offset,
+					   int gain, int offset)
+{
+	int64_t hwval;
 
-	hwval = ((hwval + offset) * gain) >> 15; /* signed */
-	hwval += 0x8000; /* offset binary */
+	hwval = ((raw_offset + offset) * gain) >> 15; /* signed */
+        hwval += 0x8000; /* offset binary */
 	if (hwval < 0)
 		hwval = 0;
 	if (hwval > 0xffff)
@@ -216,6 +216,8 @@ int zfad_apply_offset(struct zio_channel *chan)
 {
 	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
 	int32_t off_uv = fa_dac_offset_get(fa, chan->index);
+	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
+	struct fa_calib_stanza *cal;
 	int hwval;
 	int range;
 
@@ -223,7 +225,11 @@ int zfad_apply_offset(struct zio_channel *chan)
 	range = fa->range[chan->index];
 	spin_unlock(&fa->zdev->cset->lock);
 
-	hwval = zfad_offset_to_dac(chan, off_uv, range);
+        cal = &fa->calib.dac[range];
+	hwval = fa_dac_offset_raw_calibrate(off_uv_raw,
+					    cal->gain[chan->index],
+					    cal->offset[chan->index]);
+
 	return zfad_dac_set(chan, hwval);
 }
 
