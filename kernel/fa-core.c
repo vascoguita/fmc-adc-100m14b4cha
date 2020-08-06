@@ -39,6 +39,22 @@ struct workqueue_struct *fa_workqueue;
 
 
 /**
+ * Read FMC mezzanine temperature
+ * @fa: the adc descriptor
+ *
+ * DS18B20 returns units of 1/16 degree. We return units
+ * of 1/1000 of a degree instead.
+ */
+uint32_t fa_temperature_read(struct fa_dev *fa)
+{
+	uint32_t raw_temp;
+
+	raw_temp = fa_readl(fa, fa->fa_ow_base, &zfad_regs[ZFA_DS18B20_TEMP]);
+
+	return (raw_temp * 1000 + 8) / 16;
+}
+
+/**
  * Description:
  *    The version from the Linux kernel automatically squash contiguous pages.
  *    Sometimes we do not want to squash (e.g. SVEC)

@@ -372,13 +372,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
-		/*
-		 * DS18B20 returns units of 1/16 degree. We return units
-		 * of 1/1000 of a degree instead.
-		 */
-		*usr_val = fa_readl(fa, fa->fa_ow_base,
-				    &zfad_regs[ZFA_DS18B20_TEMP]);
-		*usr_val = (*usr_val * 1000 + 8) / 16;
+		*usr_val = fa_temperature_read(fa);
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;

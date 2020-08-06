@@ -603,6 +603,7 @@ extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 extern int zfad_apply_offset(struct zio_channel *chan);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
+extern uint32_t fa_temperature_read(struct fa_dev *fa);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);
