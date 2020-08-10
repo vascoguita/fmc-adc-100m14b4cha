@@ -21,7 +21,7 @@ module_param_named(calib_s, fa_calib_period_s, int, 0444);
 static const struct fa_calib_stanza fa_identity_calib = {
 	.offset = { 0, },
 	.gain = {0x8000, 0x8000, 0x8000, 0x8000},
-	.temperature = 50 * 100, /* 50 celsius degrees */
+	.temperature = 50 * 1000, /* 50 celsius degrees */
 };
 
 /* Max difference from identity thing */
