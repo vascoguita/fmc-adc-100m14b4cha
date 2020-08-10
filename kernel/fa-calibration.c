@@ -68,12 +68,14 @@ static void fa_calib_offset_set(struct fa_dev *fa, unsigned int chan, int val)
  *   10V  0.0012500
  *    1V -0.0000233
  * 100mV -0.0000163
- * To do integer math I store the value multiplied by 10000000
+ *
+ * Multiply by 0x8000 to have the same range as the calibration data.
+ * To do integer math we also multiply by 0x2000.
  */
-static const int gain_adc_error_slope_fix[] = {
-	[FA100M14B4C_RANGE_10V] = 12500,
-	[FA100M14B4C_RANGE_1V] = -233,
-	[FA100M14B4C_RANGE_100mV] = -163,
+static const int64_t gain_adc_error_slope_fix[] = {
+	[FA100M14B4C_RANGE_10V] = 335544,
+	[FA100M14B4C_RANGE_1V] = -6255,
+	[FA100M14B4C_RANGE_100mV] = -4375,
 };
 
 /**
@@ -83,29 +85,30 @@ static const int gain_adc_error_slope_fix[] = {
  * @delta_temp: temperature difference: (current temp. - calibration temp.)
  *              the unit must be milli-degree
  */
-static int fa_calib_adc_gain_fix(int range, int gain_c, int32_t delta_temp)
+static int fa_calib_adc_gain_fix(int range, int32_t gain_c,
+				 int32_t delta_temp)
 {
-	int error;
+	int64_t error;
 
 	error = gain_adc_error_slope_fix[range] * delta_temp;
-
-	error /= 10000000; /* the slope was multiplied by 10000000 */
-	error /= 1000; /* the temperature is in milli-degree */
+	error /= 0x2000; /* see comment above for gain_adc_error_slope_fix */
+	error /= 1000; /* convert to degree */
 
 	return gain_c - error;
 }
 
 /*
  * Empirical values for the gain error slope
- *   10V  0.0012500
- *    1V -0.0000233
- * 100mV -0.0000163
- * To do integer math I store the value multiplied by 100000000
+ *   10V  0.00017100
+ *    1V -0.00000349
+ * 100mV  0.00001540
+ * Multiply by 0x8000 to have the same range as the calibration data.
+ * To do integer math we also multiply by 0x2000.
  */
-static const int gain_dac_error_slope_fix[] = {
-	[FA100M14B4C_RANGE_10V] = 17100,
-	[FA100M14B4C_RANGE_1V] = -349,
-	[FA100M14B4C_RANGE_100mV] = 1540,
+static const int64_t gain_dac_error_slope_fix[] = {
+	[FA100M14B4C_RANGE_10V] = 459025,
+	[FA100M14B4C_RANGE_1V] = -937,
+	[FA100M14B4C_RANGE_100mV] = 4134,
 };
 
 /**
@@ -115,14 +118,14 @@ static const int gain_dac_error_slope_fix[] = {
  * @delta_temp: temperature difference: (current temp. - calibration temp.)
  *              the unit must be milli-degree
  */
-static int fa_calib_dac_gain_fix(int range, int gain_c, int32_t delta_temp)
+static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
+				 int32_t delta_temp)
 {
-	int error;
+        int64_t error;
 
 	error = gain_adc_error_slope_fix[range] * delta_temp;
-
-	error /= 100000000; /* the slope was multiplied by 100000000 */
-	error /= 1000; /* the temperature is in milli-degree */
+	error /= 0x2000; /* see comment above for gain_dac_error_slope_fix */
+	error /= 1000; /* convert to degree */
 
 	return gain_c - error;
 }
