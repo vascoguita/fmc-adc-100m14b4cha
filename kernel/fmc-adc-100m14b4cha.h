@@ -605,7 +605,7 @@ extern const struct zfa_field_desc zfad_regs[];
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
-extern uint32_t fa_temperature_read(struct fa_dev *fa);
+extern int32_t fa_temperature_read(struct fa_dev *fa);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);
@@ -646,7 +646,7 @@ extern void fa_spi_exit(struct fa_dev *fd);
 extern int fa_calib_init(struct fa_dev *fa);
 extern void fa_calib_exit(struct fa_dev *fa);
 extern void fa_calib_config(struct fa_dev *fa);
-extern void fa_calib_dac_config(struct fa_dev *fa, uint32_t temperature);
+extern void fa_calib_dac_config(struct fa_dev *fa, int32_t temperature);
 
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);

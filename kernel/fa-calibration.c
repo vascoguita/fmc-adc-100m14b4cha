@@ -128,7 +128,7 @@ static int fa_calib_dac_gain_fix(int range, int gain_c, int32_t delta_temp)
 }
 
 static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
-				     uint32_t temperature)
+				     int32_t temperature)
 {
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.adc[range];
@@ -202,7 +202,7 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
 }
 
 static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
-				    uint32_t temperature)
+				    int32_t temperature)
 {
 	int range = fa->range[chan];
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
@@ -220,7 +220,7 @@ static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
         return  fa_dac_offset_set(fa, chan, hwval);
 }
 
-void fa_calib_dac_config(struct fa_dev *fa, uint32_t temperature)
+void fa_calib_dac_config(struct fa_dev *fa, int32_t temperature)
 {
 	int i;
 
@@ -235,7 +235,7 @@ void fa_calib_dac_config(struct fa_dev *fa, uint32_t temperature)
 	spin_unlock(&fa->zdev->cset->lock);
 }
 
-static void fa_calib_adc_config(struct fa_dev *fa, uint32_t temperature)
+static void fa_calib_adc_config(struct fa_dev *fa, int32_t temperature)
 {
 	int err;
 	int i;
@@ -257,7 +257,7 @@ static void fa_calib_adc_config(struct fa_dev *fa, uint32_t temperature)
 
 void fa_calib_config(struct fa_dev *fa)
 {
-	uint32_t temperature;
+	int32_t temperature;
 
 	temperature = fa_temperature_read(fa);
 	fa_calib_adc_config(fa, temperature);
