@@ -27,7 +27,7 @@ static const struct fa_calib_stanza fa_identity_calib = {
 /* Max difference from identity thing */
 #define FA_CALIB_MAX_DELTA_OFFSET	0x1000
 #define FA_CALIB_MAX_DELTA_GAIN		0x1000
-#define FA_CALIB_MAX_DELTA_TEMP		(40 * 100) /* 10-90 celsius */
+#define FA_CALIB_MAX_DELTA_TEMP		(40 * 1000) /* 10-90 celsius */
 
 static bool fa_calib_is_busy(struct fa_dev *fa)
 {
