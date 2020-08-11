@@ -55,6 +55,34 @@ int32_t fa_temperature_read(struct fa_dev *fa)
 }
 
 /**
+ * Do a software trigger
+ * @fa: the adc descriptor
+ *
+ * Return: 0 on success, otherwise a negative error number
+ */
+int fa_trigger_software(struct fa_dev *fa)
+{
+	struct zio_ti *ti = fa->zdev->cset->ti;
+
+	/* Fire if software trigger is enabled (index 5) */
+	if (!(ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value &
+	      FA100M14B4C_TRG_SRC_SW)) {
+		dev_info(&fa->pdev->dev, "sw trigger is not enabled\n");
+		return -EPERM;
+	}
+
+        /* Fire if nsamples!=0 */
+	if (!ti->nsamples) {
+		dev_info(&fa->pdev->dev, "pre + post = 0: cannot acquire\n");
+		return -EINVAL;
+	}
+
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SW], 1);
+
+        return 0;
+}
+
+/**
  * Description:
  *    The version from the Linux kernel automatically squash contiguous pages.
  *    Sometimes we do not want to squash (e.g. SVEC)

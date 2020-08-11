@@ -98,10 +98,6 @@ static struct zio_attribute zfat_ext_zattr[] = {
 	[FA100M14B4C_TATTR_EXT_DLY] = ZIO_ATTR_EXT("ext-delay", ZIO_RW_PERM,
 							ZFAT_EXT_DLY, 0),
 
-	/* Software Trigger */
-	[FA100M14B4C_TATTR_SW_FIRE] = ZIO_PARAM_EXT("sw-trg-fire", ZIO_WO_PERM,
-							ZFAT_SW, 0),
-
 	/* last trigger time stamp */
 	[FA100M14B4C_TATTR_TRG_SU] = ZIO_PARAM_EXT("tstamp-trg-lst-su",
 						   ZIO_RO_PERM,
@@ -133,7 +129,6 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	struct zio_ti *ti = to_zio_ti(dev);
 	void *baseoff = fa->fa_adc_csr_base;
 	uint32_t tmp_val = usr_val;
 
@@ -154,24 +149,6 @@ static int zfat_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EINVAL;
 		}
 		tmp_val--;  /* Remove one sample for the trigger */
-		break;
-	case ZFAT_SW:
-		/* Fire if software trigger is enabled (index 5) */
-		if (!(ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value &
-		      FA100M14B4C_TRG_SRC_SW)) {
-			dev_info(fa->msgdev, "sw trigger is not enabled\n");
-			return -EPERM;
-		}
-		/* Fire if nsamples!=0 */
-		if (!ti->nsamples) {
-			dev_info(fa->msgdev, "pre + post = 0: cannot acquire\n");
-			return -EINVAL;
-		}
-		/*
-		 * The software trigger will be fired to force
-		 * acquisition, so we don't care about current
-		 * acquisition or other problems:
-		 */
 		break;
 	case ZFAT_CFG_SRC:
 		/*

@@ -72,7 +72,6 @@ enum fa100m14b4c_trg_ext_attr {
 	FA100M14B4C_TATTR_TRG_TIM_C,
 
 #ifdef __KERNEL__
-	FA100M14B4C_TATTR_SW_FIRE,
 	FA100M14B4C_TATTR_TRG_SU,
 	FA100M14B4C_TATTR_TRG_SL,
 	FA100M14B4C_TATTR_TRG_C,
@@ -462,6 +461,7 @@ struct fa_dev {
 	struct debugfs_regset32 dbg_reg32;
 	struct dentry *dbg_reg;
 	struct dentry *dbg_reg_spi;
+	struct dentry *dbg_trg_sw;
 
 	/* Operations */
 	int (*sg_alloc_table_from_pages)(struct sg_table *sgt,
@@ -606,6 +606,7 @@ extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int32_t fa_temperature_read(struct fa_dev *fa);
+extern int fa_trigger_software(struct fa_dev *fa);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);

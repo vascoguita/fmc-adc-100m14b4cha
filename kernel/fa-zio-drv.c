@@ -474,6 +474,7 @@ static inline int zfat_overflow_detection(struct zio_ti *ti)
 static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 {
 	struct zfad_block *tmp;
+	int err;
 
 	tmp = kzalloc(sizeof(struct zfad_block), GFP_ATOMIC);
 	if (!tmp)
@@ -489,7 +490,9 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 
 	fa->n_shots = 1;
 	/* Fire software trigger */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SW], 1);
+	err = fa_trigger_software(fa);
+	if (err)
+		return err;
 
 	return -EAGAIN;
 }

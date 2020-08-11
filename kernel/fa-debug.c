@@ -163,6 +163,24 @@ static const struct file_operations fa_regdump_ops = {
 };
 
 
+static ssize_t fa_trg_sw_write(struct file *file, const char __user *buf,
+                               size_t count, loff_t *ppos)
+{
+	struct fa_dev *fa = file->private_data;
+	int err;
+
+	err = fa_trigger_software(fa);
+
+	return err ? err : count;
+}
+
+static const struct file_operations fa_trg_sw_ops = {
+	.owner = THIS_MODULE,
+	.open = simple_open,
+	.write = fa_trg_sw_write,
+};
+
+
 int fa_debug_init(struct fa_dev *fa)
 {
 	int err;
@@ -194,6 +212,14 @@ int fa_debug_init(struct fa_dev *fa)
 	if (IS_ERR_OR_NULL(fa->dbg_reg_spi)) {
 		dev_warn(fa->msgdev,
 			"Cannot create regdump debugfs file\n");
+	}
+
+	fa->dbg_trg_sw = debugfs_create_file("trigger_software", 0200,
+					      fa->dbg_dir, fa,
+					      &fa_trg_sw_ops);
+	if (IS_ERR_OR_NULL(fa->dbg_trg_sw)) {
+		dev_warn(&fa->pdev->dev,
+			"Cannot create software trigger file\n");
 	}
 
 	return 0;
