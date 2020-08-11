@@ -45,7 +45,7 @@ struct workqueue_struct *fa_workqueue;
  * DS18B20 returns units of 1/16 degree. We return units
  * of 1/1000 of a degree instead.
  */
-uint32_t fa_temperature_read(struct fa_dev *fa)
+int32_t fa_temperature_read(struct fa_dev *fa)
 {
 	uint32_t raw_temp;
 
