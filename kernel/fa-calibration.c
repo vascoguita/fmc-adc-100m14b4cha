@@ -123,7 +123,7 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 {
         int64_t error;
 
-	error = gain_adc_error_slope_fix[range] * delta_temp;
+	error = gain_dac_error_slope_fix[range] * delta_temp;
 	error /= 0x2000; /* see comment above for gain_dac_error_slope_fix */
 	error /= 1000; /* convert to degree */
 
