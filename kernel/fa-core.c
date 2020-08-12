@@ -281,6 +281,12 @@ int fa_fsm_wait_state(struct fa_dev *fa,
         return 0;
 }
 
+static void fa_fpga_data_pattern_set(struct fa_dev *fa, unsigned int enable)
+{
+	fa_writel(fa, fa->fa_adc_csr_base,
+		  &zfad_regs[ZFA_CTL_TEST_DATA_EN], enable);
+}
+
 /*
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor
@@ -412,8 +418,7 @@ static int __fa_init(struct fa_dev *fa)
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
-		  fa_enable_test_data_fpga);
+	fa_fpga_data_pattern_set(fa, fa_enable_test_data_fpga);
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
