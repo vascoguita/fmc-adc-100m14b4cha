@@ -611,8 +611,8 @@ extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int32_t fa_temperature_read(struct fa_dev *fa);
 extern int fa_trigger_software(struct fa_dev *fa);
 extern int fa_fsm_wait_state(struct fa_dev *fa,
-			     enum fa100m14b4c_fsm_state state,
-			     unsigned int timeout_us);
+                             enum fa100m14b4c_fsm_state state,
+                             unsigned int timeout_us);
 extern int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 				   unsigned int enable);
 
