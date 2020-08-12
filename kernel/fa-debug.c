@@ -180,6 +180,58 @@ static const struct file_operations fa_trg_sw_ops = {
 	.write = fa_trg_sw_write,
 };
 
+#define FA_ADC_DATA_PATTERN_CMD_SIZE 16UL
+static int fa_data_pattern_adc_write(struct fa_dev *fa, const char __user *buf,
+				     size_t count)
+{
+	char buf_l[FA_ADC_DATA_PATTERN_CMD_SIZE];
+	int err;
+
+	memset(buf_l, 0, FA_ADC_DATA_PATTERN_CMD_SIZE);
+	err = copy_from_user(buf_l, buf, min(count,
+					     FA_ADC_DATA_PATTERN_CMD_SIZE));
+	if (err)
+		return -EFAULT;
+
+	if ((count == 1 || count == 2)&& buf_l[0] == '0') {
+		fa_calib_init(fa);
+		return fa_adc_data_pattern_set(fa, 0, 0);
+	} else if (count > 2 && buf_l[0] == '1' && buf_l[1] == ' ') {
+		uint16_t pattern = 0;
+
+		err = kstrtou16(buf_l + 2, 0, &pattern);
+		if (err)
+			return err;
+		fa_calib_exit(fa);
+		pattern &= 0xFFF;
+		return fa_adc_data_pattern_set(fa, pattern, 1);
+	} else {
+		return -EINVAL;
+	}
+}
+
+static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
+				     size_t count, loff_t *ppos)
+{
+	struct fa_dev *fa = file->private_data;
+
+	if (strncmp(buf, "adc ", 4) == 0) {
+		int err;
+
+		err = fa_data_pattern_adc_write(fa, buf + 4, count - 4);
+
+		return err ? err : count;
+	} else {
+		dev_err(&fa->pdev->dev, "Unknown command \"%s\"\n", buf);
+		return -EINVAL;
+	}
+}
+
+static const struct file_operations fa_data_pattern_ops = {
+	.owner = THIS_MODULE,
+	.open = simple_open,
+	.write = fa_data_pattern_write,
+};
 
 int fa_debug_init(struct fa_dev *fa)
 {
@@ -220,6 +272,14 @@ int fa_debug_init(struct fa_dev *fa)
 	if (IS_ERR_OR_NULL(fa->dbg_trg_sw)) {
 		dev_warn(&fa->pdev->dev,
 			"Cannot create software trigger file\n");
+	}
+
+	fa->dbg_data_pattern = debugfs_create_file("data_pattern", 0200,
+					      fa->dbg_dir, fa,
+					      &fa_data_pattern_ops);
+	if (IS_ERR_OR_NULL(fa->dbg_data_pattern)) {
+		dev_warn(&fa->pdev->dev,
+			"Cannot create ADC data pattern file\n");
 	}
 
 	return 0;

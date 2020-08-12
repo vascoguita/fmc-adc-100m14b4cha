@@ -18,8 +18,6 @@
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
-int fa_enable_test_data_adc = 0;
-module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
 
 #define FA_EEPROM_TYPE "at24c64"
 
@@ -154,36 +152,6 @@ int zfad_get_chx_index(unsigned long addr, unsigned int chan)
 }
 
 
-/**
- * It enables or disables the pattern data on the ADC
- * @fa The ADC device instance
- * @pattern the pattern data to get from the ADC
- * @enable 0 to disable, 1 to enable
- */
-int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
-			     unsigned int enable)
-{
-	uint32_t frame_tx;
-	int err;
-
-	frame_tx  = 0x0000; /* write mode */
-	frame_tx |= 0x0400; /* A4 pattern */
-	frame_tx |= pattern & 0xFF; /* LSB pattern */
-	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
-	if (err)
-		return err;
-
-	frame_tx  = 0x0000; /* write mode */
-	frame_tx |= 0x0300; /* A3 pattern + enable */
-	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
-	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
-	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
-	if (err)
-		return err;
-
-	return 0;
-}
-
 /*
  * zfad_reset_offset
  * @fa: the fmc-adc descriptor
@@ -234,7 +202,8 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
+	if (range == FA100M14B4C_RANGE_OPEN ||
+	    (fa->flags & FA_DEV_F_PATTERN_DATA))
 		range = FA100M14B4C_RANGE_1V;
 	else if (range >= FA100M14B4C_RANGE_10V_CAL)
 		range -= FA100M14B4C_RANGE_10V_CAL;
@@ -285,6 +254,46 @@ static void fa_fpga_data_pattern_set(struct fa_dev *fa, unsigned int enable)
 {
 	fa_writel(fa, fa->fa_adc_csr_base,
 		  &zfad_regs[ZFA_CTL_TEST_DATA_EN], enable);
+}
+
+/**
+ * It enables or disables the pattern data on the ADC
+ * @fa The ADC device instance
+ * @pattern the pattern data to get from the ADC
+ * @enable 0 to disable, 1 to enable
+ */
+int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
+			    unsigned int enable)
+{
+	uint32_t frame_tx;
+	int err;
+
+	dev_dbg(&fa->pdev->dev, "%s {patter: 0x%04x, enable: %d}\n", __func__, pattern, enable);
+
+        spin_lock(&fa->zdev->cset->lock);
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0400; /* A4 pattern */
+	frame_tx |= pattern & 0xFF; /* LSB pattern */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		goto err;
+
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0300; /* A3 pattern + enable */
+	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
+	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		goto err;
+
+
+	if (enable)
+		fa->flags |= FA_DEV_F_PATTERN_DATA;
+	else
+		fa->flags &= ~FA_DEV_F_PATTERN_DATA;
+err:
+	spin_unlock(&fa->zdev->cset->lock);
+	return err;
 }
 
 /*
@@ -419,6 +428,8 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
 	fa_fpga_data_pattern_set(fa, fa_enable_test_data_fpga);
+	/* disable test pattern data in the ADC */
+	fa_adc_data_pattern_set(fa, 0, 0);
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);

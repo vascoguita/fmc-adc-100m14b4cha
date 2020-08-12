@@ -137,8 +137,10 @@ static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	struct fa_calib_stanza *cal = &fa->calib.adc[range];
 	int32_t delta_temp = temperature - cal->temperature;
 	int offset = cal->offset[chan];
-	int gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
-					 delta_temp);
+	int gain = cal->gain[chan];
+
+	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
+		gain = fa_calib_adc_gain_fix(range, gain, delta_temp);
 
 	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
 		__func__, chan, range, gain, offset);
@@ -213,8 +215,11 @@ static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int32_t delta_temp = temperature - cal->temperature;
 	int offset = cal->offset[chan];
-	int gain = fa_calib_dac_gain_fix(range, cal->gain[chan], delta_temp);
+	int gain = cal->gain[chan];
 	int hwval;
+
+	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
+		gain = fa_calib_dac_gain_fix(range, gain, delta_temp);
 
 	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
 		__func__, chan, range, gain, offset);
@@ -479,4 +484,5 @@ out:
 void fa_calib_exit(struct fa_dev *fa)
 {
 	del_timer_sync(&fa->calib_timer);
+	fa_identity_calib_set(&fa->calib);
 }

@@ -177,8 +177,6 @@ struct fa_calib {
 #define DAC_SAT_LOW -5000000
 #define DAC_SAT_UP 5000000
 
-extern int fa_enable_test_data_adc;
-
 #define ADC_DMA 0
 
 enum fa_irq_resource {
@@ -247,8 +245,6 @@ enum zfadc_dregs_enum {
 	ZFAT_POST,
 	/* Sample counter */
 	ZFAT_CNT,
-	/* Pattern data for the ADC chip */
-	ZFAT_ADC_TST_PATTERN,
 	/* start:declaration block requiring some order */
 	/* Channel 1 */
 	ZFA_CH1_CTL_RANGE,
@@ -386,6 +382,11 @@ enum fa_irq_adc {
 struct fa_dev; /* forward declaration */
 
 /*
+ * Flag bit set when the ADC uses pattern data
+ */
+#define FA_DEV_F_PATTERN_DATA BIT(0)
+
+/*
  * fa_dev: is the descriptor of the FMC ADC mezzanine
  *
  * @pdev: the pointer to the fmc_device generic structure
@@ -401,6 +402,7 @@ struct fa_dev; /* forward declaration */
  * @zero_offset: necessary offset to push the channel to zero (micro-Volts)
  */
 struct fa_dev {
+	unsigned long flags;
 	struct device *msgdev; /**< device used to print messages */
 	/* the pointer to the platform_device generic structure */
 	struct platform_device	*pdev;
@@ -462,6 +464,7 @@ struct fa_dev {
 	struct dentry *dbg_reg;
 	struct dentry *dbg_reg_spi;
 	struct dentry *dbg_trg_sw;
+	struct dentry *dbg_data_pattern;
 
 	/* Operations */
 	int (*sg_alloc_table_from_pages)(struct sg_table *sgt,
@@ -610,14 +613,14 @@ extern int fa_trigger_software(struct fa_dev *fa);
 extern int fa_fsm_wait_state(struct fa_dev *fa,
 			     enum fa100m14b4c_fsm_state state,
 			     unsigned int timeout_us);
+extern int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
+				   unsigned int enable);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);
 extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 			  int range);
 extern int zfad_get_chx_index(unsigned long addr, unsigned int chan);
-extern int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
-				    unsigned int enable);
 
 /* Function exported by fa-dma.c */
 extern void fa_irq_work(struct work_struct *work);
