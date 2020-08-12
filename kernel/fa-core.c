@@ -241,6 +241,34 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	return 0;
 }
 
+static enum fa100m14b4c_fsm_state fa_fsm_get_state(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_STA_FSM]);
+}
+
+static bool fa_fsm_is_state(struct fa_dev *fa,
+			    enum fa100m14b4c_fsm_state state)
+{
+	return fa_fsm_get_state(fa) == state;
+}
+
+int fa_fsm_wait_state(struct fa_dev *fa,
+		      enum fa100m14b4c_fsm_state state,
+		      unsigned int timeout_us)
+{
+	unsigned long timeout;
+
+	timeout = jiffies + usecs_to_jiffies(timeout_us);
+	while (!fa_fsm_is_state(fa, state)) {
+		cpu_relax();
+
+		if (time_after(jiffies, timeout))
+			return -ETIMEDOUT;
+	}
+
+        return 0;
+}
+
 /*
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor

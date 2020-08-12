@@ -607,6 +607,9 @@ extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int32_t fa_temperature_read(struct fa_dev *fa);
 extern int fa_trigger_software(struct fa_dev *fa);
+extern int fa_fsm_wait_state(struct fa_dev *fa,
+			     enum fa100m14b4c_fsm_state state,
+			     unsigned int timeout_us);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);

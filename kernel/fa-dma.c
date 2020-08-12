@@ -86,30 +86,6 @@ static uint32_t zfad_dev_mem_offset(struct zio_cset *cset)
 	return dev_mem_off;
 }
 
-/**
- * zfad_wait_idle
- * @cset: ZIO channel set
- * @try: how many times poll for IDLE
- * @udelay: us between two consecutive delay
- *
- * @return: it returns 0 on success. If the IDLE status never comes, then it returns
- * the status value
- */
-static int zfad_wait_idle(struct zio_cset *cset, unsigned int try,
-			  unsigned int udelay)
-{
-	struct fa_dev *fa = cset->zdev->priv_d;
-	uint32_t val = 0;
-
-	while (try-- && val != FA100M14B4C_STATE_IDLE) {
-		udelay(udelay);
-		val = fa_readl(fa, fa->fa_adc_csr_base,
-			       &zfad_regs[ZFA_STA_FSM]);
-	}
-
-	return val != FA100M14B4C_STATE_IDLE ? val : 0;
-}
-
 static unsigned int zfad_block_n_pages(struct zio_block *block)
 {
 	unsigned int nr_pages;
@@ -416,7 +392,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	}
 	dma_dev_id = r->start;
 
-	err = zfad_wait_idle(cset, 5, 1);
+	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
 	if (err) {
 		dev_warn(fa->msgdev,
 			 "Can't start DMA on the last acquisition, "
