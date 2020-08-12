@@ -63,6 +63,9 @@ int32_t fa_temperature_read(struct fa_dev *fa)
 int fa_trigger_software(struct fa_dev *fa)
 {
 	struct zio_ti *ti = fa->zdev->cset->ti;
+	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
+	unsigned int timeout;
+	int err;
 
 	/* Fire if software trigger is enabled (index 5) */
 	if (!(ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value &
@@ -77,9 +80,18 @@ int fa_trigger_software(struct fa_dev *fa)
 		return -EINVAL;
 	}
 
+        /*
+	 * We can do a software trigger if the FSM is not in
+	 * the WAIT trigger status. Wait for it.
+	 * Remember that: timeout is in us, a sample takes 10ns
+	 */
+	timeout = ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value / 10;
+	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_WAIT, timeout);
+	if (err)
+		return err;
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SW], 1);
 
-        return 0;
+	return 0;
 }
 
 /**
