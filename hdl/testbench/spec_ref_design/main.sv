@@ -279,6 +279,8 @@ module main;
       $display("<%t> START ACQ 1/4", $realtime);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM start
 
+      wait (DUT.cmp_fmc_adc_mezzanine.cmp_fmc_adc_100Ms_core.acq_in_wait_trig == 1);
+
       #200ns;
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SW_TRIG, 'hFFFFFFFF); // soft trigger
