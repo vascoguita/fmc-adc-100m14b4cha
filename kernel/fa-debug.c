@@ -194,8 +194,9 @@ static int fa_data_pattern_adc_write(struct fa_dev *fa, const char __user *buf,
 		return -EFAULT;
 
 	if ((count == 1 || count == 2)&& buf_l[0] == '0') {
+		err = fa_adc_data_pattern_set(fa, 0, 0);
 		fa_calib_init(fa);
-		return fa_adc_data_pattern_set(fa, 0, 0);
+		return err;
 	} else if (count > 2 && buf_l[0] == '1' && buf_l[1] == ' ') {
 		uint16_t pattern = 0;
 
