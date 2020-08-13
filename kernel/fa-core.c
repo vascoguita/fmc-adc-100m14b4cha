@@ -294,6 +294,34 @@ err:
 	return err;
 }
 
+/**
+ * Get current status for data pattern
+ * @fa The ADC device instance
+ * @pattern the pattern data to get from the ADC
+ * @enable 0 to disable, 1 to enable
+ */
+int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
+                            unsigned int *enable)
+{
+	uint32_t tx, rx;
+	int err;
+
+	tx = 0x8000 | (3 << 8);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
+	if (err)
+		return err;
+	*enable = !!(rx & 0x80);
+	*pattern = ((rx & 0xF) << 8);
+
+	tx = 0x8000 | (4 << 8);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
+	if (err)
+		return err;
+	*pattern |= (rx & 0xFF);
+
+	return 0;
+}
+
 /*
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor

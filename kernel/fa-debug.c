@@ -227,10 +227,34 @@ static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
 	}
 }
 
+static ssize_t fa_data_pattern_read(struct file *file, char __user *buf,
+				     size_t count, loff_t *ppos)
+{
+	struct fa_dev *fa = file->private_data;
+	char buf_l[FA_ADC_DATA_PATTERN_CMD_SIZE];
+	uint16_t pattern;
+	unsigned int enable;
+	int err;
+
+        if (*ppos > 0)
+		return 0;
+
+        err = fa_adc_data_pattern_get(fa, &pattern, &enable);
+	if (err)
+		return err;
+	snprintf(buf_l, FA_ADC_DATA_PATTERN_CMD_SIZE, "adc %d 0x%02x\n",
+		 enable, pattern);
+	count = min(count, strlen(buf_l));
+	err = copy_to_user(buf, buf_l, count);
+	*ppos += count;
+	return err ? err : count;
+}
+
 static const struct file_operations fa_data_pattern_ops = {
 	.owner = THIS_MODULE,
 	.open = simple_open,
 	.write = fa_data_pattern_write,
+	.read = fa_data_pattern_read,
 };
 
 int fa_debug_init(struct fa_dev *fa)
@@ -274,7 +298,7 @@ int fa_debug_init(struct fa_dev *fa)
 			"Cannot create software trigger file\n");
 	}
 
-	fa->dbg_data_pattern = debugfs_create_file("data_pattern", 0200,
+	fa->dbg_data_pattern = debugfs_create_file("data_pattern", 0644,
 					      fa->dbg_dir, fa,
 					      &fa_data_pattern_ops);
 	if (IS_ERR_OR_NULL(fa->dbg_data_pattern)) {

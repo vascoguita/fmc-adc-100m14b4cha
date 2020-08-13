@@ -614,7 +614,9 @@ extern int fa_fsm_wait_state(struct fa_dev *fa,
                              enum fa100m14b4c_fsm_state state,
                              unsigned int timeout_us);
 extern int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
-				   unsigned int enable);
+                                   unsigned int enable);
+extern int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
+				   unsigned int *enable);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);
