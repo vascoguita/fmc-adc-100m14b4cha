@@ -130,8 +130,8 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 	return gain_c - error;
 }
 
-static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
-				     int32_t temperature)
+void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
+			      int32_t temperature)
 {
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.adc[range];
@@ -139,6 +139,8 @@ static void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	int offset = cal->offset[chan];
 	int gain = cal->gain[chan];
 
+	if (temperature == 0xFFFFFFFF)
+		temperature = fa_temperature_read(fa);
 	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
 		gain = fa_calib_adc_gain_fix(range, gain, delta_temp);
 
@@ -206,8 +208,8 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
         return off_uv;
 }
 
-static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
-				    int32_t temperature)
+int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
+			     int32_t temperature)
 {
 	int range = fa->range[chan];
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
@@ -217,6 +219,9 @@ static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	int offset = cal->offset[chan];
 	int gain = cal->gain[chan];
 	int hwval;
+
+	if (temperature == 0xFFFFFFFF)
+		temperature = fa_temperature_read(fa);
 
 	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
 		gain = fa_calib_dac_gain_fix(range, gain, delta_temp);
@@ -228,12 +233,10 @@ static int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
         return  fa_dac_offset_set(fa, chan, hwval);
 }
 
-void fa_calib_dac_config(struct fa_dev *fa, int32_t temperature)
+static void fa_calib_dac_config(struct fa_dev *fa, int32_t temperature)
 {
 	int i;
 
-	if (temperature == 0xFFFFFFFF)
-	    temperature = fa_temperature_read(fa);
 	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n",
 		__func__, temperature);
 
@@ -248,8 +251,6 @@ static void fa_calib_adc_config(struct fa_dev *fa, int32_t temperature)
 	int err;
 	int i;
 
-	if (temperature == 0xFFFFFFFF)
-	    temperature = fa_temperature_read(fa);
 	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n",
 		__func__, temperature);
 

@@ -165,8 +165,8 @@ void zfad_reset_offset(struct fa_dev *fa)
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
 		fa->user_offset[i] = 0;
 		fa->zero_offset[i] = 0;
+		fa_calib_dac_config_chan(fa, i, ~0);
 	}
-	fa_calib_dac_config(fa, ~0);
 }
 
 /*
