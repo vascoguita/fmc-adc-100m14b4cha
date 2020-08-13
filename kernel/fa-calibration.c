@@ -155,8 +155,9 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 					     temperature - cal->temperature);
 
 	dev_dbg(&fa->pdev->dev,
-		"%s: {temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, temperature, chan, range, gain, cal->offset[chan]);
+		"%s: {calib-temperatur: %d, temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, cal->temperature, temperature,
+		chan, range, gain, cal->offset[chan]);
 
 	fa_calib_gain_set(fa, chan, gain);
 	fa_calib_offset_set(fa, chan, cal->offset[chan]);
@@ -250,8 +251,9 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 					     temperature - cal->temperature);
 
 	dev_dbg(&fa->pdev->dev,
-		"%s: {temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, temperature, chan, range, gain, cal->offset[chan]);
+		"%s: {calib-temperatur: %d, temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, cal->temperature, temperature,
+		chan, range, gain, cal->offset[chan]);
 	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain,
 					    cal->offset[chan]);
 
