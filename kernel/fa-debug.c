@@ -203,9 +203,9 @@ static int fa_data_pattern_adc_write(struct fa_dev *fa, const char __user *buf,
 		err = kstrtou16(buf_l + 2, 0, &pattern);
 		if (err)
 			return err;
+		err = fa_adc_data_pattern_set(fa, pattern & 0xFFF, 1);
 		fa_calib_exit(fa);
-		pattern &= 0xFFF;
-		return fa_adc_data_pattern_set(fa, pattern, 1);
+		return err;
 	} else {
 		return -EINVAL;
 	}
