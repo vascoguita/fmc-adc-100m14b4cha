@@ -486,4 +486,5 @@ void fa_calib_exit(struct fa_dev *fa)
 {
 	del_timer_sync(&fa->calib_timer);
 	fa_identity_calib_set(&fa->calib);
+	fa_apply_calib(fa);
 }
