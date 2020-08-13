@@ -377,25 +377,6 @@ static void fa_identity_calib_set(struct fa_calib *calib)
 	fa_calib_le16_to_cpus(calib);
 }
 
-/**
- * Calculate calibrated values for offset and range using current values
- * @fa: FMC ADC device
- */
-static void fa_apply_calib(struct fa_dev *fa)
-{
-	int i;
-
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
-		struct zio_channel *chan = &fa->zdev->cset->chan[i];
-		int reg = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
-		int range = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg]);
-
-		fa_adc_range_set(fa, chan, zfad_convert_hw_range(range));
-		fa_calib_config(fa);
-	}
-}
-
-
 static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 {
 	int err;
@@ -408,7 +389,7 @@ static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 	} else {
 		memcpy(&fa->calib, calib, sizeof(*calib));
 	}
-	fa_apply_calib(fa);
+	fa_calib_config(fa);
 }
 
 static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
@@ -487,5 +468,5 @@ void fa_calib_exit(struct fa_dev *fa)
 {
 	del_timer_sync(&fa->calib_timer);
 	fa_identity_calib_set(&fa->calib);
-	fa_apply_calib(fa);
+	fa_calib_config(fa);
 }
