@@ -312,7 +312,7 @@ int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
 	if (err)
 		return err;
 	*enable = !!(rx & 0x80);
-	*pattern = ((rx & 0xF) << 8);
+	*pattern = ((rx & 0x3F) << 8);
 
 	tx = 0x8000 | (4 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
