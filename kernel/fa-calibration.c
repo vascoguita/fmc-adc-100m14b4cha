@@ -133,23 +133,33 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 			      int32_t temperature)
 {
-	int range = fa->range[chan];
-	struct fa_calib_stanza *cal = &fa->calib.adc[range];
-	int32_t delta_temp = temperature - cal->temperature;
-	int offset = cal->offset[chan];
-	int gain = cal->gain[chan];
+	struct fa_calib_stanza *cal;
+	int range;
+	int gain;
+	int err;
+
+	spin_lock(&fa->zdev->cset->lock);
+	range = fa->range[chan];
+	spin_unlock(&fa->zdev->cset->lock);
+	cal = &fa->calib.dac[range];
 
 	if (temperature == 0xFFFFFFFF)
 		temperature = fa_temperature_read(fa);
-	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
-		gain = fa_calib_adc_gain_fix(range, gain, delta_temp);
+	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
+		gain = cal->gain[chan];
+	else
+		gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
+					     temperature - cal->temperature);
 
 	dev_dbg(&fa->pdev->dev,
 		"%s: {temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, temperature, chan, range, gain, offset);
+		__func__, temperature, chan, range, gain, cal->offset[chan]);
 
 	fa_calib_gain_set(fa, chan, gain);
-	fa_calib_offset_set(fa, chan, offset);
+	fa_calib_offset_set(fa, chan, cal->offset[chan]);
+	err = fa_calib_apply(fa);
+	if (err)
+		dev_err(&fa->pdev->dev, "Can't apply calibration values\n");
 }
 
 /**
@@ -212,61 +222,46 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
 int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 			     int32_t temperature)
 {
-	int range = fa->range[chan];
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
 	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
-	struct fa_calib_stanza *cal = &fa->calib.dac[range];
-	int32_t delta_temp = temperature - cal->temperature;
-	int offset = cal->offset[chan];
-	int gain = cal->gain[chan];
+	struct fa_calib_stanza *cal;
+	int range;
+	int gain;
 	int hwval;
+
+	spin_lock(&fa->zdev->cset->lock);
+	range = fa->range[chan];
+	spin_unlock(&fa->zdev->cset->lock);
+	cal = &fa->calib.dac[range];
 
 	if (temperature == 0xFFFFFFFF)
 		temperature = fa_temperature_read(fa);
 
-	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
-		gain = fa_calib_dac_gain_fix(range, gain, delta_temp);
+	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
+		gain = cal->gain[chan];
+	else
+		gain = fa_calib_dac_gain_fix(range, cal->gain[chan],
+					     temperature - cal->temperature);
 
 	dev_dbg(&fa->pdev->dev,
 		"%s: {temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, temperature, chan, range, gain, offset);
-	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain, offset);
+		__func__, temperature, chan, range, gain, cal->offset[chan]);
+	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain,
+					    cal->offset[chan]);
 
         return  fa_dac_offset_set(fa, chan, hwval);
-}
-
-static void fa_calib_dac_config(struct fa_dev *fa, int32_t temperature)
-{
-	int i;
-
-	spin_lock(&fa->zdev->cset->lock);
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
-		fa_calib_dac_config_chan(fa, i, temperature);
-	spin_unlock(&fa->zdev->cset->lock);
-}
-
-static void fa_calib_adc_config(struct fa_dev *fa, int32_t temperature)
-{
-	int err;
-	int i;
-
-	spin_lock(&fa->zdev->cset->lock);
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
-		fa_calib_adc_config_chan(fa, i, temperature);
-	spin_unlock(&fa->zdev->cset->lock);
-
-        err = fa_calib_apply(fa);
-	if (err)
-		dev_err(&fa->pdev->dev, "Can't apply calibration values\n");
 }
 
 void fa_calib_config(struct fa_dev *fa)
 {
 	int32_t temperature;
+	int i;
 
-	temperature = fa_temperature_read(fa);
-	fa_calib_adc_config(fa, temperature);
-	fa_calib_dac_config(fa, temperature);
+        temperature = fa_temperature_read(fa);
+        for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
+		fa_calib_adc_config_chan(fa, i, temperature);
+		fa_calib_dac_config_chan(fa, i, temperature);
+	}
 }
 /**
  * Periodically update gain calibration values
