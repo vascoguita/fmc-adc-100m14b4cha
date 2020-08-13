@@ -176,7 +176,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	void *baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
-	int i, range, reg_index;
+	int i, range, reg_index, err;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
@@ -294,13 +294,21 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		range = zfad_convert_user_range(usr_val);
 		if (range < 0)
 			return range;
-		return zfad_set_range(fa, &to_zio_cset(dev)->chan[i], range);
+		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
+		if (err)
+			return err;
+		fa_calib_config(fa);
+		return 0;
 
 	case ZFA_CHx_CTL_RANGE:
 		range = zfad_convert_user_range(usr_val);
 		if (range < 0)
 			return range;
-		return zfad_set_range(fa, to_zio_chan(dev), range);
+		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
+		if (err)
+			return err;
+		fa_calib_config(fa);
+		return 0;
 
 	case ZFA_UTC_COARSE:
 		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {

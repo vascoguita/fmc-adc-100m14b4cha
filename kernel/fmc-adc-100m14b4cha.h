@@ -618,8 +618,8 @@ extern int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);
-extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
-			  int range);
+extern int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan,
+			    int range);
 extern int zfad_get_chx_index(unsigned long addr, unsigned int chan);
 
 /* Function exported by fa-dma.c */

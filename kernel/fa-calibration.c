@@ -389,7 +389,8 @@ static void fa_apply_calib(struct fa_dev *fa)
 		int reg = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 		int range = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[reg]);
 
-		zfad_set_range(fa, chan, zfad_convert_hw_range(range));
+		fa_adc_range_set(fa, chan, zfad_convert_hw_range(range));
+		fa_calib_config(fa);
 	}
 }
 

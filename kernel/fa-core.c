@@ -184,7 +184,7 @@ void zfad_init_saturation(struct fa_dev *fa)
 }
 
 /*
- * zfad_set_range
+ * fa_adc_range_set
  * @fa: the fmc-adc descriptor
  * @chan: the channel to calibrate
  * @usr_val: the volt range to set and calibrate
@@ -193,8 +193,7 @@ void zfad_init_saturation(struct fa_dev *fa)
  * Gain ad offsets must be corrected with offset and gain calibration value.
  * An open input and test data do not need any correction.
  */
-int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
-			  int range)
+int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan, int range)
 {
 	int i;
 
@@ -218,7 +217,6 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 	fa->range[chan->index] = range;
 	spin_unlock(&fa->zdev->cset->lock);
 
-	fa_calib_config(fa);
 	return 0;
 }
 
@@ -418,7 +416,9 @@ static int __fa_init(struct fa_dev *fa)
 					  zdev->cset->chan[i].index);
 		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
 			  FA100M14B4C_RANGE_1V);
-		zfad_set_range(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
+	        fa_adc_range_set(fa, &zdev->cset->chan[i],
+				 FA100M14B4C_RANGE_1V);
+		fa_calib_config(fa);
 	}
 	zfad_reset_offset(fa);
 
