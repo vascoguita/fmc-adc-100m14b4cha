@@ -144,8 +144,9 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
 		gain = fa_calib_adc_gain_fix(range, gain, delta_temp);
 
-	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, chan, range, gain, offset);
+	dev_dbg(&fa->pdev->dev,
+		"%s: {temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, temperature, chan, range, gain, offset);
 
 	fa_calib_gain_set(fa, chan, gain);
 	fa_calib_offset_set(fa, chan, offset);
@@ -226,8 +227,9 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	if (unlikely(!(fa->flags & FA_DEV_F_PATTERN_DATA)))
 		gain = fa_calib_dac_gain_fix(range, gain, delta_temp);
 
-	dev_dbg(&fa->pdev->dev, "%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, chan, range, gain, offset);
+	dev_dbg(&fa->pdev->dev,
+		"%s: {temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, temperature, chan, range, gain, offset);
 	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain, offset);
 
         return  fa_dac_offset_set(fa, chan, hwval);
@@ -236,9 +238,6 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 static void fa_calib_dac_config(struct fa_dev *fa, int32_t temperature)
 {
 	int i;
-
-	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n",
-		__func__, temperature);
 
 	spin_lock(&fa->zdev->cset->lock);
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
@@ -250,9 +249,6 @@ static void fa_calib_adc_config(struct fa_dev *fa, int32_t temperature)
 {
 	int err;
 	int i;
-
-	dev_dbg(&fa->pdev->dev, "%s: {temperature: %d}\n",
-		__func__, temperature);
 
 	spin_lock(&fa->zdev->cset->lock);
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
