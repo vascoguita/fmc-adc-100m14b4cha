@@ -130,18 +130,21 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 	return gain_c - error;
 }
 
+/**
+ * Calibrate a ADC channel
+ * @fa ADC instance
+ * @chan channel number
+ * @temperature temperature
+ *
+ * You must hold &fa->zdev->cset->lock while calling this function
+ */
 void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 			      int32_t temperature)
 {
-	struct fa_calib_stanza *cal;
-	int range;
+	int range = fa->range[chan];
+	struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int gain;
 	int err;
-
-	spin_lock(&fa->zdev->cset->lock);
-	range = fa->range[chan];
-	spin_unlock(&fa->zdev->cset->lock);
-	cal = &fa->calib.dac[range];
 
 	if (temperature == 0xFFFFFFFF)
 		temperature = fa_temperature_read(fa);
@@ -219,20 +222,23 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
         return off_uv;
 }
 
+/**
+ * Calibrate a DAC channel
+ * @fa ADC instance
+ * @chan channel number
+ * @temperature temperature
+ *
+ * You must hold &fa->zdev->cset->lock while calling this function
+ */
 int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 			     int32_t temperature)
 {
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
 	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
-	struct fa_calib_stanza *cal;
-	int range;
+        int range = fa->range[chan];
+        struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int gain;
 	int hwval;
-
-	spin_lock(&fa->zdev->cset->lock);
-	range = fa->range[chan];
-	spin_unlock(&fa->zdev->cset->lock);
-	cal = &fa->calib.dac[range];
 
 	if (temperature == 0xFFFFFFFF)
 		temperature = fa_temperature_read(fa);
@@ -258,10 +264,12 @@ void fa_calib_config(struct fa_dev *fa)
 	int i;
 
         temperature = fa_temperature_read(fa);
+	spin_lock(&fa->zdev->cset->lock);
         for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
 		fa_calib_adc_config_chan(fa, i, temperature);
 		fa_calib_dac_config_chan(fa, i, temperature);
 	}
+	spin_unlock(&fa->zdev->cset->lock);
 }
 /**
  * Periodically update gain calibration values

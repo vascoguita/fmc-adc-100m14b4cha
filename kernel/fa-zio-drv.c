@@ -213,8 +213,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EINVAL;
 		spin_lock(&fa->zdev->cset->lock);
 		fa->zero_offset[i] = usr_val;
-		spin_unlock(&fa->zdev->cset->lock);
 		fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
 		return 0;
 	case ZFA_CHx_SAT:
 		/* TODO when TLV */
@@ -248,14 +248,16 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EINVAL;
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
+		err = fa_calib_dac_config_chan(fa, i, ~0);
 		spin_unlock(&fa->zdev->cset->lock);
-		return fa_calib_dac_config_chan(fa, i, ~0);
+		return err;
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev);
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
+		err = fa_calib_dac_config_chan(fa, chan->index, ~0);
 		spin_unlock(&fa->zdev->cset->lock);
-		return fa_calib_dac_config_chan(fa, chan->index, ~0);
+		return err;
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
 		return 0;
@@ -295,8 +297,10 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
 		if (err)
 			return err;
+		spin_lock(&fa->zdev->cset->lock);
 		fa_calib_adc_config_chan(fa, i, ~0);
 		fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
 		return 0;
 
 	case ZFA_CHx_CTL_RANGE:
@@ -306,8 +310,10 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
 		if (err)
 			return err;
+		spin_lock(&fa->zdev->cset->lock);
 		fa_calib_adc_config_chan(fa, i, ~0);
 		fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
 		return 0;
 
 	case ZFA_UTC_COARSE:
