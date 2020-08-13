@@ -201,8 +201,7 @@ int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan, int range)
 	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == FA100M14B4C_RANGE_OPEN ||
-	    (fa->flags & FA_DEV_F_PATTERN_DATA))
+	if (range == FA100M14B4C_RANGE_OPEN)
 		range = FA100M14B4C_RANGE_1V;
 	else if (range >= FA100M14B4C_RANGE_10V_CAL)
 		range -= FA100M14B4C_RANGE_10V_CAL;
