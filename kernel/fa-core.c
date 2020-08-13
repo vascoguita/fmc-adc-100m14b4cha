@@ -446,8 +446,8 @@ static int __fa_init(struct fa_dev *fa)
 			  FA100M14B4C_RANGE_1V);
 	        fa_adc_range_set(fa, &zdev->cset->chan[i],
 				 FA100M14B4C_RANGE_1V);
-		fa_calib_config(fa);
 	}
+	fa_calib_config(fa);
 	zfad_reset_offset(fa);
 
 	/* Enable mezzanine clock */
