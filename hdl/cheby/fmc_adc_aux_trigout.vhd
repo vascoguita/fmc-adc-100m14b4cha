@@ -141,7 +141,7 @@ begin
         ts_cycles_rd_o <= '0';
       else
         ts_cycles_rd_o <= '0';
-        reg_rdat_int <= (others => '0');
+        reg_rdat_int <= (others => 'X');
         case wb_i.adr(4 downto 3) is
         when "00" => 
           case wb_i.adr(2 downto 2) is

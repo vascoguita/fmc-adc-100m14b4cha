@@ -143,7 +143,7 @@ begin
       if rst_n_i = '0' then
         rd_ack1_int <= '0';
       else
-        reg_rdat_int <= (others => '0');
+        reg_rdat_int <= (others => 'X');
         case wb_i.adr(4 downto 3) is
         when "00" => 
           case wb_i.adr(2 downto 2) is
