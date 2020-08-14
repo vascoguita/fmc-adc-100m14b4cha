@@ -144,3 +144,6 @@ TIMEGRP "adc_sync_reg" = "sync_reg" EXCEPT "fs_clk";
 TIMESPEC TS_adc_sync_reg = FROM fs_clk TO "adc_sync_reg" 10ns DATAPATHONLY;
 
 TIMESPEC TS_adc_sync_word = FROM sync_word TO fs_clk 30ns DATAPATHONLY;
+
+INST "inst_spec_base/gen_with_ddr.cmp_ddr_ctrl_bank3/cmp_ddr3_ctrl_wb_0/cmp_cmd_fifo/U_Inferred_FIFO/U_FIFO_Ram/gen_single_clk.U_RAM_SC/Mram_ram1" LOC=RAMB16_X0Y44:RAMB16_X0Y54;
+INST "inst_spec_base/gen_with_ddr.cmp_ddr_ctrl_bank3/cmp_ddr3_ctrl_wb_0/cmp_wr_fifo/U_Inferred_FIFO/U_FIFO_Ram/gen_single_clk.U_RAM_SC/Mram_ram1"  LOC=RAMB16_X0Y44:RAMB16_X0Y54;
