@@ -38,6 +38,7 @@ use work.genram_pkg.all;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
 use work.fmc_adc_100ms_csr_pkg.all;
+use work.fmc_adc_100ms_channel_regs_pkg.all;
 
 entity fmc_adc_100Ms_core is
   generic (
@@ -135,6 +136,11 @@ architecture rtl of fmc_adc_100Ms_core is
   type t_fmc_adc_vec16_array is array (positive range<>) of std_logic_vector(15 downto 0);
   type t_fmc_adc_vec32_array is array (positive range<>) of std_logic_vector(31 downto 0);
   type t_fmc_adc_uint32_array is array (positive range<>) of unsigned(31 downto 0);
+
+  type t_fmc_adc_channel_regin_array is array (1 to 4) of t_fmc_adc_100ms_ch_master_in;
+  type t_fmc_adc_channel_regout_array is array (1 to 4) of t_fmc_adc_100ms_ch_master_out;
+  type t_fmc_adc_channel_wbin_array is array (1 to 4) of t_wishbone_slave_in;
+  type t_fmc_adc_channel_wbout_array is array (1 to 4) of t_wishbone_slave_out;
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -313,19 +319,27 @@ architecture rtl of fmc_adc_100Ms_core is
   signal trig_addr    : std_logic_vector(31 downto 0);
   signal mem_ovr      : std_logic;
 
-  -- IO from CSR registers
-  signal csr_regin  : t_fmc_adc_100ms_csr_master_in;
-  signal csr_regout : t_fmc_adc_100ms_csr_master_out;
-
   -- LEDs
   signal trig_led     : std_logic;
   signal trig_led_man : std_logic;
   signal acq_led      : std_logic;
   signal acq_led_man  : std_logic;
 
+  -- IO from CSR registers
+  signal csr_regin  : t_fmc_adc_100ms_csr_master_in;
+  signal csr_regout : t_fmc_adc_100ms_csr_master_out;
+
+  -- IO from channel registers
+  signal channel_regin  : t_fmc_adc_channel_regin_array;
+  signal channel_regout : t_fmc_adc_channel_regout_array;
+
   -- from/to wb slave adapters
   signal wb_csr_in  : t_wishbone_slave_in;
   signal wb_csr_out : t_wishbone_slave_out;
+
+  -- CSR <-> channel regs wishbone interfaces
+  signal wb_channel_in  : t_fmc_adc_channel_wbin_array;
+  signal wb_channel_out : t_fmc_adc_channel_wbout_array;
 
 begin
 
@@ -469,7 +483,15 @@ begin
       wb_i                => wb_csr_in,
       wb_o                => wb_csr_out,
       fmc_adc_100Ms_csr_i => csr_regin,
-      fmc_adc_100Ms_csr_o => csr_regout);
+      fmc_adc_100Ms_csr_o => csr_regout,
+      fmc_adc_ch1_i       => wb_channel_out(1),
+      fmc_adc_ch1_o       => wb_channel_in(1),
+      fmc_adc_ch2_i       => wb_channel_out(2),
+      fmc_adc_ch2_o       => wb_channel_in(2),
+      fmc_adc_ch3_i       => wb_channel_out(3),
+      fmc_adc_ch3_o       => wb_channel_in(3),
+      fmc_adc_ch4_i       => wb_channel_out(4),
+      fmc_adc_ch4_o       => wb_channel_in(4));
 
   csr_regin.sta_fsm           <= acq_fsm_state;
   csr_regin.sta_serdes_pll    <= serdes_locked_sync;
@@ -490,10 +512,6 @@ begin
   csr_regin.trig_pos          <= trig_addr;
   csr_regin.fs_freq           <= fs_freq;
   csr_regin.samples_cnt       <= std_logic_vector(samples_cnt);
-  csr_regin.ch1_sta_val       <= serdes_out_data_synced(15 downto 0);
-  csr_regin.ch2_sta_val       <= serdes_out_data_synced(31 downto 16);
-  csr_regin.ch3_sta_val       <= serdes_out_data_synced(47 downto 32);
-  csr_regin.ch4_sta_val       <= serdes_out_data_synced(63 downto 48);
   csr_regin.multi_depth       <= c_MULTISHOT_SAMPLE_DEPTH;
 
   ctl_reg_wr                <= csr_regout.ctl_wr;
@@ -504,10 +522,6 @@ begin
   acq_led_man               <= csr_regout.ctl_acq_led;
   trig_storage_clear        <= csr_regout.ctl_clear_trig_stat and ctl_reg_wr;
   sync_calib_apply          <= csr_regout.ctl_calib_apply and ctl_reg_wr;
-  int_trig_delay_in(1)      <= csr_regout.ch1_trig_dly;
-  int_trig_delay_in(2)      <= csr_regout.ch2_trig_dly;
-  int_trig_delay_in(3)      <= csr_regout.ch3_trig_dly;
-  int_trig_delay_in(4)      <= csr_regout.ch4_trig_dly;
   int_trig_en_in(1)         <= csr_regout.trig_en_ch1;
   int_trig_en_in(2)         <= csr_regout.trig_en_ch2;
   int_trig_en_in(3)         <= csr_regout.trig_en_ch3;
@@ -516,25 +530,9 @@ begin
   int_trig_pol_in(2)        <= csr_regout.trig_pol_ch2;
   int_trig_pol_in(3)        <= csr_regout.trig_pol_ch3;
   int_trig_pol_in(4)        <= csr_regout.trig_pol_ch4;
-  int_trig_thres_in(1)      <= csr_regout.ch1_trig_thres_val;
-  int_trig_thres_in(2)      <= csr_regout.ch2_trig_thres_val;
-  int_trig_thres_in(3)      <= csr_regout.ch3_trig_thres_val;
-  int_trig_thres_in(4)      <= csr_regout.ch4_trig_thres_val;
-  int_trig_thres_hyst_in(1) <= csr_regout.ch1_trig_thres_hyst;
-  int_trig_thres_hyst_in(2) <= csr_regout.ch2_trig_thres_hyst;
-  int_trig_thres_hyst_in(3) <= csr_regout.ch3_trig_thres_hyst;
-  int_trig_thres_hyst_in(4) <= csr_regout.ch4_trig_thres_hyst;
   shots_value               <= csr_regout.shots_nbr;
   pre_trig_value            <= csr_regout.pre_samples;
   post_trig_value           <= csr_regout.post_samples;
-
-  sync_calib_in <= csr_regout.ch4_calib_offset & csr_regout.ch3_calib_offset &
-                   csr_regout.ch2_calib_offset & csr_regout.ch1_calib_offset &
-                   csr_regout.ch4_calib_gain & csr_regout.ch3_calib_gain &
-                   csr_regout.ch2_calib_gain & csr_regout.ch1_calib_gain;
-
-  sat_val_in <= csr_regout.ch4_sat_val & csr_regout.ch3_sat_val &
-                csr_regout.ch2_sat_val & csr_regout.ch1_sat_val;
 
   -- Delays for user-controlled GPIO outputs to help with timing
   p_delay_gpio_ssr : process (sys_clk_i) is
@@ -542,12 +540,34 @@ begin
     if rising_edge(sys_clk_i) then
       gpio_si570_oe_o  <= csr_regout.ctl_fmc_clk_oe;
       gpio_dac_clr_n_o <= csr_regout.ctl_offset_dac_clr_n;
-      gpio_ssr_ch1_o   <= csr_regout.ch1_ctl_ssr;
-      gpio_ssr_ch2_o   <= csr_regout.ch2_ctl_ssr;
-      gpio_ssr_ch3_o   <= csr_regout.ch3_ctl_ssr;
-      gpio_ssr_ch4_o   <= csr_regout.ch4_ctl_ssr;
+        gpio_ssr_ch1_o <= channel_regout(1).ctl_ssr;
+        gpio_ssr_ch2_o <= channel_regout(2).ctl_ssr;
+        gpio_ssr_ch3_o <= channel_regout(3).ctl_ssr;
+        gpio_ssr_ch4_o <= channel_regout(4).ctl_ssr;
     end if;
   end process p_delay_gpio_ssr;
+
+  -- Channel registers' submaps
+  gen_ch_reg_submap : for I in 1 to 4 generate
+    fmc_adc_100ms_channel_regs_1 : entity work.fmc_adc_100ms_channel_regs
+      port map (
+        rst_n_i            => sys_rst_n_i,
+        clk_i              => sys_clk_i,
+        wb_i               => wb_channel_in(I),
+        wb_o               => wb_channel_out(I),
+        fmc_adc_100ms_ch_i => channel_regin(I),
+        fmc_adc_100ms_ch_o => channel_regout(I));
+
+    channel_regin(I).sta_val <= serdes_out_data_synced((16*I)-1 downto 16*(I-1));
+
+    int_trig_delay_in(I)                          <= channel_regout(I).trig_dly;
+    int_trig_thres_in(I)                          <= channel_regout(I).trig_thres_val;
+    int_trig_thres_hyst_in(I)                     <= channel_regout(I).trig_thres_hyst;
+    sync_calib_in(64+(16*I)-1 downto 64+16*(I-1)) <= channel_regout(I).calib_offset;
+    sync_calib_in((16*I)-1 downto 16*(I-1))       <= channel_regout(I).calib_gain;
+    sat_val_in((15*I)-1 downto 15*(I-1))          <= channel_regout(I).sat_val;
+
+  end generate gen_ch_reg_submap;
 
   cmp_ext_trig_en_sync : gc_sync
     port map (

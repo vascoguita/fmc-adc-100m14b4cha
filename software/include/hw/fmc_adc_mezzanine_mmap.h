@@ -1,10 +1,10 @@
 #ifndef __CHEBY__FMC_ADC_MEZZANINE_MMAP__H__
 #define __CHEBY__FMC_ADC_MEZZANINE_MMAP__H__
 
-#include "timetag_core_regs.h"
-#include "fmc_adc_eic_regs.h"
 #include "wb_ds182x_regs.h"
+#include "fmc_adc_eic_regs.h"
 #include "fmc_adc_100ms_csr.h"
+#include "timetag_core_regs.h"
 #define FMC_ADC_MEZZANINE_MMAP_SIZE 8192
 
 /* FMC ADC 100M CSR */

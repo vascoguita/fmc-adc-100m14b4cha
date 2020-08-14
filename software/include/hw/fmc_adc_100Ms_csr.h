@@ -1,5 +1,7 @@
 #ifndef __CHEBY__FMC_ADC_100MS_CSR__H__
 #define __CHEBY__FMC_ADC_100MS_CSR__H__
+
+#include "fmc_adc_100ms_channel_regs.h"
 #define FMC_ADC_100MS_CSR_SIZE 512
 
 /* Control register */
@@ -89,133 +91,21 @@
 /* Samples counter */
 #define FMC_ADC_100MS_CSR_SAMPLES_CNT 0x38UL
 
-/* Channel 1 control register */
-#define FMC_ADC_100MS_CSR_CH1_CTL 0x80UL
-#define FMC_ADC_100MS_CSR_CH1_CTL_SSR_MASK 0x7fUL
-#define FMC_ADC_100MS_CSR_CH1_CTL_SSR_SHIFT 0
+/* Channel 1 registers */
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH1 0x80UL
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH1_SIZE 32
 
-/* Channel 1 status register */
-#define FMC_ADC_100MS_CSR_CH1_STA 0x84UL
-#define FMC_ADC_100MS_CSR_CH1_STA_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH1_STA_VAL_SHIFT 0
+/* Channel 2 registers */
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH2 0xc0UL
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH2_SIZE 32
 
-/* Channel 1 calibration register */
-#define FMC_ADC_100MS_CSR_CH1_CALIB 0x88UL
-#define FMC_ADC_100MS_CSR_CH1_CALIB_GAIN_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH1_CALIB_GAIN_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH1_CALIB_OFFSET_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH1_CALIB_OFFSET_SHIFT 16
+/* Channel 3 registers */
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH3 0x100UL
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH3_SIZE 32
 
-/* Channel 1 saturation register */
-#define FMC_ADC_100MS_CSR_CH1_SAT 0x8cUL
-#define FMC_ADC_100MS_CSR_CH1_SAT_VAL_MASK 0x7fffUL
-#define FMC_ADC_100MS_CSR_CH1_SAT_VAL_SHIFT 0
-
-/* Channel 1 trigger threshold configuration register */
-#define FMC_ADC_100MS_CSR_CH1_TRIG_THRES 0x90UL
-#define FMC_ADC_100MS_CSR_CH1_TRIG_THRES_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH1_TRIG_THRES_VAL_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH1_TRIG_THRES_HYST_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH1_TRIG_THRES_HYST_SHIFT 16
-
-/* Channel 1 trigger delay */
-#define FMC_ADC_100MS_CSR_CH1_TRIG_DLY 0x94UL
-
-/* Channel 2 control register */
-#define FMC_ADC_100MS_CSR_CH2_CTL 0xc0UL
-#define FMC_ADC_100MS_CSR_CH2_CTL_SSR_MASK 0x7fUL
-#define FMC_ADC_100MS_CSR_CH2_CTL_SSR_SHIFT 0
-
-/* Channel 2 status register */
-#define FMC_ADC_100MS_CSR_CH2_STA 0xc4UL
-#define FMC_ADC_100MS_CSR_CH2_STA_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH2_STA_VAL_SHIFT 0
-
-/* Channel 2 calibration register */
-#define FMC_ADC_100MS_CSR_CH2_CALIB 0xc8UL
-#define FMC_ADC_100MS_CSR_CH2_CALIB_GAIN_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH2_CALIB_GAIN_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH2_CALIB_OFFSET_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH2_CALIB_OFFSET_SHIFT 16
-
-/* Channel 2 saturation register */
-#define FMC_ADC_100MS_CSR_CH2_SAT 0xccUL
-#define FMC_ADC_100MS_CSR_CH2_SAT_VAL_MASK 0x7fffUL
-#define FMC_ADC_100MS_CSR_CH2_SAT_VAL_SHIFT 0
-
-/* Channel 2 trigger threshold configuration register */
-#define FMC_ADC_100MS_CSR_CH2_TRIG_THRES 0xd0UL
-#define FMC_ADC_100MS_CSR_CH2_TRIG_THRES_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH2_TRIG_THRES_VAL_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH2_TRIG_THRES_HYST_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH2_TRIG_THRES_HYST_SHIFT 16
-
-/* Channel 2 trigger delay */
-#define FMC_ADC_100MS_CSR_CH2_TRIG_DLY 0xd4UL
-
-/* Channel 3 control register */
-#define FMC_ADC_100MS_CSR_CH3_CTL 0x100UL
-#define FMC_ADC_100MS_CSR_CH3_CTL_SSR_MASK 0x7fUL
-#define FMC_ADC_100MS_CSR_CH3_CTL_SSR_SHIFT 0
-
-/* Channel 3 status register */
-#define FMC_ADC_100MS_CSR_CH3_STA 0x104UL
-#define FMC_ADC_100MS_CSR_CH3_STA_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH3_STA_VAL_SHIFT 0
-
-/* Channel 3 calibration register */
-#define FMC_ADC_100MS_CSR_CH3_CALIB 0x108UL
-#define FMC_ADC_100MS_CSR_CH3_CALIB_GAIN_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH3_CALIB_GAIN_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH3_CALIB_OFFSET_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH3_CALIB_OFFSET_SHIFT 16
-
-/* Channel 3 saturation register */
-#define FMC_ADC_100MS_CSR_CH3_SAT 0x10cUL
-#define FMC_ADC_100MS_CSR_CH3_SAT_VAL_MASK 0x7fffUL
-#define FMC_ADC_100MS_CSR_CH3_SAT_VAL_SHIFT 0
-
-/* Channel 3 trigger threshold configuration register */
-#define FMC_ADC_100MS_CSR_CH3_TRIG_THRES 0x110UL
-#define FMC_ADC_100MS_CSR_CH3_TRIG_THRES_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH3_TRIG_THRES_VAL_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH3_TRIG_THRES_HYST_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH3_TRIG_THRES_HYST_SHIFT 16
-
-/* Channel 3 trigger delay */
-#define FMC_ADC_100MS_CSR_CH3_TRIG_DLY 0x114UL
-
-/* Channel 4 control register */
-#define FMC_ADC_100MS_CSR_CH4_CTL 0x140UL
-#define FMC_ADC_100MS_CSR_CH4_CTL_SSR_MASK 0x7fUL
-#define FMC_ADC_100MS_CSR_CH4_CTL_SSR_SHIFT 0
-
-/* Channel 4 status register */
-#define FMC_ADC_100MS_CSR_CH4_STA 0x144UL
-#define FMC_ADC_100MS_CSR_CH4_STA_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH4_STA_VAL_SHIFT 0
-
-/* Channel 4 gain calibration register */
-#define FMC_ADC_100MS_CSR_CH4_CALIB 0x148UL
-#define FMC_ADC_100MS_CSR_CH4_CALIB_GAIN_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH4_CALIB_GAIN_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH4_CALIB_OFFSET_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH4_CALIB_OFFSET_SHIFT 16
-
-/* Channel 4 saturation register */
-#define FMC_ADC_100MS_CSR_CH4_SAT 0x14cUL
-#define FMC_ADC_100MS_CSR_CH4_SAT_VAL_MASK 0x7fffUL
-#define FMC_ADC_100MS_CSR_CH4_SAT_VAL_SHIFT 0
-
-/* Channel 4 trigger threshold configuration register */
-#define FMC_ADC_100MS_CSR_CH4_TRIG_THRES 0x150UL
-#define FMC_ADC_100MS_CSR_CH4_TRIG_THRES_VAL_MASK 0xffffUL
-#define FMC_ADC_100MS_CSR_CH4_TRIG_THRES_VAL_SHIFT 0
-#define FMC_ADC_100MS_CSR_CH4_TRIG_THRES_HYST_MASK 0xffff0000UL
-#define FMC_ADC_100MS_CSR_CH4_TRIG_THRES_HYST_SHIFT 16
-
-/* Channel 4 trigger delay */
-#define FMC_ADC_100MS_CSR_CH4_TRIG_DLY 0x154UL
+/* Channel 4 registers */
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH4 0x140UL
+#define FMC_ADC_100MS_CSR_FMC_ADC_CH4_SIZE 32
 
 struct fmc_adc_100ms_csr {
   /* [0x0]: REG (rw) Control register */
@@ -266,89 +156,29 @@ struct fmc_adc_100ms_csr {
   /* padding to: 32 words */
   uint32_t __padding_0[17];
 
-  /* [0x80]: REG (rw) Channel 1 control register */
-  uint32_t ch1_ctl;
-
-  /* [0x84]: REG (ro) Channel 1 status register */
-  uint32_t ch1_sta;
-
-  /* [0x88]: REG (rw) Channel 1 calibration register */
-  uint32_t ch1_calib;
-
-  /* [0x8c]: REG (rw) Channel 1 saturation register */
-  uint32_t ch1_sat;
-
-  /* [0x90]: REG (rw) Channel 1 trigger threshold configuration register */
-  uint32_t ch1_trig_thres;
-
-  /* [0x94]: REG (rw) Channel 1 trigger delay */
-  uint32_t ch1_trig_dly;
+  /* [0x80]: SUBMAP Channel 1 registers */
+  struct fmc_adc_100ms_channel_regs fmc_adc_ch1;
 
   /* padding to: 48 words */
-  uint32_t __padding_1[10];
+  uint32_t __padding_1[8];
 
-  /* [0xc0]: REG (rw) Channel 2 control register */
-  uint32_t ch2_ctl;
-
-  /* [0xc4]: REG (ro) Channel 2 status register */
-  uint32_t ch2_sta;
-
-  /* [0xc8]: REG (rw) Channel 2 calibration register */
-  uint32_t ch2_calib;
-
-  /* [0xcc]: REG (rw) Channel 2 saturation register */
-  uint32_t ch2_sat;
-
-  /* [0xd0]: REG (rw) Channel 2 trigger threshold configuration register */
-  uint32_t ch2_trig_thres;
-
-  /* [0xd4]: REG (rw) Channel 2 trigger delay */
-  uint32_t ch2_trig_dly;
+  /* [0xc0]: SUBMAP Channel 2 registers */
+  struct fmc_adc_100ms_channel_regs fmc_adc_ch2;
 
   /* padding to: 64 words */
-  uint32_t __padding_2[10];
+  uint32_t __padding_2[8];
 
-  /* [0x100]: REG (rw) Channel 3 control register */
-  uint32_t ch3_ctl;
-
-  /* [0x104]: REG (ro) Channel 3 status register */
-  uint32_t ch3_sta;
-
-  /* [0x108]: REG (rw) Channel 3 calibration register */
-  uint32_t ch3_calib;
-
-  /* [0x10c]: REG (rw) Channel 3 saturation register */
-  uint32_t ch3_sat;
-
-  /* [0x110]: REG (rw) Channel 3 trigger threshold configuration register */
-  uint32_t ch3_trig_thres;
-
-  /* [0x114]: REG (rw) Channel 3 trigger delay */
-  uint32_t ch3_trig_dly;
+  /* [0x100]: SUBMAP Channel 3 registers */
+  struct fmc_adc_100ms_channel_regs fmc_adc_ch3;
 
   /* padding to: 80 words */
-  uint32_t __padding_3[10];
+  uint32_t __padding_3[8];
 
-  /* [0x140]: REG (rw) Channel 4 control register */
-  uint32_t ch4_ctl;
+  /* [0x140]: SUBMAP Channel 4 registers */
+  struct fmc_adc_100ms_channel_regs fmc_adc_ch4;
 
-  /* [0x144]: REG (ro) Channel 4 status register */
-  uint32_t ch4_sta;
-
-  /* [0x148]: REG (rw) Channel 4 gain calibration register */
-  uint32_t ch4_calib;
-
-  /* [0x14c]: REG (rw) Channel 4 saturation register */
-  uint32_t ch4_sat;
-
-  /* [0x150]: REG (rw) Channel 4 trigger threshold configuration register */
-  uint32_t ch4_trig_thres;
-
-  /* [0x154]: REG (rw) Channel 4 trigger delay */
-  uint32_t ch4_trig_dly;
-
-  /* padding to: 85 words */
-  uint32_t __padding_4[42];
+  /* padding to: 80 words */
+  uint32_t __padding_4[40];
 };
 
 #endif /* __CHEBY__FMC_ADC_100MS_CSR__H__ */

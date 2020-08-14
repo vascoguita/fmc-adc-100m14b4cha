@@ -39,34 +39,6 @@ package fmc_adc_100ms_csr_pkg is
     downsample       : std_logic_vector(31 downto 0);
     pre_samples      : std_logic_vector(31 downto 0);
     post_samples     : std_logic_vector(31 downto 0);
-    ch1_ctl_ssr      : std_logic_vector(6 downto 0);
-    ch1_calib_gain   : std_logic_vector(15 downto 0);
-    ch1_calib_offset : std_logic_vector(15 downto 0);
-    ch1_sat_val      : std_logic_vector(14 downto 0);
-    ch1_trig_thres_val : std_logic_vector(15 downto 0);
-    ch1_trig_thres_hyst : std_logic_vector(15 downto 0);
-    ch1_trig_dly     : std_logic_vector(31 downto 0);
-    ch2_ctl_ssr      : std_logic_vector(6 downto 0);
-    ch2_calib_gain   : std_logic_vector(15 downto 0);
-    ch2_calib_offset : std_logic_vector(15 downto 0);
-    ch2_sat_val      : std_logic_vector(14 downto 0);
-    ch2_trig_thres_val : std_logic_vector(15 downto 0);
-    ch2_trig_thres_hyst : std_logic_vector(15 downto 0);
-    ch2_trig_dly     : std_logic_vector(31 downto 0);
-    ch3_ctl_ssr      : std_logic_vector(6 downto 0);
-    ch3_calib_gain   : std_logic_vector(15 downto 0);
-    ch3_calib_offset : std_logic_vector(15 downto 0);
-    ch3_sat_val      : std_logic_vector(14 downto 0);
-    ch3_trig_thres_val : std_logic_vector(15 downto 0);
-    ch3_trig_thres_hyst : std_logic_vector(15 downto 0);
-    ch3_trig_dly     : std_logic_vector(31 downto 0);
-    ch4_ctl_ssr      : std_logic_vector(6 downto 0);
-    ch4_calib_gain   : std_logic_vector(15 downto 0);
-    ch4_calib_offset : std_logic_vector(15 downto 0);
-    ch4_sat_val      : std_logic_vector(14 downto 0);
-    ch4_trig_thres_val : std_logic_vector(15 downto 0);
-    ch4_trig_thres_hyst : std_logic_vector(15 downto 0);
-    ch4_trig_dly     : std_logic_vector(31 downto 0);
   end record t_fmc_adc_100ms_csr_master_out;
   subtype t_fmc_adc_100ms_csr_slave_in is t_fmc_adc_100ms_csr_master_out;
 
@@ -95,10 +67,6 @@ package fmc_adc_100ms_csr_pkg is
     trig_pos         : std_logic_vector(31 downto 0);
     fs_freq          : std_logic_vector(31 downto 0);
     samples_cnt      : std_logic_vector(31 downto 0);
-    ch1_sta_val      : std_logic_vector(15 downto 0);
-    ch2_sta_val      : std_logic_vector(15 downto 0);
-    ch3_sta_val      : std_logic_vector(15 downto 0);
-    ch4_sta_val      : std_logic_vector(15 downto 0);
   end record t_fmc_adc_100ms_csr_slave_out;
   subtype t_fmc_adc_100ms_csr_master_in is t_fmc_adc_100ms_csr_slave_out;
 end fmc_adc_100ms_csr_pkg;
@@ -118,7 +86,23 @@ entity fmc_adc_100ms_csr is
 
     -- Wires and registers
     fmc_adc_100ms_csr_i  : in    t_fmc_adc_100ms_csr_master_in;
-    fmc_adc_100ms_csr_o  : out   t_fmc_adc_100ms_csr_master_out
+    fmc_adc_100ms_csr_o  : out   t_fmc_adc_100ms_csr_master_out;
+
+    -- Channel 1 registers
+    fmc_adc_ch1_i        : in    t_wishbone_master_in;
+    fmc_adc_ch1_o        : out   t_wishbone_master_out;
+
+    -- Channel 2 registers
+    fmc_adc_ch2_i        : in    t_wishbone_master_in;
+    fmc_adc_ch2_o        : out   t_wishbone_master_out;
+
+    -- Channel 3 registers
+    fmc_adc_ch3_i        : in    t_wishbone_master_in;
+    fmc_adc_ch3_o        : out   t_wishbone_master_out;
+
+    -- Channel 4 registers
+    fmc_adc_ch4_i        : in    t_wishbone_master_in;
+    fmc_adc_ch4_o        : out   t_wishbone_master_out
   );
 end fmc_adc_100ms_csr;
 
@@ -152,34 +136,30 @@ architecture syn of fmc_adc_100ms_csr is
   signal downsample_reg                 : std_logic_vector(31 downto 0);
   signal pre_samples_reg                : std_logic_vector(31 downto 0);
   signal post_samples_reg               : std_logic_vector(31 downto 0);
-  signal ch1_ctl_ssr_reg                : std_logic_vector(6 downto 0);
-  signal ch1_calib_gain_reg             : std_logic_vector(15 downto 0);
-  signal ch1_calib_offset_reg           : std_logic_vector(15 downto 0);
-  signal ch1_sat_val_reg                : std_logic_vector(14 downto 0);
-  signal ch1_trig_thres_val_reg         : std_logic_vector(15 downto 0);
-  signal ch1_trig_thres_hyst_reg        : std_logic_vector(15 downto 0);
-  signal ch1_trig_dly_reg               : std_logic_vector(31 downto 0);
-  signal ch2_ctl_ssr_reg                : std_logic_vector(6 downto 0);
-  signal ch2_calib_gain_reg             : std_logic_vector(15 downto 0);
-  signal ch2_calib_offset_reg           : std_logic_vector(15 downto 0);
-  signal ch2_sat_val_reg                : std_logic_vector(14 downto 0);
-  signal ch2_trig_thres_val_reg         : std_logic_vector(15 downto 0);
-  signal ch2_trig_thres_hyst_reg        : std_logic_vector(15 downto 0);
-  signal ch2_trig_dly_reg               : std_logic_vector(31 downto 0);
-  signal ch3_ctl_ssr_reg                : std_logic_vector(6 downto 0);
-  signal ch3_calib_gain_reg             : std_logic_vector(15 downto 0);
-  signal ch3_calib_offset_reg           : std_logic_vector(15 downto 0);
-  signal ch3_sat_val_reg                : std_logic_vector(14 downto 0);
-  signal ch3_trig_thres_val_reg         : std_logic_vector(15 downto 0);
-  signal ch3_trig_thres_hyst_reg        : std_logic_vector(15 downto 0);
-  signal ch3_trig_dly_reg               : std_logic_vector(31 downto 0);
-  signal ch4_ctl_ssr_reg                : std_logic_vector(6 downto 0);
-  signal ch4_calib_gain_reg             : std_logic_vector(15 downto 0);
-  signal ch4_calib_offset_reg           : std_logic_vector(15 downto 0);
-  signal ch4_sat_val_reg                : std_logic_vector(14 downto 0);
-  signal ch4_trig_thres_val_reg         : std_logic_vector(15 downto 0);
-  signal ch4_trig_thres_hyst_reg        : std_logic_vector(15 downto 0);
-  signal ch4_trig_dly_reg               : std_logic_vector(31 downto 0);
+  signal fmc_adc_ch1_re                 : std_logic;
+  signal fmc_adc_ch1_wt                 : std_logic;
+  signal fmc_adc_ch1_rt                 : std_logic;
+  signal fmc_adc_ch1_tr                 : std_logic;
+  signal fmc_adc_ch1_wack               : std_logic;
+  signal fmc_adc_ch1_rack               : std_logic;
+  signal fmc_adc_ch2_re                 : std_logic;
+  signal fmc_adc_ch2_wt                 : std_logic;
+  signal fmc_adc_ch2_rt                 : std_logic;
+  signal fmc_adc_ch2_tr                 : std_logic;
+  signal fmc_adc_ch2_wack               : std_logic;
+  signal fmc_adc_ch2_rack               : std_logic;
+  signal fmc_adc_ch3_re                 : std_logic;
+  signal fmc_adc_ch3_wt                 : std_logic;
+  signal fmc_adc_ch3_rt                 : std_logic;
+  signal fmc_adc_ch3_tr                 : std_logic;
+  signal fmc_adc_ch3_wack               : std_logic;
+  signal fmc_adc_ch3_rack               : std_logic;
+  signal fmc_adc_ch4_re                 : std_logic;
+  signal fmc_adc_ch4_wt                 : std_logic;
+  signal fmc_adc_ch4_rt                 : std_logic;
+  signal fmc_adc_ch4_tr                 : std_logic;
+  signal fmc_adc_ch4_wack               : std_logic;
+  signal fmc_adc_ch4_rack               : std_logic;
   signal reg_rdat_int                   : std_logic_vector(31 downto 0);
   signal rd_ack1_int                    : std_logic;
 begin
@@ -237,34 +217,86 @@ begin
   fmc_adc_100ms_csr_o.downsample <= downsample_reg;
   fmc_adc_100ms_csr_o.pre_samples <= pre_samples_reg;
   fmc_adc_100ms_csr_o.post_samples <= post_samples_reg;
-  fmc_adc_100ms_csr_o.ch1_ctl_ssr <= ch1_ctl_ssr_reg;
-  fmc_adc_100ms_csr_o.ch1_calib_gain <= ch1_calib_gain_reg;
-  fmc_adc_100ms_csr_o.ch1_calib_offset <= ch1_calib_offset_reg;
-  fmc_adc_100ms_csr_o.ch1_sat_val <= ch1_sat_val_reg;
-  fmc_adc_100ms_csr_o.ch1_trig_thres_val <= ch1_trig_thres_val_reg;
-  fmc_adc_100ms_csr_o.ch1_trig_thres_hyst <= ch1_trig_thres_hyst_reg;
-  fmc_adc_100ms_csr_o.ch1_trig_dly <= ch1_trig_dly_reg;
-  fmc_adc_100ms_csr_o.ch2_ctl_ssr <= ch2_ctl_ssr_reg;
-  fmc_adc_100ms_csr_o.ch2_calib_gain <= ch2_calib_gain_reg;
-  fmc_adc_100ms_csr_o.ch2_calib_offset <= ch2_calib_offset_reg;
-  fmc_adc_100ms_csr_o.ch2_sat_val <= ch2_sat_val_reg;
-  fmc_adc_100ms_csr_o.ch2_trig_thres_val <= ch2_trig_thres_val_reg;
-  fmc_adc_100ms_csr_o.ch2_trig_thres_hyst <= ch2_trig_thres_hyst_reg;
-  fmc_adc_100ms_csr_o.ch2_trig_dly <= ch2_trig_dly_reg;
-  fmc_adc_100ms_csr_o.ch3_ctl_ssr <= ch3_ctl_ssr_reg;
-  fmc_adc_100ms_csr_o.ch3_calib_gain <= ch3_calib_gain_reg;
-  fmc_adc_100ms_csr_o.ch3_calib_offset <= ch3_calib_offset_reg;
-  fmc_adc_100ms_csr_o.ch3_sat_val <= ch3_sat_val_reg;
-  fmc_adc_100ms_csr_o.ch3_trig_thres_val <= ch3_trig_thres_val_reg;
-  fmc_adc_100ms_csr_o.ch3_trig_thres_hyst <= ch3_trig_thres_hyst_reg;
-  fmc_adc_100ms_csr_o.ch3_trig_dly <= ch3_trig_dly_reg;
-  fmc_adc_100ms_csr_o.ch4_ctl_ssr <= ch4_ctl_ssr_reg;
-  fmc_adc_100ms_csr_o.ch4_calib_gain <= ch4_calib_gain_reg;
-  fmc_adc_100ms_csr_o.ch4_calib_offset <= ch4_calib_offset_reg;
-  fmc_adc_100ms_csr_o.ch4_sat_val <= ch4_sat_val_reg;
-  fmc_adc_100ms_csr_o.ch4_trig_thres_val <= ch4_trig_thres_val_reg;
-  fmc_adc_100ms_csr_o.ch4_trig_thres_hyst <= ch4_trig_thres_hyst_reg;
-  fmc_adc_100ms_csr_o.ch4_trig_dly <= ch4_trig_dly_reg;
+
+  -- Assignments for submap fmc_adc_ch1
+  fmc_adc_ch1_tr <= fmc_adc_ch1_wt or fmc_adc_ch1_rt;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        fmc_adc_ch1_rt <= '0';
+      else
+        fmc_adc_ch1_rt <= (fmc_adc_ch1_rt or fmc_adc_ch1_re) and not fmc_adc_ch1_rack;
+      end if;
+    end if;
+  end process;
+  fmc_adc_ch1_o.cyc <= fmc_adc_ch1_tr;
+  fmc_adc_ch1_o.stb <= fmc_adc_ch1_tr;
+  fmc_adc_ch1_wack <= fmc_adc_ch1_i.ack and fmc_adc_ch1_wt;
+  fmc_adc_ch1_rack <= fmc_adc_ch1_i.ack and fmc_adc_ch1_rt;
+  fmc_adc_ch1_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch1_o.sel <= (others => '1');
+  fmc_adc_ch1_o.we <= fmc_adc_ch1_wt;
+  fmc_adc_ch1_o.dat <= wb_i.dat;
+
+  -- Assignments for submap fmc_adc_ch2
+  fmc_adc_ch2_tr <= fmc_adc_ch2_wt or fmc_adc_ch2_rt;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        fmc_adc_ch2_rt <= '0';
+      else
+        fmc_adc_ch2_rt <= (fmc_adc_ch2_rt or fmc_adc_ch2_re) and not fmc_adc_ch2_rack;
+      end if;
+    end if;
+  end process;
+  fmc_adc_ch2_o.cyc <= fmc_adc_ch2_tr;
+  fmc_adc_ch2_o.stb <= fmc_adc_ch2_tr;
+  fmc_adc_ch2_wack <= fmc_adc_ch2_i.ack and fmc_adc_ch2_wt;
+  fmc_adc_ch2_rack <= fmc_adc_ch2_i.ack and fmc_adc_ch2_rt;
+  fmc_adc_ch2_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch2_o.sel <= (others => '1');
+  fmc_adc_ch2_o.we <= fmc_adc_ch2_wt;
+  fmc_adc_ch2_o.dat <= wb_i.dat;
+
+  -- Assignments for submap fmc_adc_ch3
+  fmc_adc_ch3_tr <= fmc_adc_ch3_wt or fmc_adc_ch3_rt;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        fmc_adc_ch3_rt <= '0';
+      else
+        fmc_adc_ch3_rt <= (fmc_adc_ch3_rt or fmc_adc_ch3_re) and not fmc_adc_ch3_rack;
+      end if;
+    end if;
+  end process;
+  fmc_adc_ch3_o.cyc <= fmc_adc_ch3_tr;
+  fmc_adc_ch3_o.stb <= fmc_adc_ch3_tr;
+  fmc_adc_ch3_wack <= fmc_adc_ch3_i.ack and fmc_adc_ch3_wt;
+  fmc_adc_ch3_rack <= fmc_adc_ch3_i.ack and fmc_adc_ch3_rt;
+  fmc_adc_ch3_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch3_o.sel <= (others => '1');
+  fmc_adc_ch3_o.we <= fmc_adc_ch3_wt;
+  fmc_adc_ch3_o.dat <= wb_i.dat;
+
+  -- Assignments for submap fmc_adc_ch4
+  fmc_adc_ch4_tr <= fmc_adc_ch4_wt or fmc_adc_ch4_rt;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        fmc_adc_ch4_rt <= '0';
+      else
+        fmc_adc_ch4_rt <= (fmc_adc_ch4_rt or fmc_adc_ch4_re) and not fmc_adc_ch4_rack;
+      end if;
+    end if;
+  end process;
+  fmc_adc_ch4_o.cyc <= fmc_adc_ch4_tr;
+  fmc_adc_ch4_o.stb <= fmc_adc_ch4_tr;
+  fmc_adc_ch4_wack <= fmc_adc_ch4_i.ack and fmc_adc_ch4_wt;
+  fmc_adc_ch4_rack <= fmc_adc_ch4_i.ack and fmc_adc_ch4_rt;
+  fmc_adc_ch4_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch4_o.sel <= (others => '1');
+  fmc_adc_ch4_o.we <= fmc_adc_ch4_wt;
+  fmc_adc_ch4_o.dat <= wb_i.dat;
 
   -- Process for write requests.
   process (clk_i) begin
@@ -294,263 +326,133 @@ begin
         downsample_reg <= "00000000000000000000000000000000";
         pre_samples_reg <= "00000000000000000000000000000000";
         post_samples_reg <= "00000000000000000000000000000000";
-        ch1_ctl_ssr_reg <= "0000000";
-        ch1_calib_gain_reg <= "0000000000000000";
-        ch1_calib_offset_reg <= "0000000000000000";
-        ch1_sat_val_reg <= "000000000000000";
-        ch1_trig_thres_val_reg <= "0000000000000000";
-        ch1_trig_thres_hyst_reg <= "0000000000000000";
-        ch1_trig_dly_reg <= "00000000000000000000000000000000";
-        ch2_ctl_ssr_reg <= "0000000";
-        ch2_calib_gain_reg <= "0000000000000000";
-        ch2_calib_offset_reg <= "0000000000000000";
-        ch2_sat_val_reg <= "000000000000000";
-        ch2_trig_thres_val_reg <= "0000000000000000";
-        ch2_trig_thres_hyst_reg <= "0000000000000000";
-        ch2_trig_dly_reg <= "00000000000000000000000000000000";
-        ch3_ctl_ssr_reg <= "0000000";
-        ch3_calib_gain_reg <= "0000000000000000";
-        ch3_calib_offset_reg <= "0000000000000000";
-        ch3_sat_val_reg <= "000000000000000";
-        ch3_trig_thres_val_reg <= "0000000000000000";
-        ch3_trig_thres_hyst_reg <= "0000000000000000";
-        ch3_trig_dly_reg <= "00000000000000000000000000000000";
-        ch4_ctl_ssr_reg <= "0000000";
-        ch4_calib_gain_reg <= "0000000000000000";
-        ch4_calib_offset_reg <= "0000000000000000";
-        ch4_sat_val_reg <= "000000000000000";
-        ch4_trig_thres_val_reg <= "0000000000000000";
-        ch4_trig_thres_hyst_reg <= "0000000000000000";
-        ch4_trig_dly_reg <= "00000000000000000000000000000000";
+        fmc_adc_ch1_wt <= '0';
+        fmc_adc_ch2_wt <= '0';
+        fmc_adc_ch3_wt <= '0';
+        fmc_adc_ch4_wt <= '0';
       else
         wr_ack_int <= '0';
         fmc_adc_100ms_csr_o.ctl_wr <= '0';
         fmc_adc_100ms_csr_o.sw_trig_wr <= '0';
-        case wb_i.adr(8 downto 2) is
-        when "0000000" => 
-          -- Register ctl
-          fmc_adc_100ms_csr_o.ctl_wr <= wr_int;
-          if wr_int = '1' then
-            fmc_adc_100ms_csr_o.ctl_fsm_cmd <= wb_i.dat(1 downto 0);
-            ctl_fmc_clk_oe_reg <= wb_i.dat(2);
-            ctl_offset_dac_clr_n_reg <= wb_i.dat(3);
-            fmc_adc_100ms_csr_o.ctl_man_bitslip <= wb_i.dat(4);
-            ctl_test_data_en_reg <= wb_i.dat(5);
-            ctl_trig_led_reg <= wb_i.dat(6);
-            ctl_acq_led_reg <= wb_i.dat(7);
-            fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wb_i.dat(8);
-            fmc_adc_100ms_csr_o.ctl_calib_apply <= wb_i.dat(15);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0000001" => 
-          -- Register sta
-        when "0000010" => 
-          -- Register trig_stat
-        when "0000011" => 
-          -- Register trig_en
-          if wr_int = '1' then
-            trig_en_ext_reg <= wb_i.dat(0);
-            fmc_adc_100ms_csr_o.trig_en_sw <= wb_i.dat(1);
-            trig_en_time_reg <= wb_i.dat(4);
-            fmc_adc_100ms_csr_o.trig_en_aux_time <= wb_i.dat(5);
-            trig_en_ch1_reg <= wb_i.dat(8);
-            trig_en_ch2_reg <= wb_i.dat(9);
-            trig_en_ch3_reg <= wb_i.dat(10);
-            trig_en_ch4_reg <= wb_i.dat(11);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0000100" => 
-          -- Register trig_pol
-          if wr_int = '1' then
-            trig_pol_ext_reg <= wb_i.dat(0);
-            trig_pol_ch1_reg <= wb_i.dat(8);
-            trig_pol_ch2_reg <= wb_i.dat(9);
-            trig_pol_ch3_reg <= wb_i.dat(10);
-            trig_pol_ch4_reg <= wb_i.dat(11);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0000101" => 
-          -- Register ext_trig_dly
-          if wr_int = '1' then
-            ext_trig_dly_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "0000110" => 
-          -- Register sw_trig
-          fmc_adc_100ms_csr_o.sw_trig_wr <= wr_int;
-          if wr_int = '1' then
-            fmc_adc_100ms_csr_o.sw_trig <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "0000111" => 
-          -- Register shots
-          if wr_int = '1' then
-            shots_nbr_reg <= wb_i.dat(15 downto 0);
-            fmc_adc_100ms_csr_o.shots_remain <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0001000" => 
-          -- Register multi_depth
-        when "0001001" => 
-          -- Register trig_pos
-        when "0001010" => 
-          -- Register fs_freq
-        when "0001011" => 
-          -- Register downsample
-          if wr_int = '1' then
-            downsample_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "0001100" => 
-          -- Register pre_samples
-          if wr_int = '1' then
-            pre_samples_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "0001101" => 
-          -- Register post_samples
-          if wr_int = '1' then
-            post_samples_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "0001110" => 
-          -- Register samples_cnt
-        when "0100000" => 
-          -- Register ch1_ctl
-          if wr_int = '1' then
-            ch1_ctl_ssr_reg <= wb_i.dat(6 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0100001" => 
-          -- Register ch1_sta
-        when "0100010" => 
-          -- Register ch1_calib
-          if wr_int = '1' then
-            ch1_calib_gain_reg <= wb_i.dat(15 downto 0);
-            ch1_calib_offset_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0100011" => 
-          -- Register ch1_sat
-          if wr_int = '1' then
-            ch1_sat_val_reg <= wb_i.dat(14 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0100100" => 
-          -- Register ch1_trig_thres
-          if wr_int = '1' then
-            ch1_trig_thres_val_reg <= wb_i.dat(15 downto 0);
-            ch1_trig_thres_hyst_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0100101" => 
-          -- Register ch1_trig_dly
-          if wr_int = '1' then
-            ch1_trig_dly_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "0110000" => 
-          -- Register ch2_ctl
-          if wr_int = '1' then
-            ch2_ctl_ssr_reg <= wb_i.dat(6 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0110001" => 
-          -- Register ch2_sta
-        when "0110010" => 
-          -- Register ch2_calib
-          if wr_int = '1' then
-            ch2_calib_gain_reg <= wb_i.dat(15 downto 0);
-            ch2_calib_offset_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0110011" => 
-          -- Register ch2_sat
-          if wr_int = '1' then
-            ch2_sat_val_reg <= wb_i.dat(14 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0110100" => 
-          -- Register ch2_trig_thres
-          if wr_int = '1' then
-            ch2_trig_thres_val_reg <= wb_i.dat(15 downto 0);
-            ch2_trig_thres_hyst_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "0110101" => 
-          -- Register ch2_trig_dly
-          if wr_int = '1' then
-            ch2_trig_dly_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "1000000" => 
-          -- Register ch3_ctl
-          if wr_int = '1' then
-            ch3_ctl_ssr_reg <= wb_i.dat(6 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1000001" => 
-          -- Register ch3_sta
-        when "1000010" => 
-          -- Register ch3_calib
-          if wr_int = '1' then
-            ch3_calib_gain_reg <= wb_i.dat(15 downto 0);
-            ch3_calib_offset_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1000011" => 
-          -- Register ch3_sat
-          if wr_int = '1' then
-            ch3_sat_val_reg <= wb_i.dat(14 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1000100" => 
-          -- Register ch3_trig_thres
-          if wr_int = '1' then
-            ch3_trig_thres_val_reg <= wb_i.dat(15 downto 0);
-            ch3_trig_thres_hyst_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1000101" => 
-          -- Register ch3_trig_dly
-          if wr_int = '1' then
-            ch3_trig_dly_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "1010000" => 
-          -- Register ch4_ctl
-          if wr_int = '1' then
-            ch4_ctl_ssr_reg <= wb_i.dat(6 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1010001" => 
-          -- Register ch4_sta
-        when "1010010" => 
-          -- Register ch4_calib
-          if wr_int = '1' then
-            ch4_calib_gain_reg <= wb_i.dat(15 downto 0);
-            ch4_calib_offset_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1010011" => 
-          -- Register ch4_sat
-          if wr_int = '1' then
-            ch4_sat_val_reg <= wb_i.dat(14 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1010100" => 
-          -- Register ch4_trig_thres
-          if wr_int = '1' then
-            ch4_trig_thres_val_reg <= wb_i.dat(15 downto 0);
-            ch4_trig_thres_hyst_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "1010101" => 
-          -- Register ch4_trig_dly
-          if wr_int = '1' then
-            ch4_trig_dly_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
+        fmc_adc_ch1_wt <= '0';
+        fmc_adc_ch2_wt <= '0';
+        fmc_adc_ch3_wt <= '0';
+        fmc_adc_ch4_wt <= '0';
+        case wb_i.adr(8 downto 5) is
+        when "0000" => 
+          case wb_i.adr(4 downto 2) is
+          when "000" => 
+            -- Register ctl
+            fmc_adc_100ms_csr_o.ctl_wr <= wr_int;
+            if wr_int = '1' then
+              fmc_adc_100ms_csr_o.ctl_fsm_cmd <= wb_i.dat(1 downto 0);
+              ctl_fmc_clk_oe_reg <= wb_i.dat(2);
+              ctl_offset_dac_clr_n_reg <= wb_i.dat(3);
+              fmc_adc_100ms_csr_o.ctl_man_bitslip <= wb_i.dat(4);
+              ctl_test_data_en_reg <= wb_i.dat(5);
+              ctl_trig_led_reg <= wb_i.dat(6);
+              ctl_acq_led_reg <= wb_i.dat(7);
+              fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wb_i.dat(8);
+              fmc_adc_100ms_csr_o.ctl_calib_apply <= wb_i.dat(15);
+            end if;
+            wr_ack_int <= wr_int;
+          when "001" => 
+            -- Register sta
+          when "010" => 
+            -- Register trig_stat
+          when "011" => 
+            -- Register trig_en
+            if wr_int = '1' then
+              trig_en_ext_reg <= wb_i.dat(0);
+              fmc_adc_100ms_csr_o.trig_en_sw <= wb_i.dat(1);
+              trig_en_time_reg <= wb_i.dat(4);
+              fmc_adc_100ms_csr_o.trig_en_aux_time <= wb_i.dat(5);
+              trig_en_ch1_reg <= wb_i.dat(8);
+              trig_en_ch2_reg <= wb_i.dat(9);
+              trig_en_ch3_reg <= wb_i.dat(10);
+              trig_en_ch4_reg <= wb_i.dat(11);
+            end if;
+            wr_ack_int <= wr_int;
+          when "100" => 
+            -- Register trig_pol
+            if wr_int = '1' then
+              trig_pol_ext_reg <= wb_i.dat(0);
+              trig_pol_ch1_reg <= wb_i.dat(8);
+              trig_pol_ch2_reg <= wb_i.dat(9);
+              trig_pol_ch3_reg <= wb_i.dat(10);
+              trig_pol_ch4_reg <= wb_i.dat(11);
+            end if;
+            wr_ack_int <= wr_int;
+          when "101" => 
+            -- Register ext_trig_dly
+            if wr_int = '1' then
+              ext_trig_dly_reg <= wb_i.dat;
+            end if;
+            wr_ack_int <= wr_int;
+          when "110" => 
+            -- Register sw_trig
+            fmc_adc_100ms_csr_o.sw_trig_wr <= wr_int;
+            if wr_int = '1' then
+              fmc_adc_100ms_csr_o.sw_trig <= wb_i.dat;
+            end if;
+            wr_ack_int <= wr_int;
+          when "111" => 
+            -- Register shots
+            if wr_int = '1' then
+              shots_nbr_reg <= wb_i.dat(15 downto 0);
+              fmc_adc_100ms_csr_o.shots_remain <= wb_i.dat(31 downto 16);
+            end if;
+            wr_ack_int <= wr_int;
+          when others =>
+            wr_ack_int <= wr_int;
+          end case;
+        when "0001" => 
+          case wb_i.adr(4 downto 2) is
+          when "000" => 
+            -- Register multi_depth
+          when "001" => 
+            -- Register trig_pos
+          when "010" => 
+            -- Register fs_freq
+          when "011" => 
+            -- Register downsample
+            if wr_int = '1' then
+              downsample_reg <= wb_i.dat;
+            end if;
+            wr_ack_int <= wr_int;
+          when "100" => 
+            -- Register pre_samples
+            if wr_int = '1' then
+              pre_samples_reg <= wb_i.dat;
+            end if;
+            wr_ack_int <= wr_int;
+          when "101" => 
+            -- Register post_samples
+            if wr_int = '1' then
+              post_samples_reg <= wb_i.dat;
+            end if;
+            wr_ack_int <= wr_int;
+          when "110" => 
+            -- Register samples_cnt
+          when others =>
+            wr_ack_int <= wr_int;
+          end case;
+        when "0100" => 
+          -- Submap fmc_adc_ch1
+          fmc_adc_ch1_wt <= (fmc_adc_ch1_wt or wr_int) and not fmc_adc_ch1_wack;
+          wr_ack_int <= fmc_adc_ch1_wack;
+        when "0110" => 
+          -- Submap fmc_adc_ch2
+          fmc_adc_ch2_wt <= (fmc_adc_ch2_wt or wr_int) and not fmc_adc_ch2_wack;
+          wr_ack_int <= fmc_adc_ch2_wack;
+        when "1000" => 
+          -- Submap fmc_adc_ch3
+          fmc_adc_ch3_wt <= (fmc_adc_ch3_wt or wr_int) and not fmc_adc_ch3_wack;
+          wr_ack_int <= fmc_adc_ch3_wack;
+        when "1010" => 
+          -- Submap fmc_adc_ch4
+          fmc_adc_ch4_wt <= (fmc_adc_ch4_wt or wr_int) and not fmc_adc_ch4_wack;
+          wr_ack_int <= fmc_adc_ch4_wack;
         when others =>
           wr_ack_int <= wr_int;
         end case;
@@ -565,201 +467,113 @@ begin
         rd_ack1_int <= '0';
       else
         reg_rdat_int <= (others => 'X');
-        case wb_i.adr(8 downto 2) is
-        when "0000000" => 
-          -- ctl
-          reg_rdat_int(1 downto 0) <= fmc_adc_100ms_csr_i.ctl_fsm_cmd;
-          reg_rdat_int(2) <= ctl_fmc_clk_oe_reg;
-          reg_rdat_int(3) <= ctl_offset_dac_clr_n_reg;
-          reg_rdat_int(4) <= fmc_adc_100ms_csr_i.ctl_man_bitslip;
-          reg_rdat_int(5) <= ctl_test_data_en_reg;
-          reg_rdat_int(6) <= ctl_trig_led_reg;
-          reg_rdat_int(7) <= ctl_acq_led_reg;
-          reg_rdat_int(8) <= fmc_adc_100ms_csr_i.ctl_clear_trig_stat;
-          reg_rdat_int(15) <= fmc_adc_100ms_csr_i.ctl_calib_apply;
-          rd_ack1_int <= rd_int;
-        when "0000001" => 
-          -- sta
-          reg_rdat_int(2 downto 0) <= fmc_adc_100ms_csr_i.sta_fsm;
-          reg_rdat_int(3) <= fmc_adc_100ms_csr_i.sta_serdes_pll;
-          reg_rdat_int(4) <= fmc_adc_100ms_csr_i.sta_serdes_synced;
-          reg_rdat_int(5) <= fmc_adc_100ms_csr_i.sta_acq_cfg;
-          reg_rdat_int(7 downto 6) <= fmc_adc_100ms_csr_i.sta_fmc_nr;
-          reg_rdat_int(15) <= fmc_adc_100ms_csr_i.sta_calib_busy;
-          rd_ack1_int <= rd_int;
-        when "0000010" => 
-          -- trig_stat
-          reg_rdat_int(0) <= fmc_adc_100ms_csr_i.trig_stat_ext;
-          reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_stat_sw;
-          reg_rdat_int(4) <= fmc_adc_100ms_csr_i.trig_stat_time;
-          reg_rdat_int(8) <= fmc_adc_100ms_csr_i.trig_stat_ch1;
-          reg_rdat_int(9) <= fmc_adc_100ms_csr_i.trig_stat_ch2;
-          reg_rdat_int(10) <= fmc_adc_100ms_csr_i.trig_stat_ch3;
-          reg_rdat_int(11) <= fmc_adc_100ms_csr_i.trig_stat_ch4;
-          rd_ack1_int <= rd_int;
-        when "0000011" => 
-          -- trig_en
-          reg_rdat_int(0) <= trig_en_ext_reg;
-          reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_en_sw;
-          reg_rdat_int(4) <= trig_en_time_reg;
-          reg_rdat_int(5) <= fmc_adc_100ms_csr_i.trig_en_aux_time;
-          reg_rdat_int(8) <= trig_en_ch1_reg;
-          reg_rdat_int(9) <= trig_en_ch2_reg;
-          reg_rdat_int(10) <= trig_en_ch3_reg;
-          reg_rdat_int(11) <= trig_en_ch4_reg;
-          rd_ack1_int <= rd_int;
-        when "0000100" => 
-          -- trig_pol
-          reg_rdat_int(0) <= trig_pol_ext_reg;
-          reg_rdat_int(8) <= trig_pol_ch1_reg;
-          reg_rdat_int(9) <= trig_pol_ch2_reg;
-          reg_rdat_int(10) <= trig_pol_ch3_reg;
-          reg_rdat_int(11) <= trig_pol_ch4_reg;
-          rd_ack1_int <= rd_int;
-        when "0000101" => 
-          -- ext_trig_dly
-          reg_rdat_int <= ext_trig_dly_reg;
-          rd_ack1_int <= rd_int;
-        when "0000110" => 
-          -- sw_trig
-          rd_ack1_int <= rd_int;
-        when "0000111" => 
-          -- shots
-          reg_rdat_int(15 downto 0) <= shots_nbr_reg;
-          reg_rdat_int(31 downto 16) <= fmc_adc_100ms_csr_i.shots_remain;
-          rd_ack1_int <= rd_int;
-        when "0001000" => 
-          -- multi_depth
-          reg_rdat_int <= fmc_adc_100ms_csr_i.multi_depth;
-          rd_ack1_int <= rd_int;
-        when "0001001" => 
-          -- trig_pos
-          reg_rdat_int <= fmc_adc_100ms_csr_i.trig_pos;
-          rd_ack1_int <= rd_int;
-        when "0001010" => 
-          -- fs_freq
-          reg_rdat_int <= fmc_adc_100ms_csr_i.fs_freq;
-          rd_ack1_int <= rd_int;
-        when "0001011" => 
-          -- downsample
-          reg_rdat_int <= downsample_reg;
-          rd_ack1_int <= rd_int;
-        when "0001100" => 
-          -- pre_samples
-          reg_rdat_int <= pre_samples_reg;
-          rd_ack1_int <= rd_int;
-        when "0001101" => 
-          -- post_samples
-          reg_rdat_int <= post_samples_reg;
-          rd_ack1_int <= rd_int;
-        when "0001110" => 
-          -- samples_cnt
-          reg_rdat_int <= fmc_adc_100ms_csr_i.samples_cnt;
-          rd_ack1_int <= rd_int;
-        when "0100000" => 
-          -- ch1_ctl
-          reg_rdat_int(6 downto 0) <= ch1_ctl_ssr_reg;
-          rd_ack1_int <= rd_int;
-        when "0100001" => 
-          -- ch1_sta
-          reg_rdat_int(15 downto 0) <= fmc_adc_100ms_csr_i.ch1_sta_val;
-          rd_ack1_int <= rd_int;
-        when "0100010" => 
-          -- ch1_calib
-          reg_rdat_int(15 downto 0) <= ch1_calib_gain_reg;
-          reg_rdat_int(31 downto 16) <= ch1_calib_offset_reg;
-          rd_ack1_int <= rd_int;
-        when "0100011" => 
-          -- ch1_sat
-          reg_rdat_int(14 downto 0) <= ch1_sat_val_reg;
-          rd_ack1_int <= rd_int;
-        when "0100100" => 
-          -- ch1_trig_thres
-          reg_rdat_int(15 downto 0) <= ch1_trig_thres_val_reg;
-          reg_rdat_int(31 downto 16) <= ch1_trig_thres_hyst_reg;
-          rd_ack1_int <= rd_int;
-        when "0100101" => 
-          -- ch1_trig_dly
-          reg_rdat_int <= ch1_trig_dly_reg;
-          rd_ack1_int <= rd_int;
-        when "0110000" => 
-          -- ch2_ctl
-          reg_rdat_int(6 downto 0) <= ch2_ctl_ssr_reg;
-          rd_ack1_int <= rd_int;
-        when "0110001" => 
-          -- ch2_sta
-          reg_rdat_int(15 downto 0) <= fmc_adc_100ms_csr_i.ch2_sta_val;
-          rd_ack1_int <= rd_int;
-        when "0110010" => 
-          -- ch2_calib
-          reg_rdat_int(15 downto 0) <= ch2_calib_gain_reg;
-          reg_rdat_int(31 downto 16) <= ch2_calib_offset_reg;
-          rd_ack1_int <= rd_int;
-        when "0110011" => 
-          -- ch2_sat
-          reg_rdat_int(14 downto 0) <= ch2_sat_val_reg;
-          rd_ack1_int <= rd_int;
-        when "0110100" => 
-          -- ch2_trig_thres
-          reg_rdat_int(15 downto 0) <= ch2_trig_thres_val_reg;
-          reg_rdat_int(31 downto 16) <= ch2_trig_thres_hyst_reg;
-          rd_ack1_int <= rd_int;
-        when "0110101" => 
-          -- ch2_trig_dly
-          reg_rdat_int <= ch2_trig_dly_reg;
-          rd_ack1_int <= rd_int;
-        when "1000000" => 
-          -- ch3_ctl
-          reg_rdat_int(6 downto 0) <= ch3_ctl_ssr_reg;
-          rd_ack1_int <= rd_int;
-        when "1000001" => 
-          -- ch3_sta
-          reg_rdat_int(15 downto 0) <= fmc_adc_100ms_csr_i.ch3_sta_val;
-          rd_ack1_int <= rd_int;
-        when "1000010" => 
-          -- ch3_calib
-          reg_rdat_int(15 downto 0) <= ch3_calib_gain_reg;
-          reg_rdat_int(31 downto 16) <= ch3_calib_offset_reg;
-          rd_ack1_int <= rd_int;
-        when "1000011" => 
-          -- ch3_sat
-          reg_rdat_int(14 downto 0) <= ch3_sat_val_reg;
-          rd_ack1_int <= rd_int;
-        when "1000100" => 
-          -- ch3_trig_thres
-          reg_rdat_int(15 downto 0) <= ch3_trig_thres_val_reg;
-          reg_rdat_int(31 downto 16) <= ch3_trig_thres_hyst_reg;
-          rd_ack1_int <= rd_int;
-        when "1000101" => 
-          -- ch3_trig_dly
-          reg_rdat_int <= ch3_trig_dly_reg;
-          rd_ack1_int <= rd_int;
-        when "1010000" => 
-          -- ch4_ctl
-          reg_rdat_int(6 downto 0) <= ch4_ctl_ssr_reg;
-          rd_ack1_int <= rd_int;
-        when "1010001" => 
-          -- ch4_sta
-          reg_rdat_int(15 downto 0) <= fmc_adc_100ms_csr_i.ch4_sta_val;
-          rd_ack1_int <= rd_int;
-        when "1010010" => 
-          -- ch4_calib
-          reg_rdat_int(15 downto 0) <= ch4_calib_gain_reg;
-          reg_rdat_int(31 downto 16) <= ch4_calib_offset_reg;
-          rd_ack1_int <= rd_int;
-        when "1010011" => 
-          -- ch4_sat
-          reg_rdat_int(14 downto 0) <= ch4_sat_val_reg;
-          rd_ack1_int <= rd_int;
-        when "1010100" => 
-          -- ch4_trig_thres
-          reg_rdat_int(15 downto 0) <= ch4_trig_thres_val_reg;
-          reg_rdat_int(31 downto 16) <= ch4_trig_thres_hyst_reg;
-          rd_ack1_int <= rd_int;
-        when "1010101" => 
-          -- ch4_trig_dly
-          reg_rdat_int <= ch4_trig_dly_reg;
-          rd_ack1_int <= rd_int;
+        case wb_i.adr(8 downto 5) is
+        when "0000" => 
+          case wb_i.adr(4 downto 2) is
+          when "000" => 
+            -- ctl
+            reg_rdat_int(1 downto 0) <= fmc_adc_100ms_csr_i.ctl_fsm_cmd;
+            reg_rdat_int(2) <= ctl_fmc_clk_oe_reg;
+            reg_rdat_int(3) <= ctl_offset_dac_clr_n_reg;
+            reg_rdat_int(4) <= fmc_adc_100ms_csr_i.ctl_man_bitslip;
+            reg_rdat_int(5) <= ctl_test_data_en_reg;
+            reg_rdat_int(6) <= ctl_trig_led_reg;
+            reg_rdat_int(7) <= ctl_acq_led_reg;
+            reg_rdat_int(8) <= fmc_adc_100ms_csr_i.ctl_clear_trig_stat;
+            reg_rdat_int(15) <= fmc_adc_100ms_csr_i.ctl_calib_apply;
+            rd_ack1_int <= rd_int;
+          when "001" => 
+            -- sta
+            reg_rdat_int(2 downto 0) <= fmc_adc_100ms_csr_i.sta_fsm;
+            reg_rdat_int(3) <= fmc_adc_100ms_csr_i.sta_serdes_pll;
+            reg_rdat_int(4) <= fmc_adc_100ms_csr_i.sta_serdes_synced;
+            reg_rdat_int(5) <= fmc_adc_100ms_csr_i.sta_acq_cfg;
+            reg_rdat_int(7 downto 6) <= fmc_adc_100ms_csr_i.sta_fmc_nr;
+            reg_rdat_int(15) <= fmc_adc_100ms_csr_i.sta_calib_busy;
+            rd_ack1_int <= rd_int;
+          when "010" => 
+            -- trig_stat
+            reg_rdat_int(0) <= fmc_adc_100ms_csr_i.trig_stat_ext;
+            reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_stat_sw;
+            reg_rdat_int(4) <= fmc_adc_100ms_csr_i.trig_stat_time;
+            reg_rdat_int(8) <= fmc_adc_100ms_csr_i.trig_stat_ch1;
+            reg_rdat_int(9) <= fmc_adc_100ms_csr_i.trig_stat_ch2;
+            reg_rdat_int(10) <= fmc_adc_100ms_csr_i.trig_stat_ch3;
+            reg_rdat_int(11) <= fmc_adc_100ms_csr_i.trig_stat_ch4;
+            rd_ack1_int <= rd_int;
+          when "011" => 
+            -- trig_en
+            reg_rdat_int(0) <= trig_en_ext_reg;
+            reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_en_sw;
+            reg_rdat_int(4) <= trig_en_time_reg;
+            reg_rdat_int(5) <= fmc_adc_100ms_csr_i.trig_en_aux_time;
+            reg_rdat_int(8) <= trig_en_ch1_reg;
+            reg_rdat_int(9) <= trig_en_ch2_reg;
+            reg_rdat_int(10) <= trig_en_ch3_reg;
+            reg_rdat_int(11) <= trig_en_ch4_reg;
+            rd_ack1_int <= rd_int;
+          when "100" => 
+            -- trig_pol
+            reg_rdat_int(0) <= trig_pol_ext_reg;
+            reg_rdat_int(8) <= trig_pol_ch1_reg;
+            reg_rdat_int(9) <= trig_pol_ch2_reg;
+            reg_rdat_int(10) <= trig_pol_ch3_reg;
+            reg_rdat_int(11) <= trig_pol_ch4_reg;
+            rd_ack1_int <= rd_int;
+          when "101" => 
+            -- ext_trig_dly
+            reg_rdat_int <= ext_trig_dly_reg;
+            rd_ack1_int <= rd_int;
+          when "110" => 
+            -- sw_trig
+            rd_ack1_int <= rd_int;
+          when "111" => 
+            -- shots
+            reg_rdat_int(15 downto 0) <= shots_nbr_reg;
+            reg_rdat_int(31 downto 16) <= fmc_adc_100ms_csr_i.shots_remain;
+            rd_ack1_int <= rd_int;
+          when others =>
+            reg_rdat_int <= (others => 'X');
+            rd_ack1_int <= rd_int;
+          end case;
+        when "0001" => 
+          case wb_i.adr(4 downto 2) is
+          when "000" => 
+            -- multi_depth
+            reg_rdat_int <= fmc_adc_100ms_csr_i.multi_depth;
+            rd_ack1_int <= rd_int;
+          when "001" => 
+            -- trig_pos
+            reg_rdat_int <= fmc_adc_100ms_csr_i.trig_pos;
+            rd_ack1_int <= rd_int;
+          when "010" => 
+            -- fs_freq
+            reg_rdat_int <= fmc_adc_100ms_csr_i.fs_freq;
+            rd_ack1_int <= rd_int;
+          when "011" => 
+            -- downsample
+            reg_rdat_int <= downsample_reg;
+            rd_ack1_int <= rd_int;
+          when "100" => 
+            -- pre_samples
+            reg_rdat_int <= pre_samples_reg;
+            rd_ack1_int <= rd_int;
+          when "101" => 
+            -- post_samples
+            reg_rdat_int <= post_samples_reg;
+            rd_ack1_int <= rd_int;
+          when "110" => 
+            -- samples_cnt
+            reg_rdat_int <= fmc_adc_100ms_csr_i.samples_cnt;
+            rd_ack1_int <= rd_int;
+          when others =>
+            reg_rdat_int <= (others => 'X');
+            rd_ack1_int <= rd_int;
+          end case;
+        when "0100" => 
+        when "0110" => 
+        when "1000" => 
+        when "1010" => 
         when others =>
           reg_rdat_int <= (others => 'X');
           rd_ack1_int <= rd_int;
@@ -769,166 +583,104 @@ begin
   end process;
 
   -- Process for read requests.
-  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int) begin
+  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int, rd_int, fmc_adc_ch1_i.dat, fmc_adc_ch1_rack, fmc_adc_ch1_rt, rd_int, fmc_adc_ch2_i.dat, fmc_adc_ch2_rack, fmc_adc_ch2_rt, rd_int, fmc_adc_ch3_i.dat, fmc_adc_ch3_rack, fmc_adc_ch3_rt, rd_int, fmc_adc_ch4_i.dat, fmc_adc_ch4_rack, fmc_adc_ch4_rt) begin
     -- By default ack read requests
     wb_o.dat <= (others => '0');
-    case wb_i.adr(8 downto 2) is
-    when "0000000" => 
-      -- ctl
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000001" => 
-      -- sta
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000010" => 
-      -- trig_stat
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000011" => 
-      -- trig_en
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000100" => 
-      -- trig_pol
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000101" => 
-      -- ext_trig_dly
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000110" => 
-      -- sw_trig
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0000111" => 
-      -- shots
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001000" => 
-      -- multi_depth
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001001" => 
-      -- trig_pos
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001010" => 
-      -- fs_freq
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001011" => 
-      -- downsample
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001100" => 
-      -- pre_samples
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001101" => 
-      -- post_samples
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0001110" => 
-      -- samples_cnt
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0100000" => 
-      -- ch1_ctl
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0100001" => 
-      -- ch1_sta
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0100010" => 
-      -- ch1_calib
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0100011" => 
-      -- ch1_sat
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0100100" => 
-      -- ch1_trig_thres
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0100101" => 
-      -- ch1_trig_dly
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0110000" => 
-      -- ch2_ctl
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0110001" => 
-      -- ch2_sta
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0110010" => 
-      -- ch2_calib
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0110011" => 
-      -- ch2_sat
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0110100" => 
-      -- ch2_trig_thres
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "0110101" => 
-      -- ch2_trig_dly
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1000000" => 
-      -- ch3_ctl
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1000001" => 
-      -- ch3_sta
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1000010" => 
-      -- ch3_calib
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1000011" => 
-      -- ch3_sat
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1000100" => 
-      -- ch3_trig_thres
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1000101" => 
-      -- ch3_trig_dly
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1010000" => 
-      -- ch4_ctl
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1010001" => 
-      -- ch4_sta
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1010010" => 
-      -- ch4_calib
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1010011" => 
-      -- ch4_sat
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1010100" => 
-      -- ch4_trig_thres
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "1010101" => 
-      -- ch4_trig_dly
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
+    fmc_adc_ch1_re <= '0';
+    fmc_adc_ch2_re <= '0';
+    fmc_adc_ch3_re <= '0';
+    fmc_adc_ch4_re <= '0';
+    case wb_i.adr(8 downto 5) is
+    when "0000" => 
+      case wb_i.adr(4 downto 2) is
+      when "000" => 
+        -- ctl
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "001" => 
+        -- sta
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "010" => 
+        -- trig_stat
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "011" => 
+        -- trig_en
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "100" => 
+        -- trig_pol
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "101" => 
+        -- ext_trig_dly
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "110" => 
+        -- sw_trig
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "111" => 
+        -- shots
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when others =>
+        rd_ack_int <= rd_int;
+      end case;
+    when "0001" => 
+      case wb_i.adr(4 downto 2) is
+      when "000" => 
+        -- multi_depth
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "001" => 
+        -- trig_pos
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "010" => 
+        -- fs_freq
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "011" => 
+        -- downsample
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "100" => 
+        -- pre_samples
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "101" => 
+        -- post_samples
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when "110" => 
+        -- samples_cnt
+        wb_o.dat <= reg_rdat_int;
+        rd_ack_int <= rd_ack1_int;
+      when others =>
+        rd_ack_int <= rd_int;
+      end case;
+    when "0100" => 
+      -- Submap fmc_adc_ch1
+      fmc_adc_ch1_re <= rd_int;
+      wb_o.dat <= fmc_adc_ch1_i.dat;
+      rd_ack_int <= fmc_adc_ch1_rack;
+    when "0110" => 
+      -- Submap fmc_adc_ch2
+      fmc_adc_ch2_re <= rd_int;
+      wb_o.dat <= fmc_adc_ch2_i.dat;
+      rd_ack_int <= fmc_adc_ch2_rack;
+    when "1000" => 
+      -- Submap fmc_adc_ch3
+      fmc_adc_ch3_re <= rd_int;
+      wb_o.dat <= fmc_adc_ch3_i.dat;
+      rd_ack_int <= fmc_adc_ch3_rack;
+    when "1010" => 
+      -- Submap fmc_adc_ch4
+      fmc_adc_ch4_re <= rd_int;
+      wb_o.dat <= fmc_adc_ch4_i.dat;
+      rd_ack_int <= fmc_adc_ch4_rack;
     when others =>
       rd_ack_int <= rd_int;
     end case;
