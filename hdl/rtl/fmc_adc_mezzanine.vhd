@@ -43,13 +43,13 @@ entity fmc_adc_mezzanine is
     -- Only used on Xilinx Spartan6 FPGAs
     g_SPARTAN6_USE_PLL   : boolean                        := TRUE;
     -- External trigger delay calibration value
-    g_TRIG_DELAY_EXT     : natural                        := 7;
+    g_TRIG_DELAY_EXT     : natural                        := 8;
     -- Software and time trigger delay calibration value
-    g_TRIG_DELAY_SW      : natural                        := 9;
+    g_TRIG_DELAY_SW      : natural                        := 12;
     -- Value to be subtracted from trigger tag coarse counter.
     -- This is useful if you know that the system introduces
     -- some systematic delay wrt the actual trigger time
-    g_TAG_ADJUST         : natural                        := 24;
+    g_TAG_ADJUST         : natural                        := 27;
     -- FMC-ADC identification number
     g_FMC_ADC_NR         : natural                        := 0;
     -- WB interface configuration
