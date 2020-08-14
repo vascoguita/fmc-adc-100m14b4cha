@@ -315,7 +315,6 @@ architecture rtl of fmc_adc_100Ms_core is
 
   -- RAM address counter
   signal ram_addr_cnt : unsigned(28 downto 0);
-  signal test_data_en : std_logic;
   signal trig_addr    : std_logic_vector(31 downto 0);
   signal mem_ovr      : std_logic;
 
@@ -517,7 +516,6 @@ begin
   ctl_reg_wr                <= csr_regout.ctl_wr;
   fsm_cmd                   <= csr_regout.ctl_fsm_cmd;
   serdes_man_bitslip        <= csr_regout.ctl_man_bitslip and ctl_reg_wr;
-  test_data_en              <= csr_regout.ctl_test_data_en;
   trig_led_man              <= csr_regout.ctl_trig_led;
   acq_led_man               <= csr_regout.ctl_acq_led;
   trig_storage_clear        <= csr_regout.ctl_clear_trig_stat and ctl_reg_wr;
@@ -1594,11 +1592,7 @@ begin
   wb_ddr_master_o.adr <= "00" & std_logic_vector(ram_addr_cnt) & "0";
   wb_ddr_master_o.we  <= '1';
   wb_ddr_master_o.sel <= X"FF";
-
-  with test_data_en select
-    wb_ddr_master_o.dat <=
-    x"00000000" & "000" & std_logic_vector(ram_addr_cnt) when '1',
-    wb_ddr_fifo_dout(63 downto 0)                        when others;
+  wb_ddr_master_o.dat <= wb_ddr_fifo_dout(63 downto 0);
 
   -- Store trigger DDR address (byte address)
   p_trig_addr : process (wb_ddr_clk_i)

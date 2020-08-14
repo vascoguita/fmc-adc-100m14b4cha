@@ -12,7 +12,6 @@ package fmc_adc_100ms_csr_pkg is
     ctl_fmc_clk_oe   : std_logic;
     ctl_offset_dac_clr_n : std_logic;
     ctl_man_bitslip  : std_logic;
-    ctl_test_data_en : std_logic;
     ctl_trig_led     : std_logic;
     ctl_acq_led      : std_logic;
     ctl_clear_trig_stat : std_logic;
@@ -117,7 +116,6 @@ architecture syn of fmc_adc_100ms_csr is
   signal wb_wip                         : std_logic;
   signal ctl_fmc_clk_oe_reg             : std_logic;
   signal ctl_offset_dac_clr_n_reg       : std_logic;
-  signal ctl_test_data_en_reg           : std_logic;
   signal ctl_trig_led_reg               : std_logic;
   signal ctl_acq_led_reg                : std_logic;
   signal trig_en_ext_reg                : std_logic;
@@ -198,7 +196,6 @@ begin
   -- Assign outputs
   fmc_adc_100ms_csr_o.ctl_fmc_clk_oe <= ctl_fmc_clk_oe_reg;
   fmc_adc_100ms_csr_o.ctl_offset_dac_clr_n <= ctl_offset_dac_clr_n_reg;
-  fmc_adc_100ms_csr_o.ctl_test_data_en <= ctl_test_data_en_reg;
   fmc_adc_100ms_csr_o.ctl_trig_led <= ctl_trig_led_reg;
   fmc_adc_100ms_csr_o.ctl_acq_led <= ctl_acq_led_reg;
   fmc_adc_100ms_csr_o.trig_en_ext <= trig_en_ext_reg;
@@ -306,7 +303,6 @@ begin
         fmc_adc_100ms_csr_o.ctl_wr <= '0';
         ctl_fmc_clk_oe_reg <= '0';
         ctl_offset_dac_clr_n_reg <= '0';
-        ctl_test_data_en_reg <= '0';
         ctl_trig_led_reg <= '0';
         ctl_acq_led_reg <= '0';
         trig_en_ext_reg <= '0';
@@ -349,7 +345,6 @@ begin
               ctl_fmc_clk_oe_reg <= wb_i.dat(2);
               ctl_offset_dac_clr_n_reg <= wb_i.dat(3);
               fmc_adc_100ms_csr_o.ctl_man_bitslip <= wb_i.dat(4);
-              ctl_test_data_en_reg <= wb_i.dat(5);
               ctl_trig_led_reg <= wb_i.dat(6);
               ctl_acq_led_reg <= wb_i.dat(7);
               fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wb_i.dat(8);
@@ -476,7 +471,6 @@ begin
             reg_rdat_int(2) <= ctl_fmc_clk_oe_reg;
             reg_rdat_int(3) <= ctl_offset_dac_clr_n_reg;
             reg_rdat_int(4) <= fmc_adc_100ms_csr_i.ctl_man_bitslip;
-            reg_rdat_int(5) <= ctl_test_data_en_reg;
             reg_rdat_int(6) <= ctl_trig_led_reg;
             reg_rdat_int(7) <= ctl_acq_led_reg;
             reg_rdat_int(8) <= fmc_adc_100ms_csr_i.ctl_clear_trig_stat;

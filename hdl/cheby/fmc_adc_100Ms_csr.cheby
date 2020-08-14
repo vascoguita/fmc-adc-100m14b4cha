@@ -42,13 +42,6 @@ memory-map:
           x-hdl:
             type: wire
       - field:
-          name: test_data_en
-          range: 5
-          description: Enable test data
-          comment: |
-            Write the DDR RAM address counter value instead of ADC data to DDR.
-            Note that no timetags are appended at the end of test data.
-      - field:
           name: trig_led
           range: 6
           description: Manual TRIG LED
