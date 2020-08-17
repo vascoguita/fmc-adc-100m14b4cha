@@ -41,7 +41,7 @@ static void print_version(char *pname)
 
 int main(int argc, char **argv)
 {
-	int fd, addr, count, usec;
+	int fd, addr, count, usec, ret;
 	int64_t tics;
 
 	if ((argc == 2) &&
@@ -83,15 +83,15 @@ int main(int argc, char **argv)
 		char b[]={0x00, 0xff};
 
 		lseek(fd, addr, SEEK_SET);
-		write(fd, b + 1, 1);
+		ret = write(fd, b + 1, 1);
 		lseek(fd, addr, SEEK_SET);
-		write(fd, b + 0, 1);
+		ret = write(fd, b + 0, 1);
 
 		if (count > 1) {
 			tics += usec;
 			delay_to(tics);
 		}
 	} while (--count);
-	return 0;
+	return ret;
 }
 

@@ -1,6 +1,0 @@
-[submodule "zio"]
-	path = zio
-	url = https://ohwr.org/project/zio.git
-[submodule "fmc-bus"]
-	path = fmc-bus
-	url = https://ohwr.org/project/fmc-bus.git

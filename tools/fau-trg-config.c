@@ -53,7 +53,7 @@ const char *attribute[] = {
 /* Write a sysfs attribute */
 int fau_write_attribute(enum fau_attribute attr, uint32_t val)
 {
-	int fd;
+	int  ret, fd;
 	char buf[buf_len], fullpath[200];
 
 	/* convert val to string */
@@ -66,9 +66,9 @@ int fau_write_attribute(enum fau_attribute attr, uint32_t val)
 	fd = open(fullpath, O_WRONLY);
 	if (fd < 0)
 		return -ENOENT;
-	write(fd, buf, strlen(buf));
+	ret = write(fd, buf, strlen(buf));
 	close(fd);
-	return 0;
+	return ret;
 }
 
 static void fau_help()

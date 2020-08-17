@@ -8,18 +8,19 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/version.h>
+#include <linux/dmaengine.h>
+#include <linux/mod_devicetable.h>
+#include <linux/ipmi-fru.h>
+#include <linux/fmc.h>
 
 #include "fmc-adc-100m14b4cha.h"
-
-/* Module parameters */
-static struct fmc_driver fa_dev_drv;
-FMC_PARAM_BUSID(fa_dev_drv);
-FMC_PARAM_GATEWARE(fa_dev_drv);
+#include <platform_data/fmc-adc-100m14b4cha.h>
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
-int fa_enable_test_data_adc = 0;
-module_param_named(enable_test_data_adc, fa_enable_test_data_adc, int, 0444);
+
+#define FA_EEPROM_TYPE "at24c64"
+
 
 static const int zfad_hw_range[] = {
 	[FA100M14B4C_RANGE_10V_CAL]   = 0x44,
@@ -33,6 +34,96 @@ static const int zfad_hw_range[] = {
 
 /* fmc-adc specific workqueue */
 struct workqueue_struct *fa_workqueue;
+
+
+/**
+ * Read FMC mezzanine temperature
+ * @fa: the adc descriptor
+ *
+ * DS18B20 returns units of 1/16 degree. We return units
+ * of 1/1000 of a degree instead.
+ */
+int32_t fa_temperature_read(struct fa_dev *fa)
+{
+	uint32_t raw_temp;
+
+	raw_temp = fa_readl(fa, fa->fa_ow_base, &zfad_regs[ZFA_DS18B20_TEMP]);
+
+	return (raw_temp * 1000 + 8) / 16;
+}
+
+/**
+ * Do a software trigger
+ * @fa: the adc descriptor
+ *
+ * Return: 0 on success, otherwise a negative error number
+ */
+int fa_trigger_software(struct fa_dev *fa)
+{
+	struct zio_ti *ti = fa->zdev->cset->ti;
+	struct zio_attribute *ti_zattr = ti->zattr_set.std_zattr;
+	unsigned int timeout;
+	int err;
+
+	/* Fire if software trigger is enabled (index 5) */
+	if (!(ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value &
+	      FA100M14B4C_TRG_SRC_SW)) {
+		dev_info(&fa->pdev->dev, "sw trigger is not enabled\n");
+		return -EPERM;
+	}
+
+        /* Fire if nsamples!=0 */
+	if (!ti->nsamples) {
+		dev_info(&fa->pdev->dev, "pre + post = 0: cannot acquire\n");
+		return -EINVAL;
+	}
+
+        /*
+	 * We can do a software trigger if the FSM is not in
+	 * the WAIT trigger status. Wait for it.
+	 * Remember that: timeout is in us, a sample takes 10ns
+	 */
+	timeout = ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value / 10;
+	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_WAIT, timeout);
+	if (err)
+		return err;
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SW], 1);
+
+	return 0;
+}
+
+/**
+ * Description:
+ *    The version from the Linux kernel automatically squash contiguous pages.
+ *    Sometimes we do not want to squash (e.g. SVEC)
+ */
+static int sg_alloc_table_from_pages_no_squash(struct sg_table *sgt,
+					       struct page **pages,
+					       unsigned int n_pages,
+					       unsigned int offset,
+					       unsigned long size,
+					       unsigned int max_segment,
+					       gfp_t gfp_mask)
+{
+	struct scatterlist *sg;
+	int err, i;
+
+	err = sg_alloc_table(sgt, n_pages, GFP_KERNEL);
+	if (unlikely(err))
+		return err;
+
+	for_each_sg(sgt->sgl, sg, sgt->orig_nents, i) {
+		unsigned long chunk_size;
+
+		chunk_size = PAGE_SIZE - offset;
+		sg_set_page(sg, pages[i], min(size, chunk_size), offset);
+		offset = 0;
+		size -= chunk_size;
+	}
+
+	return 0;
+}
+
 
 /*
  * zfad_convert_hw_range
@@ -51,121 +142,15 @@ int zfad_convert_hw_range(uint32_t bitmask)
 }
 
 /* Calculate correct index in fa_regfield array for channel from CHx indexes */
-int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan)
+int zfad_get_chx_index(unsigned long addr, unsigned int chan)
 {
 	int offset;
 
-	offset = ZFA_CHx_MULT  * (FA100M14B4C_NCHAN - chan->index);
+	offset = ZFA_CHx_MULT  * (FA100M14B4C_NCHAN - chan);
 
 	return addr - offset;
 }
 
-
-/**
- * It enables or disables the pattern data on the ADC
- * @fa The ADC device instance
- * @pattern the pattern data to get from the ADC
- * @enable 0 to disable, 1 to enable
- */
-int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
-			     unsigned int enable)
-{
-	uint32_t frame_tx;
-	int err;
-
-	frame_tx  = 0x0000; /* write mode */
-	frame_tx |= 0x0400; /* A4 pattern */
-	frame_tx |= pattern & 0xFF; /* LSB pattern */
-	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
-	if (err)
-		return err;
-
-	frame_tx  = 0x0000; /* write mode */
-	frame_tx |= 0x0300; /* A3 pattern + enable */
-	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
-	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
-	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
-	if (err)
-		return err;
-
-	return 0;
-}
-
-/**
- * It sets the DAC voltage to apply an offset on the input channel
- * @chan
- * @val DAC values (-5V: 0x0000, 0V: 0x8000, +5V: 0x7FFF)
- *
- * Return: 0 on success, otherwise a negative error number
- */
-static int zfad_dac_set(struct zio_channel *chan, uint32_t val)
-{
-	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-
-	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan->index), 16, val, NULL);
-}
-
-static int zfad_offset_to_dac(struct zio_channel *chan,
-			      int32_t uval,
-			      enum fa100m14b4c_input_range range)
-{
-	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-	int offset, gain;
-	int64_t hwval;
-
-	hwval = uval * 0x8000LL / 5000000;
-	if (hwval == 0x8000)
-		hwval = 0x7fff; /* -32768 .. 32767 */
-
-	offset = fa->calib.dac[range].offset[chan->index];
-	gain = fa->calib.dac[range].gain[chan->index];
-
-	hwval = ((hwval + offset) * gain) >> 15; /* signed */
-	hwval += 0x8000; /* offset binary */
-	if (hwval < 0)
-		hwval = 0;
-	if (hwval > 0xffff)
-		hwval = 0xffff;
-
-	return hwval;
-}
-
-/*
- * zfad_apply_user_offset
- * @chan: the channel where apply offset
- *
- * Apply user offset to the channel input. Before apply the user offset it must
- * be corrected with offset and gain calibration value.
- *
- * Offset values are taken from `struct fa_dev`, so they must be there before
- * calling this function
- */
-int zfad_apply_offset(struct zio_channel *chan)
-{
-	struct fa_dev *fa = get_zfadc(&chan->cset->zdev->head.dev);
-	uint32_t range_reg;
-	int32_t off_uv;
-	int hwval, i, range;
-
-	off_uv = fa->user_offset[chan->index] + fa->zero_offset[chan->index];
-	if (off_uv < -5000000 || off_uv > 5000000)
-		return -EINVAL;
-
-	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
-	range_reg = fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[i]);
-
-	range = zfad_convert_hw_range(range_reg);
-	if (range < 0)
-		return range;
-
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
-		range = FA100M14B4C_RANGE_1V;
-	else if (range >= FA100M14B4C_RANGE_10V_CAL)
-		range -= FA100M14B4C_RANGE_10V_CAL;
-
-	hwval = zfad_offset_to_dac(chan, off_uv, range);
-	return zfad_dac_set(chan, hwval);
-}
 
 /*
  * zfad_reset_offset
@@ -177,11 +162,13 @@ void zfad_reset_offset(struct fa_dev *fa)
 {
 	int i;
 
+	spin_lock(&fa->zdev->cset->lock);
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
 		fa->user_offset[i] = 0;
 		fa->zero_offset[i] = 0;
-		zfad_apply_offset(&fa->zdev->cset->chan[i]);
+		fa_calib_dac_config_chan(fa, i, ~0);
 	}
+	spin_unlock(&fa->zdev->cset->lock);
 }
 
 /*
@@ -199,7 +186,7 @@ void zfad_init_saturation(struct fa_dev *fa)
 }
 
 /*
- * zfad_set_range
+ * fa_adc_range_set
  * @fa: the fmc-adc descriptor
  * @chan: the channel to calibrate
  * @usr_val: the volt range to set and calibrate
@@ -208,16 +195,15 @@ void zfad_init_saturation(struct fa_dev *fa)
  * Gain ad offsets must be corrected with offset and gain calibration value.
  * An open input and test data do not need any correction.
  */
-int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
-			  int range)
+int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan, int range)
 {
-	int i, offset, gain;
+	int i;
 
 	/* Actually set the range */
-	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan);
+	i = zfad_get_chx_index(ZFA_CHx_CTL_RANGE, chan->index);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], zfad_hw_range[range]);
 
-	if (range == FA100M14B4C_RANGE_OPEN || fa_enable_test_data_adc)
+	if (range == FA100M14B4C_RANGE_OPEN)
 		range = FA100M14B4C_RANGE_1V;
 	else if (range >= FA100M14B4C_RANGE_10V_CAL)
 		range -= FA100M14B4C_RANGE_10V_CAL;
@@ -228,17 +214,111 @@ int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
 		return -EINVAL;
 	}
 
-	offset = fa->calib.adc[range].offset[chan->index];
-	gain = fa->calib.adc[range].gain[chan->index];
+	spin_lock(&fa->zdev->cset->lock);
+	fa->range[chan->index] = range;
+	spin_unlock(&fa->zdev->cset->lock);
 
-	i = zfad_get_chx_index(ZFA_CHx_OFFSET, chan);
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i],
-		  offset & 0xffff /* prevent warning */);
-	i = zfad_get_chx_index(ZFA_CHx_GAIN, chan);
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[i], gain);
+	return 0;
+}
 
-	/* recalculate user offset for the new range */
-	zfad_apply_offset(chan);
+static enum fa100m14b4c_fsm_state fa_fsm_get_state(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_STA_FSM]);
+}
+
+static bool fa_fsm_is_state(struct fa_dev *fa,
+			    enum fa100m14b4c_fsm_state state)
+{
+	return fa_fsm_get_state(fa) == state;
+}
+
+int fa_fsm_wait_state(struct fa_dev *fa,
+		      enum fa100m14b4c_fsm_state state,
+		      unsigned int timeout_us)
+{
+	unsigned long timeout;
+
+	timeout = jiffies + usecs_to_jiffies(timeout_us);
+	while (!fa_fsm_is_state(fa, state)) {
+		cpu_relax();
+
+		if (time_after(jiffies, timeout))
+			return -ETIMEDOUT;
+	}
+
+        return 0;
+}
+
+static void fa_fpga_data_pattern_set(struct fa_dev *fa, unsigned int enable)
+{
+	fa_writel(fa, fa->fa_adc_csr_base,
+		  &zfad_regs[ZFA_CTL_TEST_DATA_EN], enable);
+}
+
+/**
+ * It enables or disables the pattern data on the ADC
+ * @fa The ADC device instance
+ * @pattern the pattern data to get from the ADC
+ * @enable 0 to disable, 1 to enable
+ */
+int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
+			    unsigned int enable)
+{
+	uint32_t frame_tx;
+	int err;
+
+	dev_dbg(&fa->pdev->dev, "%s {patter: 0x%04x, enable: %d}\n", __func__, pattern, enable);
+
+        spin_lock(&fa->zdev->cset->lock);
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0400; /* A4 pattern */
+	frame_tx |= pattern & 0xFF; /* LSB pattern */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		goto err;
+
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0300; /* A3 pattern + enable */
+	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
+	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		goto err;
+
+
+	if (enable)
+		fa->flags |= FA_DEV_F_PATTERN_DATA;
+	else
+		fa->flags &= ~FA_DEV_F_PATTERN_DATA;
+err:
+	spin_unlock(&fa->zdev->cset->lock);
+	return err;
+}
+
+/**
+ * Get current status for data pattern
+ * @fa The ADC device instance
+ * @pattern the pattern data to get from the ADC
+ * @enable 0 to disable, 1 to enable
+ */
+int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
+                            unsigned int *enable)
+{
+	uint32_t tx, rx;
+	int err;
+
+	tx = 0x8000 | (3 << 8);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
+	if (err)
+		return err;
+	*enable = !!(rx & 0x80);
+	*pattern = ((rx & 0x3F) << 8);
+
+	tx = 0x8000 | (4 << 8);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
+	if (err)
+		return err;
+	*pattern |= (rx & 0xFF);
 
 	return 0;
 }
@@ -317,13 +397,13 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 			return -EIO;
 		}
 
-		dev_dbg(fa->msgdev, "FSM START Command, Enable interrupts\n");
+		dev_dbg(fa->msgdev, "FSM START Command\n");
 		fa_enable_irqs(fa);
 
 		fa_writel(fa, fa->fa_adc_csr_base,
 			  &zfad_regs[ZFA_CTL_RST_TRG_STA], 1);
 	} else {
-		dev_dbg(fa->msgdev, "FSM STOP Command, Disable interrupts\n");
+		dev_dbg(fa->msgdev, "FSM STOP Command\n");
 		fa->enable_auto_start = 0;
 		fa_disable_irqs(fa);
 	}
@@ -333,44 +413,15 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	return 0;
 }
 
-/* Extract from SDB the base address of the core components */
-/* which are not carrier specific */
-static int __fa_sdb_get_device(struct fa_dev *fa)
+static void fa_init_timetag(struct fa_dev *fa)
 {
-	struct fmc_device *fmc = fa->fmc;
-	int ret;
+	unsigned long seconds;
 
-	ret = fmc_scan_sdb_tree(fmc, 0);
-	if (ret == -EBUSY) {
-		/* Not a problem, it's already there. We assume that
-		   it's the correct one */
-		ret = 0;
-	}
-	if (ret < 0) {
-		dev_err(fa->msgdev,
-			"%s: no SDB in the bitstream."
-			"Are you sure you've provided the correct one?\n",
-			KBUILD_MODNAME);
-		return ret;
-	}
-
-	/* Now use SDB to find the base addresses */
-	fa->fa_irq_vic_base = fmc_find_sdb_device(fmc->sdb, 0xce42,
-						  0x13, NULL);
-	fa->fa_adc_csr_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-						      0x608,
-						      fmc->slot_id, NULL);
-	fa->fa_irq_adc_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-						      0x26ec6086,
-						      fmc->slot_id, NULL);
-	fa->fa_utc_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42,
-						  0x604, fmc->slot_id, NULL);
-	fa->fa_spi_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42, 0xe503947e,
-							fmc->slot_id, NULL);
-	fa->fa_ow_base = fmc_find_sdb_device_ext(fmc->sdb, 0xce42, 0x779c5443,
-							fmc->slot_id, NULL);
-
-	return ret;
+	seconds = get_seconds();
+	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_U],
+		  (seconds >> 32) & 0xFFFFFFFF);
+	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_L],
+		  (seconds >> 00) & 0xFFFFFFFF);
 }
 
 /*
@@ -378,21 +429,10 @@ static int __fa_sdb_get_device(struct fa_dev *fa)
  */
 static int __fa_init(struct fa_dev *fa)
 {
-	struct device *hwdev = fa->fmc->hwdev;
 	struct zio_device *zdev = fa->zdev;
 	int i, addr;
 
-	/* Check if hardware supports 64-bit DMA */
-	if (dma_set_mask(hwdev, DMA_BIT_MASK(64))) {
-		/* Check if hardware supports 32-bit DMA */
-		if (dma_set_mask(hwdev, DMA_BIT_MASK(32))) {
-			dev_err(fa->msgdev, "32-bit DMA addressing not available\n");
-			return -EINVAL;
-		}
-	}
-
 	/* Use identity calibration */
-	fa_read_eeprom_calib(fa);
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
 					 &zfad_regs[ZFA_MULT_MAX_SAMP]);
 
@@ -402,11 +442,13 @@ static int __fa_init(struct fa_dev *fa)
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
 		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
-						&zdev->cset->chan[i]);
+					  zdev->cset->chan[i].index);
 		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
 			  FA100M14B4C_RANGE_1V);
-		zfad_set_range(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
+	        fa_adc_range_set(fa, &zdev->cset->chan[i],
+				 FA100M14B4C_RANGE_1V);
 	}
+	fa_calib_config(fa);
 	zfad_reset_offset(fa);
 
 	/* Enable mezzanine clock */
@@ -414,15 +456,14 @@ static int __fa_init(struct fa_dev *fa)
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_TEST_DATA_EN],
-		  fa_enable_test_data_fpga);
+	fa_fpga_data_pattern_set(fa, fa_enable_test_data_fpga);
+	/* disable test pattern data in the ADC */
+	fa_adc_data_pattern_set(fa, 0, 0);
 
 	/* Set to single shot mode by default */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SHOTS_NB], 1);
 
-	/* Enable the software trigger by default: there is no arm in this */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
-		  FA100M14B4C_TRG_SRC_SW);
+	zfat_trigger_source_reset(fa);
 
 	/* Zero offsets and release the DAC clear */
 	zfad_reset_offset(fa);
@@ -431,9 +472,7 @@ static int __fa_init(struct fa_dev *fa)
 	/* Initialize channel saturation values */
 	zfad_init_saturation(fa);
 
-	/* Set UTC seconds from the kernel seconds */
-	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS],
-		  get_seconds());
+	fa_init_timetag(fa);
 
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_EXT_DLY], 0);
 
@@ -451,91 +490,166 @@ struct fa_modlist {
 
 static struct fa_modlist mods[] = {
 	{"spi", fa_spi_init, fa_spi_exit},
-	{"onewire", fa_onewire_init, fa_onewire_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
 	{"debug", fa_debug_init, fa_debug_exit},
+	{"calibration", fa_calib_init, fa_calib_exit},
+};
+
+
+static int fa_resource_validation(struct platform_device *pdev)
+{
+	struct resource *r;
+
+	r = platform_get_resource(pdev, IORESOURCE_IRQ, ADC_IRQ_TRG);
+	if (!r) {
+		dev_err(&pdev->dev,
+			"The ADC needs an interrupt number for the IRQ\n");
+		return -ENXIO;
+	}
+
+	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
+	if (!r) {
+		dev_err(&pdev->dev,
+			"The ADC needs base address\n");
+		return -ENXIO;
+	}
+
+	return 0;
+}
+
+#define FA_FMC_NAME "FmcAdc100m14b4cha"
+
+static bool fa_fmc_slot_is_valid(struct fa_dev *fa)
+{
+	int ret;
+	void *fru = NULL;
+	char *fmc_name = NULL;
+
+	if (!fmc_slot_fru_valid(fa->slot)) {
+		dev_err(fa->msgdev, "Can't identify FMC card: invalid FRU\n");
+		return -EINVAL;
+	}
+
+	fru = kmalloc(FRU_SIZE_MAX, GFP_KERNEL);
+	if (!fru)
+		return -ENOMEM;
+
+	ret = fmc_slot_eeprom_read(fa->slot, fru, 0x0, FRU_SIZE_MAX);
+	if (ret != FRU_SIZE_MAX) {
+		dev_err(fa->msgdev, "Failed to read FRU header\n");
+		goto err;
+	}
+
+	fmc_name = fru_get_product_name(fru);
+	ret = strcmp(fmc_name, FA_FMC_NAME);
+	if (ret) {
+		dev_err(fa->msgdev,
+			"Invalid FMC card: expectd '%s', found '%s'\n",
+			FA_FMC_NAME, fmc_name);
+		goto err;
+	}
+
+	kfree(fmc_name);
+	kfree(fru);
+
+	return true;
+err:
+	kfree(fmc_name);
+	kfree(fru);
+	return false;
+}
+
+static void fa_memops_detect(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_BIG_ENDIAN)) {
+		fa->memops.read = ioread32be;
+		fa->memops.write = iowrite32be;
+	} else {
+		fa->memops.read = ioread32;
+		fa->memops.write = iowrite32;
+	}
+}
+
+static void fa_sg_alloc_table_init(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_NOSQUASH_SCATTERLIST))
+		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
+	else
+		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
+
+}
+
+static struct fmc_adc_platform_data fmc_adc_pdata_default = {
+	.flags = 0,
+	.calib_trig_time = 0,
+	.calib_trig_threshold = 0,
+	.calib_trig_internal = 0,
 };
 
 /* probe and remove are called by fa-spec.c */
-int fa_probe(struct fmc_device *fmc)
+int fa_probe(struct platform_device *pdev)
 {
 	struct fa_modlist *m = NULL;
 	struct fa_dev *fa;
-	int err, i = 0;
-	char *fwname;
+	struct resource *r;
+	int err, i = 0, slot_nr;
 
-	/* Validate the new FMC device */
-	i = fmc_validate(fmc, &fa_dev_drv);
-	if (i < 0) {
-		dev_info(&fmc->dev, "not using \"%s\" according to "
-			 "modparam\n", KBUILD_MODNAME);
-		return -ENODEV;
-	}
+	err = fa_resource_validation(pdev);
+	if (err)
+		return err;
 
 	/* Driver data */
-	fa = devm_kzalloc(&fmc->dev, sizeof(struct fa_dev), GFP_KERNEL);
+	fa = devm_kzalloc(&pdev->dev, sizeof(struct fa_dev), GFP_KERNEL);
 	if (!fa)
 		return -ENOMEM;
-	fmc_set_drvdata(fmc, fa);
-	fa->fmc = fmc;
-	fa->msgdev = &fa->fmc->dev;
 
-	/* apply carrier-specific hacks and workarounds */
-	fa->carrier_op = NULL;
-	if (!strcmp(fmc->carrier_name, "SPEC")) {
-		fa->carrier_op = &fa_spec_op;
-	} else if (!strcmp(fmc->carrier_name, "SVEC")) {
-#ifdef CONFIG_FMC_ADC_SVEC
-		fa->carrier_op = &fa_svec_op;
-#endif
+	platform_set_drvdata(pdev, fa);
+	fa->pdev = pdev;
+	fa->msgdev = &fa->pdev->dev;
+	if (!pdev->dev.platform_data) {
+		dev_err(fa->msgdev, "Missing platform data, use default\n");
+		pdev->dev.platform_data = &fmc_adc_pdata_default;
 	}
 
-	/*
-	 * Check if carrier operations exists. Otherwise it means that the
-	 * driver was compiled without enable any carrier, so it cannot work
-	 */
-	if (!fa->carrier_op) {
-		dev_err(fa->msgdev,
-			"This binary doesn't support the '%s' carrier\n",
-			fmc->carrier_name);
-		return -ENODEV;
+	fa_memops_detect(fa);
+	fa_sg_alloc_table_init(fa);
+
+	r = platform_get_resource(pdev, IORESOURCE_MEM, ADC_MEM_BASE);
+	fa->fa_top_level = ioremap(r->start, resource_size(r));
+	fa->fa_adc_csr_base = fa->fa_top_level + ADC_CSR_OFF;
+	fa->fa_irq_adc_base = fa->fa_top_level + ADC_EIC_OFF;
+	fa->fa_ow_base =      fa->fa_top_level + ADC_OW_OFF;
+	fa->fa_spi_base =     fa->fa_top_level + ADC_SPI_OFF;
+	fa->fa_utc_base =     fa->fa_top_level + ADC_UTC_OFF;
+
+	slot_nr = fa_readl(fa, fa->fa_adc_csr_base,
+			   &zfad_regs[ZFA_STA_FMC_NR]) + 1;
+	fa->slot = fmc_slot_get(pdev->dev.parent->parent, slot_nr);
+	if (IS_ERR(fa->slot)) {
+		dev_err(fa->msgdev, "Can't find FMC slot %d err: %ld\n",
+			slot_nr, PTR_ERR(fa->slot));
+		goto out_fmc;
 	}
 
-	/*
-	 * If the carrier is still using the golden bitstream or the user is
-	 * asking for a particular one, then program our bistream, otherwise
-	 * we already have our bitstream
-	 */
-	if (fmc->flags & FMC_DEVICE_HAS_GOLDEN || fa_dev_drv.gw_n) {
-		if (fa_dev_drv.gw_n)
-			fwname = ""; /* reprogram will pick from module parameter */
-		else
-			fwname = fa->carrier_op->get_gwname();
+	if (!fmc_slot_present(fa->slot)) {
+		dev_err(fa->msgdev, "Can't identify FMC card: missing card\n");
+		goto out_fmc_pre;
+	}
 
-		/* We first write a new binary (and lm32) within the carrier */
-		err = fmc_reprogram(fmc, &fa_dev_drv, fwname, 0x0);
+	if (strcmp(fmc_slot_eeprom_type_get(fa->slot), FA_EEPROM_TYPE)) {
+		dev_warn(fa->msgdev, "use non standard EERPOM type \"%s\"\n",
+			 FA_EEPROM_TYPE);
+		err = fmc_slot_eeprom_type_set(fa->slot, FA_EEPROM_TYPE);
 		if (err) {
-			dev_err(fa->msgdev, "write firmware \"%s\": error %i\n",
-				fwname, err);
-			goto out;
+			dev_err(fa->msgdev,
+				"Failed to change EEPROM type to \"%s\"",
+				FA_EEPROM_TYPE);
+			goto out_fmc_eeprom;
 		}
-	} else {
-		dev_info(fa->msgdev,
-			 "Gateware already there. Set the \"gateware\" parameter to overwrite the current gateware\n");
 	}
 
-	/* Extract whisbone core base address fron SDB */
-	err = __fa_sdb_get_device(fa);
-	if (err < 0)
-		goto out;
-
-	err = fa->carrier_op->init(fa);
-	if (err < 0)
-		goto out;
-
-	err = fa->carrier_op->reset_core(fa);
-	if (err < 0)
-		goto out;
+	if(!fa_fmc_slot_is_valid(fa))
+		goto out_fmc_err;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
@@ -556,27 +670,32 @@ int fa_probe(struct fmc_device *fmc)
 	if (err < 0)
 		goto out_irq;
 
-	/* Pin the carrier */
-	if (!try_module_get(fmc->owner))
-		goto out_mod;
-
 	return 0;
 
-out_mod:
-	fa_free_irqs(fa);
 out_irq:
 out:
 	while (--m, --i >= 0)
 		if (m->exit)
 			m->exit(fa);
+	iounmap(fa->fa_top_level);
+out_fmc_err:
+out_fmc_eeprom:
+out_fmc_pre:
+	fmc_slot_put(fa->slot);
+out_fmc:
+	devm_kfree(&pdev->dev, fa);
+	platform_set_drvdata(pdev, NULL);
 	return err;
 }
 
-int fa_remove(struct fmc_device *fmc)
+int fa_remove(struct platform_device *pdev)
 {
-	struct fa_dev *fa = fmc_get_drvdata(fmc);
+	struct fa_dev *fa = platform_get_drvdata(pdev);
 	struct fa_modlist *m;
 	int i = ARRAY_SIZE(mods);
+
+	if (WARN(!fa, "asked to remove fmc-adc-100m device but it does not exists\n"))
+		return 0;
 
 	fa_free_irqs(fa);
 	flush_workqueue(fa_workqueue);
@@ -586,30 +705,29 @@ int fa_remove(struct fmc_device *fmc)
 		if (m->exit)
 			m->exit(fa);
 	}
+	iounmap(fa->fa_top_level);
 
-	fa->carrier_op->exit(fa);
-
-	/* Release the carrier */
-	module_put(fmc->owner);
+	fmc_slot_put(fa->slot);
 
 	return 0;
 }
 
-static struct fmc_fru_id fa_fru_id[] = {
+
+static const struct platform_device_id fa_id[] = {
 	{
-		.product_name = "FmcAdc100m14b4cha",
-	},
+		.name = "fmc-adc-100m",
+		.driver_data = ADC_VER,
+	}
+	/* TODO we should support different version */
 };
 
-static struct fmc_driver fa_dev_drv = {
-	.version = FMC_VERSION,
-	.driver.name = KBUILD_MODNAME,
+static struct platform_driver fa_dev_drv = {
+	.driver = {
+		.name = KBUILD_MODNAME,
+	},
 	.probe = fa_probe,
 	.remove = fa_remove,
-	.id_table = {
-		.fru_id = fa_fru_id,
-		.fru_id_nr = ARRAY_SIZE(fa_fru_id),
-	},
+	.id_table = fa_id,
 };
 
 static int fa_init(void)
@@ -637,7 +755,7 @@ static int fa_init(void)
 		goto out2;
 
 	/* Finally the fmc driver, whose probe instantiates zio devices */
-	ret = fmc_driver_register(&fa_dev_drv);
+	ret = platform_driver_register(&fa_dev_drv);
 	if (ret)
 		goto out3;
 
@@ -655,7 +773,7 @@ out1:
 
 static void fa_exit(void)
 {
-	fmc_driver_unregister(&fa_dev_drv);
+	platform_driver_unregister(&fa_dev_drv);
 	fa_zio_unregister();
 	fa_trig_exit();
 	if (fa_workqueue != NULL)
@@ -668,6 +786,6 @@ module_exit(fa_exit);
 MODULE_AUTHOR("Federico Vaga");
 MODULE_DESCRIPTION("FMC-ADC-100MS-14b Linux Driver");
 MODULE_LICENSE("GPL");
-MODULE_VERSION(GIT_VERSION);
+MODULE_VERSION(VERSION);
 
 ADDITIONAL_VERSIONS;

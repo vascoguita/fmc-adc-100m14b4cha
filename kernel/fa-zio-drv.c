@@ -67,16 +67,16 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_ATTR_EXT("ch3-50ohm-term", ZIO_RW_PERM, ZFA_CH4_CTL_TERM, 0),
 
 	/* last acquisition start time stamp */
-	ZIO_ATTR_EXT("tstamp-acq-str-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_SECONDS, 0),
+	ZIO_ATTR_EXT("tstamp-acq-str-su", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_SECONDS_U, 0),
+	ZIO_ATTR_EXT("tstamp-acq-str-sl", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_START_SECONDS_L, 0),
 	ZIO_ATTR_EXT("tstamp-acq-str-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_START_COARSE, 0),
-	ZIO_ATTR_EXT("tstamp-acq-str-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_START_FINE, 0),
 
 	/* Timing base */
-	ZIO_ATTR_EXT("tstamp-base-s", ZIO_RW_PERM, ZFA_UTC_SECONDS, 0),
-
+	ZIO_ATTR_EXT("tstamp-base-su", ZIO_RW_PERM, ZFA_UTC_SECONDS_U, 0),
+	ZIO_ATTR_EXT("tstamp-base-sl", ZIO_RW_PERM, ZFA_UTC_SECONDS_L, 0),
 	ZIO_ATTR_EXT("tstamp-base-t", ZIO_RW_PERM, ZFA_UTC_COARSE, 0),
 
 	/* Parameters (not attributes) follow */
@@ -104,26 +104,25 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * */
 	ZIO_PARAM_EXT("fsm-state", ZIO_RO_PERM, ZFA_STA_FSM, 0),
 	/* last acquisition end time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-end-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_END_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-su", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_SECONDS_U, 0),
+	ZIO_PARAM_EXT("tstamp-acq-end-sl", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_END_SECONDS_L, 0),
 	ZIO_PARAM_EXT("tstamp-acq-end-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_END_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-end-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_END_FINE, 0),
 	/* last acquisition stop time stamp */
-	ZIO_PARAM_EXT("tstamp-acq-stp-s", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_STOP_SECONDS, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-su", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_SECONDS_U, 0),
+	ZIO_PARAM_EXT("tstamp-acq-stp-sl", ZIO_RO_PERM,
+			ZFA_UTC_ACQ_STOP_SECONDS_L, 0),
 	ZIO_PARAM_EXT("tstamp-acq-stp-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_STOP_COARSE, 0),
-	ZIO_PARAM_EXT("tstamp-acq-stp-b", ZIO_RO_PERM,
-			ZFA_UTC_ACQ_STOP_FINE, 0),
 	/* Reset all channel offset */
 	ZIO_PARAM_EXT("rst-ch-offset", ZIO_WO_PERM, ZFA_CTL_DAC_CLR_N, 1),
 
 	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 	ZIO_PARAM_EXT("max-sample-mshot", ZIO_RO_PERM, ZFA_MULT_MAX_SAMP, 0),
 	ZIO_PARAM_EXT("sample-counter", ZIO_RO_PERM, ZFAT_CNT, 0),
-	ZIO_PARAM_EXT("test-data-pattern", ZIO_RW_PERM, ZFAT_ADC_TST_PATTERN, 0),
 };
 
 #if 0 /* FIXME Unused until TLV control will be available */
@@ -150,16 +149,22 @@ static struct zio_attribute zfad_chan_ext_zattr[] = {
 };
 
 static struct zio_attribute zfad_dev_ext_zattr[] = {
-	/* Get Mezzanine temperature from onewire */
+	/* Get Mezzanine temperature from the DS18B20 chip */
 	ZIO_PARAM_EXT("temperature", ZIO_RO_PERM, ZFA_SW_R_NOADDRES_TEMP, 0),
 };
 
 /* Temporarily, user values are the same as hardware values */
-static int zfad_convert_user_range(uint32_t user_val)
+int zfad_convert_user_range(uint32_t user_val)
 {
 	return zfad_convert_hw_range(user_val);
 }
 
+static bool fa_is_dac_offset_valid(int32_t user, int32_t zero)
+{
+	int32_t offset = user + zero;
+
+	return (offset >= DAC_SAT_LOW && offset <= DAC_SAT_UP);
+}
 /*
  * zfad_conf_set
  *
@@ -169,14 +174,15 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	unsigned int baseoff = fa->fa_adc_csr_base;
+	void *baseoff = fa->fa_adc_csr_base;
 	struct zio_channel *chan;
-	int i, range, err = 0, reg_index;
+	int i, range, reg_index, err;
 
 	reg_index = zattr->id;
 	i = FA100M14B4C_NCHAN;
 
-	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
 		baseoff = fa->fa_utc_base;
 
 	switch (reg_index) {
@@ -192,19 +198,24 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH2_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH3_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
-
 		chan = to_zio_cset(dev)->chan + i;
+		if (!fa_is_dac_offset_valid(fa->user_offset[chan->index],
+					    usr_val))
+			return -EINVAL;
+		spin_lock(&fa->zdev->cset->lock);
 		fa->zero_offset[i] = usr_val;
-		err = zfad_apply_offset(chan);
-		if (err == -EIO)
-			fa->zero_offset[chan->index] = 0;
-		return err;
+		fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
+		return 0;
 	case ZFA_CHx_SAT:
 		/* TODO when TLV */
 		break;
@@ -222,25 +233,30 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
-
-		chan = to_zio_cset(dev)->chan + i;
+                chan = to_zio_cset(dev)->chan + i;
+                if (!fa_is_dac_offset_valid(usr_val,
+					    fa->zero_offset[chan->index]))
+			return -EINVAL;
+		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
-		err = zfad_apply_offset(chan);
-		if (err == -EIO)
-			fa->user_offset[chan->index] = 0;
+		err = fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
 		return err;
 	case ZFA_CHx_OFFSET:
-		chan = to_zio_chan(dev),
+		chan = to_zio_chan(dev);
+		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
-		err = zfad_apply_offset(chan);
-		if (err == -EIO)
-			fa->user_offset[chan->index] = 0;
+		err = fa_calib_dac_config_chan(fa, chan->index, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
 		return err;
 	case ZFA_CTL_DAC_CLR_N:
 		zfad_reset_offset(fa);
@@ -251,9 +267,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH2_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH3_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CH4_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_TERM:
 		if (usr_val > 1)
 			usr_val = 1;
@@ -262,22 +282,39 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_CTL_RANGE:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_CTL_RANGE:
 		i--;
 		range = zfad_convert_user_range(usr_val);
 		if (range < 0)
 			return range;
-		return zfad_set_range(fa, &to_zio_cset(dev)->chan[i], range);
+		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
+		if (err)
+			return err;
+		spin_lock(&fa->zdev->cset->lock);
+		fa_calib_adc_config_chan(fa, i, ~0);
+		fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
+		return 0;
 
 	case ZFA_CHx_CTL_RANGE:
 		range = zfad_convert_user_range(usr_val);
 		if (range < 0)
 			return range;
-		return zfad_set_range(fa, to_zio_chan(dev), range);
+		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
+		if (err)
+			return err;
+		spin_lock(&fa->zdev->cset->lock);
+		fa_calib_adc_config_chan(fa, i, ~0);
+		fa_calib_dac_config_chan(fa, i, ~0);
+		spin_unlock(&fa->zdev->cset->lock);
+		return 0;
 
 	case ZFA_UTC_COARSE:
 		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {
@@ -289,24 +326,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		break;
 	case ZFA_CTL_FMS_CMD:
 		return zfad_fsm_command(fa, usr_val);
-	case ZFAT_ADC_TST_PATTERN:
-		if (unlikely(fa_enable_test_data_adc)) {
-			usr_val &= 0xFFF;
-			err = zfad_pattern_data_enable(fa, usr_val,
-						       fa_enable_test_data_adc);
-			if (err)
-				dev_warn(fa->msgdev,
-					 "Failed to set the ADC test data. Continue without\n");
-			else if (fa_enable_test_data_adc)
-				dev_info(fa->msgdev,
-					 "the ADC test data (0x%x) is enabled on all channels\n",
-					 usr_val);
-			return err;
-		} else {
-			dev_err(fa->msgdev,
-				"Cannot set the ADC test data. The driver is not in test mode\n");
-			return -EPERM;
-		}
 	}
 
 	fa_writel(fa, baseoff, &zfad_regs[reg_index], usr_val);
@@ -322,22 +341,26 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 			 uint32_t *usr_val)
 {
 	struct fa_dev *fa = get_zfadc(dev);
-	unsigned int baseoff = fa->fa_adc_csr_base;
+	void *baseoff = fa->fa_adc_csr_base;
 	int i, reg_index;
 
 	i = FA100M14B4C_NCHAN;
 
-	if (zattr->id >= ZFA_UTC_SECONDS && zattr->id <= ZFA_UTC_ACQ_END_FINE)
+	if (zattr->id >= ZFA_UTC_SECONDS_U &&
+	    zattr->id <= ZFA_UTC_ACQ_END_COARSE)
 		baseoff = fa->fa_utc_base;
 
 	switch (zattr->id) {
 	/* FIXME temporary until TLV control */
 	case ZFA_CH1_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH2_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH3_OFFSET:
 		i--;
+		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
 		*usr_val = fa->user_offset[i];
@@ -346,36 +369,36 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	case ZFA_CHx_OFFSET:
 		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
 		return 0;
-	case ZFAT_ADC_TST_PATTERN:
 	case ZFA_SW_R_NOADDRES_NBIT:
+		/*fallthrough*/
 	case ZFA_SW_R_NOADDERS_AUTO:
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
-		/*
-		 * Onewire returns units of 1/16 degree. We return units
-		 * of 1/1000 of a degree instead.
-		 */
-		*usr_val = fa_read_temp(fa, 0);
-		*usr_val = (*usr_val * 1000 + 8) / 16;
+		*usr_val = fa_temperature_read(fa);
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH2_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH3_OFFSET_ZERO:
 		i--;
+		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
 		*usr_val = fa->zero_offset[i];
 		return 0;
 	case ZFA_CHx_SAT:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_TERM:
+		/*fallthrough*/
 	case ZFA_CHx_CTL_RANGE:
-		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
+		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev)->index);
 		break;
 	case ZFA_CHx_STA:
-		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev));
+		reg_index = zfad_get_chx_index(zattr->id, to_zio_chan(dev)->index);
 		*usr_val = fa_readl(fa, fa->fa_adc_csr_base,
 				    &zfad_regs[reg_index]);
 		i = (int16_t)(*usr_val); /* now signed integer */
@@ -444,13 +467,13 @@ static inline int zfat_overflow_detection(struct zio_ti *ti)
 static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 {
 	struct zfad_block *tmp;
+	int err;
 
 	tmp = kzalloc(sizeof(struct zfad_block), GFP_ATOMIC);
 	if (!tmp)
 		return -ENOMEM;
 	tmp->block = cset->interleave->active_block;
 	cset->interleave->priv_d = tmp;
-	tmp->dev_mem_off = 0; /* Always the first block */
 
 	/* Configure post samples */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_POST],
@@ -460,7 +483,9 @@ static int zfad_input_cset_software(struct fa_dev *fa, struct zio_cset *cset)
 
 	fa->n_shots = 1;
 	/* Fire software trigger */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SW], 1);
+	err = fa_trigger_software(fa);
+	if (err)
+		return err;
 
 	return -EAGAIN;
 }
@@ -538,10 +563,6 @@ static int zfad_zio_probe(struct zio_device *zdev)
 	dev_dbg(fa->msgdev, "%s:%d\n", __func__, __LINE__);
 	/* Save also the pointer to the real zio_device */
 	fa->zdev = zdev;
-
-	err = zfad_pattern_data_enable(fa, 0, fa_enable_test_data_adc);
-	if (err)
-		return err;
 
 	err = device_create_bin_file(&zdev->head.dev, &dev_attr_calibration);
 	if (err)
@@ -677,7 +698,7 @@ int fa_zio_init(struct fa_dev *fa)
 
 	/* Register the hardware zio_device */
 	err = zio_register_device(fa->hwzdev, "adc-100m14b",
-				  fa->fmc->device_id);
+				  fa->pdev->id);
 	if (err) {
 		dev_err(fa->msgdev, "Cannot register ZIO device fmc-adc-100m14b\n");
 		zio_free_device(fa->hwzdev);

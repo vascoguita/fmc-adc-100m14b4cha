@@ -11,10 +11,9 @@
 #include <linux/types.h>
 #else
 #include <stdint.h>
-#endif
-
 #ifndef BIT
 #define BIT(nr) (1UL << (nr))
+#endif
 #endif
 
 /* Trigger sources */
@@ -36,6 +35,9 @@
 #define FA100M14B4C_TRG_POL_CH4 FA100M14B4C_TRG_SRC_CH4
 #define FA100M14B4C_TRG_POL_CHx(_x) (FA100M14B4C_TRG_POL_CH1 << ((_x) - 1))
 
+enum fa_versions {
+	ADC_VER = 0,
+};
 
 /*
  * Trigger Extended Attribute Enumeration
@@ -65,12 +67,14 @@ enum fa100m14b4c_trg_ext_attr {
 	FA100M14B4C_TATTR_CH2_DLY,
 	FA100M14B4C_TATTR_CH3_DLY,
 	FA100M14B4C_TATTR_CH4_DLY,
+	FA100M14B4C_TATTR_TRG_TIM_SU,
+	FA100M14B4C_TATTR_TRG_TIM_SL,
+	FA100M14B4C_TATTR_TRG_TIM_C,
 
 #ifdef __KERNEL__
-	FA100M14B4C_TATTR_SW_FIRE,
-	FA100M14B4C_TATTR_TRG_S,
+	FA100M14B4C_TATTR_TRG_SU,
+	FA100M14B4C_TATTR_TRG_SL,
 	FA100M14B4C_TATTR_TRG_C,
-	FA100M14B4C_TATTR_TRG_F,
 #endif
 };
 
@@ -128,8 +132,8 @@ enum fa100m14b4c_fsm_cmd {
 enum fa100m14b4c_fsm_state {
 	FA100M14B4C_STATE_IDLE = 0x1,
 	FA100M14B4C_STATE_PRE,
-	FA100M14B4C_STATE_POST,
 	FA100M14B4C_STATE_WAIT,
+	FA100M14B4C_STATE_POST,
 	FA100M14B4C_STATE_DECR,
 };
 
@@ -140,19 +144,21 @@ struct fa_calib_stanza {
 	uint16_t temperature;
 };
 
+#define FA_CALIB_STANZA_N 3
 struct fa_calib {
-	struct fa_calib_stanza adc[3];  /* For input, one per range */
-	struct fa_calib_stanza dac[3];  /* For user offset, one per range */
+	struct fa_calib_stanza adc[FA_CALIB_STANZA_N];  /* For input, one per range */
+	struct fa_calib_stanza dac[FA_CALIB_STANZA_N];  /* For user offset, one per range */
 };
 
 #ifdef __KERNEL__ /* All the rest is only of kernel users */
+#include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/scatterlist.h>
 #include <linux/workqueue.h>
 #include <linux/debugfs.h>
-
+#include <linux/platform_device.h>
 #include <linux/fmc.h>
-#include <linux/fmc-sdb.h>
+
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
 #include <linux/zio-sysfs.h>
@@ -160,8 +166,35 @@ struct fa_calib {
 #include <linux/zio-trigger.h>
 
 #include "field-desc.h"
+#include <platform_data/fmc-adc-100m14b4cha.h>
 
-extern int fa_enable_test_data_adc;
+#define ADC_CSR_OFF 0x1000
+#define ADC_EIC_OFF 0x1500
+#define ADC_OW_OFF  0x1700
+#define ADC_SPI_OFF 0x1800
+#define ADC_UTC_OFF 0x1900
+
+#define DAC_SAT_LOW -5000000
+#define DAC_SAT_UP 5000000
+
+#define ADC_DMA 0
+
+enum fa_irq_resource {
+	ADC_IRQ_TRG = 0,
+};
+
+enum fa_mem_resource {
+	ADC_MEM_BASE = 0,
+};
+
+enum fa_bus_resource {
+	ADC_CARR_VME_ADDR,
+};
+
+struct fa_memory_ops {
+	u32 (*read)(void *addr);
+	void (*write)(u32 value, void *addr);
+};
 
 /*
  * ZFA_CHx_MULT : the trick which requires channel regs id grouped and ordered
@@ -181,10 +214,13 @@ enum zfadc_dregs_enum {
 	ZFA_CTL_TRIG_LED,
 	ZFA_CTL_ACQ_LED,
 	ZFA_CTL_RST_TRG_STA,
+	ZFA_CTL_CALIB_APPLY,
 	/* Status registers */
 	ZFA_STA_FSM,
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
+	ZFA_STA_FMC_NR,
+	ZFA_STA_CALIB_BUSY,
 	/* Configuration register */
 	ZFAT_CFG_STA,
 	ZFAT_CFG_SRC,
@@ -209,8 +245,6 @@ enum zfadc_dregs_enum {
 	ZFAT_POST,
 	/* Sample counter */
 	ZFAT_CNT,
-	/* Pattern data for the ADC chip */
-	ZFAT_ADC_TST_PATTERN,
 	/* start:declaration block requiring some order */
 	/* Channel 1 */
 	ZFA_CH1_CTL_RANGE,
@@ -284,25 +318,30 @@ enum zfadc_dregs_enum {
 	ZFA_IRQ_VIC_DISABLE_MASK,
 	ZFA_IRQ_VIC_ENABLE_MASK,
 	ZFA_IRQ_VIC_MASK_STATUS,
+	/* DS18B20 UID/Temperature */
+	ZFA_DS18B20_ID_U,
+	ZFA_DS18B20_ID_L,
+	ZFA_DS18B20_TEMP,
+	ZFA_DS18B20_STAT,
 	/* UTC core */
-	ZFA_UTC_SECONDS,
+	ZFA_UTC_SECONDS_U,
+	ZFA_UTC_SECONDS_L,
 	ZFA_UTC_COARSE,
-	ZFA_UTC_TRIG_META,
-	ZFA_UTC_TRIG_SECONDS,
+	ZFA_UTC_TRIG_TIME_SECONDS_U,
+	ZFA_UTC_TRIG_TIME_SECONDS_L,
+	ZFA_UTC_TRIG_TIME_COARSE,
+	ZFA_UTC_TRIG_SECONDS_U,
+	ZFA_UTC_TRIG_SECONDS_L,
 	ZFA_UTC_TRIG_COARSE,
-	ZFA_UTC_TRIG_FINE,
-	ZFA_UTC_ACQ_START_META,
-	ZFA_UTC_ACQ_START_SECONDS,
+	ZFA_UTC_ACQ_START_SECONDS_U,
+	ZFA_UTC_ACQ_START_SECONDS_L,
 	ZFA_UTC_ACQ_START_COARSE,
-	ZFA_UTC_ACQ_START_FINE,
-	ZFA_UTC_ACQ_STOP_META,
-	ZFA_UTC_ACQ_STOP_SECONDS,
+	ZFA_UTC_ACQ_STOP_SECONDS_U,
+	ZFA_UTC_ACQ_STOP_SECONDS_L,
 	ZFA_UTC_ACQ_STOP_COARSE,
-	ZFA_UTC_ACQ_STOP_FINE,
-	ZFA_UTC_ACQ_END_META,
-	ZFA_UTC_ACQ_END_SECONDS,
+	ZFA_UTC_ACQ_END_SECONDS_U,
+	ZFA_UTC_ACQ_END_SECONDS_L,
 	ZFA_UTC_ACQ_END_COARSE,
-	ZFA_UTC_ACQ_END_FINE,
 	ZFA_HW_PARAM_COMMON_LAST,
 };
 
@@ -330,16 +369,6 @@ enum fa_sw_param_id {
 	ZFA_SW_PARAM_COMMON_LAST,
 };
 
-/*
- * Bit pattern used in order to factorize code  between SVEC and SPEC
- * Depending of the carrier, ADC may have to listen vaious IRQ sources
- * SVEC: only ACQ irq source (end DMA irq is manged by vmebus driver)
- * SPEC: ACQ and DMA irq source
- */
-enum fa_irq_src {
-	FA_IRQ_SRC_ACQ = 0x1,
-	FA_IRQ_SRC_DMA = 0x2,
-};
 
 /* adc IRQ values */
 enum fa_irq_adc {
@@ -351,25 +380,16 @@ enum fa_irq_adc {
    carrier specific stuff, such as DMA or resets, from
    mezzanine-specific operations). */
 struct fa_dev; /* forward declaration */
-struct fa_carrier_op {
-	char* (*get_gwname)(void);
-	int (*init) (struct fa_dev *);
-	int (*reset_core) (struct fa_dev *);
-	void (*exit) (struct fa_dev *);
-	int (*setup_irqs) (struct fa_dev *);
-	int (*free_irqs) (struct fa_dev *);
-	int (*enable_irqs) (struct fa_dev *);
-	int (*disable_irqs) (struct fa_dev *);
-	int (*ack_irq) (struct fa_dev *, int irq_id);
-	int (*dma_start)(struct zio_cset *cset);
-	void (*dma_done)(struct zio_cset *cset);
-	void (*dma_error)(struct zio_cset *cset);
-};
+
+/*
+ * Flag bit set when the ADC uses pattern data
+ */
+#define FA_DEV_F_PATTERN_DATA BIT(0)
 
 /*
  * fa_dev: is the descriptor of the FMC ADC mezzanine
  *
- * @fmc: the pointer to the fmc_device generic structure
+ * @pdev: the pointer to the fmc_device generic structure
  * @zdev: is the pointer to the real zio_device in use
  * @hwzdev: is the pointer to the fake zio_device, used to initialize and
  *          to remove a zio_device
@@ -382,31 +402,31 @@ struct fa_carrier_op {
  * @zero_offset: necessary offset to push the channel to zero (micro-Volts)
  */
 struct fa_dev {
+	unsigned long flags;
 	struct device *msgdev; /**< device used to print messages */
-	/* the pointer to the fmc_device generic structure */
-	struct fmc_device	*fmc;
+	/* the pointer to the platform_device generic structure */
+	struct platform_device	*pdev;
 	/* the pointer to the real zio_device in use */
 	struct zio_device	*zdev;
 	/* the pointer to the fake zio_device, used for init/remove */
 	struct zio_device	*hwzdev;
 
-	/* carrier common base offset addresses obtained from SDB */
-	unsigned int fa_adc_csr_base;
-	unsigned int fa_spi_base;
-	unsigned int fa_ow_base;
-	unsigned int fa_carrier_csr_base;
-	unsigned int fa_irq_vic_base;
-	unsigned int fa_irq_adc_base;
-	unsigned int fa_utc_base;
+	struct fmc_slot	*slot;
+	struct fa_memory_ops	memops;
+
+	/* carrier common base offset addresses */
+	void *fa_adc_csr_base;
+	void *fa_spi_base;
+	void *fa_ow_base;
+	void *fa_top_level;
+	void *fa_irq_vic_base;
+	void *fa_irq_adc_base;
+	void *fa_utc_base;
 
 	/* DMA description */
 	struct zio_dma_sgt *zdma;
+	struct sg_table sgt;
 
-	/* carrier specific functions (init/exit/reset/readout/irq handling) */
-	struct fa_carrier_op *carrier_op;
-	/* carrier private data */
-	void *carrier_data;
-	int irq_src; /* list of irq sources to listen */
 	struct work_struct irq_work;
 	/*
 	 * keep last core having fired an IRQ
@@ -417,6 +437,7 @@ struct fa_dev {
 	/* Acquisition */
 	unsigned int		n_shots;
 	unsigned int		n_fires;
+	unsigned int		transfers_left;
 	unsigned int		mshot_max_samples;
 
 	/* Statistic informations */
@@ -432,24 +453,45 @@ struct fa_dev {
 
 	/* Calibration Data */
 	struct fa_calib calib;
+	int32_t range[FA100M14B4C_NCHAN];
+	struct timer_list calib_timer;
 
 	/* flag  */
 	int enable_auto_start;
 
-	struct dentry *reg_dump;
+	struct dentry *dbg_dir;
+	struct debugfs_regset32 dbg_reg32;
+	struct dentry *dbg_reg;
+	struct dentry *dbg_reg_spi;
+	struct dentry *dbg_trg_sw;
+	struct dentry *dbg_data_pattern;
+
+	/* Operations */
+	int (*sg_alloc_table_from_pages)(struct sg_table *sgt,
+					 struct page **pages,
+					 unsigned int n_pages,
+					 unsigned int offset,
+					 unsigned long size,
+					 unsigned int max_segment,
+					 gfp_t gfp_mask);
 };
 
 /*
  * zfad_block
  * @block is zio_block which contains data and metadata from a single shot
- * @dev_mem_off is the offset in ADC internal memory. It points to the first
- *              sample of the stored shot
  * @first_nent is the index of the first nent used for this block
+ * @cset: channel set source for the block
+ * @tx: DMA transfer descriptor
+ * @cookie: transfer token
  */
 struct zfad_block {
 	struct zio_block *block;
-	uint32_t	dev_mem_off;
 	unsigned int first_nent;
+	struct zio_cset *cset;
+	struct dma_async_tx_descriptor *tx;
+	dma_cookie_t cookie;
+	struct sg_table sgt;
+	void *dma_ctx;
 };
 
 /*
@@ -493,23 +535,23 @@ static inline struct fa_dev *get_zfadc(struct device *dev)
 	return NULL;
 }
 
-static inline u32 fa_ioread(struct fa_dev *fa, unsigned long addr)
+static inline u32 fa_ioread(struct fa_dev *fa, void *addr)
 {
-	return fmc_readl(fa->fmc, addr);
+	return fa->memops.read(addr);
 }
 
-static inline void fa_iowrite(struct fa_dev *fa, u32 value, unsigned long addr)
+static inline void fa_iowrite(struct fa_dev *fa, u32 value, void *addr)
 {
-	fmc_writel(fa->fmc, value, addr);
+	fa->memops.write(value, addr);
 }
 
 static inline uint32_t fa_readl(struct fa_dev *fa,
-				unsigned int base_off,
+				void *base_off,
 				const struct zfa_field_desc *field)
 {
 	uint32_t cur;
 
-	cur = fa_ioread(fa, base_off+field->offset);
+	cur = fa_ioread(fa, base_off + field->offset);
 	if (field->is_bitfield) {
 		/* apply mask and shift right accordlying to the mask */
 		cur &= field->mask;
@@ -517,11 +559,12 @@ static inline uint32_t fa_readl(struct fa_dev *fa,
 	} else {
 		cur &= field->mask; /* bitwise and with the mask */
 	}
+
 	return cur;
 }
 
 static inline void fa_writel(struct fa_dev *fa,
-				unsigned int base_off,
+			     void *base_off,
 				const struct zfa_field_desc *field,
 				uint32_t usr_val)
 {
@@ -536,12 +579,21 @@ static inline void fa_writel(struct fa_dev *fa,
 		val = usr_val * (field->mask & -(field->mask));
 		if (val & ~field->mask)
 			dev_warn(fa->msgdev,
-				"addr 0x%lx: value 0x%x doesn't fit mask 0x%x\n",
+				"addr %p: value 0x%x doesn't fit mask 0x%x\n",
 				base_off+field->offset, val, field->mask);
 		val &= field->mask;
 		val |= cur;
 	}
-	fa_iowrite(fa, val, base_off+field->offset);
+	fa_iowrite(fa, val, base_off + field->offset);
+}
+
+static inline int fa_is_flag_set(struct fa_dev *fa, unsigned long flag)
+{
+	const struct fmc_adc_platform_data *fmc_adc_pdata;
+
+        fmc_adc_pdata = fa->pdev->dev.platform_data;
+
+        return !!(fmc_adc_pdata->flags & flag);
 }
 
 extern struct bin_attribute dev_attr_calibration;
@@ -549,25 +601,31 @@ extern struct bin_attribute dev_attr_calibration;
 /* Global variable exported by fa-core.c */
 extern struct workqueue_struct *fa_workqueue;
 
-/* Global variable exported by fa-spec.c */
-extern struct fa_carrier_op fa_spec_op;
-
-/* Global variable exported by fa-svec.c */
-extern struct fa_carrier_op fa_svec_op;
-
-/* Global variable exported by fa-regfield.c */
+/* Global variable exported by fa-regtable.c */
 extern const struct zfa_field_desc zfad_regs[];
 
 /* Functions exported by fa-core.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
-extern int zfad_apply_offset(struct zio_channel *chan);
 extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
-extern int zfad_set_range(struct fa_dev *fa, struct zio_channel *chan,
-			  int range);
-extern int zfad_get_chx_index(unsigned long addr, struct zio_channel *chan);
-extern int zfad_pattern_data_enable(struct fa_dev *fa, uint16_t pattern,
-				    unsigned int enable);
+extern int32_t fa_temperature_read(struct fa_dev *fa);
+extern int fa_trigger_software(struct fa_dev *fa);
+extern int fa_fsm_wait_state(struct fa_dev *fa,
+                             enum fa100m14b4c_fsm_state state,
+                             unsigned int timeout_us);
+extern int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
+                                   unsigned int enable);
+extern int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
+				   unsigned int *enable);
+
+/* Temporarily, user values are the same as hardware values */
+extern int zfad_convert_user_range(uint32_t user_val);
+extern int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan,
+			    int range);
+extern int zfad_get_chx_index(unsigned long addr, unsigned int chan);
+
+/* Function exported by fa-dma.c */
+extern void fa_irq_work(struct work_struct *work);
 
 /* Functions exported by fa-zio-drv.c */
 extern int fa_zio_register(void);
@@ -576,24 +634,16 @@ extern int fa_zio_init(struct fa_dev *fa);
 extern void fa_zio_exit(struct fa_dev *fa);
 
 /* Functions exported by fa-zio-trg.c */
+extern void zfat_trigger_source_reset(struct fa_dev *fa);
 extern int fa_trig_init(void);
 extern void fa_trig_exit(void);
 
 /* Functions exported by fa-irq.c */
-extern int zfad_dma_start(struct zio_cset *cset);
-extern void zfad_dma_done(struct zio_cset *cset);
-extern void zfad_dma_error(struct zio_cset *cset);
 extern void zfat_irq_trg_fire(struct zio_cset *cset);
-extern void zfat_irq_acq_end(struct zio_cset *cset);
 extern int fa_setup_irqs(struct fa_dev *fa);
 extern int fa_free_irqs(struct fa_dev *fa);
 extern int fa_enable_irqs(struct fa_dev *fa);
 extern int fa_disable_irqs(struct fa_dev *fa);
-
-/* Functions exported by onewire.c */
-extern int fa_onewire_init(struct fa_dev *fa);
-extern void fa_onewire_exit(struct fa_dev *fa);
-extern int fa_read_temp(struct fa_dev *fa, int verbose);
 
 /* functions exported by spi.c */
 extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
@@ -601,18 +651,18 @@ extern int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 extern int fa_spi_init(struct fa_dev *fd);
 extern void fa_spi_exit(struct fa_dev *fd);
 
-/* fmc extended function */
-signed long fmc_find_sdb_device_ext(struct sdb_array *tree,
-					uint64_t vid, uint32_t did, int index,
-					unsigned long *sz);
-
 /* function exporetd by fa-calibration.c */
-extern void fa_read_eeprom_calib(struct fa_dev *fa);
+extern int fa_calib_init(struct fa_dev *fa);
+extern void fa_calib_exit(struct fa_dev *fa);
+extern void fa_calib_config(struct fa_dev *fa);
+extern void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
+				     int32_t temperature);
+extern int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
+				    int32_t temperature);
 
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);
 extern void fa_debug_exit(struct fa_dev *fa);
-
 
 #endif /* __KERNEL__ */
 #endif /*  FMC_ADC_H_ */

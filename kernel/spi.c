@@ -50,7 +50,8 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 	while (fa_ioread(fa, fa->fa_spi_base + FA_SPI_CTRL)
 	       & FA_SPI_CTRL_BUSY) {
 		if (jiffies > j) {
-			dev_err(fa->msgdev, "SPI transfer error\n");
+			dev_err(fa->msgdev, "SPI transfer error cs:%d, ctrl: 0x%x\n",
+				cs, fa_ioread(fa, fa->fa_spi_base + FA_SPI_CTRL));
 			err = -EIO;
 			goto out;
 		}
