@@ -416,6 +416,10 @@ post-samples, pre-samples
      multi-shot acquisition, each shot acquires that many sample, but
      pre + post must be at most 2048.
 
+trg-time-{su|sl|t}
+     When the trigger time is enabled, then these attributes can be used
+     to program the trigger time.
+
 The Buffer
 ''''''''''
 
