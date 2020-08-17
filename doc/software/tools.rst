@@ -1,3 +1,7 @@
+..
+  SPDX-License-Identifier: CC-BY-SA-4.0
+  SPDX-FileCopyrightText: 2020 CERN
+
 Tools
 =====
 
@@ -98,7 +102,7 @@ the graphic appearance of Tk-8.4 (and earlier versions). If you prefer the
 older one, run *wish8.4 tools/fau-config-if* instead of
 ``tools/fau-config-if`` (or set the previous version as default Tk interpreter).
 
-.. figure:: img/config-if.gif
+.. figure:: ../img/config-if.gif
    :alt: Two snapshots of fa-config-if
    :align: center
 
@@ -118,3 +122,48 @@ physical address of my parallel port (if yours is part of the
 motherboard, the address is ``378``)::
 
     ./tools/parport-burst dd00 1000 100
+
+Calibration Data
+----------------
+
+The FMC ADC 100M mezzanine stores its calibration data in the FMC
+EEPROM at offset 256. You could you ``hexdump`` to read it:::
+
+
+  $ hexdump -n 108 /sys/bus/zio/devices/adc-100m14b-0021/calibration_data
+  0000000 ffe8 0044 ffc2 ff9d 76bc 7658 7637 769c
+  0000010 1211 ffd7 002e ffa6 ff88 7894 78ae 7887
+  0000020 78ba 121d ff94 ff7e ff36 fef8 7962 7915
+  0000030 7881 7851 122a 0000 fffc 0000 0003 7d1e
+  0000040 7d5f 7e05 7d3c 1211 0000 0000 0000 0000
+  0000050 801b 8014 8018 8014 121d 0000 0000 0000
+  0000060 0000 8303 82dc 82e3 82ce 122a
+
+The output is hard to read, that's why we wrote ``fau-calibration``
+that make the calibration data human readable:::
+
+  $ fau-calibration -f /sys/bus/zio/devices/adc-100m14b-0021/calibration_data
+  ADC Range 10V
+    temperature: 46.250000 C
+    gain: [0x76bc, 0x7658, 0x7637, 0x769c]
+    offset: [0xffffffe8, 0x0044, 0xffffffc2, 0xffffff9d]
+  DAC Range 10V
+    temperature: 46.250000 C
+    gain: [0x7d1e, 0x7d5f, 0x7e05, 0x7d3c]
+    offset: [0x0000, 0xfffffffc, 0x0000, 0x0003]
+  ADC Range 1V
+    temperature: 46.370000 C
+    gain: [0x7894, 0x78ae, 0x7887, 0x78ba]
+    offset: [0xffffffd7, 0x002e, 0xffffffa6, 0xffffff88]
+  DAC Range 1V
+    temperature: 46.370000 C
+    gain: [0x801b, 0x8014, 0x8018, 0x8014]
+    offset: [0x0000, 0x0000, 0x0000, 0x0000]
+  ADC Range 100mV
+    temperature: 46.500000 C
+    gain: [0x7962, 0x7915, 0x7881, 0x7851]
+    offset: [0xffffff94, 0xffffff7e, 0xffffff36, 0xfffffef8]
+  DAC Range 100mV
+    temperature: 46.500000 C
+    gain: [0x8303, 0x82dc, 0x82e3, 0x82ce]
+    offset: [0x0000, 0x0000, 0x0000, 0x0000]

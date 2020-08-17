@@ -1,120 +1,58 @@
-The Driver Interface For Users
-==============================
+..
+  SPDX-License-Identifier: CC-BY-SA-4.0
+  SPDX-FileCopyrightText: 2020 CERN
 
-Installation
-------------
+======
+Driver
+======
 
-This driver depends on two other drivers, as well as the Linux kernel.
-Also, it must talk to a specific FPGA binary file running in the carrier
-card.
+Driver Features
+===============
 
-Gateware
-''''''''
+Requirements
+============
 
-The driver does not support all the gateware version; each gateware
-main release need a new driver release which typically is not backward
-compatible. So the latest version of the driver supports only the
-latest version of the gateware
+The fmcadc100m14b4ch device driver has been developed and tested on Linux
+3.10. Other Linux versions might work as well but it is not guaranteed.
 
-.. note:: On 2018-02 driver v5.0 supports gateware v5.0
+This driver depends on the `zio`_ framework and `fmc`_ library; we
+developed and tested against version `zio`_ 1.4 and `fmc`_ 1.0.
 
-On the ohwr `wiki page`_ you can find other details about all the past
-releases.
-
-.. _`wiki page`: http://www.ohwr.org/projects/fmc-adc-100m14b4cha-sw/wiki/Releases
-
-To install the FPGA image in the target system, you need to place the
-.bin file within ``/lib/firmware/``, where the system can find it.
-
-The default gateware depends on the carrier in use. On a SVEC carrier
-the default gateware is *fmc/spec-fmc-adc-100m14b.bin*; on a SPEC carrier
-the default gateware is *fmc/spec-fmc-adc-100m14b.bin*
-
-Anyway, you can use a different name for your gateware file and you can load
-it by specifying the module parameter ``gateware=`` as described in the
-`Module Parameters`_ section.
-
-.. NOTE this can change in the future if we drop the fmc-bus
+The FPGA address space must be visible on the host system. This requires
+a driver for the FPGA carrier that exports the FPGA address space to the
+host. As of today we support `SPEC`_ and `SVEC`_.
 
 
-Software
-''''''''
+Compile And Install
+====================
 
-The kernel versions used during development are 3.2 and 3.6.
+The compile and install the fmcadc100m14b4ch device driver you need
+first to export the path to its direct dependencies, and then you
+execute ``make``. This driver depends on the `zio`_ framework and `fmc`_ library; on a VME system it depends also on the VME bridge driver from CERN BE-CO.
 
-The driver is base on the `ZIO framework`_. The exact commit being used
-for development is also used as a git submodule of this package, so it is
-automatically built.
+::
 
-.. note:: On 2018-02 driver v5.0 used ZIO *zio-1.2-24-g0765fa5*
+      $ cd /path/to/fmc-adc-100m14b4cha-sw/kernel
+      $ export LINUX=/path/to/linux/sources
+      $ export ZIO=/path/to/zio
+      $ export FMC=/path/to/fmc-sw
+      $ export VMEUS=/path/to/vmebridge
+      $ make
+      $ make install
 
-The driver is also based on the `fmc-bus`_. This bus manages FMC carriers
-and mezzanines, identification and so on.
-
-.. note:: On 2018-02 driver v5.0 used FMC-bus *fmc-bus-v2017-06*
-
-.. note:: The fmc-bus support can be dropped in the future in favor of
-   a platform device
-
-For the particular case of the SVEC carrier, in order to be able to use
-the DMA operations, we need the header files of `SVEC`_ and the VME bus.
-
-.. note:: On 2018-02 driver v5.0 used SVEC *svec-sw-v2014-04-hotfixes-44-gbdbc36c*
-
-.. warning:: The VME bus used for this driver is the one developed at CERN
-   by the BE-CO-HT section. This is not publicly available, it means that
-   the SVEC support is limited to CERN users.
-
-The versions mentioned above are the one used during the development. You may
-want to use different version of those dependencis to include bugfixes or
-improvements.
-
-Now that you have the dependencies you can start building the driver.
-The building process needs to know the location of the different dependencies.
-
-``LINUX``
-     The top-level directory of the Linux kernel you are compiling
-     against. If not set, the default may work if you compile in the
-     same host where you expect to run the driver.
-
-``ZIO``, ``FMC_BUS``
-    The top-level directory of the repository checkouts for the pacakges.
-    If unset, the top-level Makefile refers to the submodules of this package.
-
-``CONFIG_FMC_ADC_SVEC``
-    It enables the `SVEC`_ support when its value is ``y``.
-
-``SVEC_SW``, ``VMEBUS``
-    The top-level directory of the repository checkouts for the pacakges.
-    These are necessary only if you need the `SVEC`_ support.
-
-When you have the necessary environment variables you can  the ``make`` command::
-
-    make
-    sudo make install
-
-
-.. _`ZIO framework`: http://www.ohwr.org/projects/zio
-.. _`fmc-bus`: http://www.ohwr.org/projects/fmc-bus
-.. _`SVEC`: https://www.ohwr.org/projects/svec-sw
-.. _`SPEC`: https://www.ohwr.org/projects/spec-sw
-
+.. note::
+   Since version v5.0.0 the fmcadc100m14b4ch device driver does not
+   depend anymore on `fmc-bus`_ subsystem, instead it uses a new
+   `fmc`_ library
 
 Module Parameters
------------------
+=================
+
 The driver accepts a few load-time parameters for configuration. You can
 pass them to insmod directly, or write them in ``/etc/modules.conf`` or
 the proper file in ``/etc/modutils/``.
 
 The following parameters are used:
-
-gateware=PATH[, PATH]
-     The binary file to use to reprogram the FPGA. The default value for
-     this parameter is ``fmc/adc-100m14b.bin`` as seen in Gateware
-     Installation. The name is a relative pathname from
-     ``/lib/firmware``, and it will be used for each and every card.
-     In combination with the busid, you can provide different file for
-     different card.
 
 enable_test_data=[0, 1]
      This is for testing purpose. When set to 1, this option enables the
@@ -124,16 +62,19 @@ enable_test_data=[0, 1]
      range, channel 1 goes from 0 to 511, other channel always report 0.
      Trigger detection is unaffected by use of test data.
 
-busid=NUMBER[,NUMBER]
-     Restrict loading the driver to only a few mezzanine cards. If you
-     have several SPEC cards, most likely not all of them host an ADC
-     card; by specifying the list of bus identifiers you restrict the
-     module to only drive those cards.  This option will remain, but is
-     going to be mostly obsoleted by use of eeprom-based identification
-     of the cards.
+fa_calib_period_s=NUMBER
+     The ADC has a periodic task that every 60 seconds adjusts the
+     calibration data based on the currunt temperature. You can use
+     this module paramter to pass your period in seconds.
+
+.. _zio: https://www.ohwr.org/project/zio
+.. _fmc: https://www.ohwr.org/project/fmc-sw
+.. _`fmc-bus`: http://www.ohwr.org/projects/fmc-bus
+.. _`SVEC`: https://www.ohwr.org/projects/svec
+.. _`SPEC`: https://www.ohwr.org/projects/spec
 
 Device Abstraction
-------------------
+==================
 
 This driver is based on the ZIO framework and the fmc-bus. It supports
 initial setup of the board; it allows users to manually configure the
@@ -176,10 +117,9 @@ channel represent the interleave acquisition on the cset.
      cset0 -- chani;
     }
 
+The ADC registers can be accessed in the proper sysfs directory:::
 
-The ADC registers can be accessed in the proper sysfs directory. For a
-card in slot 0 of bus 2 (like shown above), the directory is
-*/sys/bus/zio/devices/adc-100m14b-0200*.
+  cd /sys/bus/zio/devices/adc-100m14b-${ID}.
 
 The overall device (*adc-100m14b*) provides the following attributes:
 
@@ -228,6 +168,9 @@ chN-offset
      input signal.  DAC values are corrected according to the
      calibration values retrieved from the FMC EEPROM. For this reason,
      the offset may saturate at values less than +/- 5V.
+
+chN-offset-zero
+     The necessary offset to to bring the signal to 0.
 
 chN-vref
      The "voltage reference" used for conversion. This attribute may be
@@ -308,9 +251,8 @@ max-sample-mshot
      Maximum number of samples that can be stored in the FPGA memory in
      multi-shot mode
 
-
-Timestamp Cset Attributes
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Timestamp Attributes
+~~~~~~~~~~~~~~~~~~~~
 
 The ADC mark with a timestamp all these events: state machine start,
 state machine stop and acquisition end. The device split each timestamp
@@ -328,7 +270,7 @@ event you should do::
      cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-t
      cat /sys/bus/zio/devices/adc-100m14b-0200/cset0/tstamp-acq-str-b
 
-The driver export 4 time stamps:
+The channel set exports 3 time stamps:
 
 tstamp-acq-str-{s|t|b}
      this is the time stamp of the last acquisition start command
@@ -341,6 +283,8 @@ tstamp-acq-stop-{s|t|b}
      this is the time stamp of the last acquisition stop command
      execution
 
+While the trigger instance export a time stamp:
+
 tstamp-trg-lst-{s|t|b}
      this is the time stamp of the last trigger fire.  Please bear in
      mind that in multi-shot acquisition you have several trigger fire,
@@ -350,8 +294,11 @@ tstamp-trg-lst-{s|t|b}
 
 By default these time stamps represent (more or less) the time since the
 epoch. The user can change this and configure a different timing base.
-The attributes tstamp-base-s and tstamp-base-t are ment for this
-purpose.
+The following attributes show the current base time::
+
+tstamp-base-{su|sl|b}
+     The current time known by the FPGA bitstream. It could be an
+     internal clock or white-rabbit.
 
 The Channels
 ''''''''''''
@@ -365,7 +312,6 @@ current-value
      even if it actually represents a signed 16-bit integer. (This because
      ZIO manages 32-bit attributes and the value shown comes directly from
      the hardware)
-
 
 The Trigger
 '''''''''''
@@ -451,15 +397,6 @@ post-samples, pre-samples
      multi-shot acquisition, each shot acquires that many sample, but
      pre + post must be at most 2048.
 
-sw-trg-fire
-     To use the software trigger, you must first enable it (writing 1)
-     to sw-trg-enable.  When enabled, by writing any values to
-     sw-trg-file you can force a trigger event. This is expected to be
-     used only for diagnostic reasons.
-
-tstamp-trg-lst-b, tstamp-trg-lst-s, tstamp-trg-lst-t
-     To be verified and documented.
-
 The Buffer
 ''''''''''
 
@@ -501,306 +438,32 @@ of the interleaved channel. For example this sets it to 10MB::
      export DEV=/sys/bus/zio/devices/adc-100m14b-0200
      echo 10000 > $DEV/cset0/chani/buffer/max-buffer-kb
 
-Summary of Attributes
-'''''''''''''''''''''
+The dubugfs Interface
+=====================
 
-The following table lists all attributes related to this driver. All
-values are 32-bit that ZIO framework can handle only 32bit unsigned
-integer.
+The fmcadc100m14b4cha driver exports a set of debugfs attributes which
+are supposed to be used only for debugging activities. For each device
+instance you will see a directory in ``/sys/kernel/debug/adc-100m14b-*``.
 
-.. list-table:: FMC ADC 100M 4B 4 C Attributes Summary
-   :header-rows: 1
-   :widths: 1 1 1 1 1 2
+data_pattern
+   It set/unset the data pattern in the ADC chip. It uses the
+   following syntax: "adc <enable> <pattern>", where *<enable>* could
+   be 0 (disable), or (enable); and *<pattern>* could be any 14bit
+   value. If you are disabling the feature, then the pattern is not
+   necessary
 
-   * - Context
-     - Name
-     - Permission
-     - Default
-     - Values
-     - Comments
+trigger_software
+   Write to this file to instantaneously trigger an acquisition.
 
-   * - device
-     - calibration_data
-     - rw
-     - --
-     -
-     - Run-time calibration data
+spi-regs
+   It dumps the ADC's registers.
 
-   * - device
-     - temperature
-     - ro
-     - --
-     -
-     - The temperature is in millidegree
+regs
+   It dumps the FPGA registers
 
-   * - cset
-     - enable
-     - rw
-     - 1
-     - [0, 1]
-     -
-
-   * - cset
-     - chN-50ohm-term
-     - rw
-     - 0
-     - [0, 1]
-     - N = 0..3
-
-   * - cset
-     - chN-offset
-     - rw
-     - 0
-     - [-5000; 5000]
-     - N = 0..3
-
-   * - cset
-     - chN-vref
-     - rw
-     - 17
-     - [0, 17, 35, 69]
-     - N = 0..3
-
-   * - cset
-     - chN-saturation
-     - rw
-     - 32767
-     - [0;32767]
-     - N = 0..3
-
-   * - cset
-     - fsm-auto-start
-     - rw
-     - 0
-     - [0, 1]
-     -
-
-   * - cset
-     - fsm-command
-     - wo
-     -
-     - [1, 2]
-     - 1: start, 2: stop
-
-   * - cset
-     - fsm-state
-     - ro
-     -
-     -
-     - hw values
-
-   * - cset
-     - max-sample-mshot
-     - ro
-     -
-     -
-     - hw value
-
-   * - cset
-     - resolution-bits
-     - ro
-     - 14
-     -
-     -
-
-   * - cset
-     - rst-ch-offset
-     - wo
-     -
-     - any
-     -
-
-   * - cset
-     - sample-decimation
-     - rw
-     - 1
-     -
-     -
-
-   * - cset
-     - sample-frequency
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - sample-counter
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-str-s
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-str-t
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-str-b
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-stp-s
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-stp-t
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-stp-b
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-end-s
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-end-t
-     - ro
-     -
-     -
-     -
-
-   * - cset
-     - tstamp-acq-end-b
-     - ro
-     -
-     -
-     -
-
-   * - chan
-     - current-value
-     - ro
-     -
-     -
-     -
-
-   * - trigger
-     - delay
-     - rw
-     - 0
-     - [0; ]
-     -
-
-   * - trigger
-     - enable
-     - rw
-     - 1
-     - [0, 1]
-     -
-
-   * - trigger
-     - external
-     - rw
-     - 1
-     - [0, 1]
-     -
-
-   * - trigger
-     - int-channel
-     - rw
-     - 0
-     - [0; 3]
-     -
-
-   * - trigger
-     - int-threshold
-     - rw
-     - 0
-     - [0; 65535]
-     - datum after offset/calibration
-
-   * - trigger
-     - nshots
-     - rw
-     - 1
-     - [0; 65535]
-     -
-
-   * - trigger
-     - polarity
-     - rw
-     - 0
-     - [0, 1]
-     - 0: raising, 1: falling
-
-   * - trigger
-     - post-samples
-     - rw
-     - 0
-     - Any
-     - max 2K if multishot
-
-   * - trigger
-     - pre-samples
-     - rw
-     - 0
-     - Any
-     - max 2K if multishot
-
-   * - trigger
-     - sw-trg-enable
-     - rw
-     - 0
-     - [0, 1]
-     -
-
-   * - trigger
-     - sw-trg-fire
-     - wo
-     - -
-     - Any
-     -
-
-   * - trigger
-     - tstamp-trg-s
-     - ro
-     -
-     -
-     -
-
-   * - trigger
-     - tstamp-trg-t
-     - ro
-     -
-     -
-     -
-
-   * - trigger
-     - tstamp-trg-b
-     - ro
-     -
-     -
-     -
 
 Reading Data with Char Devices
-------------------------------
+==============================
 
 To read data from user-space, applications should use the ZIO char
 device interface. ZIO creates 2 char devices for each channel (as
@@ -846,7 +509,7 @@ The ADC hardware always interleaves all 4 channels, and you cannot
 acquire a subset of the channels. The acquired stream, thus, follows
 this format:
 
-.. figure:: img/interleaved.pdf
+.. figure:: ../img/interleaved.pdf
    :alt: ADC interleaved data
 
 The char-device model of ZIO is documented in the ZIO manual; basically,
@@ -859,7 +522,7 @@ The ``zio-dump`` tool, part of the ZIO distribution, turns metadata and data
 into a meaningful grep-friendly text stream.
 
 User Header Files
------------------
+=================
 
 Internally the driver uses the header file ``fmc-adc-100m14b4cha.h`` for the
 declaration of all the functions, constants and structures. Some of these are
