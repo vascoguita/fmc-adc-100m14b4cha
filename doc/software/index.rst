@@ -10,4 +10,5 @@ The Software
    :maxdepth: 1
    :caption: Contents
 
+   driver
    tools

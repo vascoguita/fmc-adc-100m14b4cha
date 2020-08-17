@@ -313,7 +313,7 @@ tstamp-trg-lst-{s|t|b}
 
 By default these time stamps represent (more or less) the time since the
 epoch. The user can change this and configure a different timing base.
-The following attributes show the current base time::
+The following attributes show the current base time:
 
 tstamp-base-{su|sl|b}
      The current time known by the FPGA bitstream. It could be an
@@ -550,7 +550,7 @@ used to properly interpret the ``zio_control`` attributes, or the bitmask
 fields definitions.
 
 Troubleshooting
----------------
+'''''''''''''''
 
 This chapter lists a few errors that may happen and how to deal with
 them.
