@@ -717,7 +717,8 @@ static const struct platform_device_id fa_id[] = {
 	{
 		.name = "fmc-adc-100m",
 		.driver_data = ADC_VER,
-	}
+	},
+	{},
 	/* TODO we should support different version */
 };
 
@@ -787,5 +788,6 @@ MODULE_AUTHOR("Federico Vaga");
 MODULE_DESCRIPTION("FMC-ADC-100MS-14b Linux Driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(VERSION);
+MODULE_DEVICE_TABLE(platform, fa_id);
 
 ADDITIONAL_VERSIONS;
