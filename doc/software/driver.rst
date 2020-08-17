@@ -45,6 +45,25 @@ execute ``make``. This driver depends on the `zio`_ framework and `fmc`_ library
    depend anymore on `fmc-bus`_ subsystem, instead it uses a new
    `fmc`_ library
 
+The building process generates 3 Linux modules:
+*kernel/fmc-adc-100m14b4ch.ko*, *kernel/fmc-adc-100m14b4ch-spec.ko*, and
+*kernel/fmc-adc-100m14b4ch-svec.ko*.
+
+Top Level Driver
+================
+
+The fmcadc100m14b4ch is a generic driver for an FPGA device that could
+be instanciated on a number of FMC carriers. For each carrier we write
+a little Linux module which acts as a top level driver (like the MFD
+drivers in the Linux kernel). In these modules there is the knowledge
+about the virtual memory range, the IRQ lines, and the DMA engine to
+be used.
+
+The top level driver is a platform driver that matches a string
+containing the application identifier. The carrier driver builds this
+identification string from the device ID embedded into the FPGA
+(https://ohwr.org/project/fpga-dev-id).
+
 Module Parameters
 =================
 
