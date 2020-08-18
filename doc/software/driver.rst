@@ -270,6 +270,10 @@ max-sample-mshot
      Maximum number of samples that can be stored in the FPGA memory in
      multi-shot mode
 
+output-randomizer
+     It allows to enable or disable the *Data Output Randomizer* in the ADC
+     chip.
+
 Timestamp Attributes
 ~~~~~~~~~~~~~~~~~~~~
 

@@ -362,6 +362,7 @@ enum fa_sw_param_id {
 
 	ZFA_SW_R_NOADDRES_TEMP,
 	ZFA_SW_R_NOADDERS_AUTO,
+	ZFA_SW_R_NOADDERS_RAND,
 	ZFA_SW_CH1_OFFSET_ZERO,
 	ZFA_SW_CH2_OFFSET_ZERO,
 	ZFA_SW_CH3_OFFSET_ZERO,
@@ -616,7 +617,9 @@ extern int fa_fsm_wait_state(struct fa_dev *fa,
 extern int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
                                    unsigned int enable);
 extern int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
-				   unsigned int *enable);
+                                   unsigned int *enable);
+extern int fa_adc_output_randomizer_set(struct fa_dev *fa, bool enable);
+extern bool fa_adc_is_output_randomizer(struct fa_dev *fa);
 
 /* Temporarily, user values are the same as hardware values */
 extern int zfad_convert_user_range(uint32_t user_val);

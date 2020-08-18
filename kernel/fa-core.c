@@ -37,6 +37,55 @@ struct workqueue_struct *fa_workqueue;
 
 
 /**
+ * Enable/Disable Data Output Randomizer
+ * @fa: the adc descriptor
+ * @enable:
+ */
+int fa_adc_output_randomizer_set(struct fa_dev *fa, bool enable)
+{
+	uint32_t tx, rx;
+	int err;
+
+        tx  = 0x8000;
+	tx |= (1 << 8);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
+	if (err)
+		return err;
+
+	if (enable)
+		rx |= BIT(6);
+	else
+		rx &= ~BIT(6);
+
+	tx  = 0x0000;
+	tx |= (1 << 8);
+	tx |= (rx & 0xFF);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, NULL);
+	if (err)
+		return err;
+	return 0;
+}
+
+/**
+ * Check if the Data Output Randomizer is enabled
+ * @fa: the adc descriptor
+ * Return: true if the feature is enabled, otherwise false
+ */
+bool fa_adc_is_output_randomizer(struct fa_dev *fa)
+{
+	uint32_t tx, rx;
+	int err;
+
+        tx  = 0x8000;
+	tx |= (1 << 8);
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
+	if (err)
+		return false;
+
+	return !!(rx & BIT(6));
+}
+
+/**
  * Read FMC mezzanine temperature
  * @fa: the adc descriptor
  *

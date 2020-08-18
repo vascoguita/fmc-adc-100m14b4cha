@@ -123,6 +123,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 	ZIO_PARAM_EXT("max-sample-mshot", ZIO_RO_PERM, ZFA_MULT_MAX_SAMP, 0),
 	ZIO_PARAM_EXT("sample-counter", ZIO_RO_PERM, ZFAT_CNT, 0),
+	ZIO_PARAM_EXT("output-randomizer", ZIO_RW_PERM, ZFA_SW_R_NOADDERS_RAND, 0),
 };
 
 #if 0 /* FIXME Unused until TLV control will be available */
@@ -192,7 +193,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		 * programming of hardware is done at the end of the
 		 * switch, in the catch-all final zfa_hardware_write()
 		 */
-
+	case ZFA_SW_R_NOADDERS_RAND:
+		return fa_adc_output_randomizer_set(fa, !!usr_val);
 	case ZFA_SW_R_NOADDERS_AUTO:
 		fa->enable_auto_start = usr_val;
 		return 0;
@@ -368,6 +370,9 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 
 	case ZFA_CHx_OFFSET:
 		*usr_val = fa->user_offset[to_zio_chan(dev)->index];
+		return 0;
+	case ZFA_SW_R_NOADDERS_RAND:
+		*usr_val = fa_adc_is_output_randomizer(fa);
 		return 0;
 	case ZFA_SW_R_NOADDRES_NBIT:
 		/*fallthrough*/
