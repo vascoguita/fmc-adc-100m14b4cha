@@ -246,7 +246,7 @@ static void zfad_dma_complete(void *arg)
 	struct fa_dev *fa = cset->zdev->priv_d;
 
 	/* Release DMA resources */
-	dma_unmap_sg(fa->msgdev,
+	dma_unmap_sg(&fa->pdev->dev,
 		     zfad_block->sgt.sgl,
 		     zfad_block->sgt.nents,
 		     DMA_DEV_TO_MEM);

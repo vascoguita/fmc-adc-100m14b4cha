@@ -262,10 +262,10 @@ int fa_debug_init(struct fa_dev *fa)
 {
 	int err;
 
-	fa->dbg_dir = debugfs_create_dir(dev_name(&fa->zdev->head.dev), NULL);
+	fa->dbg_dir = debugfs_create_dir(dev_name(&fa->pdev->dev), NULL);
 	if (IS_ERR_OR_NULL(fa->dbg_dir)) {
 		err = PTR_ERR(fa->dbg_dir);
-		dev_err(&fa->zdev->head.dev,
+		dev_err(&fa->pdev->dev,
 			"Cannot create debugfs directory \"%s\" (%d)\n",
 			dev_name(&fa->zdev->head.dev), err);
 		return err;
@@ -278,7 +278,7 @@ int fa_debug_init(struct fa_dev *fa)
 					      &fa->dbg_reg32);
 	if (IS_ERR_OR_NULL(fa->dbg_reg)) {
 		err = PTR_ERR(fa->dbg_reg);
-		dev_warn(fa->msgdev,
+		dev_warn(&fa->pdev->dev,
 			"Cannot create debugfs file \"regs\" (%d)\n",
 			 err);
 	}
@@ -287,7 +287,7 @@ int fa_debug_init(struct fa_dev *fa)
 					      fa->dbg_dir, fa,
 					      &fa_regdump_ops);
 	if (IS_ERR_OR_NULL(fa->dbg_reg_spi)) {
-		dev_warn(fa->msgdev,
+		dev_warn(&fa->pdev->dev,
 			"Cannot create regdump debugfs file\n");
 	}
 
