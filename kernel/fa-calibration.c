@@ -143,21 +143,22 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 {
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.dac[range];
+	int32_t delta_temp;
 	int gain;
 	int err;
 
 	if (temperature == 0xFFFFFFFF)
 		temperature = fa_temperature_read(fa);
+	delta_temp = (temperature / 10) - cal->temperature;
 	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
 		gain = cal->gain[chan];
 	else
 		gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
-					     temperature - cal->temperature);
+					     delta_temp);
 
 	dev_dbg(&fa->pdev->dev,
-		"%s: {calib-temperatur: %d, temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, cal->temperature, temperature,
-		chan, range, gain, cal->offset[chan]);
+		"%s: {delta-temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, delta_temp, chan, range, gain, cal->offset[chan]);
 
 	fa_calib_gain_set(fa, chan, gain);
 	fa_calib_offset_set(fa, chan, cal->offset[chan]);
@@ -238,22 +239,22 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
         int range = fa->range[chan];
         struct fa_calib_stanza *cal = &fa->calib.dac[range];
+	int32_t delta_temp;
 	int gain;
 	int hwval;
 
 	if (temperature == 0xFFFFFFFF)
 		temperature = fa_temperature_read(fa);
-
+	delta_temp = (temperature / 10) - cal->temperature;
 	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
 		gain = cal->gain[chan];
 	else
 		gain = fa_calib_dac_gain_fix(range, cal->gain[chan],
-					     temperature - cal->temperature);
+					     delta_temp);
 
 	dev_dbg(&fa->pdev->dev,
-		"%s: {calib-temperatur: %d, temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-		__func__, cal->temperature, temperature,
-		chan, range, gain, cal->offset[chan]);
+		"%s: {delta-temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+		__func__, delta_temp, chan, range, gain, cal->offset[chan]);
 	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain,
 					    cal->offset[chan]);
 
