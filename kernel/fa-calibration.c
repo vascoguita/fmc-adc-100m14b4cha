@@ -83,7 +83,7 @@ static const int64_t gain_adc_error_slope_fix[] = {
  * @range: voltage range
  * @gain_c: calibration value
  * @delta_temp: temperature difference: (current temp. - calibration temp.)
- *              the unit must be milli-degree
+ *              the unit must be centi-degree
  */
 static int fa_calib_adc_gain_fix(int range, int32_t gain_c,
 				 int32_t delta_temp)
@@ -92,7 +92,7 @@ static int fa_calib_adc_gain_fix(int range, int32_t gain_c,
 
 	error = gain_adc_error_slope_fix[range] * delta_temp;
 	error /= 0x2000; /* see comment above for gain_adc_error_slope_fix */
-	error /= 1000; /* convert to degree */
+	error /= 100; /* convert to degree */
 
 	return gain_c - error;
 }
@@ -116,7 +116,7 @@ static const int64_t gain_dac_error_slope_fix[] = {
  * @range: voltage range
  * @gain_c: calibration value
  * @delta_temp: temperature difference: (current temp. - calibration temp.)
- *              the unit must be milli-degree
+ *              the unit must be centi-degree
  */
 static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 				 int32_t delta_temp)
@@ -125,7 +125,7 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 
 	error = gain_dac_error_slope_fix[range] * delta_temp;
 	error /= 0x2000; /* see comment above for gain_dac_error_slope_fix */
-	error /= 1000; /* convert to degree */
+	error /= 100; /* convert to degree */
 
 	return gain_c - error;
 }
