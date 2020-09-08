@@ -453,6 +453,13 @@ err_prep:
 err_config:
 	dmaengine_terminate_all(dchan);
 	dma_release_channel(dchan);
+	while (--i >= 0) {
+		dma_unmap_sg(&fa->pdev->dev,
+			     zfad_block[i].sgt.sgl,
+			     zfad_block[i].sgt.nents,
+			     DMA_DEV_TO_MEM);
+		sg_free_table(&zfad_block[i].sgt);
+	}
 err:
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
 		  cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
