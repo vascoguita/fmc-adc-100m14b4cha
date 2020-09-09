@@ -630,6 +630,8 @@ extern int zfad_get_chx_index(unsigned long addr, unsigned int chan);
 
 /* Function exported by fa-dma.c */
 extern void fa_irq_work(struct work_struct *work);
+extern int fa_dma_request_channel(struct fa_dev *fa);
+extern void fa_dma_release_channel(struct fa_dev *fa);
 
 /* Functions exported by fa-zio-drv.c */
 extern int fa_zio_register(void);

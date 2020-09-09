@@ -700,6 +700,10 @@ int fa_probe(struct platform_device *pdev)
 	if(!fa_fmc_slot_is_valid(fa))
 		goto out_fmc_err;
 
+	err = fa_dma_request_channel(fa);
+	if (err)
+		goto out_dma;
+
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
 		dev_dbg(fa->msgdev, "Calling init for \"%s\"\n", m->name);
@@ -727,6 +731,8 @@ out:
 		if (m->exit)
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
+	fa_dma_release_channel(fa);
+out_dma:
 out_fmc_err:
 out_fmc_eeprom:
 out_fmc_pre:
@@ -754,6 +760,8 @@ int fa_remove(struct platform_device *pdev)
 		if (m->exit)
 			m->exit(fa);
 	}
+	fa_dma_release_channel(fa);
+
 	iounmap(fa->fa_top_level);
 
 	fmc_slot_put(fa->slot);

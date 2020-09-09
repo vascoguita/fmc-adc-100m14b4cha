@@ -73,7 +73,7 @@ static bool fa_dmaengine_filter(struct dma_chan *dchan, void *arg)
 	return ddev->dev_id == dev_id && dchan->chan_id == chan_id;
 }
 
-static int fa_dma_request_channel(struct fa_dev *fa)
+static int __fa_dma_request_channel(struct fa_dev *fa)
 {
 	dma_cap_mask_t dma_mask;
 	struct resource *r;
@@ -96,10 +96,48 @@ static int fa_dma_request_channel(struct fa_dev *fa)
 	return 0;
 }
 
-static void fa_dma_release_channel(struct fa_dev *fa)
+int fa_dma_request_channel(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return 0;
+	return __fa_dma_request_channel(fa);
+}
+
+/**
+ * Remove this function and its use when VME Bridge will support virtual
+ * DMA channels. Then we will request a channel only once at probe like
+ * on SPEC
+ */
+static int fa_dma_request_channel_svec(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return fa_dma_request_channel(fa);
+	return 0;
+}
+
+static void __fa_dma_release_channel(struct fa_dev *fa)
 {
 	dma_release_channel(fa->dchan);
 }
+
+void fa_dma_release_channel(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return;
+	__fa_dma_release_channel(fa);
+}
+
+/**
+ * Remove this function and its use when VME Bridge will support virtual
+ * DMA channels. Then we will request a channel only once at probe like
+ * on SPEC
+ */
+static void fa_dma_release_channel_svec(struct fa_dev *fa)
+{
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		__fa_dma_release_channel(fa);
+}
+
 
 static uint32_t zfad_dev_mem_offset(struct zio_cset *cset)
 {
@@ -301,7 +339,7 @@ static void fa_dma_complete(void *arg,
 	/* Complete the full acquisition when the last transfer is over */
 	--fa->transfers_left;
 	if (!fa->transfers_left) {
-		fa_dma_release_channel(fa);
+		fa_dma_release_channel_svec(fa);
 		zfad_dma_done(cset);
 	}
 }
@@ -422,7 +460,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	}
 
         dev_dbg(fa->msgdev, "Start DMA transfer\n");
-        err = fa_dma_request_channel(fa);
+        err = fa_dma_request_channel_svec(fa);
 	if (err)
 		return err;
 
@@ -468,7 +506,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 err_prep:
 err_config:
 	dmaengine_terminate_all(fa->dchan);
-	fa_dma_release_channel(fa);
+	fa_dma_release_channel_svec(fa);
 	while (--i >= 0) {
 		dma_unmap_sg(&fa->pdev->dev,
 			     zfad_block[i].sgt.sgl,
