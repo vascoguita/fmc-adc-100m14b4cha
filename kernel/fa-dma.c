@@ -379,25 +379,37 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 	if (err)
 		goto err_to_pages;
 
-
-	max_segment_size = dma_get_max_seg_size(dchan->device->dev);
+	max_segment_size = min(zfad_block->block->datalen + PAGE_SIZE, /* PAGE aligned */
+			       (size_t)dma_get_max_seg_size(dchan->device->dev));
 	max_segment_size &= PAGE_MASK; /* to make alloc_table happy */
-	err = fa->sg_alloc_table_from_pages(&zfad_block->sgt, pages, nr_pages,
-					    offset_in_page(zfad_block->block->data),
-					    zfad_block->block->datalen,
-					    max_segment_size, GFP_KERNEL);
-	if (unlikely(err))
-		goto err_sgt;
+	/* Find something that fits in the [SW-]IOMMU */
+	do {
+		dev_dbg(&fa->pdev->dev, "DMA max segment %ld\n",
+			max_segment_size);
+		err = fa->sg_alloc_table_from_pages(&zfad_block->sgt, pages,
+						    nr_pages,
+						    offset_in_page(zfad_block->block->data),
+						    zfad_block->block->datalen,
+						    max_segment_size,
+						    GFP_KERNEL);
+		if (unlikely(err))
+			goto err_sgt;
 
-	sg_mapped = dma_map_sg(&fa->pdev->dev,
-			       zfad_block->sgt.sgl,
-			       zfad_block->sgt.nents,
-			       DMA_DEV_TO_MEM);
-	if (sg_mapped <= 0) {
-		err = sg_mapped ? sg_mapped : -ENOMEM;
+		sg_mapped = dma_map_sg(&fa->pdev->dev,
+				       zfad_block->sgt.sgl,
+				       zfad_block->sgt.nents,
+				       DMA_DEV_TO_MEM);
+		if (sg_mapped <= 0) {
+			sg_free_table(&zfad_block->sgt);
+			err = sg_mapped ? sg_mapped : -ENOMEM;
+			max_segment_size /= 2;
+		} else {
+			err = 0;
+			break;
+		}
+	} while (max_segment_size >= PAGE_SIZE);
+	if (err)
 		goto err_map;
-	}
-
 	/* Prepare the DMA transmisison */
 	tx = dmaengine_prep_slave_sg_ctx(dchan, zfad_block->sgt.sgl, sg_mapped,
 					 DMA_DEV_TO_MEM, 0, zfad_block->dma_ctx);
