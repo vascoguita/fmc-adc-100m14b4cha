@@ -411,6 +411,7 @@ struct fa_dev {
 	struct zio_device	*zdev;
 	/* the pointer to the fake zio_device, used for init/remove */
 	struct zio_device	*hwzdev;
+	struct dma_chan *dchan;
 
 	struct fmc_slot	*slot;
 	struct fa_memory_ops	memops;

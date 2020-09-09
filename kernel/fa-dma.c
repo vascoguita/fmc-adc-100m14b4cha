@@ -61,6 +61,45 @@ struct zfad_timetag {
 	uint32_t status;
 };
 
+/**
+ * It matches a valid DMA channel
+ */
+static bool fa_dmaengine_filter(struct dma_chan *dchan, void *arg)
+{
+	struct dma_device *ddev = dchan->device;
+	int dev_id = (*((int *)arg) >> 16) & 0xFFFF;
+	int chan_id = *((int *)arg) & 0xFFFF;
+
+	return ddev->dev_id == dev_id && dchan->chan_id == chan_id;
+}
+
+static int fa_dma_request_channel(struct fa_dev *fa)
+{
+	dma_cap_mask_t dma_mask;
+	struct resource *r;
+	int dma_dev_id;
+
+	r = platform_get_resource(fa->pdev, IORESOURCE_DMA, ADC_DMA);
+	if (!r) {
+		dev_err(&fa->pdev->dev, "Can't set find DMA channel\n");
+		return -ENODEV;
+	}
+	dma_dev_id = r->start;
+
+	dma_cap_zero(dma_mask);
+	dma_cap_set(DMA_SLAVE, dma_mask);
+	dma_cap_set(DMA_PRIVATE, dma_mask);
+	fa->dchan = dma_request_channel(dma_mask, fa_dmaengine_filter,
+					&dma_dev_id);
+	if (!fa->dchan)
+		return -ENODEV;
+	return 0;
+}
+
+static void fa_dma_release_channel(struct fa_dev *fa)
+{
+	dma_release_channel(fa->dchan);
+}
 
 static uint32_t zfad_dev_mem_offset(struct zio_cset *cset)
 {
@@ -262,7 +301,7 @@ static void fa_dma_complete(void *arg,
 	/* Complete the full acquisition when the last transfer is over */
 	--fa->transfers_left;
 	if (!fa->transfers_left) {
-		dma_release_channel(zfad_block->tx->chan);
+		fa_dma_release_channel(fa);
 		zfad_dma_done(cset);
 	}
 }
@@ -361,19 +400,6 @@ err_alloc_pages:
 }
 
 /**
- * It matches a valid DMA channel
- */
-static bool fa_dmaengine_filter(struct dma_chan *dchan, void *arg)
-{
-	struct dma_device *ddev = dchan->device;
-	int dev_id = (*((int *)arg) >> 16) & 0xFFFF;
-	int chan_id = *((int *)arg) & 0xFFFF;
-
-	return ddev->dev_id == dev_id && dchan->chan_id == chan_id;
-}
-
-
-/**
  * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
  * from the ADC to the host memory.
  *
@@ -383,19 +409,9 @@ static int zfad_dma_start(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
-	struct dma_chan *dchan;
 	struct dma_slave_config sconfig;
-	dma_cap_mask_t dma_mask;
 	unsigned int data_offset;
-	int err, i, dma_dev_id;
-	struct resource *r;
-
-	r = platform_get_resource(fa->pdev, IORESOURCE_DMA, ADC_DMA);
-	if (!r) {
-		dev_err(&fa->pdev->dev, "Can't set find DMA channel\n");
-		return -ENODEV;
-	}
-	dma_dev_id = r->start;
+	int err, i;
 
 	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
 	if (err) {
@@ -405,21 +421,16 @@ static int zfad_dma_start(struct zio_cset *cset)
 		return err;
 	}
 
+        dev_dbg(fa->msgdev, "Start DMA transfer\n");
+        err = fa_dma_request_channel(fa);
+	if (err)
+		return err;
+
 	/*
 	 * Disable all triggers to prevent fires between
 	 * different DMA transfers required for multi-shots
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
-
-	dev_dbg(fa->msgdev, "Start DMA transfer\n");
-	dma_cap_zero(dma_mask);
-	dma_cap_set(DMA_SLAVE, dma_mask);
-	dma_cap_set(DMA_PRIVATE, dma_mask);
-	dchan = dma_request_channel(dma_mask, fa_dmaengine_filter, &dma_dev_id);
-	if (!dchan) {
-		err = -ENODEV;
-		goto err;
-	}
 
 	memset(&sconfig, 0, sizeof(sconfig));
 	sconfig.direction = DMA_DEV_TO_MEM;
@@ -441,23 +452,23 @@ static int zfad_dma_start(struct zio_cset *cset)
 			sconfig.src_addr = zfad_dev_mem_offset(cset);
 		else
 			sconfig.src_addr = i * data_offset;
-		err = dmaengine_slave_config(dchan, &sconfig);
+		err = dmaengine_slave_config(fa->dchan, &sconfig);
 		if (err)
 			goto err_config;
-		err = zfad_dma_prep_slave_sg(dchan, cset, &zfad_block[i]);
+		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
 		if (err)
 			goto err_prep;
 	}
 
 	fa->transfers_left = fa->n_shots;
-	dma_async_issue_pending(dchan);
+	dma_async_issue_pending(fa->dchan);
 
 	return 0;
 
 err_prep:
 err_config:
-	dmaengine_terminate_all(dchan);
-	dma_release_channel(dchan);
+	dmaengine_terminate_all(fa->dchan);
+	fa_dma_release_channel(fa);
 	while (--i >= 0) {
 		dma_unmap_sg(&fa->pdev->dev,
 			     zfad_block[i].sgt.sgl,
@@ -465,7 +476,6 @@ err_config:
 			     DMA_DEV_TO_MEM);
 		sg_free_table(&zfad_block[i].sgt);
 	}
-err:
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
 		  cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
 	dev_err(fa->msgdev, "Failed to run a DMA transfer (%d)\n", err);
