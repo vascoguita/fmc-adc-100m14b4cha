@@ -239,11 +239,15 @@ static inline struct dma_async_tx_descriptor *dmaengine_prep_slave_sg_ctx(
  *
  * It handles the data transfer completion of a block
  */
-static void zfad_dma_complete(void *arg)
+static void fa_dma_complete(void *arg,
+			    const struct dmaengine_result *result)
 {
 	struct zfad_block *zfad_block = arg;
 	struct zio_cset *cset = zfad_block->cset;
 	struct fa_dev *fa = cset->zdev->priv_d;
+
+	if (result->result != DMA_TRANS_NOERROR)
+		dev_err(&fa->pdev->dev, "DMA failed %d\n", result->result);
 
 	/* Release DMA resources */
 	dma_unmap_sg(&fa->pdev->dev,
@@ -325,7 +329,8 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 			"Failed to prepare dmaengine transfer descriptor\n");
 		return -EBUSY;
 	}
-	tx->callback = zfad_dma_complete;
+
+	tx->callback_result = fa_dma_complete;
 	tx->callback_param = (void *)zfad_block;
 	zfad_block->tx = tx;
 
