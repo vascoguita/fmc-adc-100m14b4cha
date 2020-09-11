@@ -41,6 +41,7 @@ subdirs-ccflags-y = $(ccflags-y)
 
 obj-m := fmc-adc-100m14b4ch.o
 obj-m += fmc-adc-100m14b4ch-spec.o
+obj-m += fmc-adc-100m14b4ch-svec.o
 
 fmc-adc-100m14b4ch-y =  fa-core.o
 fmc-adc-100m14b4ch-y += fa-zio-drv.o
@@ -53,3 +54,4 @@ fmc-adc-100m14b4ch-y += fa-dma.o
 fmc-adc-100m14b4ch-y += spi.o
 
 fmc-adc-100m14b4ch-spec-objs := fmc-adc-100m14b4ch-spec-core.o
+fmc-adc-100m14b4ch-svec-objs := fmc-adc-100m14b4ch-svec-core.o
