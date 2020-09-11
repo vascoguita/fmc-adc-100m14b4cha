@@ -391,7 +391,6 @@ static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 	} else {
 		memcpy(&fa->calib, calib, sizeof(*calib));
 	}
-	fa_calib_config(fa);
 }
 
 static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
@@ -406,6 +405,7 @@ static ssize_t fa_write_eeprom(struct file *file, struct kobject *kobj,
 		return -EINVAL;
 
 	fa_calib_write(fa, calib);
+	fa_calib_config(fa);
 
 	return count;
 }
