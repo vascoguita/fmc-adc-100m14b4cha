@@ -14,7 +14,7 @@
 #include <linux/jiffies.h>
 #include <fmc-adc-100m14b4cha.h>
 
-static int fa_calib_period_s = 60;
+static int fa_calib_period_s = 0;
 module_param_named(calib_s, fa_calib_period_s, int, 0444);
 
 /* This identity calibration is used as default */

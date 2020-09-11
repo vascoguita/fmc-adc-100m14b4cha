@@ -82,9 +82,14 @@ enable_test_data=[0, 1]
      Trigger detection is unaffected by use of test data.
 
 fa_calib_period_s=NUMBER
-     The ADC has a periodic task that every 60 seconds adjusts the
-     calibration data based on the current temperature. You can use
-     this module parameter to pass your period in seconds.
+     The ADC periodically adjusts the calibration data based on the
+     current temperature. You can use this module parameter to pass
+     your period in seconds. By default the value is 0 (meaning
+     feature disabled).
+
+.. warning::
+   The periodical calibration is by default disabled because we were
+   not able to perform a complete validation. Use it at your own risk.
 
 .. _zio: https://www.ohwr.org/project/zio
 .. _fmc: https://www.ohwr.org/project/fmc-sw
