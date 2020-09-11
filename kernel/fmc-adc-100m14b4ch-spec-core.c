@@ -7,6 +7,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <linux/fmc.h>
 
 #include "platform_data/fmc-adc-100m14b4cha.h"
 
@@ -51,6 +52,22 @@ static int fa_spec_probe(struct platform_device *pdev) {
 	struct resource *r;
 	int irq;
 	int dma_dev_chan;
+	struct fmc_slot *slot;
+	bool present;
+
+	slot = fmc_slot_get(pdev->dev.parent, 1);
+	if (IS_ERR(slot)) {
+		dev_err(&pdev->dev, "Can't find FMC slot 1 err: %ld\n",
+			PTR_ERR(slot));
+		return PTR_ERR(slot);
+	}
+	present = fmc_slot_present(slot);
+	fmc_slot_put(slot);
+	if (!present) {
+		dev_err(&pdev->dev,
+			"FMC slot: 1, not present\n");
+		return -ENODEV;
+	}
 
 	rmem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!rmem) {
@@ -118,7 +135,7 @@ static const struct platform_device_id fa_spec_id_table[] = {
 static struct platform_driver fa_spec_driver = {
 	.driver =
         {
-		.name = "fmc-adc-spec",
+		.name = "fmc-adc-100m-spec",
 		.owner = THIS_MODULE,
         },
 	.id_table = fa_spec_id_table,
