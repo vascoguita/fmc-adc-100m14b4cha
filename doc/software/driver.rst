@@ -36,7 +36,7 @@ execute ``make``. This driver depends on the `zio`_ framework and `fmc`_ library
       $ export LINUX=/path/to/linux/sources
       $ export ZIO=/path/to/zio
       $ export FMC=/path/to/fmc-sw
-      $ export VMEUS=/path/to/vmebridge
+      $ export VMEBUS=/path/to/vmebridge
       $ make
       $ make install
 
@@ -83,8 +83,8 @@ enable_test_data=[0, 1]
 
 fa_calib_period_s=NUMBER
      The ADC has a periodic task that every 60 seconds adjusts the
-     calibration data based on the currunt temperature. You can use
-     this module paramter to pass your period in seconds.
+     calibration data based on the current temperature. You can use
+     this module parameter to pass your period in seconds.
 
 .. _zio: https://www.ohwr.org/project/zio
 .. _fmc: https://www.ohwr.org/project/fmc-sw
@@ -117,7 +117,7 @@ The Overall Device
 ''''''''''''''''''
 
 As said, the device has 1 cset with 4+1 channels. Channels from 0 to 3
-represent che physical channels 1 to 4. The 5th channel *chani* represent
+represent the physical channels 1 to 4. The 5th channel *chani* represent
 a virtual channel created automatically by the ZIO framework; this
 channel represent the interleave acquisition on the cset.
 
@@ -206,7 +206,7 @@ cnN-saturation
      The user saturation level in the range [0, 32767].  Users can use
      this value to configure their own saturation level.  The hardware
      applies this value symmetrically on the negative side.  By default
-     is setted at the maximum value.
+     is set at the maximum value.
 
 Generic Cset Attributes
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,7 +220,7 @@ fsm-auto-start
      to 1, the acquisition state-machine is automatically restarted
      after the previous run is complete.  Thus, for example, a card
      configured for external trigger, after the first acquisition will
-     continue aquiring and storing blocks to the ZIO buffer every time a
+     continue acquiring and storing blocks to the ZIO buffer every time a
      new trigger event is detected.  Applications can read such blocks
      from the char device.
 
@@ -381,7 +381,7 @@ polarity
      or the gateware document, for the meaning of each bit.
 
 chN-threshold
-     These attributes choose the value of the data thresold (as a signed
+     These attributes choose the value of the data threshold (as a signed
      16-bit value).
 
 chN-hysteresis
@@ -402,7 +402,7 @@ enable
 int-channel, int-threshold
      If the internal trigger is selected, these attributes choose the
      channel being monitored (range is 0..3) and the value of the data
-     thresold (as a signed 16-bit value).
+     threshold (as a signed 16-bit value).
 
 nshots
      Number of trigger shots.  The state machine acquires all trigger
@@ -459,13 +459,13 @@ may be unsuitable if you have several cards and acquire from one of them
 at a time.
 
 The vmalloc buffer type starts off with a size of 128kB, but you can
-change it (while not aquiring), by writing to the associated attribute
+change it (while not acquiring), by writing to the associated attribute
 of the interleaved channel. For example this sets it to 10MB::
 
      export DEV=/sys/bus/zio/devices/adc-100m14b-0200
      echo 10000 > $DEV/cset0/chani/buffer/max-buffer-kb
 
-The dubugfs Interface
+The debugfs Interface
 =====================
 
 The fmcadc100m14b4cha driver exports a set of debugfs attributes which
@@ -502,9 +502,9 @@ samples, so ZIO creates two char device, as shown below::
      crw------- 1 root root 250, 8 Aug 23 22:21 adc-100m14b-0200-0-i-ctrl
      crw------- 1 root root 250, 9 Aug 23 22:21 adc-100m14b-0200-0-i-data
 
-The actual pathnames depend on the version of udev you are running. The
+The actual path names depend on the version of udev you are running. The
 fmc-adc library tries both names (the new one shown above, and the older
-one, without a ``zio`` subdirectory). Also, please note that a still-newer
+one, without a ``zio`` sub-directory). Also, please note that a still-newer
 version of udev obeys device permissions, so you'll have read-only and
 write-only device files (in this case they are both read-only).
 
@@ -540,7 +540,7 @@ this format:
    :alt: ADC interleaved data
 
 The char-device model of ZIO is documented in the ZIO manual; basically,
-the ctrl device returns metadata dna thr data device returns data. Items
+the ctrl device returns metadata and the data device returns data. Items
 in there are strictly ordered, so you can read metadata and then the
 associated data, or read only data blocks and discard the associated
 metadata.
