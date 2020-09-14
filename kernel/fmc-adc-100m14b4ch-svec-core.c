@@ -13,10 +13,10 @@
 #include "platform_data/fmc-adc-100m14b4cha.h"
 
 enum fa_svec_dev_offsets {
-	FA_SVEC_ADC1_MEM_START = 0x000050000,
-	FA_SVEC_ADC1_MEM_END = 0x0006FFFF,
-	FA_SVEC_ADC2_MEM_START = 0x0007E000,
-	FA_SVEC_ADC2_MEM_END = 0x00008FFFF,
+	FA_SVEC_ADC1_MEM_START = 0x000002000,
+	FA_SVEC_ADC1_MEM_END = 0x00003FFF,
+	FA_SVEC_ADC2_MEM_START = 0x00004000,
+	FA_SVEC_ADC2_MEM_END = 0x000005FFF,
 };
 
 static struct fmc_adc_platform_data fmc_adc_pdata = {
