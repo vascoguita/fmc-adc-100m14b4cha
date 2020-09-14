@@ -458,9 +458,10 @@ int fa_calib_init(struct fa_dev *fa)
 
 	/* Prepare the timely recalibration */
 	fa_calib_config(fa);
-	setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
-	if (fa_calib_period_s)
+	if (fa_calib_period_s) {
+		setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
 		mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
+	}
 
 out:
 	return 0;
@@ -468,7 +469,8 @@ out:
 
 void fa_calib_exit(struct fa_dev *fa)
 {
-	del_timer_sync(&fa->calib_timer);
+	if (fa_calib_period_s)
+		del_timer_sync(&fa->calib_timer);
 	fa_identity_calib_set(&fa->calib);
 	fa_calib_config(fa);
 }
