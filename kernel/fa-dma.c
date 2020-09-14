@@ -73,11 +73,24 @@ static bool fa_dmaengine_filter(struct dma_chan *dchan, void *arg)
 	return ddev->dev_id == dev_id && dchan->chan_id == chan_id;
 }
 
-static int __fa_dma_request_channel(struct fa_dev *fa)
+static bool fa_dmaengine_filter_svec(struct dma_chan *dchan, void *arg)
+{
+	struct fa_dev *fa = arg;
+	struct device *device_ref;
+
+        device_ref = fa->pdev->dev.parent->parent->parent->parent->parent;
+
+	return (dchan->device->dev == device_ref);
+}
+
+int fa_dma_request_channel(struct fa_dev *fa)
 {
 	dma_cap_mask_t dma_mask;
 	struct resource *r;
 	int dma_dev_id;
+
+        if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return 0;
 
 	r = platform_get_resource(fa->pdev, IORESOURCE_DMA, ADC_DMA);
 	if (!r) {
@@ -89,18 +102,11 @@ static int __fa_dma_request_channel(struct fa_dev *fa)
 	dma_cap_zero(dma_mask);
 	dma_cap_set(DMA_SLAVE, dma_mask);
 	dma_cap_set(DMA_PRIVATE, dma_mask);
-	fa->dchan = dma_request_channel(dma_mask, fa_dmaengine_filter,
-					&dma_dev_id);
+	fa->dchan = dma_request_channel(dma_mask,
+					fa_dmaengine_filter, &dma_dev_id);
 	if (!fa->dchan)
 		return -ENODEV;
 	return 0;
-}
-
-int fa_dma_request_channel(struct fa_dev *fa)
-{
-	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
-		return 0;
-	return __fa_dma_request_channel(fa);
 }
 
 /**
@@ -110,8 +116,18 @@ int fa_dma_request_channel(struct fa_dev *fa)
  */
 static int fa_dma_request_channel_svec(struct fa_dev *fa)
 {
-	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
-		return fa_dma_request_channel(fa);
+	dma_cap_mask_t dma_mask;
+
+        if (!fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return 0;
+
+	dma_cap_zero(dma_mask);
+	dma_cap_set(DMA_SLAVE, dma_mask);
+	dma_cap_set(DMA_PRIVATE, dma_mask);
+	fa->dchan = dma_request_channel(dma_mask,
+					fa_dmaengine_filter_svec, fa);
+	if (!fa->dchan)
+		return -ENODEV;
 	return 0;
 }
 
