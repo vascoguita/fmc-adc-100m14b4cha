@@ -397,11 +397,11 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 
 	max_segment_size = min(zfad_block->block->datalen + PAGE_SIZE, /* PAGE aligned */
 			       (size_t)dma_get_max_seg_size(dchan->device->dev));
-	max_segment_size &= PAGE_MASK; /* to make alloc_table happy */
 	/* Find something that fits in the [SW-]IOMMU */
 	do {
 		dev_dbg(&fa->pdev->dev, "DMA max segment %ld\n",
 			max_segment_size);
+		max_segment_size &= PAGE_MASK; /* to make alloc_table happy */
 		err = fa->sg_alloc_table_from_pages(&zfad_block->sgt, pages,
 						    nr_pages,
 						    offset_in_page(zfad_block->block->data),
