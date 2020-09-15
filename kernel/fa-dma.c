@@ -216,6 +216,44 @@ static unsigned int zfad_block_n_pages(struct zio_block *block)
 
 #ifdef CONFIG_FMC_ADC_SVEC
 
+#define ADC_VME_DDR_ADDR 0x00
+#define ADC_VME_DDR_DATA 0x04
+#define SVEC_FUNC_NR 1 /* HARD coded in SVEC */
+static unsigned long fa_ddr_data_vme_addr(struct fa_dev *fa)
+{
+	struct fmc_adc_platform_data *data = fa->pdev->dev.platform_data;
+	struct vme_dev *vdev;
+	unsigned long addr;
+
+	vdev = to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
+	if (WARN(vdev->map[SVEC_FUNC_NR].kernel_va == NULL,
+		 "Invalid VME function\n"))
+		return ~0; /* invalid address, we will see VME errors */
+
+	WARN(data->vme_ddr_offset == 0, "Invalid DDR DATA offset");
+	addr = vdev->map[SVEC_FUNC_NR].vme_addrl;
+	addr += data->vme_ddr_offset + ADC_VME_DDR_DATA;
+
+	return addr;
+}
+
+static void *fa_ddr_addr_reg_off(struct fa_dev *fa)
+{
+	struct fmc_adc_platform_data *data = fa->pdev->dev.platform_data;
+	struct vme_dev *vdev;
+	void *addr;
+
+	vdev = to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
+	if (WARN(vdev->map[SVEC_FUNC_NR].kernel_va == NULL,
+		 "Invalid VME function\n"))
+		return NULL; /* invalid address, we will see VME errors */
+
+	addr = vdev->map[SVEC_FUNC_NR].kernel_va;
+	addr += data->vme_ddr_offset + ADC_VME_DDR_ADDR;
+
+	return addr;
+}
+
 #define VME_NO_ADDR_INCREMENT 1
 
 /* FIXME: move to include again */
@@ -273,19 +311,70 @@ static int zfad_dma_block_to_pages(struct page **pages, unsigned int nr_pages,
 }
 
 
+static void zfad_dma_context_exit_svec(struct zio_cset *cset,
+				       struct zfad_block *zfad_block)
+{
+
+	__endianness(zfad_block->block->datalen,
+		     zfad_block->block->data);
+
+	kfree(zfad_block->dma_ctx);
+}
+
 static void zfad_dma_context_exit(struct zio_cset *cset,
 				  struct zfad_block *zfad_block)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	if (fa_is_flag_set(fa, FMC_ADC_SVEC)) {
-		__endianness(zfad_block->block->datalen,
-			     zfad_block->block->data);
-
-		kfree(zfad_block->dma_ctx);
-	}
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		zfad_dma_context_exit_svec(cset, zfad_block);
 }
 
+static int zfad_dma_context_init_svec(struct zio_cset *cset,
+				      struct zfad_block *zfad_block)
+{
+#ifdef CONFIG_FMC_ADC_SVEC
+	struct fa_dev *fa = cset->zdev->priv_d;
+	struct vme_dma *desc;
+	int err;
+
+	dev_dbg(&fa->pdev->dev, "SVEC build DMA context\n");
+
+	desc = kmalloc(sizeof(struct vme_dma), GFP_ATOMIC);
+	if (!desc)
+		return -ENOMEM;
+
+	if (zfad_block == cset->interleave->priv_d) {
+		void *addr = fa_ddr_addr_reg_off(fa);
+
+		if (!addr) {
+			err = -ENODEV;
+			goto err_reg_addr;
+		}
+		/*
+		 * Only for the first block:
+		 * write the data address in the ddr_addr register: this
+		 * address has been computed after ACQ_END by looking to the
+		 * trigger position see fa-irq.c::irq_acq_end.
+		 * Be careful: the SVEC HW version expects an address of 32bits word
+		 * therefore mem-offset in byte is translated into 32bit word
+		 */
+		fa_iowrite(fa, zfad_block->sconfig.src_addr / 4, addr);
+	}
+
+	zfad_block->dma_ctx = desc;
+	build_dma_desc(desc, fa_ddr_data_vme_addr(fa),
+		       zfad_block->block->data,
+		       zfad_block->block->datalen);
+	return 0;
+
+err_reg_addr:
+	kfree(desc);
+	return err;
+#else
+	return 0;
+#endif
+}
 
 /**
  * It initialize the DMA context for the given block transfer
@@ -293,40 +382,10 @@ static void zfad_dma_context_exit(struct zio_cset *cset,
 static int zfad_dma_context_init(struct zio_cset *cset,
 				 struct zfad_block *zfad_block)
 {
-#ifdef CONFIG_FMC_ADC_SVEC
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	if (fa_is_flag_set(fa, FMC_ADC_SVEC))) {
-		struct fa_svec_data *svec_data = fa->carrier_data;
-		unsigned long vme_addr;
-		struct vme_dma *desc;
-
-		desc = kmalloc(sizeof(struct vme_dma), GFP_ATOMIC);
-		if (!desc)
-			return -ENOMEM;
-
-		if (zfad_block == cset->interleave->priv_d) {
-			/*
-			 * Only for the first block:
-			 * write the data address in the ddr_addr register: this
-			 * address has been computed after ACQ_END by looking to the
-			 * trigger position see fa-irq.c::irq_acq_end.
-			 * Be careful: the SVEC HW version expects an address of 32bits word
-			 * therefore mem-offset in byte is translated into 32bit word
-			 */
-			fa_writel(fa, svec_data->fa_dma_ddr_addr,
-				  &fa_svec_regfield[FA_DMA_DDR_ADDR],
-				  zfad_block->dev_mem_off/4);
-		}
-
-		zfad_block->dma_ctx = desc;
-		vme_addr = svec_data->vme_base + svec_data->fa_dma_ddr_data;
-		build_dma_desc(desc, vme_addr,
-			       zfad_block->block->data,
-			       zfad_block->block->datalen);
-	}
-#endif
-
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return zfad_dma_context_init_svec(cset, zfad_block);
 	return 0;
 }
 

@@ -12,6 +12,17 @@
 
 #include "platform_data/fmc-adc-100m14b4cha.h"
 
+/*
+ * From SVEC but we do not want to add a dependency for these 4 registers
+ * which should never change by design. If they do, and you end up here:
+ * sorry! It shouldn't have happened.
+ */
+#define SVEC_BASE_REGS_CSR 0x40UL
+#define SVEC_FPGA_CSR_DDR4_ADDR (SVEC_BASE_REGS_CSR + 0x18)
+#define SVEC_FPGA_CSR_DDR4_DATA (SVEC_BASE_REGS_CSR + 0x1C)
+#define SVEC_FPGA_CSR_DDR5_ADDR (SVEC_BASE_REGS_CSR + 0x20)
+#define SVEC_FPGA_CSR_DDR5_DATA (SVEC_BASE_REGS_CSR + 0x24)
+
 enum fa_svec_dev_offsets {
 	FA_SVEC_ADC1_MEM_START = 0x000002000,
 	FA_SVEC_ADC1_MEM_END = 0x00003FFF,
@@ -21,7 +32,7 @@ enum fa_svec_dev_offsets {
 
 static struct fmc_adc_platform_data fmc_adc_pdata1 = {
 	.flags = FMC_ADC_BIG_ENDIAN | FMC_ADC_SVEC,
-	.vme_ddr_offset = 0x1000,
+	.vme_ddr_offset = SVEC_FPGA_CSR_DDR4_ADDR,
 	.calib_trig_time = 0,
 	.calib_trig_threshold = 0,
 	.calib_trig_internal = 0,
@@ -30,7 +41,7 @@ static struct fmc_adc_platform_data fmc_adc_pdata1 = {
 
 static struct fmc_adc_platform_data fmc_adc_pdata2 = {
 	.flags = FMC_ADC_BIG_ENDIAN | FMC_ADC_SVEC,
-	.vme_ddr_offset = 0x2000,
+	.vme_ddr_offset = SVEC_FPGA_CSR_DDR5_ADDR,
 	.calib_trig_time = 0,
 	.calib_trig_threshold = 0,
 	.calib_trig_internal = 0,
