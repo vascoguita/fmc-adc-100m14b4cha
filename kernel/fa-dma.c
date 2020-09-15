@@ -488,6 +488,17 @@ err_alloc_pages:
 	return err;
 }
 
+static int fa_dmaengine_slave_config(struct fa_dev *fa,
+				     struct dma_slave_config *sconfig)
+{
+	/*
+	 * For SVEC we must set the DMA context, there is not slave config
+	 */
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		return 0;
+	return dmaengine_slave_config(fa->dchan, sconfig);
+}
+
 /**
  * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
  * from the ADC to the host memory.
@@ -536,7 +547,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 		 * because the address of shot 2 is exactly after shot 1
 		 */
 		sconfig.src_addr = fa_ddr_offset(fa, i);
-		err = dmaengine_slave_config(fa->dchan, &sconfig);
+		err = fa_dmaengine_slave_config(fa, &sconfig);
 		if (err)
 			goto err_config;
 		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
