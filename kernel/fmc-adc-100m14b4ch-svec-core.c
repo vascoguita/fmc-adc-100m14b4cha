@@ -19,8 +19,18 @@ enum fa_svec_dev_offsets {
 	FA_SVEC_ADC2_MEM_END = 0x000005FFF,
 };
 
-static struct fmc_adc_platform_data fmc_adc_pdata = {
+static struct fmc_adc_platform_data fmc_adc_pdata1 = {
 	.flags = FMC_ADC_BIG_ENDIAN | FMC_ADC_SVEC,
+	.vme_ddr_offset = 0x1000,
+	.calib_trig_time = 0,
+	.calib_trig_threshold = 0,
+	.calib_trig_internal = 0,
+
+};
+
+static struct fmc_adc_platform_data fmc_adc_pdata2 = {
+	.flags = FMC_ADC_BIG_ENDIAN | FMC_ADC_SVEC,
+	.vme_ddr_offset = 0x2000,
 	.calib_trig_time = 0,
 	.calib_trig_threshold = 0,
 	.calib_trig_internal = 0,
@@ -74,8 +84,8 @@ static struct resource fa_svec_res2[] = {
 #define MFD_ADC(_n)                                               \
 	{                                                         \
 		.name = "fmc-adc-100m",                           \
-		.platform_data = &fmc_adc_pdata,                  \
-		.pdata_size = sizeof(fmc_adc_pdata),              \
+		.platform_data = &fmc_adc_pdata##_n,              \
+		.pdata_size = sizeof(fmc_adc_pdata##_n),              \
 		.num_resources = ARRAY_SIZE(fa_svec_res##_n), \
 		.resources = fa_svec_res##_n,                 \
 	}

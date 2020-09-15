@@ -155,10 +155,10 @@ static void fa_dma_release_channel_svec(struct fa_dev *fa)
 }
 
 
-static uint32_t zfad_dev_mem_offset(struct zio_cset *cset)
+static uint32_t fa_ddr_offset_single(struct fa_dev *fa)
 {
-	struct fa_dev *fa = cset->zdev->priv_d;
-	uint32_t dev_mem_off, trg_pos, pre_samp;
+	struct zio_cset *cset = fa->zdev->cset;
+	uint32_t off, trg_pos, pre_samp;
 	int nchan = FA100M14B4C_NCHAN;
 	struct zio_control *ctrl = cset->chan[nchan].current_ctrl;
 
@@ -171,12 +171,35 @@ static uint32_t zfad_dev_mem_offset(struct zio_cset *cset)
 	 * compute mem offset (in bytes): pre-samp is converted to
 	 * bytes
 	 */
-	dev_mem_off = trg_pos - (pre_samp * cset->ssize * nchan);
+	off = trg_pos - (pre_samp * cset->ssize * nchan);
 	dev_dbg(fa->msgdev,
 		"Trigger @ 0x%08x, pre_samp %i, offset 0x%08x\n",
-		trg_pos, pre_samp, dev_mem_off);
+		trg_pos, pre_samp, off);
 
-	return dev_mem_off;
+	return off;
+}
+
+static uint32_t fa_ddr_offset_multi(struct fa_dev *fa, uint32_t shot_n)
+{
+	struct zio_cset *cset = fa->zdev->cset;
+	uint32_t off;
+
+        off = cset->interleave->current_ctrl->ssize * cset->ti->nsamples;
+	off += FA_TRIG_TIMETAG_BYTES;
+	off *= shot_n;
+
+	return off;
+}
+
+static uint32_t fa_ddr_offset(struct fa_dev *fa, uint32_t shot_n)
+{
+	WARN(fa->n_shots == 1 && shot_n != 0,
+	     "Inconsistent shot number %d\n", shot_n);
+	if (fa->n_shots == 1) {
+		return fa_ddr_offset_single(fa);
+	} else {
+		return fa_ddr_offset_multi(fa, shot_n);
+	}
 }
 
 static unsigned int zfad_block_n_pages(struct zio_block *block)
@@ -476,7 +499,6 @@ static int zfad_dma_start(struct zio_cset *cset)
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	struct dma_slave_config sconfig;
-	unsigned int data_offset;
 	int err, i;
 
 	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
@@ -501,7 +523,6 @@ static int zfad_dma_start(struct zio_cset *cset)
 	memset(&sconfig, 0, sizeof(sconfig));
 	sconfig.direction = DMA_DEV_TO_MEM;
 	sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
-	data_offset = (cset->interleave->current_ctrl->ssize * cset->ti->nsamples) + FA_TRIG_TIMETAG_BYTES;
 	for (i = 0; i < fa->n_shots; ++i) {
 		/*
 		 * TODO
@@ -514,10 +535,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 		 * But sice the blocks are contigous, perhaps there is no need
 		 * because the address of shot 2 is exactly after shot 1
 		 */
-		if (!fa_is_flag_set(fa, FMC_ADC_SVEC) && fa->n_shots == 1)
-			sconfig.src_addr = zfad_dev_mem_offset(cset);
-		else
-			sconfig.src_addr = i * data_offset;
+		sconfig.src_addr = fa_ddr_offset(fa, i);
 		err = dmaengine_slave_config(fa->dchan, &sconfig);
 		if (err)
 			goto err_config;

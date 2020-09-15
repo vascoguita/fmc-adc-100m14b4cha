@@ -19,6 +19,7 @@
 
 struct fmc_adc_platform_data {
 	unsigned long flags;
+	unsigned long vme_ddr_offset;
 	uint8_t calib_trig_time;
 	uint8_t calib_trig_threshold;
 	uint8_t calib_trig_internal;
