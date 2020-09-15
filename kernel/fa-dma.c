@@ -509,7 +509,6 @@ static int zfad_dma_start(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
-	struct dma_slave_config sconfig;
 	int err, i;
 
 	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
@@ -530,10 +529,6 @@ static int zfad_dma_start(struct zio_cset *cset)
 	 * different DMA transfers required for multi-shots
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
-
-	memset(&sconfig, 0, sizeof(sconfig));
-	sconfig.direction = DMA_DEV_TO_MEM;
-	sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
 	for (i = 0; i < fa->n_shots; ++i) {
 		/*
 		 * TODO
@@ -546,8 +541,10 @@ static int zfad_dma_start(struct zio_cset *cset)
 		 * But sice the blocks are contigous, perhaps there is no need
 		 * because the address of shot 2 is exactly after shot 1
 		 */
-		sconfig.src_addr = fa_ddr_offset(fa, i);
-		err = fa_dmaengine_slave_config(fa, &sconfig);
+		zfad_block[i].sconfig.direction = DMA_DEV_TO_MEM;
+		zfad_block[i].sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+		zfad_block[i].sconfig.src_addr = fa_ddr_offset(fa, i);
+		err = fa_dmaengine_slave_config(fa, &zfad_block[i].sconfig);
 		if (err)
 			goto err_config;
 		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);

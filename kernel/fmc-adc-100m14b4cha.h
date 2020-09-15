@@ -495,6 +495,7 @@ struct zfad_block {
 	struct sg_table sgt;
 	void *dma_ctx;
 	unsigned int shot_n;
+	struct dma_slave_config sconfig;
 };
 
 /*
