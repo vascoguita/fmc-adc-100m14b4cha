@@ -78,7 +78,7 @@ static bool fa_dmaengine_filter_svec(struct dma_chan *dchan, void *arg)
 	struct fa_dev *fa = arg;
 	struct device *device_ref;
 
-        device_ref = fa->pdev->dev.parent->parent->parent->parent->parent;
+        device_ref = fa->pdev->dev.parent->parent->parent->parent->parent->parent;
 
 	return (dchan->device->dev == device_ref);
 }
