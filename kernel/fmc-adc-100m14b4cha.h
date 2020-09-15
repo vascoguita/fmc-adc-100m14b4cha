@@ -494,6 +494,7 @@ struct zfad_block {
 	dma_cookie_t cookie;
 	struct sg_table sgt;
 	void *dma_ctx;
+	unsigned int shot_n;
 };
 
 /*

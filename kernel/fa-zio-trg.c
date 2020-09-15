@@ -397,6 +397,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 		/* Add to the vector of prepared blocks */
 		zfad_block[i].block = block;
 		zfad_block[i].cset = ti->cset;
+		zfad_block[i].shot_n = i;
 	}
 
 	err = ti->cset->raw_io(ti->cset);
