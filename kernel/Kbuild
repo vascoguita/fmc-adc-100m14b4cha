@@ -10,6 +10,7 @@ KBUILD_EXTRA_SYMBOLS += $(FMC_EXTRA_SYMBOLS-y)
 KBUILD_EXTRA_SYMBOLS += $(VMEBUS_EXTRA_SYMBOLS-y)
 
 ccflags-y = -DVERSION=\"$(VERSION)\"
+ccflags-y += -DCONFIG_FMC_ADC_SVEC
 ccflags-y += -I$(src)
 ccflags-y += -I$(ZIO_ABS)/include
 ccflags-y += -I$(FMC_ABS)/include
