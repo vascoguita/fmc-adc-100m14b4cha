@@ -21,7 +21,7 @@ dkms-tree:
 
 dkms-src: dkms-tree
 	$(eval $@_dir := $(BUILD_DKMSSOURCE)/$(DRIVER_NAME)-$(VERSION))
-	$(eval $@_src := $(shell git ls-tree -r --name-only HEAD $(TOP_DIR)/kernel/))
+	$(eval $@_src := $(shell git ls-tree -r --name-only HEAD $(TOP_DIR)/software/kernel/))
 	@mkdir -p $($@_dir)
 	@cp $(TOP_DIR)/distribution/dkms.conf $($@_dir)
 	@cp $(TOP_DIR)/distribution/fmc-adc-100m14b4ch-dkms-mkrpm.spec $($@_dir)
