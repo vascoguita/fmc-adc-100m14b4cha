@@ -610,7 +610,6 @@ extern const struct zfa_field_desc zfad_regs[];
 
 /* Functions exported by fa-core.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
-extern void zfad_reset_offset(struct fa_dev *fa);
 extern int zfad_convert_hw_range(uint32_t bitmask);
 extern int32_t fa_temperature_read(struct fa_dev *fa);
 extern int fa_trigger_software(struct fa_dev *fa);

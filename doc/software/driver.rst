@@ -247,12 +247,6 @@ resolution-bits
      This read-only attribute returns 14, the number of valid bits in
      the ADC data stream.
 
-rst-ch-offset
-     This write-only attributes zeroes all offset DACs when written,
-     independently of the value being written.  The driver applies the
-     current calibration values, instead of writing 0 directly to the
-     hardware.
-
 undersample
      The ADC always acquires at 100MSamples/s and this value cannot be
      changed (it actually can, but it is not currently supported nor

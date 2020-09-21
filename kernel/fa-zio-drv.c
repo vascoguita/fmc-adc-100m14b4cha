@@ -117,9 +117,6 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 			ZFA_UTC_ACQ_STOP_SECONDS_L, 0),
 	ZIO_PARAM_EXT("tstamp-acq-stp-t", ZIO_RO_PERM,
 			ZFA_UTC_ACQ_STOP_COARSE, 0),
-	/* Reset all channel offset */
-	ZIO_PARAM_EXT("rst-ch-offset", ZIO_WO_PERM, ZFA_CTL_DAC_CLR_N, 1),
-
 	ZIO_PARAM_EXT("sample-frequency", ZIO_RO_PERM, ZFAT_SAMPLING_HZ, 0),
 	ZIO_PARAM_EXT("max-sample-mshot", ZIO_RO_PERM, ZFA_MULT_MAX_SAMP, 0),
 	ZIO_PARAM_EXT("sample-counter", ZIO_RO_PERM, ZFAT_CNT, 0),
@@ -260,9 +257,6 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		err = fa_calib_dac_config_chan(fa, chan->index, ~0);
 		spin_unlock(&fa->zdev->cset->lock);
 		return err;
-	case ZFA_CTL_DAC_CLR_N:
-		zfad_reset_offset(fa);
-		return 0;
 	case ZFAT_SR_UNDER:
 		if (usr_val == 0)
 			usr_val++;

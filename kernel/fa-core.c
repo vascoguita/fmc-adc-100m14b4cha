@@ -200,26 +200,6 @@ int zfad_get_chx_index(unsigned long addr, unsigned int chan)
 	return addr - offset;
 }
 
-
-/*
- * zfad_reset_offset
- * @fa: the fmc-adc descriptor
- *
- * Reset channel's offsets
- */
-void zfad_reset_offset(struct fa_dev *fa)
-{
-	int i;
-
-	spin_lock(&fa->zdev->cset->lock);
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
-		fa->user_offset[i] = 0;
-		fa->zero_offset[i] = 0;
-		fa_calib_dac_config_chan(fa, i, ~0);
-	}
-	spin_unlock(&fa->zdev->cset->lock);
-}
-
 /*
  * zfad_init_saturation
  * @fa: the fmc-adc descriptor
@@ -496,9 +476,12 @@ static int __fa_init(struct fa_dev *fa)
 			  FA100M14B4C_RANGE_1V);
 	        fa_adc_range_set(fa, &zdev->cset->chan[i],
 				 FA100M14B4C_RANGE_1V);
+		/* reset channel offset */
+		fa->user_offset[i] = 0;
+		fa->zero_offset[i] = 0;
+
 	}
 	fa_calib_config(fa);
-	zfad_reset_offset(fa);
 
 	/* Enable mezzanine clock */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
@@ -515,7 +498,6 @@ static int __fa_init(struct fa_dev *fa)
 	zfat_trigger_source_reset(fa);
 
 	/* Zero offsets and release the DAC clear */
-	zfad_reset_offset(fa);
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_DAC_CLR_N], 1);
 
 	/* Initialize channel saturation values */
