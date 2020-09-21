@@ -370,6 +370,7 @@ static int zfad_dma_context_init_svec(struct zio_cset *cset,
 
 err_reg_addr:
 	kfree(desc);
+	zfad_block->dma_ctx = NULL;
 	return err;
 #else
 	return 0;
