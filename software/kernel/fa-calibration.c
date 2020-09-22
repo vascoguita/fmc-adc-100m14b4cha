@@ -130,6 +130,14 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 	return gain_c - error;
 }
 
+static bool fa_calib_is_compensation_on(struct fa_dev *fa)
+{
+	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
+		return false;
+
+	return false;
+}
+
 /**
  * Calibrate a ADC channel
  * @fa ADC instance
@@ -146,13 +154,7 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	int gain;
 	int err;
 
-	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA))) {
-		gain = cal->gain[chan];
-		dev_dbg(&fa->pdev->dev,
-			"%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-			__func__, chan, range, gain, cal->offset[chan]);
-
-	} else {
+	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
 		if (temperature == 0xFFFFFFFF)
@@ -165,6 +167,11 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 			__func__, delta_temp, chan, range, gain,
 			cal->offset[chan]);
 
+	} else {
+		gain = cal->gain[chan];
+		dev_dbg(&fa->pdev->dev,
+			"%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+			__func__, chan, range, gain, cal->offset[chan]);
 	}
 
 	fa_calib_gain_set(fa, chan, gain);
@@ -249,13 +256,7 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	int gain;
 	int hwval;
 
-	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA))) {
-		gain = cal->gain[chan];
-		dev_dbg(&fa->pdev->dev,
-			"%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
-			__func__, chan, range, gain, cal->offset[chan]);
-
-	} else {
+	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
 		if (temperature == 0xFFFFFFFF)
@@ -266,6 +267,11 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 		dev_dbg(&fa->pdev->dev,
 			"%s: {delta-temperature: %d, chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
 			__func__, delta_temp, chan, range, gain, cal->offset[chan]);
+	} else {
+		gain = cal->gain[chan];
+		dev_dbg(&fa->pdev->dev,
+			"%s: {chan: %d, range: %d, gain: 0x%x, offset: 0x%x}\n",
+			__func__, chan, range, gain, cal->offset[chan]);
 	}
 
 	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain,
