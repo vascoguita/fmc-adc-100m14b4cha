@@ -94,11 +94,13 @@ bool fa_adc_is_output_randomizer(struct fa_dev *fa)
  */
 int32_t fa_temperature_read(struct fa_dev *fa)
 {
-	uint32_t raw_temp;
+	uint32_t reg;
+	int16_t raw_temp;
 
-	raw_temp = fa_readl(fa, fa->fa_ow_base, &zfad_regs[ZFA_DS18B20_TEMP]);
+        reg = fa_readl(fa, fa->fa_ow_base, &zfad_regs[ZFA_DS18B20_TEMP]);
+	raw_temp = reg & 0xFFFF;
 
-	return (raw_temp * 1000 + 8) / 16;
+	return (raw_temp * 1000UL + 8) / 16;
 }
 
 /**

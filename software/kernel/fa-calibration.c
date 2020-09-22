@@ -14,8 +14,11 @@
 #include <linux/jiffies.h>
 #include <fmc-adc-100m14b4cha.h>
 
-static int fa_calib_period_s = 0;
-module_param_named(calib_s, fa_calib_period_s, int, 0444);
+static int fa_calib_temp_period = 0;
+module_param_named(temp_calib_period, fa_calib_temp_period, int, 0444);
+
+static int fa_calib_temp = 0;
+module_param_named(temp_calib, fa_calib_temp, int, 0444);
 
 /* This identity calibration is used as default */
 static const struct fa_calib_stanza fa_identity_calib = {
@@ -132,6 +135,9 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 
 static bool fa_calib_is_compensation_on(struct fa_dev *fa)
 {
+	if (unlikely(fa_calib_temp))
+		return true;
+
 	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
 		return false;
 
@@ -307,7 +313,7 @@ static void fa_calib_gain_update(unsigned long arg)
 	struct fa_dev *fa = (void *)arg;
 
 	fa_calib_config(fa);
-	mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
+	mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_temp_period);
 }
 
 /* Actual verification code */
@@ -477,9 +483,10 @@ int fa_calib_init(struct fa_dev *fa)
 
 	/* Prepare the timely recalibration */
 	fa_calib_config(fa);
-	if (fa_calib_period_s) {
+	if (fa_calib_is_compensation_on(fa) && fa_calib_temp_period) {
 		setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
-		mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_period_s);
+		mod_timer(&fa->calib_timer,
+			  jiffies + HZ * fa_calib_temp_period);
 	}
 
 out:
@@ -488,7 +495,7 @@ out:
 
 void fa_calib_exit(struct fa_dev *fa)
 {
-	if (fa_calib_period_s)
+	if (fa_calib_temp_period)
 		del_timer_sync(&fa->calib_timer);
 	fa_identity_calib_set(&fa->calib);
 	fa_calib_config(fa);

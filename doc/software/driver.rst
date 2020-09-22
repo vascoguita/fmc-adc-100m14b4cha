@@ -81,7 +81,11 @@ enable_test_data=[0, 1]
      range, channel 1 goes from 0 to 511, other channel always report 0.
      Trigger detection is unaffected by use of test data.
 
-fa_calib_period_s=NUMBER
+temp_calib=[0, 1] (Experimental)
+     It enables (1) or disables (0) the gain compensation based on the
+     current temperature. By default it is disabled.
+
+temp_calib_period=NUMBER
      The ADC periodically adjusts the calibration data based on the
      current temperature. You can use this module parameter to pass
      your period in seconds. By default the value is 0 (meaning
