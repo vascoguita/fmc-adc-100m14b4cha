@@ -1,0 +1,146 @@
+#===============================================================================
+# IO Constraints
+#===============================================================================
+
+#----------------------------------------
+# FMC slot
+#----------------------------------------
+NET "adc_ext_trigger_n_i"   LOC = AB13;
+NET "adc_ext_trigger_p_i"   LOC = Y13;
+# dco_p and dco_n are swapped compared to the FMC ADC schematics
+# this is to be coherent in the hdl design
+NET "adc_dco_n_i"           LOC = AB11;
+NET "adc_dco_p_i"           LOC = Y11;
+# fr_p and fr_n are swapped compared to the FMC ADC schematics
+# this is to be coherent in the hdl design
+NET "adc_fr_n_i"            LOC = AB12;
+NET "adc_fr_p_i"            LOC = AA12;
+NET "adc_outa_n_i[0]"       LOC = AB4;
+NET "adc_outa_p_i[0]"       LOC = AA4;
+NET "adc_outb_n_i[0]"       LOC = W11;
+NET "adc_outb_p_i[0]"       LOC = V11;
+NET "adc_outa_n_i[1]"       LOC = Y12;
+NET "adc_outa_p_i[1]"       LOC = W12;
+NET "adc_outb_n_i[1]"       LOC = AB9;
+NET "adc_outb_p_i[1]"       LOC = Y9;
+NET "adc_outa_n_i[2]"       LOC = AB8;
+NET "adc_outa_p_i[2]"       LOC = AA8;
+NET "adc_outb_n_i[2]"       LOC = AB7;
+NET "adc_outb_p_i[2]"       LOC = Y7;
+NET "adc_outa_n_i[3]"       LOC = V9;
+NET "adc_outa_p_i[3]"       LOC = U9;
+NET "adc_outb_n_i[3]"       LOC = AB6;
+NET "adc_outb_p_i[3]"       LOC = AA6;
+NET "adc_spi_din_i"         LOC = T15;
+NET "adc_spi_dout_o"        LOC = C18;
+NET "adc_spi_sck_o"         LOC = D17;
+NET "adc_spi_cs_adc_n_o"    LOC = V17;
+NET "adc_spi_cs_dac1_n_o"   LOC = B20;
+NET "adc_spi_cs_dac2_n_o"   LOC = A20;
+NET "adc_spi_cs_dac3_n_o"   LOC = C19;
+NET "adc_spi_cs_dac4_n_o"   LOC = A19;
+NET "adc_gpio_dac_clr_n_o"  LOC = W18;
+NET "adc_gpio_led_acq_o"    LOC = W15;
+NET "adc_gpio_led_trig_o"   LOC = Y16;
+NET "adc_gpio_ssr_ch1_o[0]" LOC = Y17;
+NET "adc_gpio_ssr_ch1_o[1]" LOC = AB17;
+NET "adc_gpio_ssr_ch1_o[2]" LOC = AB18;
+NET "adc_gpio_ssr_ch1_o[3]" LOC = U15;
+NET "adc_gpio_ssr_ch1_o[4]" LOC = W14;
+NET "adc_gpio_ssr_ch1_o[5]" LOC = Y14;
+NET "adc_gpio_ssr_ch1_o[6]" LOC = W17;
+NET "adc_gpio_ssr_ch2_o[0]" LOC = R11;
+NET "adc_gpio_ssr_ch2_o[1]" LOC = AB15;
+NET "adc_gpio_ssr_ch2_o[2]" LOC = R13;
+NET "adc_gpio_ssr_ch2_o[3]" LOC = T14;
+NET "adc_gpio_ssr_ch2_o[4]" LOC = V13;
+NET "adc_gpio_ssr_ch2_o[5]" LOC = AA18;
+NET "adc_gpio_ssr_ch2_o[6]" LOC = W13;
+NET "adc_gpio_ssr_ch3_o[0]" LOC = R9;
+NET "adc_gpio_ssr_ch3_o[1]" LOC = R8;
+NET "adc_gpio_ssr_ch3_o[2]" LOC = T10;
+NET "adc_gpio_ssr_ch3_o[3]" LOC = U10;
+NET "adc_gpio_ssr_ch3_o[4]" LOC = W10;
+NET "adc_gpio_ssr_ch3_o[5]" LOC = Y10;
+NET "adc_gpio_ssr_ch3_o[6]" LOC = T11;
+NET "adc_gpio_ssr_ch4_o[0]" LOC = W6;
+NET "adc_gpio_ssr_ch4_o[1]" LOC = Y6;
+NET "adc_gpio_ssr_ch4_o[2]" LOC = V7;
+NET "adc_gpio_ssr_ch4_o[3]" LOC = W8;
+NET "adc_gpio_ssr_ch4_o[4]" LOC = T8;
+NET "adc_gpio_ssr_ch4_o[5]" LOC = Y5;
+NET "adc_gpio_ssr_ch4_o[6]" LOC = U8;
+NET "adc_gpio_si570_oe_o"   LOC = AB5;
+NET "adc_si570_scl_b"       LOC = U12;
+NET "adc_si570_sda_b"       LOC = T12;
+NET "adc_one_wire_b"        LOC = Y18;
+
+# IO standards
+NET "adc_ext_trigger_?_i"   IOSTANDARD = "LVDS_25";
+NET "adc_dco_?_i"           IOSTANDARD = "LVDS_25";
+NET "adc_fr_?_i"            IOSTANDARD = "LVDS_25";
+NET "adc_out?_?_i[*]"       IOSTANDARD = "LVDS_25";
+NET "adc_spi_din_i"         IOSTANDARD = "LVCMOS25";
+NET "adc_spi_dout_o"        IOSTANDARD = "LVCMOS25";
+NET "adc_spi_sck_o"         IOSTANDARD = "LVCMOS25";
+NET "adc_spi_cs_adc_n_o"    IOSTANDARD = "LVCMOS25";
+NET "adc_spi_cs_dac?_n_o"   IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_dac_clr_n_o"  IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_led_acq_o"    IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_led_trig_o"   IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_ssr_ch?_o[*]" IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_si570_oe_o"   IOSTANDARD = "LVCMOS25";
+NET "adc_si570_scl_b"       IOSTANDARD = "LVCMOS25";
+NET "adc_si570_sda_b"       IOSTANDARD = "LVCMOS25";
+NET "adc_one_wire_b"        IOSTANDARD = "LVCMOS25";
+
+#----------------------------------------
+# PCB LEDs
+#----------------------------------------
+NET "aux_leds_o[0]" LOC = G19;
+NET "aux_leds_o[1]" LOC = F20;
+NET "aux_leds_o[2]" LOC = F18;
+NET "aux_leds_o[3]" LOC = C20;
+
+NET "aux_leds_o[*]" IOSTANDARD = "LVCMOS18";
+
+#===============================================================================
+# Timing constraints and exceptions
+#===============================================================================
+
+# Tightly constrain the location and max delay from the external trigger input
+# to its synchroniser. This is needed to have consistent alignment between trigger
+# and data across implementations. Note that due to RLOC constraints in the
+# gc_sync_ffs, the synchroniser cannot be placed on the single FF of the IOB.
+NET  "cmp_fmc_adc_mezzanine/*/cmp_ext_trig_sync/gc_sync_ffs_in" MAXDELAY = 1.5 ns;
+INST "cmp_fmc_adc_mezzanine/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X30Y2;
+
+#----------------------------------------
+# IOB exceptions
+#----------------------------------------
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out"   IOB = FALSE;
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"     IOB = FALSE;
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_i2c/U_Wrapped_I2C/*"               IOB = FALSE;
+INST "cmp_fmc_adc_mezzanine/cmp_fmc_onewire/*"                         IOB = FALSE;
+
+#----------------------------------------
+# Clocks
+#----------------------------------------
+NET "adc_dco_p_i"   TNM_NET = adc_dco;
+NET "adc_dco_n_i"   TNM_NET = adc_dco;
+TIMESPEC TS_adc_dco = PERIOD "adc_dco" 2.5 ns HIGH 50%;
+
+#----------------------------------------
+# Cross-clock domain sync
+#----------------------------------------
+NET "cmp_fmc_adc_mezzanine/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs_clk;
+
+TIMEGRP "adc_sync_ffs" = "sync_ffs" EXCEPT "fs_clk";
+
+TIMESPEC TS_adc_sync_ffs = FROM fs_clk TO "adc_sync_ffs" TIG;
+
+TIMEGRP "adc_sync_reg" = "sync_reg" EXCEPT "fs_clk";
+
+TIMESPEC TS_adc_sync_reg = FROM fs_clk TO "adc_sync_reg" 10ns DATAPATHONLY;
+
+TIMESPEC TS_adc_sync_word = FROM sync_word TO fs_clk 30ns DATAPATHONLY;

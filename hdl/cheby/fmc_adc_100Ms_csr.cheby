@@ -1,0 +1,415 @@
+memory-map:
+  bus: wb-32-be
+  name: fmc_adc_100ms_csr
+  size: 0x200
+  description: FMC ADC 100MS/s core registers
+  comment: |
+    Wishbone slave for FMC ADC 100MS/s core
+  x-hdl:
+    busgroup: True
+    iogroup: fmc_adc_100ms_csr
+  children:
+  - reg:
+      name: ctl
+      address: 0x00000000
+      width: 32
+      access: rw
+      description: Control register
+      x-hdl:
+        write-strobe: True
+      children:
+      - field:
+          name: fsm_cmd
+          range: 1-0
+          description: State machine commands (ignore on read)
+          comment: |
+            1: ACQ_START (start acquisition, only when FSM is idle)
+            2: ACQ_STOP (stop acquisition, anytime)
+          x-hdl:
+            type: wire
+      - field:
+          name: fmc_clk_oe
+          range: 2
+          description: FMC Si750 output enable
+      - field:
+          name: offset_dac_clr_n
+          range: 3
+          description: Offset DACs clear (active low)
+      - field:
+          name: man_bitslip
+          range: 4
+          description: Manual serdes bitslip (ignore on read)
+          x-hdl:
+            type: wire
+      - field:
+          name: trig_led
+          range: 6
+          description: Manual TRIG LED
+          comment: |
+            Manual control of the front panel TRIG LED
+      - field:
+          name: acq_led
+          range: 7
+          description: Manual ACQ LED
+          comment: |
+            Manual control of the front panel ACQ LED
+      - field:
+          name: clear_trig_stat
+          range: 8
+          description: Clear trigger status
+          comment: |
+            Write 1 to clear the last trigger status register. Auto-resets to zero.
+          x-hdl:
+            type: wire
+      - field:
+          name: calib_apply
+          range: 15
+          description: Apply the new calibration values
+          comment: |
+            Write 1 to apply the new calibration values (Gain and Offset) already
+            loaded in the chX_calib registers, in an atomic way (all channels at
+            once). Auto-resets to zero.
+          x-hdl:
+            type: wire
+  - reg:
+      name: sta
+      address: 0x00000004
+      width: 32
+      access: ro
+      description: Status register
+      children:
+      - field:
+          name: fsm
+          range: 2-0
+          description: State machine status
+          comment: |
+            States:
+            0: illegal
+            1: IDLE
+            2: PRE_TRIG
+            3: WAIT_TRIG
+            4: POST_TRIG
+            5: TRIG_TAG
+            6: DECR_SHOT
+            7: illegal
+      - field:
+          name: serdes_pll
+          range: 3
+          description: SerDes PLL status
+          comment: |
+            Sampling clock recovery PLL.
+            0: not locked
+            1: locked
+      - field:
+          name: serdes_synced
+          range: 4
+          description: SerDes synchronization status
+          comment: |
+            0: bitslip in progress
+            1: serdes synchronized
+      - field:
+          name: acq_cfg
+          range: 5
+          description: Acquisition configuration status
+          comment: |
+            0: Unauthorised acquisition configuration (will prevent acquisition to start)
+            1: Valid acquisition configuration
+            - Shot number > 0
+            - Post-trigger sample > 0
+      - field:
+          name: fmc_nr
+          range: 7-6
+          description: FMC identification number
+          comment: |
+            Used to identify the FMC-ADC in case of a carrier with more than one FMC slot.
+      - field:
+          name: calib_busy
+          range: 15
+          description: Calibration busy flag
+          comment: |
+            0: ready to accept new values
+            1: busy applying previous values (should never be detected by software, error condition)
+  - reg:
+      name: trig_stat
+      address: 0x00000008
+      width: 32
+      access: ro
+      description: Trigger status
+      comment: |
+        Shows the source(s) of the last received trigger.
+      children:
+      - field:
+          name: ext
+          range: 0
+          description: External trigger input
+          comment: |
+            0: not triggered
+            1: triggered
+      - field:
+          name: sw
+          range: 1
+          description: Software trigger
+          comment: |
+            0: not triggered
+            1: triggered
+      - field:
+          name: time
+          range: 4
+          description: Timetag trigger
+          comment: |
+            0: not triggered
+            1: triggered
+      - field:
+          name: ch1
+          range: 8
+          description: Channel 1 internal threshold trigger
+          comment: |
+            0: not triggered
+            1: triggered
+      - field:
+          name: ch2
+          range: 9
+          description: Channel 2 internal threshold trigger
+          comment: |
+            0: not triggered
+            1: triggered
+      - field:
+          name: ch3
+          range: 10
+          description: Channel 3 internal threshold trigger
+          comment: |
+            0: not triggered
+            1: triggered
+      - field:
+          name: ch4
+          range: 11
+          description: Channel 4 internal threshold trigger
+          comment: |
+            0: not triggered
+            1: triggered
+  - reg:
+      name: trig_en
+      address: 0x0000000c
+      width: 32
+      access: rw
+      description: Trigger enable
+      children:
+      - field:
+          name: ext
+          range: 0
+          description: External trigger input
+          comment: |
+            0: disable
+            1: enable
+      - field:
+          name: sw
+          range: 1
+          description: Software trigger
+          comment: |
+            Always enabled
+          x-hdl:
+            type: wire
+      - field:
+          name: time
+          range: 4
+          description: Timetag trigger
+          comment: |
+            0: disable
+            1: enable
+      - field:
+          name: aux_time
+          range: 5
+          description: Auxiliary timetag trigger
+          comment: |
+            Always enabled
+          x-hdl:
+            type: wire
+      - field:
+          name: ch1
+          range: 8
+          description: Channel 1 internal threshold trigger
+          comment: |
+            0: disable
+            1: enable
+      - field:
+          name: ch2
+          range: 9
+          description: Channel 2 internal threshold trigger
+          comment: |
+            0: disable
+            1: enable
+      - field:
+          name: ch3
+          range: 10
+          description: Channel 3 internal threshold trigger
+          comment: |
+            0: disable
+            1: enable
+      - field:
+          name: ch4
+          range: 11
+          description: Channel 4 internal threshold trigger
+          comment: |
+            0: disable
+            1: enable
+  - reg:
+      name: trig_pol
+      address: 0x00000010
+      width: 32
+      access: rw
+      description: Trigger polarity
+      children:
+      - field:
+          name: ext
+          range: 0
+          description: External trigger input
+          comment: |
+            0: positive edge/slope
+            1: negative edge/slope
+      - field:
+          name: ch1
+          range: 8
+          description: Channel 1 internal threshold trigger
+          comment: |
+            0: positive edge/slope
+            1: negative edge/slope
+      - field:
+          name: ch2
+          range: 9
+          description: Channel 2 internal threshold trigger
+          comment: |
+            0: positive edge/slope
+            1: negative edge/slope
+      - field:
+          name: ch3
+          range: 10
+          description: Channel 3 internal threshold trigger
+          comment: |
+            0: positive edge/slope
+            1: negative edge/slope
+      - field:
+          name: ch4
+          range: 11
+          description: Channel 4 internal threshold trigger
+          comment: |
+            0: positive edge/slope
+            1: negative edge/slope
+  - reg:
+      name: ext_trig_dly
+      address: 0x00000014
+      width: 32
+      access: rw
+      description: External trigger delay
+      comment: |
+        Delay to apply on the trigger in sampling clock period.
+        The default clock frequency is 100MHz (period = 10ns).
+  - reg:
+      name: sw_trig
+      address: 0x00000018
+      width: 32
+      access: wo
+      description: Software trigger
+      comment: |
+        Writing (anything) to this register generates a software trigger.
+      x-hdl:
+        type: wire
+        write-strobe: True
+  - reg:
+      name: shots
+      address: 0x0000001c
+      width: 32
+      access: rw
+      description: Number of shots
+      children:
+      - field:
+          name: nbr
+          range: 15-0
+          description: Number of shots
+          comment: |
+            Number of shots required in multi-shot mode, set to one for single-shot mode.
+      - field:
+          name: remain
+          range: 31-16
+          description: Remaining shots counter
+          comment: |
+            Counts the number of remaining shots to acquire.
+          x-hdl:
+            type: wire
+  - reg:
+      name: multi_depth
+      address: 0x00000020
+      width: 32
+      access: ro
+      description: Multi-shot sample depth register
+      comment: |
+        Maximum sample depth allowed in multi-shot acquisition mode, excluding two samples already reserved for time tag
+  - reg:
+      name: trig_pos
+      address: 0x00000024
+      width: 32
+      access: ro
+      description: Trigger address register
+      comment: |
+        Trigger address in DDR memory.
+        Only used in single-shot mode.
+  - reg:
+      name: fs_freq
+      address: 0x00000028
+      width: 32
+      access: ro
+      description: Sampling clock frequency
+      comment: |
+        ADC sampling clock frequency in Hz
+  - reg:
+      name: downsample
+      address: 0x0000002c
+      width: 32
+      access: rw
+      description: Downsampling ratio
+      comment: |
+        Downsampling ratio. Takes one sample every N samples and discards the others (N = downsampling ratio)
+  - reg:          
+      name: pre_samples
+      address: 0x00000030
+      width: 32
+      access: rw
+      description: Pre-trigger samples
+      comment: |
+        Number of requested pre-trigger samples (>1).
+  - reg:
+      name: post_samples
+      address: 0x00000034
+      width: 32
+      access: rw
+      description: Post-trigger samples
+      comment: |
+        Number of requested post-trigger samples (>1).
+  - reg:
+      name: samples_cnt
+      address: 0x00000038
+      width: 32
+      access: ro
+      description: Samples counter
+      comment: |
+        Counts the number of samples.
+        It is reset on START and then counts the number of pre-trigger + post-trigger samples
+  - submap:
+      name: fmc_adc_ch1
+      address: 0x80
+      description: Channel 1 registers
+      filename: fmc_adc_100Ms_channel_regs.cheby
+  - submap:
+      name: fmc_adc_ch2
+      address: 0xC0
+      description: Channel 2 registers
+      filename: fmc_adc_100Ms_channel_regs.cheby
+  - submap:
+      name: fmc_adc_ch3
+      address: 0x100
+      description: Channel 3 registers
+      filename: fmc_adc_100Ms_channel_regs.cheby
+  - submap:
+      name: fmc_adc_ch4
+      address: 0x140
+      description: Channel 4 registers
+      filename: fmc_adc_100Ms_channel_regs.cheby

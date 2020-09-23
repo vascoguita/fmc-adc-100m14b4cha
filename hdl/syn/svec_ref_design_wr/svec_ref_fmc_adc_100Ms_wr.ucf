@@ -1,0 +1,213 @@
+#===============================================================================
+# IO Constraints
+#===============================================================================
+
+#----------------------------------------
+# FMC slots
+#----------------------------------------
+
+# FMC0
+NET "adc_ext_trigger_n_i[0]"  LOC = "A15";
+NET "adc_ext_trigger_p_i[0]"  LOC = "B15";
+NET "adc_dco_n_i[0]"          LOC = "A16";
+NET "adc_dco_p_i[0]"          LOC = "C16";
+NET "adc_fr_n_i[0]"           LOC = "G21";
+NET "adc_fr_p_i[0]"           LOC = "H21";
+NET "adc_outa_n_i[0]"         LOC = "E17";
+NET "adc_outa_p_i[0]"         LOC = "F17";
+NET "adc_outb_n_i[0]"         LOC = "G16";
+NET "adc_outb_p_i[0]"         LOC = "H16";
+NET "adc_outa_n_i[1]"         LOC = "E19";
+NET "adc_outa_p_i[1]"         LOC = "F19";
+NET "adc_outb_n_i[1]"         LOC = "F18";
+NET "adc_outb_p_i[1]"         LOC = "G18";
+NET "adc_outa_n_i[2]"         LOC = "K21";
+NET "adc_outa_p_i[2]"         LOC = "L21";
+NET "adc_outb_n_i[2]"         LOC = "L20";
+NET "adc_outb_p_i[2]"         LOC = "M20";
+NET "adc_outa_n_i[3]"         LOC = "F22";
+NET "adc_outa_p_i[3]"         LOC = "G22";
+NET "adc_outb_n_i[3]"         LOC = "L19";
+NET "adc_outb_p_i[3]"         LOC = "M19";
+NET "adc_spi_din_i[0]"        LOC = "F11";
+NET "adc_spi_dout_o[0]"       LOC = "K11";
+NET "adc_spi_sck_o[0]"        LOC = "L11";
+NET "adc_spi_cs_adc_n_o[0]"   LOC = "J13";
+NET "adc_spi_cs_dac1_n_o[0]"  LOC = "H11";
+NET "adc_spi_cs_dac2_n_o[0]"  LOC = "G11";
+NET "adc_spi_cs_dac3_n_o[0]"  LOC = "J12";
+NET "adc_spi_cs_dac4_n_o[0]"  LOC = "H12";
+NET "adc_gpio_dac_clr_n_o[0]" LOC = "H13";
+NET "adc_gpio_led_acq_o[0]"   LOC = "K12";
+NET "adc_gpio_led_trig_o[0]"  LOC = "L12";
+NET "adc_gpio_ssr_ch1_o[0]"   LOC = "L14";
+NET "adc_gpio_ssr_ch1_o[1]"   LOC = "K14";
+NET "adc_gpio_ssr_ch1_o[2]"   LOC = "L13";
+NET "adc_gpio_ssr_ch1_o[3]"   LOC = "E11";
+NET "adc_gpio_ssr_ch1_o[4]"   LOC = "G10";
+NET "adc_gpio_ssr_ch1_o[5]"   LOC = "F10";
+NET "adc_gpio_ssr_ch1_o[6]"   LOC = "F9";
+NET "adc_gpio_ssr_ch2_o[0]"   LOC = "F15";
+NET "adc_gpio_ssr_ch2_o[1]"   LOC = "F14";
+NET "adc_gpio_ssr_ch2_o[2]"   LOC = "F13";
+NET "adc_gpio_ssr_ch2_o[3]"   LOC = "E13";
+NET "adc_gpio_ssr_ch2_o[4]"   LOC = "G12";
+NET "adc_gpio_ssr_ch2_o[5]"   LOC = "M13";
+NET "adc_gpio_ssr_ch2_o[6]"   LOC = "F12";
+NET "adc_gpio_ssr_ch3_o[0]"   LOC = "F23";
+NET "adc_gpio_ssr_ch3_o[1]"   LOC = "E23";
+NET "adc_gpio_ssr_ch3_o[2]"   LOC = "F21";
+NET "adc_gpio_ssr_ch3_o[3]"   LOC = "E21";
+NET "adc_gpio_ssr_ch3_o[4]"   LOC = "G20";
+NET "adc_gpio_ssr_ch3_o[5]"   LOC = "F20";
+NET "adc_gpio_ssr_ch3_o[6]"   LOC = "E15";
+NET "adc_gpio_ssr_ch4_o[0]"   LOC = "J22";
+NET "adc_gpio_ssr_ch4_o[1]"   LOC = "H22";
+NET "adc_gpio_ssr_ch4_o[2]"   LOC = "E25";
+NET "adc_gpio_ssr_ch4_o[3]"   LOC = "D25";
+NET "adc_gpio_ssr_ch4_o[4]"   LOC = "D24";
+NET "adc_gpio_ssr_ch4_o[5]"   LOC = "B25";
+NET "adc_gpio_ssr_ch4_o[6]"   LOC = "C24";
+NET "adc_gpio_si570_oe_o[0]"  LOC = "A25";
+NET "adc_si570_scl_b[0]"      LOC = "H14";
+NET "adc_si570_sda_b[0]"      LOC = "J14";
+NET "adc_one_wire_b[0]"       LOC = "E9";
+
+# FMC1
+NET "adc_ext_trigger_n_i[1]"  LOC = "AD16";
+NET "adc_ext_trigger_p_i[1]"  LOC = "AC16";
+NET "adc_dco_n_i[1]"          LOC = "AK17";
+NET "adc_dco_p_i[1]"          LOC = "AJ17";
+NET "adc_fr_n_i[1]"           LOC = "AH8";
+NET "adc_fr_p_i[1]"           LOC = "AG8";
+NET "adc_outa_n_i[4]"         LOC = "AA15";
+NET "adc_outa_p_i[4]"         LOC = "Y15";
+NET "adc_outb_n_i[4]"         LOC = "AA17";
+NET "adc_outb_p_i[4]"         LOC = "Y17";
+NET "adc_outa_n_i[5]"         LOC = "AC14";
+NET "adc_outa_p_i[5]"         LOC = "AB14";
+NET "adc_outb_n_i[5]"         LOC = "AD15";
+NET "adc_outb_p_i[5]"         LOC = "AC15";
+NET "adc_outa_n_i[6]"         LOC = "AA14";
+NET "adc_outa_p_i[6]"         LOC = "Y14";
+NET "adc_outb_n_i[6]"         LOC = "Y13";
+NET "adc_outb_p_i[6]"         LOC = "W14";
+NET "adc_outa_n_i[7]"         LOC = "AE12";
+NET "adc_outa_p_i[7]"         LOC = "AD12";
+NET "adc_outb_n_i[7]"         LOC = "AF11";
+NET "adc_outb_p_i[7]"         LOC = "AE11";
+NET "adc_spi_din_i[1]"        LOC = "AB17";
+NET "adc_spi_dout_o[1]"       LOC = "AA21";
+NET "adc_spi_sck_o[1]"        LOC = "Y21";
+NET "adc_spi_cs_adc_n_o[1]"   LOC = "W20";
+NET "adc_spi_cs_dac1_n_o[1]"  LOC = "W19";
+NET "adc_spi_cs_dac2_n_o[1]"  LOC = "Y19";
+NET "adc_spi_cs_dac3_n_o[1]"  LOC = "AA19";
+NET "adc_spi_cs_dac4_n_o[1]"  LOC = "AB19";
+NET "adc_gpio_dac_clr_n_o[1]" LOC = "Y20";
+NET "adc_gpio_led_acq_o[1]"   LOC = "AC22";
+NET "adc_gpio_led_trig_o[1]"  LOC = "AA22";
+NET "adc_gpio_ssr_ch1_o[7]"   LOC = "AC19";
+NET "adc_gpio_ssr_ch1_o[8]"   LOC = "AD19";
+NET "adc_gpio_ssr_ch1_o[9]"   LOC = "AC20";
+NET "adc_gpio_ssr_ch1_o[10]"  LOC = "AD17";
+NET "adc_gpio_ssr_ch1_o[11]"  LOC = "AB21";
+NET "adc_gpio_ssr_ch1_o[12]"  LOC = "AC21";
+NET "adc_gpio_ssr_ch1_o[13]"  LOC = "AC24";
+NET "adc_gpio_ssr_ch2_o[7]"   LOC = "AE19";
+NET "adc_gpio_ssr_ch2_o[8]"   LOC = "AF23";
+NET "adc_gpio_ssr_ch2_o[9]"   LOC = "AE24";
+NET "adc_gpio_ssr_ch2_o[10]"  LOC = "AF24";
+NET "adc_gpio_ssr_ch2_o[11]"  LOC = "AD22";
+NET "adc_gpio_ssr_ch2_o[12]"  LOC = "AB20";
+NET "adc_gpio_ssr_ch2_o[13]"  LOC = "AE22";
+NET "adc_gpio_ssr_ch3_o[7]"   LOC = "AB12";
+NET "adc_gpio_ssr_ch3_o[8]"   LOC = "AC12";
+NET "adc_gpio_ssr_ch3_o[9]"   LOC = "AE15";
+NET "adc_gpio_ssr_ch3_o[10]"  LOC = "AF15";
+NET "adc_gpio_ssr_ch3_o[11]"  LOC = "Y16";
+NET "adc_gpio_ssr_ch3_o[12]"  LOC = "AB16";
+NET "adc_gpio_ssr_ch3_o[13]"  LOC = "AF19";
+NET "adc_gpio_ssr_ch4_o[7]"   LOC = "AC11";
+NET "adc_gpio_ssr_ch4_o[8]"   LOC = "AD11";
+NET "adc_gpio_ssr_ch4_o[9]"   LOC = "AE13";
+NET "adc_gpio_ssr_ch4_o[10]"  LOC = "AF13";
+NET "adc_gpio_ssr_ch4_o[11]"  LOC = "AJ15";
+NET "adc_gpio_ssr_ch4_o[12]"  LOC = "AD10";
+NET "adc_gpio_ssr_ch4_o[13]"  LOC = "AK15";
+NET "adc_gpio_si570_oe_o[1]"  LOC = "AE10";
+NET "adc_si570_scl_b[1]"      LOC = "AF21";
+NET "adc_si570_sda_b[1]"      LOC = "AE21";
+NET "adc_one_wire_b[1]"       LOC = "AD24";
+
+# IO standards
+NET "adc_ext_trigger_?_i[*]"  IOSTANDARD = "LVDS_25";
+NET "adc_dco_?_i[*]"          IOSTANDARD = "LVDS_25";
+NET "adc_fr_?_i[*]"           IOSTANDARD = "LVDS_25";
+NET "adc_out?_?_i[*]"         IOSTANDARD = "LVDS_25";
+NET "adc_spi_din_i[*]"        IOSTANDARD = "LVCMOS25";
+NET "adc_spi_dout_o[*]"       IOSTANDARD = "LVCMOS25";
+NET "adc_spi_sck_o[*]"        IOSTANDARD = "LVCMOS25";
+NET "adc_spi_cs_adc_n_o[*]"   IOSTANDARD = "LVCMOS25";
+NET "adc_spi_cs_dac?_n_o[*]"  IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_dac_clr_n_o[*]" IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_led_acq_o[*]"   IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_led_trig_o[*]"  IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_ssr_ch?_o[*]"   IOSTANDARD = "LVCMOS25";
+NET "adc_gpio_si570_oe_o[*]"  IOSTANDARD = "LVCMOS25";
+NET "adc_si570_scl_b[*]"      IOSTANDARD = "LVCMOS25";
+NET "adc_si570_sda_b[*]"      IOSTANDARD = "LVCMOS25";
+NET "adc_one_wire_b[*]"       IOSTANDARD = "LVCMOS25";
+
+#===============================================================================
+# Timing constraints and exceptions
+#===============================================================================
+
+# Tightly constrain the location and max delay from the external trigger input
+# to its synchroniser. This is needed to have consistent alignment between trigger
+# and data across implementations. Note that due to RLOC constraints in the
+# gc_sync_ffs, the synchroniser cannot be placed on the single FF of the IOB.
+NET  "gen_fmc_mezzanine[?].*/*/cmp_ext_trig_sync/gc_sync_ffs_in" MAXDELAY = 2.0 ns;
+INST "gen_fmc_mezzanine[0].*/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X66Y189;
+INST "gen_fmc_mezzanine[1].*/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X69Y2;
+
+#----------------------------------------
+# IOB exceptions
+#----------------------------------------
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/shift/s_out"   IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_spi/*/Wrapped_SPI/clgen/clk_out" IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_i2c/U_Wrapped_I2C/*"             IOB = FALSE;
+INST "gen_fmc_mezzanine[*].*/cmp_fmc_onewire/*"                       IOB = FALSE;
+
+#----------------------------------------
+# Clocks
+#----------------------------------------
+NET "adc_dco_p_i[0]" TNM_NET = adc0_dco;
+NET "adc_dco_n_i[0]" TNM_NET = adc0_dco;
+TIMESPEC TS_adc0_dco = PERIOD "adc0_dco" 2.5 ns HIGH 50%;
+
+NET "adc_dco_p_i[1]" TNM_NET = adc1_dco;
+NET "adc_dco_n_i[1]" TNM_NET = adc1_dco;
+TIMESPEC TS_adc1_dco = PERIOD "adc1_dco" 2.5 ns HIGH 50%;
+
+#----------------------------------------
+# Cross-clock domain sync
+#----------------------------------------
+NET "gen_fmc_mezzanine[0].*/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs0_clk;
+NET "gen_fmc_mezzanine[1].*/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs1_clk;
+
+TIMEGRP "adc0_sync_ffs" = "sync_ffs" EXCEPT "fs0_clk";
+TIMEGRP "adc1_sync_ffs" = "sync_ffs" EXCEPT "fs1_clk";
+
+TIMESPEC TS_adc0_sync_ffs = FROM fs0_clk TO "adc0_sync_ffs" TIG;
+TIMESPEC TS_adc1_sync_ffs = FROM fs1_clk TO "adc1_sync_ffs" TIG;
+
+TIMEGRP "adc0_sync_reg" = "sync_reg" EXCEPT "fs0_clk";
+TIMEGRP "adc1_sync_reg" = "sync_reg" EXCEPT "fs1_clk";
+
+TIMESPEC TS_adc0_sync_reg = FROM fs0_clk TO "adc0_sync_reg" 10ns DATAPATHONLY;
+TIMESPEC TS_adc1_sync_reg = FROM fs1_clk TO "adc1_sync_reg" 10ns DATAPATHONLY;
+
+# No sync words used in FMC-ADC
+#TIMESPEC TS_adc0_sync_word = FROM sync_word TO fs0_clk 30ns DATAPATHONLY;
+#TIMESPEC TS_adc1_sync_word = FROM sync_word TO fs1_clk 30ns DATAPATHONLY;

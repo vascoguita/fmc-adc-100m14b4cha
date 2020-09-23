@@ -1,0 +1,21 @@
+memory-map:
+  name: spec_ref_fmc_adc_100m_mmap
+  bus: wb-32-be
+  description: SPEC FMC-ADC-100M memory map
+  size: 0x6000
+  x-hdl:
+    busgroup: True
+  children:
+    - submap:
+        name: metadata
+        address: 0x2000
+        size: 0x40
+        interface: wb-32-be
+        x-hdl:
+          busgroup: True
+        description: a ROM containing the application metadata
+    - submap:
+        name: fmc_adc_mezzanine
+        address: 0x4000
+        description: FMC ADC Mezzanine
+        filename: fmc_adc_mezzanine_mmap.cheby

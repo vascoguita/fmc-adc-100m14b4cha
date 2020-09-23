@@ -1,0 +1,44 @@
+memory-map:
+  name: fmc_adc_mezzanine_mmap
+  bus: wb-32-be
+  description: FMC-ADC-100M mezzanine memory map
+  size: 0x2000
+  x-hdl:
+    busgroup: True
+  children:
+    - submap:
+        name: fmc_adc_100m_csr
+        address: 0x1000
+        description: FMC ADC 100M CSR
+        filename: fmc_adc_100Ms_csr.cheby
+    - submap:
+        name: fmc_adc_eic
+        address: 0x1500
+        description: FMC ADC Embedded Interrupt Controller
+        filename: fmc_adc_eic_regs.cheby
+    - submap:
+        name: si570_i2c_master
+        address: 0x1600
+        size: 0x100
+        interface: wb-32-be
+        x-hdl:
+          busgroup: True
+        description: Si570 control I2C master
+    - submap:
+        name: ds18b20_onewire_master
+        address: 0x1700
+        description: DS18B20 OneWire master
+        filename: ../ip_cores/general-cores/modules/wishbone/wb_ds182x_readout/wb_ds182x_regs.cheby
+    - submap:
+        name: fmc_spi_master
+        address: 0x1800
+        size: 0x20
+        interface: wb-32-be
+        x-hdl:
+          busgroup: True
+        description: Mezzanine SPI master (ADC control + DAC offsets)
+    - submap:
+        name: timetag_core
+        address: 0x1900
+        description: Timetag Core
+        filename: timetag_core_regs.cheby

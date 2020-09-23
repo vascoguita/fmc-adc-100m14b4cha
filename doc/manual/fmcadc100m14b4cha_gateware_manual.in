@@ -735,6 +735,13 @@ The frame rate signal is used to align the de-serialiser to data words.
 The four channel data (16-bit) are concatenated together to form a 64-bit vector.
 As shown in @ref{fig:ltc2174_mode}, the two LSB bits of a data word are always set to zero.
 
+@strong{Important:} Upon reset the ADC defaults to ``offset binary''
+representation for the channel data. However, the ADC core expects
+``two's complement''. Therefore, it is important to change the
+relevant configuration register in the ADC itself. When using the
+provided FMC-ADC driver, this is done automatically during driver
+initialisation.
+
 @c ==========================================================================
 @section Control and Status Registers
 
@@ -956,7 +963,7 @@ As for the ADC correction values, there is one pair (offset, gain) of DAC correc
 Below is the formula to calculate the corrected DAC value (applying gain and offset correction):
 @example
 @group
-c_val = ((val + offset) * gain/0x8000) - 0x8000
+c_val = ((val + offset) * gain/0x8000) + 0x8000
 where:
 c_val  = corrected value to write to DAC (16-bit unsigned)
 val    = value from user (16-bit signed)

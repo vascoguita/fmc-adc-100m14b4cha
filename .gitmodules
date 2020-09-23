@@ -1,12 +1,21 @@
 [submodule "hdl/ip_cores/general-cores"]
 	path = hdl/ip_cores/general-cores
-	url = git://ohwr.org/hdl-core-lib/general-cores.git
+	url = https://ohwr.org/project/general-cores.git
 [submodule "hdl/ip_cores/ddr3-sp6-core"]
 	path = hdl/ip_cores/ddr3-sp6-core
-	url = git://ohwr.org/hdl-core-lib/ddr3-sp6-core.git
+	url = https://ohwr.org/project/ddr3-sp6-core.git
 [submodule "hdl/ip_cores/gn4124-core"]
 	path = hdl/ip_cores/gn4124-core
-	url = git://ohwr.org/hdl-core-lib/gn4124-core.git
+	url = https://ohwr.org/project/gn4124-core.git
 [submodule "hdl/ip_cores/vme64x-core"]
 	path = hdl/ip_cores/vme64x-core
-	url = git://ohwr.org/hdl-core-lib/vme64x-core.git
+	url = https://ohwr.org/project/vme64x-core.git
+[submodule "hdl/ip_cores/wr-cores"]
+	path = hdl/ip_cores/wr-cores
+	url = https://ohwr.org/project/wr-cores.git
+[submodule "hdl/ip_cores/spec"]
+	path = hdl/ip_cores/spec
+	url = https://ohwr.org/project/spec.git
+[submodule "hdl/ip_cores/svec"]
+	path = hdl/ip_cores/svec
+	url = https://ohwr.org/project/svec.git

@@ -1,0 +1,53 @@
+memory-map:
+  bus: wb-32-be
+  name: fmc_adc_eic_regs
+  size: 0x10
+  description: FMC ADC Embedded Interrupt Controller (EIC) registers
+  comment: |
+    inspired by wbgen2 EIC
+  x-hdl:
+    busgroup: True
+    iogroup: fmc_adc_eic_regs
+  children:
+  - reg:
+      name: idr
+      address: 0x00000000
+      width: 32
+      access: wo
+      description: Interrupt Disable Register
+      comment: |
+            Write 1 to a bit to disable the respective interrupt.
+      x-hdl:
+        type: wire
+        write-strobe: True
+  - reg:
+      name: ier
+      address: 0x00000004
+      width: 32
+      access: wo
+      description: Interrupt Enable Register
+      comment: |
+            Write 1 to a bit to enable the respective interrupt.
+      x-hdl:
+        type: wire
+        write-strobe: True
+  - reg:
+      name: imr
+      address: 0x00000008
+      width: 32
+      access: ro
+      description: Interrupt Mask Register
+      comment: |
+            If a bit is set to 1, it means that the respective interrupt is enabled.
+  - reg:
+      name: isr
+      address: 0x0000000C
+      width: 32
+      access: rw
+      description: Interrupt Status Register
+      comment: |
+            If a bit is set to 1, it means that the respective interrupt is pending.
+            Write a 0 to bit to acknowledge and clear the respective interrupt.
+      x-hdl:
+        type: wire
+        write-strobe: True
