@@ -39,12 +39,20 @@ static bool fa_calib_is_busy(struct fa_dev *fa)
 
 static int fa_calib_apply(struct fa_dev *fa)
 {
-	if (fa_calib_is_busy(fa))
+	if (fa_calib_is_busy(fa)) {
+		dev_err(&fa->pdev->dev,
+			"%s Can't apply calibration values\n",
+			__func__);
 		return -EBUSY;
+	}
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CALIB_APPLY], 1);
         ndelay(100);
-	if (fa_calib_is_busy(fa))
+	if (fa_calib_is_busy(fa)) {
+		dev_err(&fa->pdev->dev,
+			"%s Calibration value applied but still 'busy'\n",
+			__func__);
 		return -EBUSY;
+	}
 
 	return 0;
 }
@@ -158,7 +166,6 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int gain;
-	int err;
 
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
@@ -182,9 +189,7 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 
 	fa_calib_gain_set(fa, chan, gain);
 	fa_calib_offset_set(fa, chan, cal->offset[chan]);
-	err = fa_calib_apply(fa);
-	if (err)
-		dev_err(&fa->pdev->dev, "Can't apply calibration values\n");
+	fa_calib_apply(fa);
 }
 
 /**
