@@ -97,7 +97,11 @@ int32_t fa_temperature_read(struct fa_dev *fa)
 	uint32_t reg;
 	int16_t raw_temp;
 
-        reg = fa_readl(fa, fa->fa_ow_base, &zfad_regs[ZFA_DS18B20_TEMP]);
+	reg = fa_ioread(fa, fa->fa_ow_base + 0x08);
+	if (reg & BIT(31)) {
+		dev_err(&fa->pdev->dev, "Temperature sensor failure\n");
+		return 45000; /* 45.000 degrees as save value */
+	}
 	raw_temp = reg & 0xFFFF;
 
 	return (raw_temp * 1000UL + 8) / 16;
