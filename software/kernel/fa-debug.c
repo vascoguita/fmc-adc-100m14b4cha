@@ -114,6 +114,22 @@ static const struct debugfs_reg32 fa_debugfs_reg32[] = {
 	FA_DBG_REG32_TIM(acq_start_tag, 0x24),
 	FA_DBG_REG32_TIM(acq_stop_tag, 0x30),
 	FA_DBG_REG32_TIM(acq_end_tag, 0x3C),
+	{
+		.name = "TEMP:serial_u",
+		.offset = ADC_OW_OFF + 0x0,
+	},
+	{
+		.name = "TEMP:serial_l",
+		.offset = ADC_OW_OFF + 0x4,
+	},
+	{
+		.name = "TEMP:temperature",
+		.offset = ADC_OW_OFF + 0x8,
+	},
+	{
+		.name = "TEMP:status",
+		.offset = ADC_OW_OFF + 0xC,
+	}
 };
 
 
