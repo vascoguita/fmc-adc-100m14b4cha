@@ -212,7 +212,7 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EINVAL;
 		spin_lock(&fa->zdev->cset->lock);
 		fa->zero_offset[i] = usr_val;
-		fa_calib_dac_config_chan(fa, i, ~0);
+		fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
 		return 0;
 	case ZFA_CHx_SAT:
@@ -247,14 +247,16 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 			return -EINVAL;
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
-		err = fa_calib_dac_config_chan(fa, i, ~0);
+		err = fa_calib_dac_config_chan(fa, i, 0,
+					       FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
 		return err;
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev);
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
-		err = fa_calib_dac_config_chan(fa, chan->index, ~0);
+		err = fa_calib_dac_config_chan(fa, chan->index, 0,
+					       FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
 		return err;
 	case ZFAT_SR_UNDER:
@@ -294,8 +296,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		if (err)
 			return err;
 		spin_lock(&fa->zdev->cset->lock);
-		fa_calib_adc_config_chan(fa, i, ~0);
-		fa_calib_dac_config_chan(fa, i, ~0);
+		fa_calib_adc_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
+		fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
 		return 0;
 
@@ -307,8 +309,8 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		if (err)
 			return err;
 		spin_lock(&fa->zdev->cset->lock);
-		fa_calib_adc_config_chan(fa, i, ~0);
-		fa_calib_dac_config_chan(fa, i, ~0);
+		fa_calib_adc_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
+		fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
 		return 0;
 

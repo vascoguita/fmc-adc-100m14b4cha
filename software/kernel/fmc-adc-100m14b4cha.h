@@ -662,10 +662,11 @@ extern void fa_spi_exit(struct fa_dev *fd);
 extern int fa_calib_init(struct fa_dev *fa);
 extern void fa_calib_exit(struct fa_dev *fa);
 extern void fa_calib_config(struct fa_dev *fa);
+#define FA_CALIB_FLAG_READ_TEMP BIT(0)
 extern void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
-				     int32_t temperature);
+				     int32_t temperature, unsigned int flags);
 extern int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
-				    int32_t temperature);
+				    int32_t temperature, unsigned int flags);
 
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);

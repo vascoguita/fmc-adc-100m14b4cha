@@ -153,7 +153,7 @@ static bool fa_calib_is_compensation_on(struct fa_dev *fa)
  * You must hold &fa->zdev->cset->lock while calling this function
  */
 void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
-			      int32_t temperature)
+			      int32_t temperature, unsigned int flags)
 {
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.dac[range];
@@ -163,7 +163,7 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
-		if (temperature == 0xFFFFFFFF)
+		if (flags & FA_CALIB_FLAG_READ_TEMP)
 			temperature = fa_temperature_read(fa);
 		delta_temp = (temperature / 10) - cal->temperature;
 		gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
@@ -253,7 +253,7 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
  * You must hold &fa->zdev->cset->lock while calling this function
  */
 int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
-			     int32_t temperature)
+			     int32_t temperature, unsigned int flags)
 {
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
 	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
@@ -265,7 +265,7 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
-		if (temperature == 0xFFFFFFFF)
+		if (flags & FA_CALIB_FLAG_READ_TEMP)
 			temperature = fa_temperature_read(fa);
 		delta_temp = (temperature / 10) - cal->temperature;
 		gain = fa_calib_dac_gain_fix(range, cal->gain[chan],
@@ -294,8 +294,8 @@ void fa_calib_config(struct fa_dev *fa)
         temperature = fa_temperature_read(fa);
 	spin_lock(&fa->zdev->cset->lock);
         for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
-		fa_calib_adc_config_chan(fa, i, temperature);
-		fa_calib_dac_config_chan(fa, i, temperature);
+		fa_calib_adc_config_chan(fa, i, temperature, 0);
+		fa_calib_dac_config_chan(fa, i, temperature, 0);
 	}
 	spin_unlock(&fa->zdev->cset->lock);
 }
