@@ -696,6 +696,7 @@ int fa_zio_init(struct fa_dev *fa)
 	/* Mandatory fields */
 	fa->hwzdev->owner = THIS_MODULE;
 	fa->hwzdev->priv_d = fa;
+	fa->hwzdev->head.dev.parent = &fa->pdev->dev;
 
 	/* Register the hardware zio_device */
 	err = zio_register_device(fa->hwzdev, "adc-100m14b",
