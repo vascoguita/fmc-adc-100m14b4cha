@@ -143,11 +143,11 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 
 static bool fa_calib_is_compensation_on(struct fa_dev *fa)
 {
-	if (unlikely(fa_calib_temp))
-		return true;
-
 	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
 		return false;
+
+        if (unlikely(fa_calib_temp))
+		return true;
 
 	return false;
 }
