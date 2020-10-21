@@ -331,14 +331,10 @@ static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 	for (i = 0; i < ARRAY_SIZE(cal->offset); i++) {
 		if (abs(cal->offset[i] - iden->offset[i])
 		    > FA_CALIB_MAX_DELTA_OFFSET) {
-			dev_err(msgdev, "wrong offset (%i) 0x%x\n",
-				i, cal->offset[i]);
 			return -EINVAL;
 		}
 		if (abs((s16)(cal->gain[i] - iden->gain[i]))
 		    > FA_CALIB_MAX_DELTA_GAIN) {
-			dev_err(msgdev, "invalid gain   (%i) 0x%x\n",
-				i, cal->gain[i]);
 			return -EINVAL;
 		}
 	}
@@ -416,7 +412,8 @@ static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 	fa_calib_le16_to_cpus(calib);
 	err = fa_verify_calib(fa->msgdev, calib);
 	if (err) {
-		dev_info(fa->msgdev, "Apply Calibration Identity\n");
+		dev_info(fa->msgdev,
+			 "Apply Calibration Identity (invalid calibration values)\n");
 		fa_identity_calib_set(&fa->calib);
 	} else {
 		memcpy(&fa->calib, calib, sizeof(*calib));
