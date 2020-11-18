@@ -33,10 +33,6 @@
 #define FA100M14B4C_TRG_POL_CH4 FA100M14B4C_TRG_SRC_CH4
 #define FA100M14B4C_TRG_POL_CHx(_x) (FA100M14B4C_TRG_POL_CH1 << ((_x) - 1))
 
-enum fa_versions {
-	ADC_VER = 0,
-};
-
 /*
  * Trigger Extended Attribute Enumeration
  */

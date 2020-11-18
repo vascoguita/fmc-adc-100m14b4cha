@@ -26,6 +26,9 @@
 #include "fmc-adc-100m14b4cha.h"
 #include <platform_data/fmc-adc-100m14b4cha.h>
 
+enum fa_versions {
+	ADC_VER = 0,
+};
 
 enum fa100m14b4c_trg_ext_attr_krn {
        FA100M14B4C_TATTR_TRG_SU = __FA100M14B4C_TATTR_TRG_MAX,
