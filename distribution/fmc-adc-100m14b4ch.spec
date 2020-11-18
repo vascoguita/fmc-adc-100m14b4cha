@@ -1,24 +1,20 @@
 # Mainline copied from the template, added requirements
 
-%{?!module_name: %{error: You did not specify a module name (%%module_name)}}
-%{?!version: %{error: You did not specify a module version (%%version)}}
-%{?!kernel_versions: %{error: You did not specify kernel versions (%%kernel_version)}}
-%{?!packager: %define packager DKMS <dkms-devel@lists.us.dell.com>}
-%{?!license: %define license Unknown}
-%{?!_dkmsdir: %define _dkmsdir /var/lib/dkms}
-%{?!_srcdir: %define _srcdir %_prefix/src}
-%{?!_datarootdir: %define _datarootdir %{_datadir}}
-
-Summary:	%{module_name} %{version} dkms package
-Name:		%{module_name}
-Version:	%{version}
-License:	%license
-Release:	1dkms
+name:		fmc-adc-100m14b4ch
+version:	%{?_build_version}
+Release:	1%{?dist}
+Summary:	Linux kernel FMC-ADC-10M support
 BuildArch:	noarch
+
+
 Group:		System/Kernel
-Requires: 	dkms >= 1.95, zio >= 1.4
-BuildRequires: 	dkms
-BuildRoot: 	%{_tmppath}/%{name}-%{version}-%{release}-root/
+License:	GPL-2.0-or-later
+URL:		https://ohwr.org/project/fmc-adc-100m14b4cha
+Source0:	%{name}-%{version}.tar.gz
+Source1:	CHANGELOG
+
+BuildRequires: dkms
+Requires: dkms >= 1.95, zio >= 1.4, fmc >= 1.1
 
 %description
 Kernel modules for %{module_name} %{version} in a DKMS wrapper.

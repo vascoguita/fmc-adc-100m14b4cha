@@ -28,7 +28,7 @@ dkms-tree:
 	@mkdir -p $(BUILD_DKMSSOURCE)
 	@mkdir -p $(BUILD_DKMSTREE)
 
-dkms-src: dkms-tree source-build
+dkms-src: dkms-tree sources-build
 	@cp -a $(PKG_SOURCES) $(BUILD_DKMSSOURCE)
 
 dkms-add: dkms-src
@@ -43,7 +43,7 @@ dkms-rpm: dkms-add
 dkms-build: dkms-add
 	@dkms build $(DKMS_OPT)
 
-source-build:
+sources-build:
 	@mkdir -p $(PKG_SOURCES)
 	@find $(TOP_DIR)/software/kernel $(FIND_OPT) -regex '.+/([^.]+[.](c|h)|Makefile|Kbuild)' -exec cp \{} $(PKG_SOURCES) \;
 	@mkdir -p $(PKG_SOURCES)/platform_data
