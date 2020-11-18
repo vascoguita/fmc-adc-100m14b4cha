@@ -17,64 +17,25 @@ BuildRequires: dkms
 Requires: dkms >= 1.95, zio >= 1.4, fmc >= 1.1
 
 %description
-Kernel modules for %{module_name} %{version} in a DKMS wrapper.
+Kernel modules for FMC-ADC-100M in a DKMS wrapper.
 
 %prep
-if [ "%mktarball_line" != "none" ]; then
-        /usr/sbin/dkms mktarball -m %module_name -v %version %mktarball_line --archive `basename %{module_name}-%{version}.dkms.tar.gz`
-        cp -af %{_dkmsdir}/%{module_name}/%{version}/tarball/`basename %{module_name}-%{version}.dkms.tar.gz` %{module_name}-%{version}.dkms.tar.gz
-fi
+%setup -q
 
 %install
-if [ "$RPM_BUILD_ROOT" != "/" ]; then
-        rm -rf $RPM_BUILD_ROOT
-fi
-mkdir -p $RPM_BUILD_ROOT/%{_srcdir}
-mkdir -p $RPM_BUILD_ROOT/%{_datarootdir}/%{module_name}
-
-if [ -d %{_sourcedir}/%{module_name}-%{version} ]; then
-        cp -Lpr %{_sourcedir}/%{module_name}-%{version} $RPM_BUILD_ROOT/%{_srcdir}
-fi
-
-if [ -f %{module_name}-%{version}.dkms.tar.gz ]; then
-        install -m 644 %{module_name}-%{version}.dkms.tar.gz $RPM_BUILD_ROOT/%{_datarootdir}/%{module_name}
-fi
-
-if [ -f %{_sourcedir}/common.postinst ]; then
-        install -m 755 %{_sourcedir}/common.postinst $RPM_BUILD_ROOT/%{_datarootdir}/%{module_name}/postinst
-fi
-
-%clean
-if [ "$RPM_BUILD_ROOT" != "/" ]; then
-        rm -rf $RPM_BUILD_ROOT
-fi
+mkdir -p %{buildroot}/usr/src/%{name}-%{version}
+cp -ra * %{buildroot}/usr/src/%{name}-%{version}/
 
 %post
-for POSTINST in %{_prefix}/lib/dkms/common.postinst %{_datarootdir}/%{module_name}/postinst; do
-        if [ -f $POSTINST ]; then
-                $POSTINST %{module_name} %{version} %{_datarootdir}/%{module_name}
-                exit $?
-        fi
-        echo "WARNING: $POSTINST does not exist."
-done
-echo -e "ERROR: DKMS version is too old and %{module_name} was not"
-echo -e "built with legacy DKMS support."
-echo -e "You must either rebuild %{module_name} with legacy postinst"
-echo -e "support or upgrade DKMS to a more current version."
-exit 1
+dkms add -m %{name} -v %{version} --rpm_safe_upgrade
+dkms build -m %{name} -v %{version} --rpm_safe_upgrade
+dkms install -m %{name} -v %{version} --rpm_safe_upgrade
 
 %preun
-echo -e
-echo -e "Uninstall of %{module_name} module (version %{version}) beginning:"
-dkms remove -m %{module_name} -v %{version} --all --rpm_safe_upgrade
-exit 0
+dkms remove -m %{name} -v %{version} --rpm_safe_upgrade --all ||:
 
 %files
-%defattr(-,root,root)
-%{_srcdir}
-%{_datarootdir}/%{module_name}/
+/usr/src/%{name}-%{version}/
 
 %changelog
-* %(date "+%a %b %d %Y") %packager %{version}-%{release}
-- Automatic build by DKMS
-
+%include %{SOURCE1}
