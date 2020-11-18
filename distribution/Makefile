@@ -21,10 +21,13 @@ dkms-tree:
 
 dkms-src: dkms-tree
 	$(eval $@_dir := $(BUILD_DKMSSOURCE)/$(DRIVER_NAME)-$(VERSION))
-	$(eval $@_src := $(shell git ls-tree -r --name-only HEAD $(TOP_DIR)/software/kernel/))
+	$(eval $@_src := $(shell git ls-tree -r --name-only HEAD $(TOP_DIR)/software/kernel/*.[ch]))
 	@mkdir -p $($@_dir)
 	@cp $(TOP_DIR)/distribution/dkms.conf $($@_dir)
 	@cp $(TOP_DIR)/distribution/fmc-adc-100m14b4ch-dkms-mkrpm.spec $($@_dir)
+	@mkdir $($@_dir)/platform_data
+	@cp $(TOP_DIR)/software/kernel/platform_data/* $($@_dir)/platform_data/
+	@cp $(TOP_DIR)/software/kernel/Makefile $(TOP_DIR)/software/kernel/Kbuild $($@_dir)
 	@cp $($@_src) $($@_dir)
 	@cp $(TOP_DIR)/LICENSES/GPL-2.0-or-later.txt $($@_dir)/LICENSE
 	@sed -r -i -e "s/^GIT_VERSION\s=\s.*/GIT_VERSION = $(VERSION)/" $($@_dir)/Makefile
