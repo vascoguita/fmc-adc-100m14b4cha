@@ -56,8 +56,6 @@ irqreturn_t fa_irq_handler(int irq, void *arg)
 	struct fa_dev *fa = arg;
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t status;
-	unsigned long flags;
-	struct zfad_block *zfad_block;
 
 	/* irq to handle */
 	fa_get_irq_status(fa, &status);
@@ -65,6 +63,9 @@ irqreturn_t fa_irq_handler(int irq, void *arg)
 		return IRQ_NONE; /* No interrupt fired by this mezzanine */
 
 	if (status & FA_IRQ_ADC_ACQ_END) {
+		struct zfad_block *zfad_block;
+		unsigned long flags;
+
 		dev_dbg(fa->msgdev, "Handle ADC interrupts\n");
 
 		/*
@@ -150,10 +151,5 @@ int fa_disable_irqs(struct fa_dev *fa)
 			&zfad_regs[ZFA_IRQ_ADC_DISABLE_MASK],
 			FA_IRQ_ADC_ACQ_END);
 
-	return 0;
-}
-
-int fa_ack_irq(struct fa_dev *fa, int irq_id)
-{
 	return 0;
 }

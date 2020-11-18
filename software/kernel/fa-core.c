@@ -369,7 +369,6 @@ int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	struct zio_cset *cset = fa->zdev->cset;
-	uint32_t val;
 
 	if (command != FA100M14B4C_CMD_START &&
 	    command != FA100M14B4C_CMD_STOP) {
@@ -401,8 +400,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	/* If START, check if we can start */
 	if (command == FA100M14B4C_CMD_START) {
 		/* Verify that SerDes PLL is lockes */
-		val = fa_readl(fa, fa->fa_adc_csr_base,
-			       &zfad_regs[ZFA_STA_SERDES_PLL]);
+		uint32_t val = fa_readl(fa, fa->fa_adc_csr_base,
+					&zfad_regs[ZFA_STA_SERDES_PLL]);
 		if (!val) {
 			dev_info(fa->msgdev, "Cannot start acquisition: "
 				 "SerDes PLL not locked\n");
@@ -465,7 +464,7 @@ static void fa_init_timetag(struct fa_dev *fa)
 static int __fa_init(struct fa_dev *fa)
 {
 	struct zio_device *zdev = fa->zdev;
-	int i, addr;
+	int i;
 
 	/* Use identity calibration */
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
@@ -476,8 +475,8 @@ static int __fa_init(struct fa_dev *fa)
 		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
-		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
-					  zdev->cset->chan[i].index);
+		int addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
+					      zdev->cset->chan[i].index);
 		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
 			  FA100M14B4C_RANGE_1V);
 	        fa_adc_range_set(fa, &zdev->cset->chan[i],
@@ -735,7 +734,6 @@ out_fmc:
 int fa_remove(struct platform_device *pdev)
 {
 	struct fa_dev *fa = platform_get_drvdata(pdev);
-	struct fa_modlist *m;
 	int i = ARRAY_SIZE(mods);
 
 	if (WARN(!fa, "asked to remove fmc-adc-100m device but it does not exists\n"))
@@ -745,7 +743,7 @@ int fa_remove(struct platform_device *pdev)
 	flush_workqueue(fa_workqueue);
 
 	while (--i >= 0) {
-		m = mods + i;
+		struct fa_modlist *m = mods + i;
 		if (m->exit)
 			m->exit(fa);
 	}

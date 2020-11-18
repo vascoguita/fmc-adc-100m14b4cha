@@ -135,12 +135,13 @@ static const struct debugfs_reg32 fa_debugfs_reg32[] = {
 
 static void fa_regdump_seq_read_spi(struct fa_dev *fa, struct seq_file *s)
 {
-	int i, err;
+	int i;
 
 	seq_printf(s, "ADC SPI registers\n");
 	seq_printf(s, "Address   Data\n");
 	for (i = 0; i < 5; ++i) {
 		uint32_t tx, rx;
+		int err;
 
 		tx = 0x8000 | (i << 8);
 		err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
@@ -259,7 +260,7 @@ static ssize_t fa_data_pattern_read(struct file *file, char __user *buf,
         err = fa_adc_data_pattern_get(fa, &pattern, &enable);
 	if (err)
 		return err;
-	snprintf(buf_l, FA_ADC_DATA_PATTERN_CMD_SIZE, "adc %d 0x%02x\n",
+	snprintf(buf_l, FA_ADC_DATA_PATTERN_CMD_SIZE, "adc %u 0x%02x\n",
 		 enable, pattern);
 	count = min(count, strlen(buf_l));
 	err = copy_to_user(buf, buf_l, count);

@@ -572,12 +572,11 @@ static inline void fa_writel(struct fa_dev *fa,
 				const struct zfa_field_desc *field,
 				uint32_t usr_val)
 {
-	uint32_t cur, val;
+	uint32_t val = usr_val;
 
-	val = usr_val;
 	/* Read current register value first if it's a bitfield */
 	if (field->is_bitfield) {
-		cur = fa_ioread(fa, base_off+field->offset);
+		uint32_t cur = fa_ioread(fa, base_off+field->offset);
 		/* */
 		cur &= ~field->mask; /* clear bits according to the mask */
 		val = usr_val * (field->mask & -(field->mask));

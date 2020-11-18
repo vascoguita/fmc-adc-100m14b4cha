@@ -40,18 +40,16 @@ static int __get_endian(void)
  */
 static void __endianness(unsigned int byte_length, void *buffer)
 {
-	int i, size;
-	uint32_t *ptr;
-
 	/* CPU may be little endian, VME is big endian */
 	if (__get_endian() == LITTLE_ENDIAN) {
-		ptr = buffer;
 		/* swap samples and trig timetag all seen as 32bits words */
-		size = byte_length/4;
+		int i;
+		int size = byte_length / 4;
+		uint32_t *ptr = buffer;
+
 		for (i = 0; i < size; ++i, ++ptr)
 			*ptr = __be32_to_cpu(*ptr);
 	}
-
 }
 
 struct zfad_timetag {
@@ -460,7 +458,8 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct dma_async_tx_descriptor *tx;
 	struct page **pages;
-	unsigned int nr_pages, sg_mapped;
+	unsigned int nr_pages;
+	int sg_mapped;
 	size_t max_segment_size;
 	int err;
 

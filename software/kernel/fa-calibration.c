@@ -349,9 +349,11 @@ static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 
 static int fa_verify_calib(struct device *msgdev, struct fa_calib *calib)
 {
-	int i, err = 0;
+	int i;
 
 	for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
+		int err;
+
 		err = fa_verify_calib_stanza(msgdev, "adc", i, calib->adc + i);
 		if (err)
 			return err;
