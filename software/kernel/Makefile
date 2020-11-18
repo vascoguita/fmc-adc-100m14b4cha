@@ -48,16 +48,15 @@ VMEBUS_ABS ?= $(abspath $(VMEBUS) )
 
 GIT_VERSION = $(shell git describe --always --dirty --long --tags)
 
-all modules:
+all: modules
+
+clean modules help modules_install coccicheck:
 	$(MAKE) -C $(LINUX) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) FMC_ABS=$(FMC_ABS) \
 		ZIO_EXTRA_SYMBOLS-y=$(ZIO_EXTRA_SYMBOLS-y) \
 		FMC_EXTRA_SYMBOLS-y=$(FMC_EXTRA_SYMBOLS-y) \
 		ZIO_VERSION=$(ZIO_VERSION) \
 		GIT_VERSION=$(GIT_VERSION) \
-		VMEBUS_ABS=$(VMEBUS_ABS) modules
-
-install modules_install: modules
-	$(MAKE) -C $(LINUX) M=$(CURDIR) modules_install
+		VMEBUS_ABS=$(VMEBUS_ABS) $@
 
 # be able to run the "clean" rule even if $(LINUX) is not valid
 clean:
@@ -66,3 +65,5 @@ clean:
 
 cppcheck:
 	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --suppress=missingIncludeSystem --enable=all *.c *.h
+
+.PHONY: all install coccicheck cppcheck
