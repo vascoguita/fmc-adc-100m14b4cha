@@ -14,6 +14,7 @@ GIT_VERSION := $(shell git describe --dirty --long --tags)
 CFLAGS += -I../kernel -Wno-trigraphs -Wall -Werror -ggdb -O2  $(EXTRACFLAGS)
 CFLAGS += -DGIT_VERSION="\"$(GIT_VERSION)\""
 
+CPPCHECK ?= cppcheck
 CC ?= $(CROSS_COMPILE)gcc
 
 progs := fau-trg-config
@@ -37,3 +38,6 @@ install:
 # we need this as we are out of the kernel
 %: %.c
 	$(CC) $(CFLAGS) $^ -o $@
+
+cppcheck:
+	$(CPPCHECK) -q -I. --suppress=missingIncludeSystem --enable=all *.c *.h  --error-exitcode=1

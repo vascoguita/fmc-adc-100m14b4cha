@@ -65,4 +65,4 @@ clean:
 		Module.markers modules.order
 
 cppcheck:
-	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --enable=all *.c *.h
+	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --suppress=missingIncludeSystem --enable=all *.c *.h

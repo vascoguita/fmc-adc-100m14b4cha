@@ -6,7 +6,7 @@ all: kernel tools
 
 DIRS =kernel tools
 
-.PHONY: all clean modules install modules_install $(DIRS)
+.PHONY: all clean modules install modules_install cppcheck $(DIRS)
 
 install modules_install:
 
@@ -20,3 +20,6 @@ modules_install: TARGET = modules_install
 
 $(DIRS):
 	$(MAKE) -C $@ $(TARGET)
+
+cppcheck:
+	@$(MAKE) -C tools $@
