@@ -5,7 +5,8 @@
  *
  * Table of register masks, used by driver functions
  */
-#include "fmc-adc-100m14b4cha.h"
+#include <linux/types.h>
+#include "fmc-adc-100m14b4cha-private.h"
 
 /* Definition of the fmc-adc registers fields: offset - mask - isbitfield */
 const struct zfa_field_desc zfad_regs[] = {

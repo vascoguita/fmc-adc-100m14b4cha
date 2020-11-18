@@ -11,10 +11,13 @@
 #include <linux/moduleparam.h>
 #include <linux/time.h>
 #include <linux/delay.h>
+#include <linux/zio.h>
+#include <linux/zio-dma.h>
+#include <linux/zio-sysfs.h>
 
 #include <asm/byteorder.h>
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 ZIO_PARAM_BUFFER(adc_buffer);
 

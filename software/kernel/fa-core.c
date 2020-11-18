@@ -13,7 +13,7 @@
 #include <uapi/linux/ipmi/fru.h>
 #include <linux/fmc.h>
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 #include <platform_data/fmc-adc-100m14b4cha.h>
 
 static int fa_enable_test_data_fpga;

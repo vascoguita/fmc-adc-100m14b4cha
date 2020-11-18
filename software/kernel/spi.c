@@ -7,7 +7,7 @@
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/delay.h>
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 /* SPI register */
 #define FA_SPI_RX(x) (x * 4)

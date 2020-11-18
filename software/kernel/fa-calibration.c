@@ -12,7 +12,7 @@
 #include <linux/zio.h>
 #include <linux/moduleparam.h>
 #include <linux/jiffies.h>
-#include <fmc-adc-100m14b4cha.h>
+#include "fmc-adc-100m14b4cha-private.h"
 
 static int fa_calib_temp_period = 0;
 module_param_named(temp_calib_period, fa_calib_temp_period, int, 0444);

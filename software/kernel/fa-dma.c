@@ -9,7 +9,7 @@
 #include "vmebus.h"
 #endif
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 /* Endianess */
 #ifndef LITTLE_ENDIAN

@@ -4,7 +4,7 @@
  * Author: Federico Vaga <federico.vaga@cern.ch>
  */
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 #define FA_DBG_REG32_CH(_n) \
 	{.name = "ADC-CSR:ch"#_n"_ctl", .offset = ADC_CSR_OFF + 0x080 + ((_n - 1) * 0x40)}, \

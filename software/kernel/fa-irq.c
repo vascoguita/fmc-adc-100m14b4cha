@@ -13,7 +13,7 @@
 #include <linux/io.h>
 #include <linux/interrupt.h>
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 /*
  * fat_get_irq_status
