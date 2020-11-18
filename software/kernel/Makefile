@@ -25,6 +25,11 @@ ifeq ($(DKMS), 1)
 ZIO_VERSION ?= $(shell basename $(shell ls -d $(DKMSTREE)/zio/* | grep -E "\/[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -n 1))
 ZIO_ABS ?= $(DKMSTREE)/zio/$(ZIO_VERSION)/source
 ZIO_EXTRA_SYMBOLS-y = $(DKMSTREE)/zio/kernel-$(KVERSION)-$(shell uname -p)/module/Module.symvers
+
+# Take last installed version (if installed using RPM it should be OK)
+FMC_VERSION ?= $(shell basename $(shell ls -d $(DKMSTREE)/fmc-sw/* | grep -E "\/[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -n 1))
+FMC_ABS ?= $(DKMSTREE)/zio/$(FMC_VERSION)/source
+FMC_EXTRA_SYMBOLS-y = $(DKMSTREE)/fmc-sw/kernel-$(KVERSION)-$(shell uname -p)/module/Module.symvers
 else
 
 ifndef ZIO
