@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
-	int opt_index = 0, err = 0;
+	int opt_index = 0, err;
 	char c;
 	long time1[3], time2[3];
 
@@ -139,7 +139,6 @@ int main(int argc, char *argv[])
 		if (c == 'h') {
 			fau_help();
 			exit(1);
-			break;
 		}
 		if (c == 'V') {
 			print_version(argv[0]);

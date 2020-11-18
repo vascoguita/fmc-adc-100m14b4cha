@@ -57,7 +57,7 @@ int fau_write_attribute(enum fau_attribute attr, uint32_t val)
 	char buf[buf_len], fullpath[200];
 
 	/* convert val to string */
-	sprintf(buf,"%d",val);
+	sprintf(buf,"%u",val);
 	/* build the attribute path */
 	strcpy(fullpath, basepath);
 	strcat(fullpath, attribute[attr]);
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 		{"help",no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
-	int i, opt_index = 0, err = 0, cur_val;
+	int i, opt_index = 0, err = 0;
 	char c;
 
 	if (argc == 1) {
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 	printf("Sysfs path to device is: %s\n", basepath);
 
 	for (i = 0; i < FAU_TRIG_NUM_ATTR; ++i) {
-		cur_val = attrval[i];
+		int cur_val = attrval[i];
 		if (cur_val == -1) {
 			if (force)
 				cur_val = attrdef[i];
