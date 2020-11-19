@@ -358,6 +358,23 @@ int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
 	return 0;
 }
 
+static bool fa_adc_is_serdes_pll_locked(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base,
+			&zfad_regs[ZFA_STA_SERDES_PLL]);
+}
+
+static bool fa_adc_is_serdes_synced(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base,
+			&zfad_regs[ZFA_STA_SERDES_SYNCED]);
+}
+
+static bool fa_adc_is_serdes_ready(struct fa_dev *fa)
+{
+	return fa_adc_is_serdes_pll_locked(fa) && fa_adc_is_serdes_synced(fa);
+}
+
 /*
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor
@@ -399,20 +416,11 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 
 	/* If START, check if we can start */
 	if (command == FA100M14B4C_CMD_START) {
-		/* Verify that SerDes PLL is lockes */
-		uint32_t val = fa_readl(fa, fa->fa_adc_csr_base,
-					&zfad_regs[ZFA_STA_SERDES_PLL]);
-		if (!val) {
-			dev_info(fa->msgdev, "Cannot start acquisition: "
-				 "SerDes PLL not locked\n");
-			return -EBUSY;
-		}
-		/* Verify that SerDes is synched */
-		val = fa_readl(fa, fa->fa_adc_csr_base,
-			       &zfad_regs[ZFA_STA_SERDES_SYNCED]);
-		if (!val) {
-			dev_info(fa->msgdev, "Cannot start acquisition: "
-				 "SerDes not synchronized\n");
+		if (fa_adc_is_serdes_ready(fa)) {
+			dev_err(fa->msgdev,
+				"Cannot start acquisition: "
+				"SerDes PLL not locked or synchronized (0x%08x)\n",
+				fa_ioread(fa, fa->fa_adc_csr_base + ADC_CSR_STA_REG_OFFSET));
 			return -EBUSY;
 		}
 

@@ -46,6 +46,10 @@ enum fa100m14b4c_trg_ext_attr_krn {
 
 #define ADC_DMA 0
 
+#define ADC_CSR_CTL_REG_OFFSET 0x00000000
+#define ADC_CSR_STA_REG_OFFSET 0x00000004
+
+
 enum fa_irq_resource {
 	ADC_IRQ_TRG = 0,
 };
