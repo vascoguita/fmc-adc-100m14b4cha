@@ -431,7 +431,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 
 	/* If START, check if we can start */
 	if (command == FA100M14B4C_CMD_START) {
-		if (fa_adc_is_serdes_ready(fa)) {
+		if (!fa_adc_is_serdes_ready(fa)) {
 			dev_err(fa->msgdev,
 				"Cannot start acquisition: "
 				"SerDes PLL not locked or synchronized (0x%08x)\n",
