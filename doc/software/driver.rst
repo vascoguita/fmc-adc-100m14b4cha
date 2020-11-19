@@ -16,7 +16,7 @@ The fmcadc100m14b4ch device driver has been developed and tested on Linux
 3.10. Other Linux versions might work as well but it is not guaranteed.
 
 This driver depends on the `zio`_ framework and `fmc`_ library; we
-developed and tested against version `zio`_ 1.4 and `fmc`_ 1.0.
+developed and tested against version `zio`_ 1.4 and `fmc`_ 1.1.
 
 The FPGA address space must be visible on the host system. This requires
 a driver for the FPGA carrier that exports the FPGA address space to the
