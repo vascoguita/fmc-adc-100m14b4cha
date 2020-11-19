@@ -23,8 +23,10 @@ a driver for the FPGA carrier that exports the FPGA address space to the
 host. As of today we support `SPEC`_ and `SVEC`_.
 
 
+.. _drv_build_install:
+
 Compile And Install
-====================
+===================
 
 The compile and install the fmcadc100m14b4ch device driver you need
 first to export the path to its direct dependencies, and then you
