@@ -519,7 +519,6 @@ static int __fa_init(struct fa_dev *fa)
 		fa->zero_offset[i] = 0;
 
 	}
-	fa_calib_config(fa);
 
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
