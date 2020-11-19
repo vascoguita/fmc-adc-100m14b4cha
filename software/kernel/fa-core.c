@@ -375,6 +375,21 @@ static bool fa_adc_is_serdes_ready(struct fa_dev *fa)
 	return fa_adc_is_serdes_pll_locked(fa) && fa_adc_is_serdes_synced(fa);
 }
 
+static int fa_adc_wait_serdes_ready(struct fa_dev *fa, unsigned int timeout)
+{
+	unsigned long j;
+
+	j = jiffies + timeout;
+
+	while (!fa_adc_is_serdes_ready(fa)) {
+		if (time_after(jiffies, j))
+			return -ETIMEDOUT;
+		cpu_relax();
+	}
+
+	return 0;
+}
+
 /*
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor
@@ -700,6 +715,11 @@ int fa_probe(struct platform_device *pdev)
 	if (err)
 		goto out_dma;
 
+
+	err = fa_adc_wait_serdes_ready(fa, msecs_to_jiffies(10));
+	if (err)
+		goto out_serdes;
+
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
 		dev_dbg(fa->msgdev, "Calling init for \"%s\"\n", m->name);
@@ -727,6 +747,7 @@ out:
 		if (m->exit)
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
+out_serdes:
 	fa_dma_release_channel(fa);
 out_dma:
 out_fmc_err:
