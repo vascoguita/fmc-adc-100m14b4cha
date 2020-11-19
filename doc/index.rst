@@ -18,6 +18,7 @@ states it has 4 input channels (plus a trigger input).
    :caption: Contents:
 
    software/index
+   gateware/index
 
 Indices and tables
 ==================
