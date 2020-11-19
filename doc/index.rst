@@ -13,3 +13,4 @@ FMC-ADC-100M-14B-4CHA documentation
    introduction
    software/index
    gateware/index
+   gateware/memory-map
