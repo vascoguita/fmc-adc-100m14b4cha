@@ -554,11 +554,12 @@ into a meaningful grep-friendly text stream.
 User Header Files
 =================
 
-Internally the driver uses the header file ``fmc-adc-100m14b4cha.h`` for the
-declaration of all the functions, constants and structures. Some of these are
-also available for the user-space programs; especially the constants to be
-used to properly interpret the ``zio_control`` attributes, or the bitmask
-fields definitions.
+Internally the driver uses the header file
+``fmc-adc-100m14b4cha-private.h`` for the declaration of all the
+functions, constants and structures. Then there is the header file
+``fmc-adc-100m14b4cha.h`` that contains useful symbols for user-space
+programs; especially the constants to be used to properly interpret
+the ``zio_control`` attributes, or the bitmask fields definitions.
 
 Troubleshooting
 '''''''''''''''
