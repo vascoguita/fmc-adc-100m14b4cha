@@ -481,6 +481,16 @@ static void fa_init_timetag(struct fa_dev *fa)
 		  (seconds >> 00) & 0xFFFFFFFF);
 }
 
+static void fa_clock_enable(struct fa_dev *fa)
+{
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
+}
+
+static void fa_clock_disable(struct fa_dev *fa)
+{
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 0);
+}
+
 /*
  * Specific check and init
  */
@@ -511,8 +521,6 @@ static int __fa_init(struct fa_dev *fa)
 	}
 	fa_calib_config(fa);
 
-	/* Enable mezzanine clock */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
@@ -715,6 +723,7 @@ int fa_probe(struct platform_device *pdev)
 	if (err)
 		goto out_dma;
 
+	fa_clock_enable(fa);
 
 	err = fa_adc_wait_serdes_ready(fa, msecs_to_jiffies(10));
 	if (err)
@@ -748,6 +757,7 @@ out:
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
 out_serdes:
+	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 out_dma:
 out_fmc_err:
@@ -776,6 +786,7 @@ int fa_remove(struct platform_device *pdev)
 		if (m->exit)
 			m->exit(fa);
 	}
+	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 
 	iounmap(fa->fa_top_level);
