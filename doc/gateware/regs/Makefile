@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 SOURCES = $(wildcard *.cheby) ../../../hdl/cheby/fmc_adc_mezzanine_mmap.cheby
 TARGETS = $(SOURCES:.cheby=.htm)
 

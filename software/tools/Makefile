@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # If it exists includes Makefile.specific. In this Makefile, you should put
 # specific Makefile code that you want to run before this. For example,
 # build a particular environment.

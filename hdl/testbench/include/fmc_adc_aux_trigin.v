@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
+// SPDX-License-Identifier: CC0-1.0
+
 `define AUX_TRIGIN_SIZE 20
 `define ADDR_AUX_TRIGIN_VERSION 'h0
 `define AUX_TRIGIN_VERSION_PRESET 'hadc10001

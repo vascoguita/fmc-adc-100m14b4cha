@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /main/DUT/cmp_fmc_adc_mezzanine/cmp_fmc_adc_100Ms_core/acq_fsm_current_state

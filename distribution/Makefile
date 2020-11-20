@@ -1,6 +1,7 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
-#
 # Copyright (C) 2020 CERN
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
 
 TOP_DIR ?= $(shell pwd)/../
 

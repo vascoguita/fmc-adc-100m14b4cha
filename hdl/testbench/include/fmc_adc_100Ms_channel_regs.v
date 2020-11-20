@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
+// SPDX-License-Identifier: CC0-1.0
+
 `define FMC_ADC_100MS_CHANNEL_REGS_SIZE 24
 `define ADDR_FMC_ADC_100MS_CHANNEL_REGS_CTL 'h0
 `define FMC_ADC_100MS_CHANNEL_REGS_CTL_SSR_OFFSET 0

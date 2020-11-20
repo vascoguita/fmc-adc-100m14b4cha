@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Mainline copied from the template, added requirements
 
 name:		fmc-adc-100m14b4ch

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Makefile for Latex work
 
 TEXFILE = adc100m14b4cha.tex
