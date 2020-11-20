@@ -14,7 +14,7 @@
    height="510"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.47 r22583"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    version="1.0"
    sodipodi:docname="svec_fw_arch.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
@@ -5260,16 +5260,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="438.34839"
-     inkscape:cy="166.20622"
+     inkscape:zoom="1"
+     inkscape:cx="687.50138"
+     inkscape:cy="4.4261307"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1920"
-     inkscape:window-height="1173"
+     inkscape:window-height="960"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="26"
      inkscape:window-maximized="1"
      inkscape:snap-grids="true"
      inkscape:snap-bbox="true"
@@ -5319,7 +5319,7 @@
        y="74.727264" />
     <text
        xml:space="preserve"
-       style="font-size:11.89787006px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';fill:#000000;fill-opacity:1;stroke:none"
        x="-379.90738"
        y="581.59229"
        id="text23128"
@@ -5327,7 +5327,8 @@
          sodipodi:role="line"
          id="tspan23130"
          x="-379.90738"
-         y="581.59229" /></text>
+         y="581.59229"
+         style="font-size:11.89787006px;line-height:1.25"> </tspan></text>
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect3679-4"
@@ -5376,18 +5377,17 @@
          id="rect4505"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="100%"
          id="text3571"
          y="233.44788"
          x="-551.83441"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3575"
            y="233.44788"
            x="-551.83441"
            sodipodi:role="line">ADC</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3579"
            y="245.44788"
            x="-551.83441"
@@ -5404,18 +5404,17 @@
          id="rect4505-3"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="100%"
          id="text3483"
          y="373.19785"
          x="-552.59906"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3485"
            y="373.19785"
            x="-552.59906"
            sodipodi:role="line">I2C</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3487"
            y="385.19785"
            x="-552.59906"
@@ -5423,27 +5422,26 @@
     </g>
     <g
        id="g13113"
-       transform="translate(-0.50000244,-4.2382817e-7)">
+       transform="translate(209.5,-0.1024174)">
       <rect
          y="454.82968"
          x="-582.06"
          height="39.999996"
          width="60"
          id="rect4505-3-1"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <text
-         sodipodi:linespacing="100%"
          id="text3519"
          y="473.19785"
          x="-552.59906"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3521"
            y="473.19785"
            x="-552.59906"
            sodipodi:role="line">I2C</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3523"
            y="485.19785"
            x="-552.59906"
@@ -5460,22 +5458,21 @@
          id="rect4505-3-3"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="100%"
          id="text3501"
          y="423.30331"
          x="-552.59906"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
-           id="tspan3503"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
+           id="tspan3505"
            y="423.30331"
            x="-552.59906"
-           sodipodi:role="line">1-wire</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
-           id="tspan3505"
+           sodipodi:role="line">Thermo</tspan><tspan
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            y="435.30331"
            x="-552.59906"
-           sodipodi:role="line">master</tspan></text>
+           sodipodi:role="line"
+           id="tspan16744">controller</tspan></text>
     </g>
     <g
        id="g13101"
@@ -5488,18 +5485,17 @@
          id="rect4505-3-8"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="100%"
          id="text3456"
          y="323.19788"
          x="-552.59906"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3458"
            y="323.19788"
            x="-552.59906"
            sodipodi:role="line">SPI</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3460"
            y="335.19788"
            x="-552.59906"
@@ -5527,11 +5523,6 @@
        d="m -522.56,424.82971 10,0 0,-50 20,0"
        id="path6892"
        sodipodi:nodetypes="cccc" />
-    <path
-       style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m -522.56,474.82971 10,0 0,-100 20,0"
-       id="path6894"
-       sodipodi:nodetypes="cccc" />
     <g
        id="g12649"
        transform="translate(-20.500004,-2.3378907e-6)">
@@ -5543,22 +5534,21 @@
          id="rect4505-3-8-2"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="125%"
          id="text3281"
          y="271.80334"
          x="-421.4975"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            y="271.80334"
            x="-421.4975"
            id="tspan3283"
            sodipodi:role="line"
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Timetag</tspan><tspan
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Timetag</tspan><tspan
            y="286.80334"
            x="-421.4975"
            sodipodi:role="line"
            id="tspan4235"
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">core</tspan></text>
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">core</tspan></text>
     </g>
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
@@ -5581,18 +5571,17 @@
          id="rect3679-0"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="125%"
          id="text3416"
          y="101.59544"
          x="-333.22015"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3420"
            y="101.59544"
            x="-333.22015"
            sodipodi:role="line">DDR3 memory</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan10304"
            y="116.59544"
            x="-333.22015"
@@ -5607,17 +5596,16 @@
        y="154.72726" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-332.75531"
        y="173.30148"
-       id="text3421"
-       sodipodi:linespacing="100%"><tspan
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+       id="text3421"><tspan
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          sodipodi:role="line"
          x="-332.75531"
          y="173.30148"
          id="tspan3425">Memory</tspan><tspan
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          sodipodi:role="line"
          x="-332.75531"
          y="185.30148"
@@ -5633,51 +5621,55 @@
          id="rect4505-3-8-2-9-3"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="100%"
          id="text3363"
          y="483.55774"
          x="-142.45551"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           id="tspan3367"
            y="483.55774"
            x="-142.45551"
            sodipodi:role="line"
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">1-wire</tspan><tspan
-           id="tspan3373"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
+           id="tspan16736">Thermo</tspan><tspan
            y="495.55774"
            x="-142.45551"
            sodipodi:role="line"
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">master</tspan></text>
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
+           id="tspan16740">controller</tspan></text>
     </g>
     <g
        id="g18028"
-       transform="translate(-0.50000244,-4.2382817e-7)">
+       transform="translate(149.5,-95.102448)">
       <rect
          y="464.82971"
          x="-382.06"
          height="39.999996"
          width="80"
          id="rect4505-3-8-2-9-2"
-         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <text
-         sodipodi:linespacing="100%"
          id="text3350"
          y="483.55774"
          x="-342.28949"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3354"
            y="483.55774"
            x="-342.28949"
            sodipodi:role="line">Carrier</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3360"
            y="495.55774"
            x="-342.28949"
            sodipodi:role="line">ctrl &amp; stat</tspan></text>
     </g>
+    <path
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);enable-background:accumulate"
+       d="m -232.56,389.72726 -140,0 v -75 l 40,0.10245"
+       id="path6894"
+       sodipodi:nodetypes="cccc"
+       inkscape:connector-curvature="0" />
     <g
        id="g12831"
        transform="translate(9.4999952,-2.3378907e-6)">
@@ -5690,50 +5682,21 @@
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
          transform="scale(0.99690878,1.0031008)"
-         sodipodi:linespacing="125%"
          id="text3207-61"
          y="370.4267"
          x="-463.37302"
-         style="font-size:9.9690876px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            y="370.4267"
            x="-463.37302"
            id="tspan3030-8"
            sodipodi:role="line"
-           style="font-size:11.96290493px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Wishbone</tspan><tspan
+           style="font-weight:normal;font-size:11.96290493px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Wishbone</tspan><tspan
            y="385.38034"
            x="-463.37302"
            id="tspan3032-5"
            sodipodi:role="line"
-           style="font-size:11.96290493px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">crossbar</tspan></text>
-      <g
-         transform="translate(1.3732911e-6,-1.9140625e-6)"
-         id="g12825">
-        <rect
-           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999988;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-           id="rect4505-3-8-2-5"
-           width="44.999996"
-           height="29.999998"
-           x="-502.06"
-           y="394.82971" />
-        <text
-           xml:space="preserve"
-           style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
-           x="-479.76752"
-           y="407.21985"
-           id="text3281-9"
-           sodipodi:linespacing="125%"><tspan
-             style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
-             id="tspan4235-3"
-             sodipodi:role="line"
-             x="-479.76752"
-             y="407.21985">SDB</tspan><tspan
-             id="tspan12808"
-             style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
-             sodipodi:role="line"
-             x="-479.76752"
-             y="419.71985">records</tspan></text>
-      </g>
+           style="font-weight:normal;font-size:11.96290493px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">crossbar</tspan></text>
     </g>
     <path
        style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
@@ -5749,47 +5712,45 @@
        y="225.22726" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-132.41058"
        y="273.39667"
-       id="text3229"
-       sodipodi:linespacing="100%"><tspan
+       id="text3229"><tspan
          sodipodi:role="line"
          id="tspan3231"
          x="-132.41058"
          y="273.39667"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">VME64x</tspan><tspan
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'">VME64x</tspan><tspan
          sodipodi:role="line"
          x="-132.41058"
          y="285.39667"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan21520">core</tspan><tspan
          sodipodi:role="line"
-         x="-132.41058"
+         x="-130.32465"
          y="297.39667"
          id="tspan14382"
-         style="font-size:12px" /></text>
+         style="font-size:12px;line-height:1"> </tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-677.80609"
        y="134.82971"
-       id="text3571-2-6"
-       sodipodi:linespacing="100%"><tspan
+       id="text3571-2-6"><tspan
          id="tspan3248-16"
          sodipodi:role="line"
          x="-675.3725"
          y="134.82971"
-         style="font-size:14px">FMC-ADC </tspan><tspan
+         style="font-size:14px;line-height:1">FMC-ADC </tspan><tspan
          sodipodi:role="line"
          x="-677.80609"
          y="148.82971"
-         style="font-size:14px"
+         style="font-size:14px;line-height:1"
          id="tspan11674">mezzanine</tspan><tspan
          sodipodi:role="line"
          x="-677.80609"
          y="162.82971"
-         style="font-size:14px"
+         style="font-size:14px;line-height:1"
          id="tspan23193">(2x)</tspan></text>
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
@@ -5800,20 +5761,19 @@
        y="245.27849" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-52.785591"
        y="272.23358"
-       id="text3229-4"
-       sodipodi:linespacing="100%"><tspan
+       id="text3229-4"><tspan
          sodipodi:role="line"
          x="-52.785591"
          y="272.23358"
          id="tspan14386"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">VME</tspan><tspan
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'">VME</tspan><tspan
          sodipodi:role="line"
          x="-52.785591"
          y="284.23358"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan23139">interface</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend-8)"
@@ -5853,9 +5813,11 @@
        x="-713.06"
        y="454.82971" />
     <path
-       style="color:#000000;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend-8);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m -642.55999,474.8297 60,0"
-       id="path11686" />
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend-8);enable-background:accumulate"
+       d="M -642.55999,474.8297 -372.56,474.72726"
+       id="path11686"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
     <path
        style="color:#000000;fill:none;stroke:#000000;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend-8);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -102.56,275.02849 20.503048,0"
@@ -5869,16 +5831,15 @@
        y="174.82971" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-677.27582"
        y="219.19788"
-       id="text3416-3"
-       sodipodi:linespacing="125%"><tspan
+       id="text3416-3"><tspan
          sodipodi:role="line"
          x="-677.27582"
          y="219.19788"
          id="tspan10304-0"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">ADC</tspan></text>
+         style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">ADC</tspan></text>
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect4505-3-8-2-9-11"
@@ -5888,62 +5849,58 @@
        y="265.32968" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-677.31024"
        y="297.30551"
-       id="text3416-3-2"
-       sodipodi:linespacing="125%"><tspan
+       id="text3416-3-2"><tspan
          sodipodi:role="line"
          x="-677.31024"
          y="297.30551"
          id="tspan10304-0-3"
-         style="font-size:11px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Analogue</tspan><tspan
+         style="font-weight:normal;font-size:11px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Analogue</tspan><tspan
          sodipodi:role="line"
          x="-677.31024"
          y="311.05551"
-         style="font-size:11px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:11px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan13203">front-end</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-678.12347"
        y="379.30334"
-       id="text3416-3-2-6"
-       sodipodi:linespacing="125%"><tspan
+       id="text3416-3-2-6"><tspan
          sodipodi:role="line"
          x="-678.12347"
          y="379.30334"
          id="tspan10304-0-3-4"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Clock</tspan></text>
+         style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Clock</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-677.21722"
        y="421.88831"
-       id="text3416-3-2-3"
-       sodipodi:linespacing="125%"><tspan
+       id="text3416-3-2-3"><tspan
          sodipodi:role="line"
          x="-677.21722"
          y="421.88831"
          id="tspan10304-0-3-0"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Thermo</tspan><tspan
+         style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Thermo</tspan><tspan
          sodipodi:role="line"
          x="-677.21722"
          y="436.88831"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan13205">+ UID</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-677.81"
        y="479.19788"
-       id="text3416-3-2-7"
-       sodipodi:linespacing="125%"><tspan
+       id="text3416-3-2-7"><tspan
          sodipodi:role="line"
          x="-677.81"
          y="479.19788"
          id="tspan10304-0-3-6"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">EEPROM</tspan></text>
+         style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">EEPROM</tspan></text>
     <path
        style="color:#000000;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#Arrow1Mstart);marker-end:url(#Arrow1Mend-8);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -642.55997,279.82971 60,0"
@@ -5961,16 +5918,15 @@
        y="174.82971" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-354.85901"
        y="-604.42523"
        id="text3571-2-9"
-       sodipodi:linespacing="100%"
-       transform="matrix(0,-1,1,0,0,0)"><tspan
+       transform="rotate(-90)"><tspan
          sodipodi:role="line"
          x="-354.85901"
          y="-604.42523"
-         style="font-size:12px"
+         style="font-size:12px;line-height:1"
          id="tspan5016">FMC connector</tspan></text>
     <g
        id="g13463"
@@ -5983,19 +5939,18 @@
          id="rect4505-3-8-2-9-32-7-7"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="125%"
          id="text3416-3-2-3-4"
          y="490.48099"
          x="-284.01163"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan10304-0-3-0-9"
            y="490.48099"
            x="-284.01163"
            sodipodi:role="line">Thermo</tspan><tspan
            id="tspan13205-6"
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
            y="505.48099"
            x="-284.01163"
            sodipodi:role="line">+ UID</tspan></text>
@@ -6024,65 +5979,60 @@
            sodipodi:nodetypes="cc" />
         <text
            xml:space="preserve"
-           style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
            x="-237.20357"
            y="148.56253"
-           id="text3416-3-9"
-           sodipodi:linespacing="125%"><tspan
+           id="text3416-3-9"><tspan
              sodipodi:role="line"
              x="-237.20357"
              y="148.56253"
              id="tspan10304-0-35"
-             style="font-weight:normal;stroke:none;-inkscape-font-specification:Bitstream Charter">Wishbone bus</tspan></text>
+             style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';stroke:none">Wishbone bus</tspan></text>
         <text
            xml:space="preserve"
-           style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
            x="-172.89789"
            y="159.43216"
-           id="text3416-3-9-1"
-           sodipodi:linespacing="125%"><tspan
+           id="text3416-3-9-1"><tspan
              sodipodi:role="line"
              x="-172.89789"
              y="159.43216"
-             style="font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+             style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
              id="tspan13649">Slave</tspan></text>
         <text
            xml:space="preserve"
-           style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
            x="-307.98093"
            y="159.27835"
-           id="text3416-3-9-8"
-           sodipodi:linespacing="125%"><tspan
+           id="text3416-3-9-8"><tspan
              sodipodi:role="line"
              x="-307.98093"
              y="159.27835"
              id="tspan10304-0-35-5"
-             style="font-weight:normal;-inkscape-font-specification:Bitstream Charter">Master</tspan></text>
+             style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Master</tspan></text>
       </g>
     </g>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
-       x="-278.57172"
-       y="414.38742"
-       id="text3571-2-6-1"
-       sodipodi:linespacing="100%"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-292.71384"
+       y="418.98361"
+       id="text3571-2-6-1"><tspan
          sodipodi:role="line"
-         x="-278.57172"
-         y="414.38742"
-         style="font-size:24px"
+         x="-292.71384"
+         y="418.98361"
+         style="font-size:24px;line-height:1"
          id="tspan21552">FPGA</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-498.16449"
        y="102.88156"
-       id="text3571-2-6-1-9"
-       sodipodi:linespacing="100%"><tspan
+       id="text3571-2-6-1-9"><tspan
          sodipodi:role="line"
          x="-498.16449"
          y="102.88156"
-         style="font-size:14px"
+         style="font-size:14px;line-height:1"
          id="tspan21586">SVEC (VME64x carrier)</tspan></text>
     <g
        transform="translate(169.5,-50.102448)"
@@ -6096,50 +6046,21 @@
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
          transform="scale(0.99690878,1.0031008)"
-         sodipodi:linespacing="125%"
          id="text3207-61-2"
          y="370.4267"
          x="-463.37302"
-         style="font-size:9.9690876px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            y="370.4267"
            x="-463.37302"
            id="tspan3030-8-03"
            sodipodi:role="line"
-           style="font-size:11.96290493px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Wishbone</tspan><tspan
+           style="font-weight:normal;font-size:11.96290493px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Wishbone</tspan><tspan
            y="385.38034"
            x="-463.37302"
            id="tspan3032-5-1"
            sodipodi:role="line"
-           style="font-size:11.96290493px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">crossbar</tspan></text>
-      <g
-         transform="translate(1.3732911e-6,-1.9140625e-6)"
-         id="g12825-9">
-        <rect
-           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999988;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
-           id="rect4505-3-8-2-5-1"
-           width="44.999996"
-           height="29.999998"
-           x="-502.06"
-           y="394.82971" />
-        <text
-           xml:space="preserve"
-           style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
-           x="-479.76752"
-           y="407.21985"
-           id="text3281-9-6"
-           sodipodi:linespacing="125%"><tspan
-             style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
-             id="tspan4235-3-4"
-             sodipodi:role="line"
-             x="-479.76752"
-             y="407.21985">SDB</tspan><tspan
-             id="tspan12808-1"
-             style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
-             sodipodi:role="line"
-             x="-479.76752"
-             y="419.71985">records</tspan></text>
-      </g>
+           style="font-weight:normal;font-size:11.96290493px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">crossbar</tspan></text>
     </g>
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999988;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
@@ -6164,27 +6085,26 @@
          id="rect4505-3-8-2-4"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="125%"
          id="text3281-8"
          y="215.31555"
          x="-447.33099"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            id="tspan12693"
            y="215.31555"
            x="-447.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Interrupt</tspan><tspan
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Interrupt</tspan><tspan
            id="tspan12699"
            y="227.81555"
            x="-447.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">controller</tspan><tspan
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">controller</tspan><tspan
            id="tspan12701"
            y="240.31555"
            x="-447.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">(eic)</tspan></text>
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">(eic)</tspan></text>
     </g>
     <g
        id="g13390"
@@ -6197,93 +6117,89 @@
          id="rect4505-3-8-2-4-5"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="125%"
          id="text3281-8-8"
          y="216.71938"
          x="-342.33099"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            id="tspan12693-7"
            y="216.71938"
            x="-342.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">Vectored</tspan><tspan
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">Vectored</tspan><tspan
            y="229.21938"
            x="-342.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan12766">interrupt</tspan><tspan
            id="tspan12699-4"
            y="241.71938"
            x="-342.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">controller</tspan><tspan
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">controller</tspan><tspan
            id="tspan12701-8"
            y="254.21938"
            x="-342.33099"
            sodipodi:role="line"
-           style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">(vic)</tspan></text>
+           style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">(vic)</tspan></text>
     </g>
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="-512.56"
        y="239.82971"
-       id="text3237-3-4"
-       sodipodi:linespacing="125%"><tspan
+       id="text3237-3-4"><tspan
          sodipodi:role="line"
          x="-512.56"
          y="239.82971"
          id="tspan3239-3-9"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">Acq. start</tspan><tspan
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">Acq. start</tspan><tspan
          sodipodi:role="line"
          x="-512.56"
          y="247.32971"
          id="tspan3241-2-2"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">Acq. stop</tspan><tspan
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">Acq. stop</tspan><tspan
          sodipodi:role="line"
          x="-512.56"
          y="254.82971"
          id="tspan4060"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">Acq. end</tspan><tspan
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">Acq. end</tspan><tspan
          sodipodi:role="line"
          x="-512.56"
          y="262.32971"
          id="tspan4062"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">Trigger</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">Trigger</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="-512.56"
        y="209.72726"
-       id="text3237-3-4-5"
-       sodipodi:linespacing="125%"><tspan
+       id="text3237-3-4-5"><tspan
          sodipodi:role="line"
          x="-512.56"
          y="209.72726"
          id="tspan4060-8"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">Acq. end</tspan><tspan
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">Acq. end</tspan><tspan
          sodipodi:role="line"
          x="-512.56"
          y="217.22726"
          id="tspan4062-2"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">Trigger</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">Trigger</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.99999988;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#TriangleInM);marker-end:none"
        d="m -164.99973,249.82971 -127.06027,0"
        id="path5962-6" />
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="-247.88715"
        y="247.18039"
-       id="text3237-3-4-5-6-2"
-       sodipodi:linespacing="125%"><tspan
+       id="text3237-3-4-5-6-2"><tspan
          sodipodi:role="line"
          x="-247.88715"
          y="247.18039"
          id="tspan4062-2-2-5"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">IRQ</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">IRQ</tspan></text>
     <path
        style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -412.56,284.82971 10,0 0,40 -110,0 0,50 20,0"
@@ -6313,16 +6229,15 @@
        id="path5962-6-1-5-7" />
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="-385.56"
        y="206.72726"
-       id="text3237-3-4-5-4"
-       sodipodi:linespacing="125%"><tspan
+       id="text3237-3-4-5-4"><tspan
          sodipodi:role="line"
          x="-385.56"
          y="206.72726"
          id="tspan4062-2-5"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">FMC1 irq</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC1 irq</tspan></text>
     <path
        style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -182.56,314.82972 20,0"
@@ -6337,10 +6252,11 @@
        id="path13578"
        sodipodi:nodetypes="cccc" />
     <path
-       style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m -302.56,484.82971 15,0 0,-50.10245 -85,0 0,-120 40,0"
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);enable-background:accumulate"
+       d="m -312.56,474.72726 h 25 l 0,-40 h -85 v -120 h 40"
        id="path13596"
-       sodipodi:nodetypes="cccccc" />
+       sodipodi:nodetypes="cccccc"
+       inkscape:connector-curvature="0" />
     <path
        style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -182.56,484.82971 -105,0 0,-50.10245 -85,0 0,-120 40,0"
@@ -6353,38 +6269,36 @@
        sodipodi:nodetypes="cccc" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
-       x="-435.27484"
-       y="469.72726"
-       id="text3571-3"
-       sodipodi:linespacing="100%"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-450.83118"
+       y="443.5643"
+       id="text3571-3"><tspan
          sodipodi:role="line"
-         x="-435.27484"
-         y="469.72726"
+         x="-450.83118"
+         y="443.5643"
          id="tspan3579-7"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter">FMC-ADC</tspan><tspan
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'">FMC-ADC</tspan><tspan
          sodipodi:role="line"
-         x="-435.27484"
-         y="481.72726"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         x="-450.83118"
+         y="455.5643"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan18087">mezzanine</tspan><tspan
          sodipodi:role="line"
-         x="-435.27484"
-         y="493.72726"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         x="-450.83118"
+         y="467.5643"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan18089">component</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
        x="-385.14886"
        y="217.28586"
-       id="text3237-3-4-5-4-0"
-       sodipodi:linespacing="125%"><tspan
+       id="text3237-3-4-5-4-0"><tspan
          sodipodi:role="line"
          x="-385.14886"
          y="217.28586"
          id="tspan4062-2-5-4"
-         style="font-size:6px;font-weight:normal;text-align:start;text-anchor:start;-inkscape-font-specification:Bitstream Charter">FMC0 irq</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC0 irq</tspan></text>
     <path
        style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -287.56,174.72726 25,0 0,0 0,0"
@@ -6405,22 +6319,21 @@
        y="154.72726" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-237.86517"
        y="170.70529"
-       id="text3281-8-8-5"
-       sodipodi:linespacing="125%"><tspan
-         style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+       id="text3281-8-8-5"><tspan
+         style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
          sodipodi:role="line"
          x="-237.86517"
          y="170.70529"
          id="tspan12701-8-4">Indirect</tspan><tspan
-         style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
          sodipodi:role="line"
          x="-237.86517"
          y="183.20529"
          id="tspan23486">memory</tspan><tspan
-         style="font-size:10px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:10px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
          sodipodi:role="line"
          x="-237.86517"
          y="195.70529"
@@ -6451,18 +6364,17 @@
          id="rect4505-3-1-6"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="100%"
          id="text3519-3"
          y="433.09543"
          x="-143.09906"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3521-3"
            y="433.09543"
            x="-143.09906"
            sodipodi:role="line">I2C</tspan><tspan
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
            id="tspan3523-2"
            y="445.09543"
            x="-143.09906"
@@ -6479,14 +6391,13 @@
          id="rect4505-3-8-2-9-32-7-7-1"
          style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
       <text
-         sodipodi:linespacing="125%"
          id="text3416-3-2-3-4-2"
          y="497.30032"
          x="-284.2045"
-         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
          xml:space="preserve"><tspan
            id="tspan13205-6-0"
-           style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+           style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
            y="497.30032"
            x="-284.2045"
            sodipodi:role="line">EEPROM</tspan></text>
@@ -6503,26 +6414,25 @@
        sodipodi:nodetypes="cccc" />
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Verdana;-inkscape-font-specification:Verdana Bold"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
        x="-207.09613"
        y="321.78781"
-       id="text3229-40"
-       sodipodi:linespacing="100%"><tspan
+       id="text3229-40"><tspan
          sodipodi:role="line"
          x="-207.09613"
          y="321.78781"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan21520-2">Clock</tspan><tspan
          sodipodi:role="line"
          x="-207.09613"
          y="333.78781"
-         style="font-size:12px;font-weight:normal;-inkscape-font-specification:Bitstream Charter"
+         style="font-weight:normal;font-size:12px;line-height:1;-inkscape-font-specification:'Bitstream Charter'"
          id="tspan39205">X'ing</tspan><tspan
          sodipodi:role="line"
-         x="-207.09613"
+         x="-205.01019"
          y="345.78781"
          id="tspan14382-0"
-         style="font-size:12px" /></text>
+         style="font-size:12px;line-height:1"> </tspan></text>
     <path
        style="color:#000000;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        d="m -252.56,314.72726 20,0"
