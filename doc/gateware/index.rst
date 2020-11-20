@@ -171,33 +171,6 @@ They are listed in the following table.
 |                 |                 |                 | (carrier)       |
 +-----------------+-----------------+-----------------+-----------------+
 
-GN4124 Core
-~~~~~~~~~~~
-
-This block is the interface between the `GN4124`_
-local bus and the other blocks in the FPGA. The GN4124 is a four lane
-PCI Express Generation 1.1 bridge. In addition to the PHY, it also
-contains the data link and transaction layers. The GN4124 bridge is used
-to access the FPGA registers, but also to generate MSI interrupts and
-re-program the FPGA. BAR4 (Base Address Register) allows access to the
-GN4124 internal registers. BAR0 is connected to the local bus and
-therefore allows access to the FPGA.
-
-The GN4124 core is made of a local bus interface with the GN4124 chip, a
-Wishbone bus master mapped to BAR0 and a DMA controller. The DMA
-controller has two Wishbone ports, a Wishbone slave to configure the DMA
-controller and a Wishbone master. In the fmc-adc gateware, the master
-port is connected to the DDR memory controller. The GN4124 Wishbone
-interfaces (masters and slave) are 32-bit data width and 32-bit word
-aligned addresses.
-
-.. note::
-
-   It would not be beneficial to insert an address converter (for
-   non-interleaved data read) between the GN4124 core and the memory
-   controller, because the DDR memory access is not efficient when
-   reading non-consecutive addresses.
-
 SVEC (VME64x carrier)
 ---------------------
 
@@ -290,13 +263,6 @@ They are listed in the following table.
 |                 | clock           |                 |                 |
 +-----------------+-----------------+-----------------+-----------------+
 
-VME64x Core
-~~~~~~~~~~~
-
-The VME64x core implements a VME slave on one side and a Wishbone
-pipelined master on the other side. For more information about the
-VME64x core, visit the OHWR page.
-
 Common Cores
 ------------
 
@@ -337,14 +303,6 @@ In the current design, the two Wishbone ports have the same priority and
 the arbitration is done with a simple round-robin. Therefore, samples
 stored in the DDR memory should not be read during an acquisition.
 
-Vectored Interrupt Controller (VIC)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-
-   FIXME explain how interrupts are connected to spec-base/svec-base.
-   There is something to be said about EDGE/LEVEL, or polarity.
-
 FMC-ADC Core
 ------------
 
@@ -378,8 +336,7 @@ the hdl code), therefore the sampling frequency has to be 100MHz and
 can’t be changed dynamically.
 
 The ADC core implements a sampling clock frequency meter. The measured
-frequency (in Hz) can be read via a register (see `ADC Core
-Registers <#ADC-Core-Registers>`__).
+frequency (in Hz) can be read via a register (see :doc:`memory-map`).
 
 Time-tagging Core
 ~~~~~~~~~~~~~~~~~
@@ -421,15 +378,13 @@ The following events are time-tagged:
    If during an acquisition no stop command is issued (normal case),
    the acquisition stop time-tag is not updated.
 
-The register description can be found in annex `Time-tagging Core
-Registers <#Time_002dtagging-Core-Registers>`__.
+The register description can be found in :doc:`memory-map`.
 
 FMC-ADC Control and Status Registers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This block contains control and status registers related to the fmc-adc
-core. The registers description can be found in annex (`ADC Core
-Registers <#ADC-Core-Registers>`__).
+core. The registers description can be found in :doc:`memory-map`.
 
 Mezzanine SPI Master
 ~~~~~~~~~~~~~~~~~~~~
@@ -456,17 +411,14 @@ This block is clocked by the system clock (125 MHz). Therefore for a
 SCLK of ~620 kHz, the divider configuration is ``DIVIDER=100``.
 
 ::
-    f_sclk = f_sys / ((DIVIDER+1) * 2)
+
+   f_sclk = f_sys / ((DIVIDER+1) * 2)
 
 Mezzanine 1-wire Master
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-This 1-wire master controls the DS18B20 thermometer chip located on the
-mezzanine board. This chip also contains a unique 64-bit identifier.
-This block is based on an OpenCores design\ `:sup:`21` <#FOOT21>`__.
-
-This block is clocked by the system clock (125 MHz). Therefore the
-dividers configuration are ``CDR_N=624`` and ``CDR_O=124``.
+.. note::
+   FIXME talk about the themometer core in general-cores
 
 Mezzanine I2C Master
 ~~~~~~~~~~~~~~~~~~~~
@@ -485,35 +437,31 @@ This block is clocked by the system clock (125 MHz). Therefore for a SCL
 clock of 100 kHz, the prescaler configuration is ``PRESCALER=249``.
 
 ::
-    PRESCALER = f_sys / (5 * f_scl) - 1
+
+   PRESCALER = f_sys / (5 * f_scl) - 1
 
 
 FMC-ADC Embedded Interrupt Controller (EIC)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-
-   FIXME check if this is gone
-
 The fmc-adc EIC gathers the interrupts from the ADC core. There are two
-inputs to the fmc-adc EIC:
+inputs to the fmc-adc EIC.
 
--  ° **Trigger**: This interrupt signals that a valid trigger arrived
-   while the acquisition state machine was in the ``WAIT_TRIG`` state.
--  ° **Acquisition end**: This interrupt signals the end of an
-   acquisition. In case of multi-shot acquisition, it occurs at the end
-   of the last shot.
+Trigger
+   This interrupt signals that a valid trigger arrived while the
+   acquisition state machine was in the ``WAIT_TRIG`` state.
 
-The two inputs are multiplexed and the result is forwarded to the VIC
-(`Vectored Interrupt Controller
-(VIC) <#Vectored-Interrupt-Controller-_0028VIC_0029>`__). Interrupt
-sources can be masked using the enable and disable registers. An
-interrupt is cleared by writing a one to the corresponding bit of the
-status register.
+Acquisition end
+   This interrupt signals the end of an acquisition. In case of
+   multi-shot acquisition, it occurs at the end of the last shot.
 
-The registers description can be found in annex `FMC-ADC Embedded
-Interrupt Controller
-Registers <#FMC_002dADC-Embedded-Interrupt-Controller-Registers>`__).
+The two inputs are multiplexed and the result is forwarded to the
+``spec-base`` (on `SPEC`_) or ``svec-base`` (on `SVEC`_).  (See
+`SPEC`_ or `SVEC`_ documentation). Interrupt sources can be masked
+using the enable and disable registers. An interrupt is cleared by
+writing a one to the corresponding bit of the status register.
+
+The registers description can be found in :doc:`memory-map`.
 
 Configuration
 -------------
@@ -524,8 +472,7 @@ an offset and gain correction block (for ADC data), an under-sampling
 block and a trigger unit. The four channels’ data and the trigger
 signal are synchronised to the system clock domain using a FIFO. The
 configuration signals coming from registers in the system clock domain
-are synchronised to the sampling clock within the Wishbone slave
-(``wbgen2`` feature).
+are synchronised to the sampling clock within the Wishbone slave.
 
 .. figure:: ../fig/adc_core_fs_clk.svg
    :alt: ADC core diagram (sampling clock domain)
@@ -572,14 +519,20 @@ FMC front panel LEDs. Those four fields are for test purpose only and
 must stay zero in normal operation.
 
 When the sampling clock is enabled, the ``SERDES_PLL`` and
-``SERDES_SYNCED`` field from the ADC core status register must be set to
-one.
+``SERDES_SYNCED`` field from the ADC core status register must be set
+to one.
 
 Input Ranges
 ~~~~~~~~~~~~
 
-`Figure 4.3 <#fig_003aanalogue_005finput>`__ shows a simplified
-schematic diagram of the analogue input stage used for each channel.
+This figure shows a simplified schematic diagram of the analogue input
+stage used for each channel.
+
+.. figure:: ../fig/analogue_input.pdf
+   :alt: Simplified schematic diagram of the analogue input stage
+
+   Simplified schematic diagram of the analogue input stage.
+
 Each input can be independently configured with one of the three
 available ranges; 100mV, 1V, 10V. Each range is defined as the maximum
 peak-to-peak input voltage. Independently to the selected range, a
@@ -591,11 +544,6 @@ more configurations used for offset calibration of each range.
 Opto-isolated analogue switches are used to apply the various
 configurations. They are represented by standard switch symbols in the
 simplified schematic.
-
-.. figure:: ../fig/analogue_input.pdf
-   :alt: Simplified schematic diagram of the analogue input stage
-
-   Simplified schematic diagram of the analogue input stage.
 
 Only the following input switch configurations are valid. For all others
 switch configurations, the behavior is not defined and therefore
@@ -611,7 +559,7 @@ shouldn’t be used.
 | 0x45    | ON  | OFF | OFF | X   | ON  | OFF | ON` | 10V range                      |
 +---------+-----+-----+-----+-----+-----+-----+-----+--------------------------------+
 | 0x42    | ON  | OFF | OFF | X   | OFF | ON  | OFF | 100mV range offset calibration |
-+-------+-------+-----+-----+-----+-----+-----+-----+--------------------------------+
++---------+-----+-----+-----+-----+-----+-----+-----+--------------------------------+
 | 0x40    | ON  | OFF | OFF | X   | OFF | OFF | OFF | 1V range offset calibration    |
 +---------+-----+-----+-----+-----+-----+-----+-----+--------------------------------+
 | 0x44    | ON  | OFF | OFF | X   | ON  | OFF | OFF | 10V range offset calibration   |
@@ -630,6 +578,7 @@ independent from the selected input range. The following equation shows
 how to convert a digital value written to a DAC to an offset voltage.
 
 ::
+
     v_dac = (v_ref * d_dac/0x8000) - v_ref
     Where:
     v_ref = DAC's voltage reference = 5V
@@ -853,7 +802,10 @@ Samples are stored interleaved in the DDR memory. `Figure
 6.2 <#fig_003amem_005fsamples>`__ illustrates the way samples are
 written, stored and read in the DDR memory. The DDR memory size is 2Gb
 or 256MB.
-This means that the maximum number of samples that can be stored is 128M (\ *2^{27}*16*).
+
+.. note::
+   This means that the maximum number of samples that can be stored is
+   128M (\ *2^{27}*16*).
 
 .. figure:: ../fig/memory_samples.svg
    :alt: Illustration of samples storage in DDR memory
@@ -864,7 +816,7 @@ The acquisition process is driven by a state machine.  At
 start-up (system reset), the state machine is ``IDLE``, waiting for an
 acquisition start command (``ACQ_START``). Commands are sent to the
 state machine by writing in the ``FSM_CMD`` field of the control
-register (see `ADC Core Registers <#ADC-Core-Registers>`__).
+register (the registers description can be found in :doc:`memory-map`).
 
 .. figure:: ../fig/acq_fsm.svg
    :alt: Acquisition state machine
@@ -983,8 +935,8 @@ around the state machine as many times as the number of configured
 shots. This means that if the board is configured for N shots, it will
 generate N trigger interrupts (if enabled) and then another interrupt at
 the end of the acquisition. A counter, accessible via a register, shows
-the remaining number of shots (see `ADC Core
-Registers <#ADC-Core-Registers>`__).
+the remaining number of shots (the registers description can be found
+in :doc:`memory-map`).
 
 Unlike the single-mode acquisition, in multi-shot, the DDR memory is not
 used as a circular buffer. Instead, two dual port RAM (dpram) are
@@ -1017,11 +969,12 @@ shots organisation in the DDR memory.
 .. note::
    The size of the dprams is configurable during the generation
    of the FPGA bitstream (VHDL generic), but not at runtime. The software
-   can retrieve the maximum *allowed* value from the *Multi-shot sample
-   depth register* (see `ADC Core Registers <#ADC-Core-Registers>`__). The
-   value stored in that read-only register already takes into account the 2
-   samples reserved for the time-tag (eg. if the actual maximum number of
-   samples allowed is 8000, the register will read 7998).
+   can retrieve the maximum *allowed* value from the *Multi-shot
+   sample depth register* (the registers description can be found in
+   :doc:`memory-map`). The value stored in that read-only register
+   already takes into account the 2 samples reserved for the time-tag
+   (eg. if the actual maximum number of samples allowed is 8000, the
+   register will read 7998).
 
 Calibration Data Storage in EEPROM
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1245,7 +1198,7 @@ Glossary
 .. _`HDL Make`: http://www.ohwr.org/projects/hdl-make
 .. _`OpenCores Wishbone`: http://opencores.org/opencores,wishbone
 .. _`OpenCores`: http://opencores.org/
-.. _`GN4124`: PCI Express bridge from Semtech (formerly Gennum)
+.. _`GN4124`: https://media.digikey.com/pdf/Data%20Sheets/Semtech%20PDFs/GN4124.pdf
 .. _`24AA64`: http://ww1.microchip.com/downloads/en/devicedoc/21189f.pdf
 .. _`Xilinx CoreGen`: http://www.xilinx.com/support/documentation/user_guides/ug388.pdf
 .. _`LTC2174`: https://www.analog.com/media/en/technical-documentation/data-sheets/21754314fa.pdf
