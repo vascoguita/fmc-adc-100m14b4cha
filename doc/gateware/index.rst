@@ -1158,3 +1158,4 @@ Glossary
 .. _`VME64x Slave`: http://www.ohwr.org/hdl-core-lib/vme64x-core
 .. _`SPEC`: https://ohwr.org/project/spec
 .. _`SVEC`: https://ohwr.org/project/svec
+.. _`Wr cores`: https://ohwr.org/project/wr-cores
