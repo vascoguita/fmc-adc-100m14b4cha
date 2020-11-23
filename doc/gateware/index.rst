@@ -19,9 +19,9 @@ generates Makefiles for synthesis/par and simulation.
 Here is the procedure to build the FPGA binary image from the hdl
 source.::
 
-  # Install ``hdlmake`` (version 2.1).
+  # Install ``hdlmake`` (version 3.4).
   # Get fmc-adc hdl sources.
-  git clone git://ohwr.org/fmc-projects/fmc-adc-100m14b4cha-gw.git <src_dir>
+  git clone git://ohwr.org/project/fmc-adc-100m14b4cha.git <src_dir>
 
   # Goto the synthesis directory.
   cd <src_dir>/hdl/<carrier>/syn/
@@ -38,19 +38,15 @@ Source Code Organisation
 hdl/rtl/
     ADC specific hdl sources.
 
-hdl/adc/wb_gen/
-    ADC specific ``wbgen2`` sources, html documentation and C header
+hdl/cheby/
+    ADC specific ``cheby`` sources, html documentation and C header
     file.
 
 hdl/ip_cores/
     Location of fetched and generated hdl cores and libraries.
 
-hdl/<carrier>/rtl/
-    Carrier related hdl sources.
-
-hdl/<carrier>/wb_gen/
-    Carrier related ``wbgen2`` sources, html documentation and C header
-    file.
+hdl/platform/<platform>
+    Platform related hdl sources.
 
 hdl/<carrier>/syn/
     Synthesis directory for selected carrier. This is where the
@@ -58,11 +54,8 @@ hdl/<carrier>/syn/
     release, the synthesis, place&route and timing reports are also
     saved here.
 
-hdl/<carrier>/sim/, hdl/<carrier>/testbench/
-    Carrier related simulation files and testbenches.
-
-hdl/<carrier>/chipscope/
-    Carrier related Chipscope projects used for debug purpose.
+hdl/testbench/
+    Simulation files and testbenches.
 
 It could happen that a hdl source directory contains extra source files
 that are not used in the current gateware release. In order to identify
@@ -74,7 +67,8 @@ Dependencies
 
 The fmc-adc gateware depends on the following hdl cores and libraries:
 `General Cores`_, `DDR3 SP6 core`_, `GN4124 core`_ (SPEC only),
-`SPEC`_ (SPEC only) `VME64x Slave`_ (SVEC only), `SVEC`_ (SVEC only).
+`SPEC`_ (SPEC only) `VME64x Slave`_ (SVEC only), `SVEC`_ (SVEC only),
+`WR Cores`_.
 
 These dependencies are managed with GIT submodules. Whenever you checkout
 a different branch remember to update the submodules as well.::
@@ -120,26 +114,6 @@ ADC core to memory controller (orange)
 Memory controller to GN4124 core (red)
   This bus is used to read samples from the DDR memory.
   Data: 32-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
-
-The next table shows the Wishbone slaves mapping and hierarchy. The
-first column represents the byte address offset from the start of the
-Wishbone address space (BAR 0).
-
-::
-
-   0x1000 |-- dma controller
-   0x1100 |-- onewire master
-   0x1200 |-- spec csr
-   0x1300 |-- vic
-   0x1400 |-- dma eic
-   0x2000 |-- bridge (fmc slot 1) -> crossbar (sdb records)
-   0x3000 |                          |-- i2c master
-   0x3100 |                          |-- spi master
-   0x3200 |                          |-- i2c master
-   0x3300 |                          |-- adc csr
-   0x3400 |                          |-- onewire
-   0x3500 |                          |-- fmc-adc eic
-   0x3600 |                          |-- timetag core
 
 Note that some of the cores from the `General Cores`_ library are
 based on cores from `OpenCores`_. Therefore, the documentation for
@@ -206,41 +180,11 @@ ADC cores to memory controllers (2x, orange)**
    and the first Wishbone crossbar component. With this topology, only
    the VME64x core runs at a lower frequency.
 
-The next table shows the Wishbone slaves mapping and hierarchy. The
-first column represents the byte address offset from the start of the
-Wishbone address space.
-
-::
-
-    0x1000 |-- i2c
-    0x1100 |-- onewire
-    0x1200 |-- svec csr
-    0x1300 |-- vic
-    0x2000 |-- bridge (fmc slot 1) -> crossbar (sdb records)
-    0x3000 |                          |-- i2c
-    0x3100 |                          |-- spi
-    0x3200 |                          |-- i2c
-    0x3300 |                          |-- adc csr
-    0x3400 |                          |-- onewire
-    0x3500 |                          |-- fmc_eic
-    0x3600 |                          |-- timetag
-    0x4000 |-- ddr_addr (fmc slot 1)
-    0x5000 |-- ddr_data (fmc slot 1)
-    0x6000 |-- bridge (fmc slot 2) -> crossbar (sdb records)
-    0x7000 |                          |-- i2c
-    0x7100 |                          |-- spi
-    0x7200 |                          |-- i2c
-    0x7300 |                          |-- adc csr
-    0x7400 |                          |-- onewire
-    0x7500 |                          |-- fmc_eic
-    0x7600 |                          |-- timetag
-    0x8000 |-- ddr_addr (fmc slot 2)
-    0x9000 |-- ddr_data (fmc slot 2)
 
 Clock Domains
 ~~~~~~~~~~~~~
 
-The SPEC version of the fmc-adc design has five different clock domains.
+The SVEC version of the fmc-adc design has five different clock domains.
 They are listed in the following table.
 
 +-----------------+-----------------+-----------------+-----------------+
