@@ -355,6 +355,7 @@ This block is clocked by the system clock (125 MHz). Therefore for a
 SCLK of ~620 kHz, the divider configuration is ``DIVIDER=100``.
 
 ::
+
    f_sclk = f_sys / ((DIVIDER+1) * 2)
 
 Mezzanine 1-wire Master
@@ -380,6 +381,7 @@ This block is clocked by the system clock (125 MHz). Therefore for a SCL
 clock of 100 kHz, the prescaler configuration is ``PRESCALER=249``.
 
 ::
+
    PRESCALER = f_sys / (5 * f_scl) - 1
 
 
