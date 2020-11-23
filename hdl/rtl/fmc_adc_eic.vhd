@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
--- SPDX-License-Identifier: CERN-OHL-W-2.0
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
 -- CERN BE-CO-HT
 -- FMC ADC 100M 14B 4CHA
 -- http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw

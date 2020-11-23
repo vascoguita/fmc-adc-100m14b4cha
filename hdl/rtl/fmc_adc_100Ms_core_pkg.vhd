@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- SPDX-License-Identifier: CERN-OHL-W-2.0
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
 -- Title      : FMC ADC 100Ms/s core package
 -- Project    : FMC ADC 100M 14B 4CHA gateware
 -- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw

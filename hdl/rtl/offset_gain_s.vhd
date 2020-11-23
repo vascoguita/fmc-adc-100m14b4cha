@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- SPDX-FileCopyrightText: 2020 CERN (home.cern)
--- SPDX-License-Identifier: CERN-OHL-W-2.0
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
 -- Offset and gain correction, signed data input and output (two's complement)
 -- http://www.ohwr.org/projects/fmc-adc-100m14b4cha
 --------------------------------------------------------------------------------
