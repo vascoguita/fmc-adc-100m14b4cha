@@ -5673,15 +5673,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
-     inkscape:cx="326.27128"
-     inkscape:cy="137.35554"
+     inkscape:cx="351.11614"
+     inkscape:cy="195.36539"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1920"
-     inkscape:window-height="1136"
-     inkscape:window-x="0"
-     inkscape:window-y="27"
+     inkscape:window-height="1163"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:snap-grids="true"
      inkscape:snap-bbox="true"
@@ -5783,12 +5783,6 @@
        id="path12617-9"
        sodipodi:nodetypes="cc"
        inkscape:connector-curvature="0" />
-    <path
-       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#Arrow1Mstart-36);marker-end:url(#Arrow1Mend-8-35);enable-background:accumulate"
-       d="M -642.55999,462.8297 -284.56,462.72726"
-       id="path11686-9"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
     <rect
        style="fill:#e5e5e5;fill-opacity:1;stroke:#000000;stroke-width:0.99999994;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:3.99999992, 3.99999992;stroke-dashoffset:0;stroke-opacity:1"
        id="rect5369"
@@ -6560,14 +6554,14 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       x="-330.40259"
+       x="-326.40259"
        y="471.69138"
        id="text3237-3-4-5-4-7"><tspan
          sodipodi:role="line"
-         x="-330.40259"
+         x="-326.40259"
          y="471.69138"
          id="tspan4062-2-5-5"
-         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC I2C 0</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC I2C</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
@@ -6590,16 +6584,22 @@
          y="181.72726"
          id="tspan4062-2-5-6-2"
          style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">DATA 0</tspan></text>
+    <path
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#Arrow1Mstart-36);marker-end:url(#Arrow1Mend-8-35);enable-background:accumulate"
+       d="M -626.55999,464.8297 -284.56,464.72726"
+       id="path11686-9"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
-       x="-326.40259"
-       y="459.69138"
+       x="-322.40259"
+       y="461.69138"
        id="text3237-3-4-5-4-7-1"><tspan
          sodipodi:role="line"
-         x="-326.40259"
-         y="459.69138"
+         x="-322.40259"
+         y="461.69138"
          id="tspan4062-2-5-5-2"
-         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC I2C 1</tspan></text>
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC I2C</tspan></text>
   </g>
 </svg>

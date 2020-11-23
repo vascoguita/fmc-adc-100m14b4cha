@@ -111,10 +111,6 @@ ADC core to memory controller (orange)
   This bus is used to write samples from the ADC core to the DDR memory.
   Data: 64-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
 
-Memory controller to GN4124 core (red)
-  This bus is used to read samples from the DDR memory.
-  Data: 32-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
-
 Note that some of the cores from the `General Cores`_ library are
 based on cores from `OpenCores`_. Therefore, the documentation for
 those cores is hosted on the OpenCores website.
@@ -167,7 +163,7 @@ Mapped WB bus (blue)
   Data: 32-bit, address: 32-bit (word aligned),
   Clock: system clock (125MHz) and system clock / 2 (62.5MHz), see note below.
 
-ADC cores to memory controllers (2x, orange)**
+ADC cores to memory controllers (2x, orange)
   These two buses are used to write samples from the ADC cores to the DDR
   memories.
   Data: 64-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
