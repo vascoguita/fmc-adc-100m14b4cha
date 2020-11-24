@@ -228,12 +228,20 @@ static int fa_data_pattern_adc_write(struct fa_dev *fa, const char __user *buf,
 	}
 }
 
+#define CMD_SIZE 4UL
 static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
 				     size_t count, loff_t *ppos)
 {
 	struct fa_dev *fa = file->private_data;
+	char buf_l[CMD_SIZE];
+	int err;
 
-	if (strncmp(buf, "adc ", 4) == 0) {
+	memset(buf_l, 0, CMD_SIZE);
+	err = copy_from_user(buf_l, buf, min(count, CMD_SIZE));
+	if (err)
+		return err;
+
+	if (strncmp(buf_l, "adc ", CMD_SIZE) == 0) {
 		int err;
 
 		err = fa_data_pattern_adc_write(fa, buf + 4, count - 4);
