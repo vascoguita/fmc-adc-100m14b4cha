@@ -217,13 +217,18 @@ static unsigned int zfad_block_n_pages(struct zio_block *block)
 #define ADC_VME_DDR_ADDR 0x00
 #define ADC_VME_DDR_DATA 0x04
 #define SVEC_FUNC_NR 1 /* HARD coded in SVEC */
+
+static inline struct vme_dev *fa_to_vme_dev(struct fa_dev *fa)
+{
+	return to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
+}
+
 static unsigned long fa_ddr_data_vme_addr(struct fa_dev *fa)
 {
 	struct fmc_adc_platform_data *data = fa->pdev->dev.platform_data;
-	struct vme_dev *vdev;
+	struct vme_dev *vdev = fa_to_vme_dev(fa);
 	unsigned long addr;
 
-	vdev = to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
 	if (WARN(vdev->map[SVEC_FUNC_NR].kernel_va == NULL,
 		 "Invalid VME function\n"))
 		return ~0; /* invalid address, we will see VME errors */
@@ -238,10 +243,9 @@ static unsigned long fa_ddr_data_vme_addr(struct fa_dev *fa)
 static void *fa_ddr_addr_reg_off(struct fa_dev *fa)
 {
 	struct fmc_adc_platform_data *data = fa->pdev->dev.platform_data;
-	struct vme_dev *vdev;
+	struct vme_dev *vdev = fa_to_vme_dev(fa);
 	void *addr;
 
-	vdev = to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
 	if (WARN(vdev->map[SVEC_FUNC_NR].kernel_va == NULL,
 		 "Invalid VME function\n"))
 		return NULL; /* invalid address, we will see VME errors */
