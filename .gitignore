@@ -111,3 +111,4 @@ GTAGS
 GPATH
 GRTAGS
 .clangd
+compile_commands.json
