@@ -48,11 +48,14 @@ hdl/ip_cores/
 hdl/platform/<platform>
     Platform related hdl sources.
 
-hdl/<carrier>/syn/
-    Synthesis directory for selected carrier. This is where the
-    synthesis top manifest and the ISE project are stored. For each
-    release, the synthesis, place&route and timing reports are also
-    saved here.
+hdl/top/<design>
+    Top-level hdl module for selected design.
+
+hdl/syn/<design>
+    Synthesis directory for selected design. This is where the
+    synthesis top manifest, the design constraints and the ISE project
+    are stored. For each release, the synthesis, place&route and timing
+    reports are also saved here.
 
 hdl/testbench/
     Simulation files and testbenches.
