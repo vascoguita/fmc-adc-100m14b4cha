@@ -60,11 +60,6 @@ hdl/syn/<design>
 hdl/testbench/
     Simulation files and testbenches.
 
-It could happen that a hdl source directory contains extra source files
-that are not used in the current gateware release. In order to identify
-the source files used in a given release, refer to the Manifest.py
-files.
-
 Dependencies
 ------------
 
