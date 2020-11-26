@@ -326,7 +326,7 @@ int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 
 	frame_tx  = 0x0000; /* write mode */
 	frame_tx |= 0x0300; /* A3 pattern + enable */
-	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
+	frame_tx |= (pattern & 0x3F00) >> 8; /* MSB pattern */
 	frame_tx |= 0x80; /* Enable the pattern data */
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
 	if (err)
