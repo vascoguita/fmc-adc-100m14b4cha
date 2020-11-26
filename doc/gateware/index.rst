@@ -402,7 +402,7 @@ writing a one to the corresponding bit of the status register.
 The registers description can be found in :doc:`memory-map`.
 
 Configuration
--------------
+=============
 
 The following figure is a block diagram of the ADC core part in the
 sampling clock domain. It contains an ADC data stream de-serialiser,
@@ -442,7 +442,7 @@ of a data word are always set to zero.
    FMC-ADC driver, this is done automatically during driver initialisation.
 
 Control and Status Registers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 Writing one to the ``FMC_CLK_OE`` field of the ADC core control
 register enables the sampling clock (Si570 chip), and the other
@@ -464,7 +464,7 @@ Before applying this bit, check that the ADC is actually ready for this
 operation. You can do this by reading ``CALIB_BUSY``.
 
 Input Ranges
-~~~~~~~~~~~~
+------------
 
 This figure shows a simplified schematic diagram of the analogue input
 stage used for each channel.
@@ -511,7 +511,7 @@ shouldn’t be used.
 +---------+-----+-----+-----+-----+-----+-----+-----+--------------------------------+
 
 Input Offset
-~~~~~~~~~~~~
+------------
 
 Each channel has a 16-bit DAC allowing to apply a dc offset to the input
 signal. The voltage range of the DAC is 10V (-5V to +5V) and is
@@ -545,7 +545,7 @@ subtracted from the input voltage.
 
 
 Trigger
-~~~~~~~
+-------
 
 The trigger unit is made of two hardware and one software sources. The
 hardware and software paths can be enabled independently. The two paths
@@ -600,7 +600,7 @@ information on the trigger configuration registers see `ADC Core
 Registers <#ADC-Core-Registers>`_.
 
 Undersampling
-~~~~~~~~~~~~~
+-------------
 
 The undersampling block is simply validating one in N samples and
 forwarding it to the acquisition logic. The number (N) is configured in
@@ -910,7 +910,7 @@ and offset correction):
     gain   = DAC gain calibration value from EEPROM (16-bit fixed point)
 
 Acquisition
------------
+===========
 
 This chapter describes the two modes of acquisition, single-shot and
 multi-shot. It also explains how the software is expected to control the
@@ -1012,7 +1012,7 @@ state.
    shots or the number of post-trigger samples is equal to zero.
 
 Single-shot Mode
-~~~~~~~~~~~~~~~~
+----------------
 
 The procedure below lists the different steps of a single-shot
 acquisition process.
@@ -1065,7 +1065,7 @@ circular buffer. The acquisition state machine is also represented.
 
 
 Multi-shot Mode
-~~~~~~~~~~~~~~~
+---------------
 
 The multi-shot acquisition process is almost identical to the
 single-shot one, except that once the acquisition is started it will go
