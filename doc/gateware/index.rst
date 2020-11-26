@@ -466,7 +466,7 @@ Input Ranges
 This figure shows a simplified schematic diagram of the analogue input
 stage used for each channel.
 
-.. figure:: ../fig/analogue_input.pdf
+.. figure:: ../fig/analogue_input.*
    :alt: Simplified schematic diagram of the analogue input stage
 
    Simplified schematic diagram of the analogue input stage.
