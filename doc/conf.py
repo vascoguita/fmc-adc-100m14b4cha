@@ -34,16 +34,6 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-#
-# The short X.Y version.
-version = '5.0'
-# The full version, including alpha/beta/rc tags
-release = '5.0'
-
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
