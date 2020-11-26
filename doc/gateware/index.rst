@@ -444,7 +444,7 @@ of a data word are always set to zero.
 Control and Status Registers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Writing one to to the ``FMC_CLK_OE`` field of the ADC core control
+Writing one to the ``FMC_CLK_OE`` field of the ADC core control
 register enables the sampling clock (Si570 chip). Also, in order to use
 the input offset DACs, the ``OFFSET_DAC_CLR_N`` field must be set to
 one.
