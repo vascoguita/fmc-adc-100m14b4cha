@@ -43,7 +43,7 @@ hdl/cheby/
     file.
 
 hdl/ip_cores/
-    Location of fetched and generated hdl cores and libraries.
+    Location of fetched hdl cores and libraries.
 
 hdl/platform/<platform>
     Platform related hdl sources.
