@@ -304,7 +304,19 @@ int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 
 	dev_dbg(&fa->pdev->dev, "%s {patter: 0x%04x, enable: %d}\n", __func__, pattern, enable);
 
-        spin_lock(&fa->zdev->cset->lock);
+	spin_lock(&fa->zdev->cset->lock);
+	/* Disable before Setting the pattern data */
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0300; /* A3 pattern + enable */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		goto err;
+
+	if (!enable) {
+		fa->flags &= ~FA_DEV_F_PATTERN_DATA;
+		goto err;
+	}
+
 	frame_tx  = 0x0000; /* write mode */
 	frame_tx |= 0x0400; /* A4 pattern */
 	frame_tx |= pattern & 0xFF; /* LSB pattern */
@@ -315,16 +327,13 @@ int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 	frame_tx  = 0x0000; /* write mode */
 	frame_tx |= 0x0300; /* A3 pattern + enable */
 	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
-	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
+	frame_tx |= 0x80; /* Enable the pattern data */
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
 	if (err)
 		goto err;
 
 
-	if (enable)
-		fa->flags |= FA_DEV_F_PATTERN_DATA;
-	else
-		fa->flags &= ~FA_DEV_F_PATTERN_DATA;
+	fa->flags |= FA_DEV_F_PATTERN_DATA;
 err:
 	spin_unlock(&fa->zdev->cset->lock);
 	return err;
