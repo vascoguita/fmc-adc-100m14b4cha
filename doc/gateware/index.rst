@@ -445,20 +445,23 @@ Control and Status Registers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Writing one to the ``FMC_CLK_OE`` field of the ADC core control
-register enables the sampling clock (Si570 chip). Also, in order to use
-the input offset DACs, the ``OFFSET_DAC_CLR_N`` field must be set to
-one.
+register enables the sampling clock (Si570 chip), and the other
+internal components. Also, in order to use the input offset DACs, the
+``OFFSET_DAC_CLR_N`` field must be set to one.
 
 The field ``MAN_BITSLIP`` allows to ’manually’ control the ADC data
-alignment in the de-serialiser. When ``TEST_DATA_EN`` is set, the ADC
-core writes the address pointer to the memory instead of the ADC
-samples. The fields ``TRIG_LED`` and ``ACQ_LED`` allows to control the
-FMC front panel LEDs. Those four fields are for test purpose only and
-must stay zero in normal operation.
+alignment in the de-serialiser. The fields ``TRIG_LED`` and
+``ACQ_LED`` allows to control the FMC front panel LEDs. Those four
+fields are for test purpose only and must stay zero in normal
+operation.
 
-When the sampling clock is enabled, the ``SERDES_PLL`` and
-``SERDES_SYNCED`` field from the ADC core status register must be set
+When the sampling clock is enabled, check that the ``SERDES_PLL`` and
+``SERDES_SYNCED`` fields from the ADC core status register are set
 to one.
+
+Calibration values are applied only when the ``CALIB_APPLY`` is set to one.
+Before applying this bit, check that the ADC is actually ready for this
+operation. You can do this by reading ``CALIB_BUSY``.
 
 Input Ranges
 ~~~~~~~~~~~~
