@@ -547,12 +547,13 @@ subtracted from the input voltage.
 Trigger
 -------
 
-The trigger unit is made of two hardware and one software sources. The
-hardware and software paths can be enabled independently. The two paths
-are then or’ed together to drive a delay generator. The delay generator
-allows to insert a predefined number of sampling clock periods before
-the trigger is forwarded to the acquisition state machine. the next
-figure shows a simplified digram of the trigger unit.
+The trigger unit is made of the following sources: hardware, software,
+and time based. The hardware and software paths can be enabled
+independently. The two paths are then or’ed together to drive a delay
+generator. The delay generator allows to insert a predefined number of
+sampling clock periods before the trigger is forwarded to the
+acquisition state machine. the next figure shows a simplified digram
+of the trigger unit.
 
 .. figure:: ../fig/trigger_unit.*
    :alt: Trigger unit diagram
@@ -571,33 +572,31 @@ external trigger pulse must be at least one sampling clock cycle wide.
 To use the internal trigger source, both the ADC input channel and the
 threshold should be configured. By default, channel 1 is selected and
 the threshold is set to 0. Note that the threshold is 16-bit signed
-(two’s complement). This figure sketches the internal hardware trigger
-threshold behavior.
+(two’s complement). If addition to the threshold value, the user can
+set an hysteresis value to avoid triggers caused by a noisy signal.
+By default the hysteresis value is 0, which means that the acquisition
+starts as soon as the threshold is crossed.
+This figure sketches the internal hardware trigger threshold behavior.
 
 .. figure:: ../fig/trig_hw_int.*
    :alt: Internal hardware trigger threshold
 
    Internal hardware trigger threshold.
 
-Furthermore, a glitch filter can be applied to the threshold detection.
-The glitch filter is useful to trigger on noisy signals. In order to
-help setting the glitch filter, an internal trigger test mode can be
-activated. When the test mode is enabled, data from channels 2, 3 and 4
-is replaced as follow:
-
-+-----------+--------------------------------------+
-| Channel 2 | Input signal over threshold          |
-+-----------+--------------------------------------+
-| Channel 3 | Input signal over threshold filtered |
-+-----------+--------------------------------------+
-| Channel 4 | Trigger                              |
-+-----------+--------------------------------------+
-
-
 The software trigger source consists of a pulse generated when a write
-cycle is detected on the *Software trigger* register. For further
-information on the trigger configuration registers see `ADC Core
-Registers <#ADC-Core-Registers>`_.
+cycle is detected on the *Software trigger* register.
+
+The time based trigger source consists of a pulse generated when the
+configured trigger time elapsed.
+
+Finally, there is an additional auxilary trigger source which is
+always enabled and it is not configurable throught the ADC core. The ADC core
+will trigger whenever there is a pulse on the auxilarry trigger line. You can
+use this feature to trigger and acquisition from an external IP-core in the
+same FPGA design.
+
+For further information on the trigger configuration registers see
+`ADC Core Registers <#ADC-Core-Registers>`_.
 
 Undersampling
 -------------
