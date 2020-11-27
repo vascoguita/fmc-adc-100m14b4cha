@@ -9,6 +9,12 @@ The Memory Map
 Following the memory map for the part of the ADC design that drives
 the FMC ADC 100M modules.
 
+.. only:: latex
+
+   .. warning::
+      Unfortunatelly we are not able to include the memory map in PDF format.
+      Please for the memory map refer to the online documentation,
+
 .. raw:: html
    :file: regs/fmc_adc_mezzanine_mmap.htm
 
