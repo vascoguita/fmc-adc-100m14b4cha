@@ -960,17 +960,46 @@ register (the registers description can be found in :doc:`memory-map`).
 
    Acquisition state machine.
 
+.. note::
+   Start commands are taken into account only in ``IDLE`` state.
+
+.. note::
+   A stop command will bring the state machine back to ``IDLE`` from any state.
+
 When a start command is received, the state machine goes to ``PRE_TRIG``
 and stays in this state until the programmed number of pre-trigger
 samples are recorded. After that, it goes in ``WAIT_TRIG`` state and
 continue recording sample to memory. If the number of programmed
 pre-trigger samples is zero, the state machine skips the ``PRE_TRIG``
-state and it foes directly to ``WAIT_TRIG``. When a valid trigger is
-detected, the state machine moves to ``POST_TRIG``. It will stay in this
-state until the programmed number of post-trigger samples is reached.
-The next state is ``TRIG_TAG`` where the trigger time-tag (4x 32-bit
-word) is pushed after the last post-trigger sample (to be stored in DDR
-memory). When the trigger time-tag has been pushed (two clock cycles),
+state and it foes directly to ``WAIT_TRIG``.
+
+.. note::
+   Triggers are taken into account only in ``WAIT_TRIG`` state.
+
+.. note::
+   The number of pre-trigger sample can be zero, but there **must** be
+   at least one post-trigger sample.
+
+When a valid trigger is detected, the state machine moves to
+``POST_TRIG``. It will stay in this state until the programmed number
+of post-trigger samples is reached.  The next state is ``TRIG_TAG``
+where the trigger tag is pushed after the last post-trigger sample (to
+be stored in DDR memory). The trigger tag contains the trigger time-tag
+and the trigger source as described in the following table.
+
++-------------+--------+---------------------------+
+| Byte offset | size   | Description               |
++=============+========+===========================+
+| 0x00        | 32 bit | Seconds LSB               |
++-------------+--------+---------------------------+
+| 0x04        | 32 bit | Seconds MSB               |
++-------------+--------+---------------------------+
+| 0x08        | 32 bit | Second fraction 8ns ticks |
++-------------+--------+---------------------------+
+| 0x0C        | 32 bit | Source                    |
++-------------+--------+---------------------------+
+
+When the trigger tag has been pushed (two clock cycles),
 the state machine goes to ``DECR_SHOT``. From ``DECR_SHOT`` it either
 goes back to ``IDLE`` if the number of shots is reached or it repeats
 the same cycle for the next shot.
@@ -981,15 +1010,6 @@ can retrieve the samples using DMA transfer. An interrupt is generated
 when the acquisition ends.
 
 .. note::
-   Start commands are taken into account only in ``IDLE`` state.
-
-.. note::
-   Triggers are taken into account only in ``WAIT_TRIG`` state.
-
-.. note::
-   A stop command will bring the state machine back to ``IDLE`` from any state.
-
-.. note::
    After a stop command, no end of acquisition interrupt is generated.
 
 There are two LEDs on the fmc-adc front panel. The LED labeled ``ACQ``
@@ -997,10 +1017,6 @@ is turned ON when the acquisition state machine is **not** in the
 ``IDLE`` state. The LED labeled ``TRIG`` flashes when a valid trigger is
 detected **and** the acquisition state machine is in the ``WAIT_TRIG``
 state.
-
-.. note::
-   The number of pre-trigger sample can be zero, but there **must** be
-   at least one post-trigger sample.
 
 .. note::
    In addition to the requested pre/post-trigger samples, an
@@ -1058,7 +1074,8 @@ circular buffer. The acquisition state machine is also represented.
    Single-shot mode acquisition example (overlapping DDR memory).
 
 .. note::
-   *Orange*: Samples written to memory and read back via DMA.
+   *Orange*: Samples written to memory.
+   *Red*: Trigger tag written to memory.
    *Grey*: Samples written to memory, but not read. *White*: Empty memory
    (or previous acquisition samples).
 
