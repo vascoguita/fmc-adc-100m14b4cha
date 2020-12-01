@@ -99,7 +99,7 @@ Wishbone address space.
 
    FMC-ADC gateware architecture on SPEC carrier.
 
-There are three different Wishbone bus interconnects in the design.
+There are two different Wishbone bus interconnects in the design.
 
 Mapped WB bus (blue)
   This bus connects all the peripherals to the GN4142 core.
