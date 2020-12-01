@@ -280,15 +280,14 @@ Time-tagging Core
 ~~~~~~~~~~~~~~~~~
 
 This block allows time-tagging of important events in the ADC core. It
-is based on two free-running counters; a seconds counter and a 125MHz
-system clock ticks counter. The system clock ticks counter is also
-called coarse counter. These two counters are accessible in read/write
-via a Wishbone interface.
+could run in two modes: *White-Rabbit* or *free-running*. If the
+white-rabbit link is up and synced, then it will be used. Otherwise, the
+time-tagging core fallback to the free-running mode.
 
-For example, the host computer can use the OS time to set the seconds
-counter and simply reset the coarse counter. It is planned, in a later
-release, to set the time-tagging core counters using the White Rabbit
-core.
+.. note:: The free-running mode is based on two free-running counters;
+   a seconds counter and a 125MHz system clock ticks counter. The
+   system clock ticks counter is also called coarse counter. These two
+   counters are accessible in read/write via a Wishbone interface.
 
 A time-tag is made of four 32-bit words; meta-data, seconds, coarse,
 fine. The fine field is always set to zero and the meta-data register
