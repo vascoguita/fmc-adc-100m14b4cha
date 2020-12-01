@@ -14,7 +14,7 @@
    height="456.66357"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    version="1.0"
    sodipodi:docname="svec_fw_arch.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape">
@@ -5664,6 +5664,48 @@
          transform="matrix(-0.4,0,0,-0.4,-4,0)"
          inkscape:connector-curvature="0" />
     </marker>
+    <marker
+       inkscape:stockid="TriangleOutM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutM-5"
+       style="overflow:visible">
+      <path
+         id="path3734-5"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         transform="scale(0.4)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mstart-32"
+       style="overflow:visible">
+      <path
+         id="path4981-1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         transform="matrix(0.4,0,0,0.4,4,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mend-8-20"
+       style="overflow:visible">
+      <path
+         id="path3597-2-95"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -5673,15 +5715,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4142136"
-     inkscape:cx="326.27128"
-     inkscape:cy="137.35554"
+     inkscape:cx="512.49939"
+     inkscape:cy="260.69179"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g10486"
      showgrid="true"
      inkscape:window-width="1920"
-     inkscape:window-height="1136"
+     inkscape:window-height="960"
      inkscape:window-x="0"
-     inkscape:window-y="27"
+     inkscape:window-y="26"
      inkscape:window-maximized="1"
      inkscape:snap-grids="true"
      inkscape:snap-bbox="true"
@@ -5958,13 +6000,13 @@
     </g>
     <path
        id="path13517-2-5-9"
-       d="m -169.56,216.72726 h -31"
+       d="m -169.56,184.72726 h -31"
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-62-0-9);marker-end:url(#Arrow1Mend-8-18-3-2)"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
     <g
        id="g5776"
-       transform="translate(210.5,117)">
+       transform="translate(210.5,85.000003)">
       <rect
          y="79.727264"
          x="-377.56"
@@ -6428,12 +6470,6 @@
          y="206.72726"
          id="tspan4062-2-5"
          style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">IRQ 1</tspan></text>
-    <path
-       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);enable-background:accumulate"
-       d="m -312.56,369.72726 h 30"
-       id="path13496"
-       inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:'Verdana Bold';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
@@ -6502,8 +6538,14 @@
            sodipodi:role="line"> </tspan></text>
     </g>
     <path
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#EmptyDiamondS);marker-end:url(#DotS-33);enable-background:accumulate"
+       d="m -312.56,369.72726 h 30"
+       id="path13496"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <path
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#0a67a3;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#EmptyDiamondS-35);marker-end:url(#DotS-33-12);enable-background:accumulate"
-       d="m -392.56,369.72726 h 30"
+       d="m -412.56001,369.72729 50.00001,-3e-5"
        id="path13496-9"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
@@ -6525,7 +6567,7 @@
        inkscape:connector-curvature="0" />
     <g
        id="g5733"
-       transform="translate(-66,133.96732)">
+       transform="translate(-66,133.96731)">
       <rect
          y="166.00995"
          x="-105.05804"
@@ -6553,7 +6595,7 @@
        sodipodi:nodetypes="cc" />
     <path
        id="path13517-2-5"
-       d="m -173.56,223.72726 h -27"
+       d="m -173.56,191.72726 h -27"
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#Arrow1Mstart-62-0);marker-end:url(#Arrow1Mend-8-18-3)"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
@@ -6601,5 +6643,59 @@
          y="459.69138"
          id="tspan4062-2-5-5-2"
          style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">FMC I2C 1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+       x="-353.28168"
+       y="266.50845"
+       id="text3237-3-4-5-4-0-3"><tspan
+         sodipodi:role="line"
+         x="-353.28168"
+         y="266.50845"
+         id="tspan4062-2-5-8"
+         style="font-weight:normal;font-size:6px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter';text-align:start;text-anchor:start">White-Rabbit time</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleOutM-5)"
+       d="m -283.56,269.72729 h -126"
+       id="path5962-6-1-5-7-1"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g17972-7"
+       transform="translate(204.36037,149.94979)">
+      <g
+         id="g10486"
+         transform="translate(5.3896219)">
+        <rect
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           id="rect3679-0-4"
+           width="99.500008"
+           height="40"
+           x="-382.31"
+           y="84.829712" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Verdana;-inkscape-font-specification:Verdana;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="-332.61273"
+           y="101.88831"
+           id="text3416-2"><tspan
+             id="tspan10479"
+             sodipodi:role="line"
+             x="-332.61273"
+             y="101.88831"
+             style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'">White Rabbit</tspan><tspan
+             sodipodi:role="line"
+             x="-332.61273"
+             y="116.88831"
+             style="font-weight:normal;font-size:12px;line-height:1.25;-inkscape-font-specification:'Bitstream Charter'"
+             id="tspan11031">link</tspan></text>
+      </g>
+    </g>
+    <path
+       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:none;stroke:#000000;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:url(#Arrow1Mstart-32);marker-end:url(#Arrow1Mend-8-20);enable-background:accumulate"
+       d="m -201.44963,255.57262 h 28"
+       id="path11682-1-6"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
