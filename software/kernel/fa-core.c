@@ -727,6 +727,14 @@ int fa_probe(struct platform_device *pdev)
 	if(!fa_fmc_slot_is_valid(fa))
 		goto out_fmc_err;
 
+	err = sysfs_create_link(&fa->pdev->dev.kobj, &fa->slot->dev.kobj,
+				dev_name(&fa->slot->dev));
+	if (err) {
+		dev_err(&fa->pdev->dev, "Failed to create FMC symlink to %s\n",
+			dev_name(&fa->slot->dev));
+		goto err_fmc_link;
+	}
+
 	err = fa_dma_request_channel(fa);
 	if (err)
 		goto out_dma;
@@ -768,6 +776,8 @@ out_serdes:
 	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 out_dma:
+	sysfs_remove_link(&fa->pdev->dev.kobj, dev_name(&fa->slot->dev));
+err_fmc_link:
 out_fmc_err:
 out_fmc_eeprom:
 out_fmc_pre:
@@ -799,6 +809,7 @@ int fa_remove(struct platform_device *pdev)
 
 	iounmap(fa->fa_top_level);
 
+	sysfs_remove_link(&fa->pdev->dev.kobj, dev_name(&fa->slot->dev));
 	fmc_slot_put(fa->slot);
 
 	return 0;
