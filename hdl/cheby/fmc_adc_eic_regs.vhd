@@ -40,7 +40,6 @@ entity fmc_adc_eic_regs is
     clk_i                : in    std_logic;
     wb_i                 : in    t_wishbone_slave_in;
     wb_o                 : out   t_wishbone_slave_out;
-
     -- Wires and registers
     fmc_adc_eic_regs_i   : in    t_fmc_adc_eic_regs_master_in;
     fmc_adc_eic_regs_o   : out   t_fmc_adc_eic_regs_master_out
@@ -48,19 +47,28 @@ entity fmc_adc_eic_regs is
 end fmc_adc_eic_regs;
 
 architecture syn of fmc_adc_eic_regs is
-  signal rd_int                         : std_logic;
-  signal wr_int                         : std_logic;
+  signal adr_int                        : std_logic_vector(3 downto 2);
+  signal rd_req_int                     : std_logic;
+  signal wr_req_int                     : std_logic;
   signal rd_ack_int                     : std_logic;
   signal wr_ack_int                     : std_logic;
   signal wb_en                          : std_logic;
   signal ack_int                        : std_logic;
   signal wb_rip                         : std_logic;
   signal wb_wip                         : std_logic;
-  signal reg_rdat_int                   : std_logic_vector(31 downto 0);
-  signal rd_ack1_int                    : std_logic;
+  signal idr_wreq                       : std_logic;
+  signal ier_wreq                       : std_logic;
+  signal isr_wreq                       : std_logic;
+  signal rd_ack_d0                      : std_logic;
+  signal rd_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_req_d0                      : std_logic;
+  signal wr_adr_d0                      : std_logic_vector(3 downto 2);
+  signal wr_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_sel_d0                      : std_logic_vector(3 downto 0);
 begin
 
   -- WB decode signals
+  adr_int <= wb_i.adr(3 downto 2);
   wb_en <= wb_i.cyc and wb_i.stb;
 
   process (clk_i) begin
@@ -72,7 +80,7 @@ begin
       end if;
     end if;
   end process;
-  rd_int <= (wb_en and not wb_i.we) and not wb_rip;
+  rd_req_int <= (wb_en and not wb_i.we) and not wb_rip;
 
   process (clk_i) begin
     if rising_edge(clk_i) then
@@ -83,7 +91,7 @@ begin
       end if;
     end if;
   end process;
-  wr_int <= (wb_en and wb_i.we) and not wb_wip;
+  wr_req_int <= (wb_en and wb_i.we) and not wb_wip;
 
   ack_int <= rd_ack_int or wr_ack_int;
   wb_o.ack <= ack_int;
@@ -91,105 +99,84 @@ begin
   wb_o.rty <= '0';
   wb_o.err <= '0';
 
-  -- Assign outputs
-
-  -- Process for write requests.
+  -- pipelining for wr-in+rd-out
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        wr_ack_int <= '0';
-        fmc_adc_eic_regs_o.idr_wr <= '0';
-        fmc_adc_eic_regs_o.ier_wr <= '0';
-        fmc_adc_eic_regs_o.isr_wr <= '0';
+        rd_ack_int <= '0';
+        wr_req_d0 <= '0';
       else
-        wr_ack_int <= '0';
-        fmc_adc_eic_regs_o.idr_wr <= '0';
-        fmc_adc_eic_regs_o.ier_wr <= '0';
-        fmc_adc_eic_regs_o.isr_wr <= '0';
-        case wb_i.adr(3 downto 2) is
-        when "00" => 
-          -- Register idr
-          fmc_adc_eic_regs_o.idr_wr <= wr_int;
-          if wr_int = '1' then
-            fmc_adc_eic_regs_o.idr <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "01" => 
-          -- Register ier
-          fmc_adc_eic_regs_o.ier_wr <= wr_int;
-          if wr_int = '1' then
-            fmc_adc_eic_regs_o.ier <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when "10" => 
-          -- Register imr
-        when "11" => 
-          -- Register isr
-          fmc_adc_eic_regs_o.isr_wr <= wr_int;
-          if wr_int = '1' then
-            fmc_adc_eic_regs_o.isr <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when others =>
-          wr_ack_int <= wr_int;
-        end case;
+        rd_ack_int <= rd_ack_d0;
+        wb_o.dat <= rd_dat_d0;
+        wr_req_d0 <= wr_req_int;
+        wr_adr_d0 <= adr_int;
+        wr_dat_d0 <= wb_i.dat;
+        wr_sel_d0 <= wb_i.sel;
       end if;
     end if;
   end process;
 
-  -- Process for registers read.
-  process (clk_i) begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        rd_ack1_int <= '0';
-      else
-        reg_rdat_int <= (others => 'X');
-        case wb_i.adr(3 downto 2) is
-        when "00" => 
-          -- idr
-          rd_ack1_int <= rd_int;
-        when "01" => 
-          -- ier
-          rd_ack1_int <= rd_int;
-        when "10" => 
-          -- imr
-          reg_rdat_int <= fmc_adc_eic_regs_i.imr;
-          rd_ack1_int <= rd_int;
-        when "11" => 
-          -- isr
-          reg_rdat_int <= fmc_adc_eic_regs_i.isr;
-          rd_ack1_int <= rd_int;
-        when others =>
-          reg_rdat_int <= (others => 'X');
-          rd_ack1_int <= rd_int;
-        end case;
-      end if;
-    end if;
+  -- Register idr
+  fmc_adc_eic_regs_o.idr <= wr_dat_d0;
+  fmc_adc_eic_regs_o.idr_wr <= idr_wreq;
+
+  -- Register ier
+  fmc_adc_eic_regs_o.ier <= wr_dat_d0;
+  fmc_adc_eic_regs_o.ier_wr <= ier_wreq;
+
+  -- Register imr
+
+  -- Register isr
+  fmc_adc_eic_regs_o.isr <= wr_dat_d0;
+  fmc_adc_eic_regs_o.isr_wr <= isr_wreq;
+
+  -- Process for write requests.
+  process (wr_adr_d0, wr_req_d0) begin
+    idr_wreq <= '0';
+    ier_wreq <= '0';
+    isr_wreq <= '0';
+    case wr_adr_d0(3 downto 2) is
+    when "00" =>
+      -- Reg idr
+      idr_wreq <= wr_req_d0;
+      wr_ack_int <= wr_req_d0;
+    when "01" =>
+      -- Reg ier
+      ier_wreq <= wr_req_d0;
+      wr_ack_int <= wr_req_d0;
+    when "10" =>
+      -- Reg imr
+      wr_ack_int <= wr_req_d0;
+    when "11" =>
+      -- Reg isr
+      isr_wreq <= wr_req_d0;
+      wr_ack_int <= wr_req_d0;
+    when others =>
+      wr_ack_int <= wr_req_d0;
+    end case;
   end process;
 
   -- Process for read requests.
-  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int) begin
+  process (adr_int, rd_req_int, fmc_adc_eic_regs_i.imr, fmc_adc_eic_regs_i.isr) begin
     -- By default ack read requests
-    wb_o.dat <= (others => '0');
-    case wb_i.adr(3 downto 2) is
-    when "00" => 
-      -- idr
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "01" => 
-      -- ier
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "10" => 
-      -- imr
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "11" => 
-      -- isr
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
+    rd_dat_d0 <= (others => 'X');
+    case adr_int(3 downto 2) is
+    when "00" =>
+      -- Reg idr
+      rd_ack_d0 <= rd_req_int;
+    when "01" =>
+      -- Reg ier
+      rd_ack_d0 <= rd_req_int;
+    when "10" =>
+      -- Reg imr
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0 <= fmc_adc_eic_regs_i.imr;
+    when "11" =>
+      -- Reg isr
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0 <= fmc_adc_eic_regs_i.isr;
     when others =>
-      rd_ack_int <= rd_int;
+      rd_ack_d0 <= rd_req_int;
     end case;
   end process;
 end syn;

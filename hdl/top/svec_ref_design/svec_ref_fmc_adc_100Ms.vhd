@@ -641,7 +641,7 @@ begin -- architecture arch
         d_i       => fmc_acq_trig(I),
         q_o       => fmc_acq_trig_sync(I));
 
-    p_fmc_acq_led: process (fmc_acq_cfg_ok_sync) is
+    p_fmc_acq_led: process (fmc_acq_cfg_ok_sync, fmc_acq_trig_sync) is
     begin
       if fmc_acq_cfg_ok_sync(I) = '0' then
         fmc_acq_led(I) <= c_LED_RED;

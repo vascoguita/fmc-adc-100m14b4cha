@@ -86,7 +86,6 @@ entity fmc_adc_100ms_csr is
     clk_i                : in    std_logic;
     wb_i                 : in    t_wishbone_slave_in;
     wb_o                 : out   t_wishbone_slave_out;
-
     -- Wires and registers
     fmc_adc_100ms_csr_i  : in    t_fmc_adc_100ms_csr_master_in;
     fmc_adc_100ms_csr_o  : out   t_fmc_adc_100ms_csr_master_out;
@@ -110,8 +109,9 @@ entity fmc_adc_100ms_csr is
 end fmc_adc_100ms_csr;
 
 architecture syn of fmc_adc_100ms_csr is
-  signal rd_int                         : std_logic;
-  signal wr_int                         : std_logic;
+  signal adr_int                        : std_logic_vector(8 downto 2);
+  signal rd_req_int                     : std_logic;
+  signal wr_req_int                     : std_logic;
   signal rd_ack_int                     : std_logic;
   signal wr_ack_int                     : std_logic;
   signal wb_en                          : std_logic;
@@ -122,51 +122,79 @@ architecture syn of fmc_adc_100ms_csr is
   signal ctl_offset_dac_clr_n_reg       : std_logic;
   signal ctl_trig_led_reg               : std_logic;
   signal ctl_acq_led_reg                : std_logic;
+  signal ctl_wreq                       : std_logic;
+  signal ctl_wack                       : std_logic;
   signal trig_en_ext_reg                : std_logic;
   signal trig_en_time_reg               : std_logic;
   signal trig_en_ch1_reg                : std_logic;
   signal trig_en_ch2_reg                : std_logic;
   signal trig_en_ch3_reg                : std_logic;
   signal trig_en_ch4_reg                : std_logic;
+  signal trig_en_wreq                   : std_logic;
+  signal trig_en_wack                   : std_logic;
   signal trig_pol_ext_reg               : std_logic;
   signal trig_pol_ch1_reg               : std_logic;
   signal trig_pol_ch2_reg               : std_logic;
   signal trig_pol_ch3_reg               : std_logic;
   signal trig_pol_ch4_reg               : std_logic;
+  signal trig_pol_wreq                  : std_logic;
+  signal trig_pol_wack                  : std_logic;
   signal ext_trig_dly_reg               : std_logic_vector(31 downto 0);
+  signal ext_trig_dly_wreq              : std_logic;
+  signal ext_trig_dly_wack              : std_logic;
+  signal sw_trig_wreq                   : std_logic;
   signal shots_nbr_reg                  : std_logic_vector(15 downto 0);
+  signal shots_wreq                     : std_logic;
+  signal shots_wack                     : std_logic;
   signal downsample_reg                 : std_logic_vector(31 downto 0);
+  signal downsample_wreq                : std_logic;
+  signal downsample_wack                : std_logic;
   signal pre_samples_reg                : std_logic_vector(31 downto 0);
+  signal pre_samples_wreq               : std_logic;
+  signal pre_samples_wack               : std_logic;
   signal post_samples_reg               : std_logic_vector(31 downto 0);
+  signal post_samples_wreq              : std_logic;
+  signal post_samples_wack              : std_logic;
   signal fmc_adc_ch1_re                 : std_logic;
+  signal fmc_adc_ch1_we                 : std_logic;
   signal fmc_adc_ch1_wt                 : std_logic;
   signal fmc_adc_ch1_rt                 : std_logic;
   signal fmc_adc_ch1_tr                 : std_logic;
   signal fmc_adc_ch1_wack               : std_logic;
   signal fmc_adc_ch1_rack               : std_logic;
   signal fmc_adc_ch2_re                 : std_logic;
+  signal fmc_adc_ch2_we                 : std_logic;
   signal fmc_adc_ch2_wt                 : std_logic;
   signal fmc_adc_ch2_rt                 : std_logic;
   signal fmc_adc_ch2_tr                 : std_logic;
   signal fmc_adc_ch2_wack               : std_logic;
   signal fmc_adc_ch2_rack               : std_logic;
   signal fmc_adc_ch3_re                 : std_logic;
+  signal fmc_adc_ch3_we                 : std_logic;
   signal fmc_adc_ch3_wt                 : std_logic;
   signal fmc_adc_ch3_rt                 : std_logic;
   signal fmc_adc_ch3_tr                 : std_logic;
   signal fmc_adc_ch3_wack               : std_logic;
   signal fmc_adc_ch3_rack               : std_logic;
   signal fmc_adc_ch4_re                 : std_logic;
+  signal fmc_adc_ch4_we                 : std_logic;
   signal fmc_adc_ch4_wt                 : std_logic;
   signal fmc_adc_ch4_rt                 : std_logic;
   signal fmc_adc_ch4_tr                 : std_logic;
   signal fmc_adc_ch4_wack               : std_logic;
   signal fmc_adc_ch4_rack               : std_logic;
-  signal reg_rdat_int                   : std_logic_vector(31 downto 0);
-  signal rd_ack1_int                    : std_logic;
+  signal rd_req_d0                      : std_logic;
+  signal rd_adr_d0                      : std_logic_vector(8 downto 2);
+  signal rd_ack_d0                      : std_logic;
+  signal rd_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_req_d0                      : std_logic;
+  signal wr_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_sel_d0                      : std_logic_vector(3 downto 0);
+  signal wr_ack_d0                      : std_logic;
 begin
 
   -- WB decode signals
+  adr_int <= wb_i.adr(8 downto 2);
   wb_en <= wb_i.cyc and wb_i.stb;
 
   process (clk_i) begin
@@ -178,7 +206,7 @@ begin
       end if;
     end if;
   end process;
-  rd_int <= (wb_en and not wb_i.we) and not wb_rip;
+  rd_req_int <= (wb_en and not wb_i.we) and not wb_rip;
 
   process (clk_i) begin
     if rising_edge(clk_i) then
@@ -189,7 +217,7 @@ begin
       end if;
     end if;
   end process;
-  wr_int <= (wb_en and wb_i.we) and not wb_wip;
+  wr_req_int <= (wb_en and wb_i.we) and not wb_wip;
 
   ack_int <= rd_ack_int or wr_ack_int;
   wb_o.ack <= ack_int;
@@ -197,36 +225,225 @@ begin
   wb_o.rty <= '0';
   wb_o.err <= '0';
 
-  -- Assign outputs
+  -- pipelining for rd-in+rd-out+wr-in+wr-out
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        rd_req_d0 <= '0';
+        rd_ack_int <= '0';
+        wr_req_d0 <= '0';
+        wr_ack_int <= '0';
+      else
+        rd_req_d0 <= rd_req_int;
+        rd_adr_d0 <= adr_int;
+        rd_ack_int <= rd_ack_d0;
+        wb_o.dat <= rd_dat_d0;
+        wr_req_d0 <= wr_req_int;
+        wr_dat_d0 <= wb_i.dat;
+        wr_sel_d0 <= wb_i.sel;
+        wr_ack_int <= wr_ack_d0;
+      end if;
+    end if;
+  end process;
+
+  -- Register ctl
+  fmc_adc_100ms_csr_o.ctl_fsm_cmd <= wr_dat_d0(1 downto 0);
   fmc_adc_100ms_csr_o.ctl_fmc_clk_oe <= ctl_fmc_clk_oe_reg;
   fmc_adc_100ms_csr_o.ctl_offset_dac_clr_n <= ctl_offset_dac_clr_n_reg;
+  fmc_adc_100ms_csr_o.ctl_man_bitslip <= wr_dat_d0(4);
   fmc_adc_100ms_csr_o.ctl_trig_led <= ctl_trig_led_reg;
   fmc_adc_100ms_csr_o.ctl_acq_led <= ctl_acq_led_reg;
+  fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wr_dat_d0(8);
+  fmc_adc_100ms_csr_o.ctl_calib_apply <= wr_dat_d0(15);
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        ctl_fmc_clk_oe_reg <= '0';
+        ctl_offset_dac_clr_n_reg <= '0';
+        ctl_trig_led_reg <= '0';
+        ctl_acq_led_reg <= '0';
+        ctl_wack <= '0';
+      else
+        if ctl_wreq = '1' then
+          ctl_fmc_clk_oe_reg <= wr_dat_d0(2);
+          ctl_offset_dac_clr_n_reg <= wr_dat_d0(3);
+          ctl_trig_led_reg <= wr_dat_d0(6);
+          ctl_acq_led_reg <= wr_dat_d0(7);
+        end if;
+        ctl_wack <= ctl_wreq;
+      end if;
+    end if;
+  end process;
+  fmc_adc_100ms_csr_o.ctl_wr <= ctl_wack;
+
+  -- Register sta
+
+  -- Register trig_stat
+
+  -- Register trig_en
   fmc_adc_100ms_csr_o.trig_en_ext <= trig_en_ext_reg;
+  fmc_adc_100ms_csr_o.trig_en_sw <= wr_dat_d0(1);
   fmc_adc_100ms_csr_o.trig_en_time <= trig_en_time_reg;
+  fmc_adc_100ms_csr_o.trig_en_aux_time <= wr_dat_d0(5);
   fmc_adc_100ms_csr_o.trig_en_ch1 <= trig_en_ch1_reg;
   fmc_adc_100ms_csr_o.trig_en_ch2 <= trig_en_ch2_reg;
   fmc_adc_100ms_csr_o.trig_en_ch3 <= trig_en_ch3_reg;
   fmc_adc_100ms_csr_o.trig_en_ch4 <= trig_en_ch4_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        trig_en_ext_reg <= '0';
+        trig_en_time_reg <= '0';
+        trig_en_ch1_reg <= '0';
+        trig_en_ch2_reg <= '0';
+        trig_en_ch3_reg <= '0';
+        trig_en_ch4_reg <= '0';
+        trig_en_wack <= '0';
+      else
+        if trig_en_wreq = '1' then
+          trig_en_ext_reg <= wr_dat_d0(0);
+          trig_en_time_reg <= wr_dat_d0(4);
+          trig_en_ch1_reg <= wr_dat_d0(8);
+          trig_en_ch2_reg <= wr_dat_d0(9);
+          trig_en_ch3_reg <= wr_dat_d0(10);
+          trig_en_ch4_reg <= wr_dat_d0(11);
+        end if;
+        trig_en_wack <= trig_en_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register trig_pol
   fmc_adc_100ms_csr_o.trig_pol_ext <= trig_pol_ext_reg;
   fmc_adc_100ms_csr_o.trig_pol_ch1 <= trig_pol_ch1_reg;
   fmc_adc_100ms_csr_o.trig_pol_ch2 <= trig_pol_ch2_reg;
   fmc_adc_100ms_csr_o.trig_pol_ch3 <= trig_pol_ch3_reg;
   fmc_adc_100ms_csr_o.trig_pol_ch4 <= trig_pol_ch4_reg;
-  fmc_adc_100ms_csr_o.ext_trig_dly <= ext_trig_dly_reg;
-  fmc_adc_100ms_csr_o.shots_nbr <= shots_nbr_reg;
-  fmc_adc_100ms_csr_o.downsample <= downsample_reg;
-  fmc_adc_100ms_csr_o.pre_samples <= pre_samples_reg;
-  fmc_adc_100ms_csr_o.post_samples <= post_samples_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        trig_pol_ext_reg <= '0';
+        trig_pol_ch1_reg <= '0';
+        trig_pol_ch2_reg <= '0';
+        trig_pol_ch3_reg <= '0';
+        trig_pol_ch4_reg <= '0';
+        trig_pol_wack <= '0';
+      else
+        if trig_pol_wreq = '1' then
+          trig_pol_ext_reg <= wr_dat_d0(0);
+          trig_pol_ch1_reg <= wr_dat_d0(8);
+          trig_pol_ch2_reg <= wr_dat_d0(9);
+          trig_pol_ch3_reg <= wr_dat_d0(10);
+          trig_pol_ch4_reg <= wr_dat_d0(11);
+        end if;
+        trig_pol_wack <= trig_pol_wreq;
+      end if;
+    end if;
+  end process;
 
-  -- Assignments for submap fmc_adc_ch1
+  -- Register ext_trig_dly
+  fmc_adc_100ms_csr_o.ext_trig_dly <= ext_trig_dly_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        ext_trig_dly_reg <= "00000000000000000000000000000000";
+        ext_trig_dly_wack <= '0';
+      else
+        if ext_trig_dly_wreq = '1' then
+          ext_trig_dly_reg <= wr_dat_d0;
+        end if;
+        ext_trig_dly_wack <= ext_trig_dly_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register sw_trig
+  fmc_adc_100ms_csr_o.sw_trig <= wr_dat_d0;
+  fmc_adc_100ms_csr_o.sw_trig_wr <= sw_trig_wreq;
+
+  -- Register shots
+  fmc_adc_100ms_csr_o.shots_nbr <= shots_nbr_reg;
+  fmc_adc_100ms_csr_o.shots_remain <= wr_dat_d0(31 downto 16);
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        shots_nbr_reg <= "0000000000000000";
+        shots_wack <= '0';
+      else
+        if shots_wreq = '1' then
+          shots_nbr_reg <= wr_dat_d0(15 downto 0);
+        end if;
+        shots_wack <= shots_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register multi_depth
+
+  -- Register trig_pos
+
+  -- Register fs_freq
+
+  -- Register downsample
+  fmc_adc_100ms_csr_o.downsample <= downsample_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        downsample_reg <= "00000000000000000000000000000000";
+        downsample_wack <= '0';
+      else
+        if downsample_wreq = '1' then
+          downsample_reg <= wr_dat_d0;
+        end if;
+        downsample_wack <= downsample_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register pre_samples
+  fmc_adc_100ms_csr_o.pre_samples <= pre_samples_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        pre_samples_reg <= "00000000000000000000000000000000";
+        pre_samples_wack <= '0';
+      else
+        if pre_samples_wreq = '1' then
+          pre_samples_reg <= wr_dat_d0;
+        end if;
+        pre_samples_wack <= pre_samples_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register post_samples
+  fmc_adc_100ms_csr_o.post_samples <= post_samples_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        post_samples_reg <= "00000000000000000000000000000000";
+        post_samples_wack <= '0';
+      else
+        if post_samples_wreq = '1' then
+          post_samples_reg <= wr_dat_d0;
+        end if;
+        post_samples_wack <= post_samples_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register samples_cnt
+
+  -- Interface fmc_adc_ch1
   fmc_adc_ch1_tr <= fmc_adc_ch1_wt or fmc_adc_ch1_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_adc_ch1_rt <= '0';
+        fmc_adc_ch1_wt <= '0';
       else
         fmc_adc_ch1_rt <= (fmc_adc_ch1_rt or fmc_adc_ch1_re) and not fmc_adc_ch1_rack;
+        fmc_adc_ch1_wt <= (fmc_adc_ch1_wt or fmc_adc_ch1_we) and not fmc_adc_ch1_wack;
       end if;
     end if;
   end process;
@@ -234,19 +451,21 @@ begin
   fmc_adc_ch1_o.stb <= fmc_adc_ch1_tr;
   fmc_adc_ch1_wack <= fmc_adc_ch1_i.ack and fmc_adc_ch1_wt;
   fmc_adc_ch1_rack <= fmc_adc_ch1_i.ack and fmc_adc_ch1_rt;
-  fmc_adc_ch1_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
-  fmc_adc_ch1_o.sel <= (others => '1');
+  fmc_adc_ch1_o.adr <= ((26 downto 0 => '0') & rd_adr_d0(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch1_o.sel <= wr_sel_d0;
   fmc_adc_ch1_o.we <= fmc_adc_ch1_wt;
-  fmc_adc_ch1_o.dat <= wb_i.dat;
+  fmc_adc_ch1_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap fmc_adc_ch2
+  -- Interface fmc_adc_ch2
   fmc_adc_ch2_tr <= fmc_adc_ch2_wt or fmc_adc_ch2_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_adc_ch2_rt <= '0';
+        fmc_adc_ch2_wt <= '0';
       else
         fmc_adc_ch2_rt <= (fmc_adc_ch2_rt or fmc_adc_ch2_re) and not fmc_adc_ch2_rack;
+        fmc_adc_ch2_wt <= (fmc_adc_ch2_wt or fmc_adc_ch2_we) and not fmc_adc_ch2_wack;
       end if;
     end if;
   end process;
@@ -254,19 +473,21 @@ begin
   fmc_adc_ch2_o.stb <= fmc_adc_ch2_tr;
   fmc_adc_ch2_wack <= fmc_adc_ch2_i.ack and fmc_adc_ch2_wt;
   fmc_adc_ch2_rack <= fmc_adc_ch2_i.ack and fmc_adc_ch2_rt;
-  fmc_adc_ch2_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
-  fmc_adc_ch2_o.sel <= (others => '1');
+  fmc_adc_ch2_o.adr <= ((26 downto 0 => '0') & rd_adr_d0(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch2_o.sel <= wr_sel_d0;
   fmc_adc_ch2_o.we <= fmc_adc_ch2_wt;
-  fmc_adc_ch2_o.dat <= wb_i.dat;
+  fmc_adc_ch2_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap fmc_adc_ch3
+  -- Interface fmc_adc_ch3
   fmc_adc_ch3_tr <= fmc_adc_ch3_wt or fmc_adc_ch3_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_adc_ch3_rt <= '0';
+        fmc_adc_ch3_wt <= '0';
       else
         fmc_adc_ch3_rt <= (fmc_adc_ch3_rt or fmc_adc_ch3_re) and not fmc_adc_ch3_rack;
+        fmc_adc_ch3_wt <= (fmc_adc_ch3_wt or fmc_adc_ch3_we) and not fmc_adc_ch3_wack;
       end if;
     end if;
   end process;
@@ -274,19 +495,21 @@ begin
   fmc_adc_ch3_o.stb <= fmc_adc_ch3_tr;
   fmc_adc_ch3_wack <= fmc_adc_ch3_i.ack and fmc_adc_ch3_wt;
   fmc_adc_ch3_rack <= fmc_adc_ch3_i.ack and fmc_adc_ch3_rt;
-  fmc_adc_ch3_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
-  fmc_adc_ch3_o.sel <= (others => '1');
+  fmc_adc_ch3_o.adr <= ((26 downto 0 => '0') & rd_adr_d0(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch3_o.sel <= wr_sel_d0;
   fmc_adc_ch3_o.we <= fmc_adc_ch3_wt;
-  fmc_adc_ch3_o.dat <= wb_i.dat;
+  fmc_adc_ch3_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap fmc_adc_ch4
+  -- Interface fmc_adc_ch4
   fmc_adc_ch4_tr <= fmc_adc_ch4_wt or fmc_adc_ch4_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_adc_ch4_rt <= '0';
+        fmc_adc_ch4_wt <= '0';
       else
         fmc_adc_ch4_rt <= (fmc_adc_ch4_rt or fmc_adc_ch4_re) and not fmc_adc_ch4_rack;
+        fmc_adc_ch4_wt <= (fmc_adc_ch4_wt or fmc_adc_ch4_we) and not fmc_adc_ch4_wack;
       end if;
     end if;
   end process;
@@ -294,393 +517,255 @@ begin
   fmc_adc_ch4_o.stb <= fmc_adc_ch4_tr;
   fmc_adc_ch4_wack <= fmc_adc_ch4_i.ack and fmc_adc_ch4_wt;
   fmc_adc_ch4_rack <= fmc_adc_ch4_i.ack and fmc_adc_ch4_rt;
-  fmc_adc_ch4_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
-  fmc_adc_ch4_o.sel <= (others => '1');
+  fmc_adc_ch4_o.adr <= ((26 downto 0 => '0') & rd_adr_d0(4 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_ch4_o.sel <= wr_sel_d0;
   fmc_adc_ch4_o.we <= fmc_adc_ch4_wt;
-  fmc_adc_ch4_o.dat <= wb_i.dat;
+  fmc_adc_ch4_o.dat <= wr_dat_d0;
 
   -- Process for write requests.
-  process (clk_i) begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        wr_ack_int <= '0';
-        fmc_adc_100ms_csr_o.ctl_wr <= '0';
-        ctl_fmc_clk_oe_reg <= '0';
-        ctl_offset_dac_clr_n_reg <= '0';
-        ctl_trig_led_reg <= '0';
-        ctl_acq_led_reg <= '0';
-        trig_en_ext_reg <= '0';
-        trig_en_time_reg <= '0';
-        trig_en_ch1_reg <= '0';
-        trig_en_ch2_reg <= '0';
-        trig_en_ch3_reg <= '0';
-        trig_en_ch4_reg <= '0';
-        trig_pol_ext_reg <= '0';
-        trig_pol_ch1_reg <= '0';
-        trig_pol_ch2_reg <= '0';
-        trig_pol_ch3_reg <= '0';
-        trig_pol_ch4_reg <= '0';
-        ext_trig_dly_reg <= "00000000000000000000000000000000";
-        fmc_adc_100ms_csr_o.sw_trig_wr <= '0';
-        shots_nbr_reg <= "0000000000000000";
-        downsample_reg <= "00000000000000000000000000000000";
-        pre_samples_reg <= "00000000000000000000000000000000";
-        post_samples_reg <= "00000000000000000000000000000000";
-        fmc_adc_ch1_wt <= '0';
-        fmc_adc_ch2_wt <= '0';
-        fmc_adc_ch3_wt <= '0';
-        fmc_adc_ch4_wt <= '0';
-      else
-        wr_ack_int <= '0';
-        fmc_adc_100ms_csr_o.ctl_wr <= '0';
-        fmc_adc_100ms_csr_o.sw_trig_wr <= '0';
-        fmc_adc_ch1_wt <= '0';
-        fmc_adc_ch2_wt <= '0';
-        fmc_adc_ch3_wt <= '0';
-        fmc_adc_ch4_wt <= '0';
-        case wb_i.adr(8 downto 5) is
-        when "0000" => 
-          case wb_i.adr(4 downto 2) is
-          when "000" => 
-            -- Register ctl
-            fmc_adc_100ms_csr_o.ctl_wr <= wr_int;
-            if wr_int = '1' then
-              fmc_adc_100ms_csr_o.ctl_fsm_cmd <= wb_i.dat(1 downto 0);
-              ctl_fmc_clk_oe_reg <= wb_i.dat(2);
-              ctl_offset_dac_clr_n_reg <= wb_i.dat(3);
-              fmc_adc_100ms_csr_o.ctl_man_bitslip <= wb_i.dat(4);
-              ctl_trig_led_reg <= wb_i.dat(6);
-              ctl_acq_led_reg <= wb_i.dat(7);
-              fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wb_i.dat(8);
-              fmc_adc_100ms_csr_o.ctl_calib_apply <= wb_i.dat(15);
-            end if;
-            wr_ack_int <= wr_int;
-          when "001" => 
-            -- Register sta
-          when "010" => 
-            -- Register trig_stat
-          when "011" => 
-            -- Register trig_en
-            if wr_int = '1' then
-              trig_en_ext_reg <= wb_i.dat(0);
-              fmc_adc_100ms_csr_o.trig_en_sw <= wb_i.dat(1);
-              trig_en_time_reg <= wb_i.dat(4);
-              fmc_adc_100ms_csr_o.trig_en_aux_time <= wb_i.dat(5);
-              trig_en_ch1_reg <= wb_i.dat(8);
-              trig_en_ch2_reg <= wb_i.dat(9);
-              trig_en_ch3_reg <= wb_i.dat(10);
-              trig_en_ch4_reg <= wb_i.dat(11);
-            end if;
-            wr_ack_int <= wr_int;
-          when "100" => 
-            -- Register trig_pol
-            if wr_int = '1' then
-              trig_pol_ext_reg <= wb_i.dat(0);
-              trig_pol_ch1_reg <= wb_i.dat(8);
-              trig_pol_ch2_reg <= wb_i.dat(9);
-              trig_pol_ch3_reg <= wb_i.dat(10);
-              trig_pol_ch4_reg <= wb_i.dat(11);
-            end if;
-            wr_ack_int <= wr_int;
-          when "101" => 
-            -- Register ext_trig_dly
-            if wr_int = '1' then
-              ext_trig_dly_reg <= wb_i.dat;
-            end if;
-            wr_ack_int <= wr_int;
-          when "110" => 
-            -- Register sw_trig
-            fmc_adc_100ms_csr_o.sw_trig_wr <= wr_int;
-            if wr_int = '1' then
-              fmc_adc_100ms_csr_o.sw_trig <= wb_i.dat;
-            end if;
-            wr_ack_int <= wr_int;
-          when "111" => 
-            -- Register shots
-            if wr_int = '1' then
-              shots_nbr_reg <= wb_i.dat(15 downto 0);
-              fmc_adc_100ms_csr_o.shots_remain <= wb_i.dat(31 downto 16);
-            end if;
-            wr_ack_int <= wr_int;
-          when others =>
-            wr_ack_int <= wr_int;
-          end case;
-        when "0001" => 
-          case wb_i.adr(4 downto 2) is
-          when "000" => 
-            -- Register multi_depth
-          when "001" => 
-            -- Register trig_pos
-          when "010" => 
-            -- Register fs_freq
-          when "011" => 
-            -- Register downsample
-            if wr_int = '1' then
-              downsample_reg <= wb_i.dat;
-            end if;
-            wr_ack_int <= wr_int;
-          when "100" => 
-            -- Register pre_samples
-            if wr_int = '1' then
-              pre_samples_reg <= wb_i.dat;
-            end if;
-            wr_ack_int <= wr_int;
-          when "101" => 
-            -- Register post_samples
-            if wr_int = '1' then
-              post_samples_reg <= wb_i.dat;
-            end if;
-            wr_ack_int <= wr_int;
-          when "110" => 
-            -- Register samples_cnt
-          when others =>
-            wr_ack_int <= wr_int;
-          end case;
-        when "0100" => 
-          -- Submap fmc_adc_ch1
-          fmc_adc_ch1_wt <= (fmc_adc_ch1_wt or wr_int) and not fmc_adc_ch1_wack;
-          wr_ack_int <= fmc_adc_ch1_wack;
-        when "0110" => 
-          -- Submap fmc_adc_ch2
-          fmc_adc_ch2_wt <= (fmc_adc_ch2_wt or wr_int) and not fmc_adc_ch2_wack;
-          wr_ack_int <= fmc_adc_ch2_wack;
-        when "1000" => 
-          -- Submap fmc_adc_ch3
-          fmc_adc_ch3_wt <= (fmc_adc_ch3_wt or wr_int) and not fmc_adc_ch3_wack;
-          wr_ack_int <= fmc_adc_ch3_wack;
-        when "1010" => 
-          -- Submap fmc_adc_ch4
-          fmc_adc_ch4_wt <= (fmc_adc_ch4_wt or wr_int) and not fmc_adc_ch4_wack;
-          wr_ack_int <= fmc_adc_ch4_wack;
-        when others =>
-          wr_ack_int <= wr_int;
-        end case;
-      end if;
-    end if;
-  end process;
-
-  -- Process for registers read.
-  process (clk_i) begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        rd_ack1_int <= '0';
-      else
-        reg_rdat_int <= (others => 'X');
-        case wb_i.adr(8 downto 5) is
-        when "0000" => 
-          case wb_i.adr(4 downto 2) is
-          when "000" => 
-            -- ctl
-            reg_rdat_int(1 downto 0) <= fmc_adc_100ms_csr_i.ctl_fsm_cmd;
-            reg_rdat_int(2) <= ctl_fmc_clk_oe_reg;
-            reg_rdat_int(3) <= ctl_offset_dac_clr_n_reg;
-            reg_rdat_int(4) <= fmc_adc_100ms_csr_i.ctl_man_bitslip;
-            reg_rdat_int(6) <= ctl_trig_led_reg;
-            reg_rdat_int(7) <= ctl_acq_led_reg;
-            reg_rdat_int(8) <= fmc_adc_100ms_csr_i.ctl_clear_trig_stat;
-            reg_rdat_int(15) <= fmc_adc_100ms_csr_i.ctl_calib_apply;
-            rd_ack1_int <= rd_int;
-          when "001" => 
-            -- sta
-            reg_rdat_int(2 downto 0) <= fmc_adc_100ms_csr_i.sta_fsm;
-            reg_rdat_int(3) <= fmc_adc_100ms_csr_i.sta_serdes_pll;
-            reg_rdat_int(4) <= fmc_adc_100ms_csr_i.sta_serdes_synced;
-            reg_rdat_int(5) <= fmc_adc_100ms_csr_i.sta_acq_cfg;
-            reg_rdat_int(7 downto 6) <= fmc_adc_100ms_csr_i.sta_fmc_nr;
-            reg_rdat_int(15) <= fmc_adc_100ms_csr_i.sta_calib_busy;
-            rd_ack1_int <= rd_int;
-          when "010" => 
-            -- trig_stat
-            reg_rdat_int(0) <= fmc_adc_100ms_csr_i.trig_stat_ext;
-            reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_stat_sw;
-            reg_rdat_int(4) <= fmc_adc_100ms_csr_i.trig_stat_time;
-            reg_rdat_int(8) <= fmc_adc_100ms_csr_i.trig_stat_ch1;
-            reg_rdat_int(9) <= fmc_adc_100ms_csr_i.trig_stat_ch2;
-            reg_rdat_int(10) <= fmc_adc_100ms_csr_i.trig_stat_ch3;
-            reg_rdat_int(11) <= fmc_adc_100ms_csr_i.trig_stat_ch4;
-            rd_ack1_int <= rd_int;
-          when "011" => 
-            -- trig_en
-            reg_rdat_int(0) <= trig_en_ext_reg;
-            reg_rdat_int(1) <= fmc_adc_100ms_csr_i.trig_en_sw;
-            reg_rdat_int(4) <= trig_en_time_reg;
-            reg_rdat_int(5) <= fmc_adc_100ms_csr_i.trig_en_aux_time;
-            reg_rdat_int(8) <= trig_en_ch1_reg;
-            reg_rdat_int(9) <= trig_en_ch2_reg;
-            reg_rdat_int(10) <= trig_en_ch3_reg;
-            reg_rdat_int(11) <= trig_en_ch4_reg;
-            rd_ack1_int <= rd_int;
-          when "100" => 
-            -- trig_pol
-            reg_rdat_int(0) <= trig_pol_ext_reg;
-            reg_rdat_int(8) <= trig_pol_ch1_reg;
-            reg_rdat_int(9) <= trig_pol_ch2_reg;
-            reg_rdat_int(10) <= trig_pol_ch3_reg;
-            reg_rdat_int(11) <= trig_pol_ch4_reg;
-            rd_ack1_int <= rd_int;
-          when "101" => 
-            -- ext_trig_dly
-            reg_rdat_int <= ext_trig_dly_reg;
-            rd_ack1_int <= rd_int;
-          when "110" => 
-            -- sw_trig
-            rd_ack1_int <= rd_int;
-          when "111" => 
-            -- shots
-            reg_rdat_int(15 downto 0) <= shots_nbr_reg;
-            reg_rdat_int(31 downto 16) <= fmc_adc_100ms_csr_i.shots_remain;
-            rd_ack1_int <= rd_int;
-          when others =>
-            reg_rdat_int <= (others => 'X');
-            rd_ack1_int <= rd_int;
-          end case;
-        when "0001" => 
-          case wb_i.adr(4 downto 2) is
-          when "000" => 
-            -- multi_depth
-            reg_rdat_int <= fmc_adc_100ms_csr_i.multi_depth;
-            rd_ack1_int <= rd_int;
-          when "001" => 
-            -- trig_pos
-            reg_rdat_int <= fmc_adc_100ms_csr_i.trig_pos;
-            rd_ack1_int <= rd_int;
-          when "010" => 
-            -- fs_freq
-            reg_rdat_int <= fmc_adc_100ms_csr_i.fs_freq;
-            rd_ack1_int <= rd_int;
-          when "011" => 
-            -- downsample
-            reg_rdat_int <= downsample_reg;
-            rd_ack1_int <= rd_int;
-          when "100" => 
-            -- pre_samples
-            reg_rdat_int <= pre_samples_reg;
-            rd_ack1_int <= rd_int;
-          when "101" => 
-            -- post_samples
-            reg_rdat_int <= post_samples_reg;
-            rd_ack1_int <= rd_int;
-          when "110" => 
-            -- samples_cnt
-            reg_rdat_int <= fmc_adc_100ms_csr_i.samples_cnt;
-            rd_ack1_int <= rd_int;
-          when others =>
-            reg_rdat_int <= (others => 'X');
-            rd_ack1_int <= rd_int;
-          end case;
-        when "0100" => 
-        when "0110" => 
-        when "1000" => 
-        when "1010" => 
-        when others =>
-          reg_rdat_int <= (others => 'X');
-          rd_ack1_int <= rd_int;
-        end case;
-      end if;
-    end if;
+  process (rd_adr_d0, wr_req_d0, ctl_wack, trig_en_wack, trig_pol_wack, ext_trig_dly_wack, shots_wack, downsample_wack, pre_samples_wack, post_samples_wack, fmc_adc_ch1_wack, fmc_adc_ch2_wack, fmc_adc_ch3_wack, fmc_adc_ch4_wack) begin
+    ctl_wreq <= '0';
+    trig_en_wreq <= '0';
+    trig_pol_wreq <= '0';
+    ext_trig_dly_wreq <= '0';
+    sw_trig_wreq <= '0';
+    shots_wreq <= '0';
+    downsample_wreq <= '0';
+    pre_samples_wreq <= '0';
+    post_samples_wreq <= '0';
+    fmc_adc_ch1_we <= '0';
+    fmc_adc_ch2_we <= '0';
+    fmc_adc_ch3_we <= '0';
+    fmc_adc_ch4_we <= '0';
+    case rd_adr_d0(8 downto 5) is
+    when "0000" =>
+      case rd_adr_d0(4 downto 2) is
+      when "000" =>
+        -- Reg ctl
+        ctl_wreq <= wr_req_d0;
+        wr_ack_d0 <= ctl_wack;
+      when "001" =>
+        -- Reg sta
+        wr_ack_d0 <= wr_req_d0;
+      when "010" =>
+        -- Reg trig_stat
+        wr_ack_d0 <= wr_req_d0;
+      when "011" =>
+        -- Reg trig_en
+        trig_en_wreq <= wr_req_d0;
+        wr_ack_d0 <= trig_en_wack;
+      when "100" =>
+        -- Reg trig_pol
+        trig_pol_wreq <= wr_req_d0;
+        wr_ack_d0 <= trig_pol_wack;
+      when "101" =>
+        -- Reg ext_trig_dly
+        ext_trig_dly_wreq <= wr_req_d0;
+        wr_ack_d0 <= ext_trig_dly_wack;
+      when "110" =>
+        -- Reg sw_trig
+        sw_trig_wreq <= wr_req_d0;
+        wr_ack_d0 <= wr_req_d0;
+      when "111" =>
+        -- Reg shots
+        shots_wreq <= wr_req_d0;
+        wr_ack_d0 <= shots_wack;
+      when others =>
+        wr_ack_d0 <= wr_req_d0;
+      end case;
+    when "0001" =>
+      case rd_adr_d0(4 downto 2) is
+      when "000" =>
+        -- Reg multi_depth
+        wr_ack_d0 <= wr_req_d0;
+      when "001" =>
+        -- Reg trig_pos
+        wr_ack_d0 <= wr_req_d0;
+      when "010" =>
+        -- Reg fs_freq
+        wr_ack_d0 <= wr_req_d0;
+      when "011" =>
+        -- Reg downsample
+        downsample_wreq <= wr_req_d0;
+        wr_ack_d0 <= downsample_wack;
+      when "100" =>
+        -- Reg pre_samples
+        pre_samples_wreq <= wr_req_d0;
+        wr_ack_d0 <= pre_samples_wack;
+      when "101" =>
+        -- Reg post_samples
+        post_samples_wreq <= wr_req_d0;
+        wr_ack_d0 <= post_samples_wack;
+      when "110" =>
+        -- Reg samples_cnt
+        wr_ack_d0 <= wr_req_d0;
+      when others =>
+        wr_ack_d0 <= wr_req_d0;
+      end case;
+    when "0100" =>
+      -- Submap fmc_adc_ch1
+      fmc_adc_ch1_we <= wr_req_d0;
+      wr_ack_d0 <= fmc_adc_ch1_wack;
+    when "0110" =>
+      -- Submap fmc_adc_ch2
+      fmc_adc_ch2_we <= wr_req_d0;
+      wr_ack_d0 <= fmc_adc_ch2_wack;
+    when "1000" =>
+      -- Submap fmc_adc_ch3
+      fmc_adc_ch3_we <= wr_req_d0;
+      wr_ack_d0 <= fmc_adc_ch3_wack;
+    when "1010" =>
+      -- Submap fmc_adc_ch4
+      fmc_adc_ch4_we <= wr_req_d0;
+      wr_ack_d0 <= fmc_adc_ch4_wack;
+    when others =>
+      wr_ack_d0 <= wr_req_d0;
+    end case;
   end process;
 
   -- Process for read requests.
-  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int, rd_int, fmc_adc_ch1_i.dat, fmc_adc_ch1_rack, fmc_adc_ch1_rt, rd_int, fmc_adc_ch2_i.dat, fmc_adc_ch2_rack, fmc_adc_ch2_rt, rd_int, fmc_adc_ch3_i.dat, fmc_adc_ch3_rack, fmc_adc_ch3_rt, rd_int, fmc_adc_ch4_i.dat, fmc_adc_ch4_rack, fmc_adc_ch4_rt) begin
+  process (rd_adr_d0, rd_req_d0, fmc_adc_100ms_csr_i.ctl_fsm_cmd, ctl_fmc_clk_oe_reg, ctl_offset_dac_clr_n_reg, fmc_adc_100ms_csr_i.ctl_man_bitslip, ctl_trig_led_reg, ctl_acq_led_reg, fmc_adc_100ms_csr_i.ctl_clear_trig_stat, fmc_adc_100ms_csr_i.ctl_calib_apply, fmc_adc_100ms_csr_i.sta_fsm, fmc_adc_100ms_csr_i.sta_serdes_pll, fmc_adc_100ms_csr_i.sta_serdes_synced, fmc_adc_100ms_csr_i.sta_acq_cfg, fmc_adc_100ms_csr_i.sta_fmc_nr, fmc_adc_100ms_csr_i.sta_calib_busy, fmc_adc_100ms_csr_i.trig_stat_ext, fmc_adc_100ms_csr_i.trig_stat_sw, fmc_adc_100ms_csr_i.trig_stat_time, fmc_adc_100ms_csr_i.trig_stat_ch1, fmc_adc_100ms_csr_i.trig_stat_ch2, fmc_adc_100ms_csr_i.trig_stat_ch3, fmc_adc_100ms_csr_i.trig_stat_ch4, trig_en_ext_reg, fmc_adc_100ms_csr_i.trig_en_sw, trig_en_time_reg, fmc_adc_100ms_csr_i.trig_en_aux_time, trig_en_ch1_reg, trig_en_ch2_reg, trig_en_ch3_reg, trig_en_ch4_reg, trig_pol_ext_reg, trig_pol_ch1_reg, trig_pol_ch2_reg, trig_pol_ch3_reg, trig_pol_ch4_reg, ext_trig_dly_reg, shots_nbr_reg, fmc_adc_100ms_csr_i.shots_remain, fmc_adc_100ms_csr_i.multi_depth, fmc_adc_100ms_csr_i.trig_pos, fmc_adc_100ms_csr_i.fs_freq, downsample_reg, pre_samples_reg, post_samples_reg, fmc_adc_100ms_csr_i.samples_cnt, fmc_adc_ch1_i.dat, fmc_adc_ch1_rack, fmc_adc_ch2_i.dat, fmc_adc_ch2_rack, fmc_adc_ch3_i.dat, fmc_adc_ch3_rack, fmc_adc_ch4_i.dat, fmc_adc_ch4_rack) begin
     -- By default ack read requests
-    wb_o.dat <= (others => '0');
+    rd_dat_d0 <= (others => 'X');
     fmc_adc_ch1_re <= '0';
     fmc_adc_ch2_re <= '0';
     fmc_adc_ch3_re <= '0';
     fmc_adc_ch4_re <= '0';
-    case wb_i.adr(8 downto 5) is
-    when "0000" => 
-      case wb_i.adr(4 downto 2) is
-      when "000" => 
-        -- ctl
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "001" => 
-        -- sta
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "010" => 
-        -- trig_stat
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "011" => 
-        -- trig_en
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "100" => 
-        -- trig_pol
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "101" => 
-        -- ext_trig_dly
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "110" => 
-        -- sw_trig
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "111" => 
-        -- shots
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
+    case rd_adr_d0(8 downto 5) is
+    when "0000" =>
+      case rd_adr_d0(4 downto 2) is
+      when "000" =>
+        -- Reg ctl
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0(1 downto 0) <= fmc_adc_100ms_csr_i.ctl_fsm_cmd;
+        rd_dat_d0(2) <= ctl_fmc_clk_oe_reg;
+        rd_dat_d0(3) <= ctl_offset_dac_clr_n_reg;
+        rd_dat_d0(4) <= fmc_adc_100ms_csr_i.ctl_man_bitslip;
+        rd_dat_d0(5) <= '0';
+        rd_dat_d0(6) <= ctl_trig_led_reg;
+        rd_dat_d0(7) <= ctl_acq_led_reg;
+        rd_dat_d0(8) <= fmc_adc_100ms_csr_i.ctl_clear_trig_stat;
+        rd_dat_d0(14 downto 9) <= (others => '0');
+        rd_dat_d0(15) <= fmc_adc_100ms_csr_i.ctl_calib_apply;
+        rd_dat_d0(31 downto 16) <= (others => '0');
+      when "001" =>
+        -- Reg sta
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0(2 downto 0) <= fmc_adc_100ms_csr_i.sta_fsm;
+        rd_dat_d0(3) <= fmc_adc_100ms_csr_i.sta_serdes_pll;
+        rd_dat_d0(4) <= fmc_adc_100ms_csr_i.sta_serdes_synced;
+        rd_dat_d0(5) <= fmc_adc_100ms_csr_i.sta_acq_cfg;
+        rd_dat_d0(7 downto 6) <= fmc_adc_100ms_csr_i.sta_fmc_nr;
+        rd_dat_d0(14 downto 8) <= (others => '0');
+        rd_dat_d0(15) <= fmc_adc_100ms_csr_i.sta_calib_busy;
+        rd_dat_d0(31 downto 16) <= (others => '0');
+      when "010" =>
+        -- Reg trig_stat
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0(0) <= fmc_adc_100ms_csr_i.trig_stat_ext;
+        rd_dat_d0(1) <= fmc_adc_100ms_csr_i.trig_stat_sw;
+        rd_dat_d0(3 downto 2) <= (others => '0');
+        rd_dat_d0(4) <= fmc_adc_100ms_csr_i.trig_stat_time;
+        rd_dat_d0(7 downto 5) <= (others => '0');
+        rd_dat_d0(8) <= fmc_adc_100ms_csr_i.trig_stat_ch1;
+        rd_dat_d0(9) <= fmc_adc_100ms_csr_i.trig_stat_ch2;
+        rd_dat_d0(10) <= fmc_adc_100ms_csr_i.trig_stat_ch3;
+        rd_dat_d0(11) <= fmc_adc_100ms_csr_i.trig_stat_ch4;
+        rd_dat_d0(31 downto 12) <= (others => '0');
+      when "011" =>
+        -- Reg trig_en
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0(0) <= trig_en_ext_reg;
+        rd_dat_d0(1) <= fmc_adc_100ms_csr_i.trig_en_sw;
+        rd_dat_d0(3 downto 2) <= (others => '0');
+        rd_dat_d0(4) <= trig_en_time_reg;
+        rd_dat_d0(5) <= fmc_adc_100ms_csr_i.trig_en_aux_time;
+        rd_dat_d0(7 downto 6) <= (others => '0');
+        rd_dat_d0(8) <= trig_en_ch1_reg;
+        rd_dat_d0(9) <= trig_en_ch2_reg;
+        rd_dat_d0(10) <= trig_en_ch3_reg;
+        rd_dat_d0(11) <= trig_en_ch4_reg;
+        rd_dat_d0(31 downto 12) <= (others => '0');
+      when "100" =>
+        -- Reg trig_pol
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0(0) <= trig_pol_ext_reg;
+        rd_dat_d0(7 downto 1) <= (others => '0');
+        rd_dat_d0(8) <= trig_pol_ch1_reg;
+        rd_dat_d0(9) <= trig_pol_ch2_reg;
+        rd_dat_d0(10) <= trig_pol_ch3_reg;
+        rd_dat_d0(11) <= trig_pol_ch4_reg;
+        rd_dat_d0(31 downto 12) <= (others => '0');
+      when "101" =>
+        -- Reg ext_trig_dly
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= ext_trig_dly_reg;
+      when "110" =>
+        -- Reg sw_trig
+        rd_ack_d0 <= rd_req_d0;
+      when "111" =>
+        -- Reg shots
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0(15 downto 0) <= shots_nbr_reg;
+        rd_dat_d0(31 downto 16) <= fmc_adc_100ms_csr_i.shots_remain;
       when others =>
-        rd_ack_int <= rd_int;
+        rd_ack_d0 <= rd_req_d0;
       end case;
-    when "0001" => 
-      case wb_i.adr(4 downto 2) is
-      when "000" => 
-        -- multi_depth
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "001" => 
-        -- trig_pos
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "010" => 
-        -- fs_freq
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "011" => 
-        -- downsample
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "100" => 
-        -- pre_samples
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "101" => 
-        -- post_samples
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
-      when "110" => 
-        -- samples_cnt
-        wb_o.dat <= reg_rdat_int;
-        rd_ack_int <= rd_ack1_int;
+    when "0001" =>
+      case rd_adr_d0(4 downto 2) is
+      when "000" =>
+        -- Reg multi_depth
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= fmc_adc_100ms_csr_i.multi_depth;
+      when "001" =>
+        -- Reg trig_pos
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= fmc_adc_100ms_csr_i.trig_pos;
+      when "010" =>
+        -- Reg fs_freq
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= fmc_adc_100ms_csr_i.fs_freq;
+      when "011" =>
+        -- Reg downsample
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= downsample_reg;
+      when "100" =>
+        -- Reg pre_samples
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= pre_samples_reg;
+      when "101" =>
+        -- Reg post_samples
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= post_samples_reg;
+      when "110" =>
+        -- Reg samples_cnt
+        rd_ack_d0 <= rd_req_d0;
+        rd_dat_d0 <= fmc_adc_100ms_csr_i.samples_cnt;
       when others =>
-        rd_ack_int <= rd_int;
+        rd_ack_d0 <= rd_req_d0;
       end case;
-    when "0100" => 
+    when "0100" =>
       -- Submap fmc_adc_ch1
-      fmc_adc_ch1_re <= rd_int;
-      wb_o.dat <= fmc_adc_ch1_i.dat;
-      rd_ack_int <= fmc_adc_ch1_rack;
-    when "0110" => 
+      fmc_adc_ch1_re <= rd_req_d0;
+      rd_dat_d0 <= fmc_adc_ch1_i.dat;
+      rd_ack_d0 <= fmc_adc_ch1_rack;
+    when "0110" =>
       -- Submap fmc_adc_ch2
-      fmc_adc_ch2_re <= rd_int;
-      wb_o.dat <= fmc_adc_ch2_i.dat;
-      rd_ack_int <= fmc_adc_ch2_rack;
-    when "1000" => 
+      fmc_adc_ch2_re <= rd_req_d0;
+      rd_dat_d0 <= fmc_adc_ch2_i.dat;
+      rd_ack_d0 <= fmc_adc_ch2_rack;
+    when "1000" =>
       -- Submap fmc_adc_ch3
-      fmc_adc_ch3_re <= rd_int;
-      wb_o.dat <= fmc_adc_ch3_i.dat;
-      rd_ack_int <= fmc_adc_ch3_rack;
-    when "1010" => 
+      fmc_adc_ch3_re <= rd_req_d0;
+      rd_dat_d0 <= fmc_adc_ch3_i.dat;
+      rd_ack_d0 <= fmc_adc_ch3_rack;
+    when "1010" =>
       -- Submap fmc_adc_ch4
-      fmc_adc_ch4_re <= rd_int;
-      wb_o.dat <= fmc_adc_ch4_i.dat;
-      rd_ack_int <= fmc_adc_ch4_rack;
+      fmc_adc_ch4_re <= rd_req_d0;
+      rd_dat_d0 <= fmc_adc_ch4_i.dat;
+      rd_ack_d0 <= fmc_adc_ch4_rack;
     when others =>
-      rd_ack_int <= rd_int;
+      rd_ack_d0 <= rd_req_d0;
     end case;
   end process;
 end syn;

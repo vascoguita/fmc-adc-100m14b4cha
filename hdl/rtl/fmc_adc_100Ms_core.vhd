@@ -274,6 +274,8 @@ architecture rtl of fmc_adc_100Ms_core is
   signal dpram_addrb_cnt       : unsigned(c_DPRAM_DEPTH-1 downto 0);
   signal dpram_dout            : std_logic_vector(63 downto 0);
   signal dpram_valid           : std_logic;
+  signal dpram_valid_d1        : std_logic;
+  signal dpram_valid_d2        : std_logic;
   signal dpram_valid_t         : std_logic;
 
   signal dpram0_dina  : std_logic_vector(63 downto 0);
@@ -300,7 +302,6 @@ architecture rtl of fmc_adc_100Ms_core is
   -- RAM address counter
   signal ram_addr_cnt : unsigned(28 downto 0);
   signal trig_addr    : std_logic_vector(31 downto 0);
-  signal mem_ovr      : std_logic;
 
   -- LEDs
   signal trig_led     : std_logic;
@@ -541,10 +542,10 @@ begin
     if rising_edge(sys_clk_i) then
       gpio_si570_oe_o  <= csr_regout.ctl_fmc_clk_oe;
       gpio_dac_clr_n_o <= csr_regout.ctl_offset_dac_clr_n;
-        gpio_ssr_ch1_o <= channel_regout(1).ctl_ssr;
-        gpio_ssr_ch2_o <= channel_regout(2).ctl_ssr;
-        gpio_ssr_ch3_o <= channel_regout(3).ctl_ssr;
-        gpio_ssr_ch4_o <= channel_regout(4).ctl_ssr;
+      gpio_ssr_ch1_o <= channel_regout(1).ctl_ssr;
+      gpio_ssr_ch2_o <= channel_regout(2).ctl_ssr;
+      gpio_ssr_ch3_o <= channel_regout(3).ctl_ssr;
+      gpio_ssr_ch4_o <= channel_regout(4).ctl_ssr;
     end if;
   end process p_delay_gpio_ssr;
 
@@ -789,12 +790,14 @@ begin
         ext_trig_delay_bsy <= '0';
       else
         if ext_trig = '1' and ext_trig_delay_bsy = '0' then
+          -- Start counter
           ext_trig_delay_cnt <= unsigned(ext_trig_delay);
           ext_trig_delay_bsy <= '1';
         elsif ext_trig_delay_cnt /= 0 then
+          --  Count
           ext_trig_delay_cnt <= ext_trig_delay_cnt - 1;
         else
-          -- when counter reaches zero
+          -- When counter reaches zero
           ext_trig_delay_bsy <= '0';
         end if;
       end if;
@@ -984,7 +987,7 @@ begin
         downsample_cnt <= to_unsigned(1, downsample_cnt'length);
         downsample_en  <= '0';
       else
-        if downsample_cnt = to_unsigned(0, downsample_cnt'length) then
+        if downsample_cnt = 0 then
           if downsample_factor /= X"00000000" then
             downsample_cnt <= unsigned(downsample_factor) - 1;
           end if;
@@ -1396,23 +1399,37 @@ begin
           dpram_addra_trig <= dpram_addra_cnt;
         end if;
         if post_trig_done = '1' then
-          dpram_addra_post_done <= dpram_addra_cnt;
+          -- reads 2 extra addresses -> trigger time-tag
+          dpram_addra_post_done <= dpram_addra_cnt + 2;
         end if;
       end if;
     end if;
   end process p_dpram_addra_cnt;
 
   -- DPRAM inputs
-  dpram0_addra <= std_logic_vector(dpram_addra_cnt);
-  dpram1_addra <= std_logic_vector(dpram_addra_cnt);
-  dpram0_dina  <= sync_fifo_dout(63 downto 0)
-                 when acq_in_trig_tag = '0' else trig_tag_data;
-  dpram1_dina <= sync_fifo_dout(63 downto 0)
-                 when acq_in_trig_tag = '0' else trig_tag_data;
-  dpram0_wea <= not single_shot and ((samples_wr_en and sync_fifo_valid) or acq_in_trig_tag)
-                when multishot_buffer_sel = '0' else '0';
-  dpram1_wea <= not single_shot and ((samples_wr_en and sync_fifo_valid) or acq_in_trig_tag)
-                when multishot_buffer_sel = '1' else '0';
+  p_dpram_inputs: process (sys_clk_i)
+  begin
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' then
+        dpram0_wea <= '0';
+        dpram1_wea <= '1';
+      else
+        dpram0_addra <= std_logic_vector(dpram_addra_cnt);
+        dpram1_addra <= std_logic_vector(dpram_addra_cnt);
+        if acq_in_trig_tag = '0' then
+          dpram0_dina <= sync_fifo_dout(63 downto 0);
+          dpram1_dina <= sync_fifo_dout(63 downto 0);
+        else
+          dpram0_dina <= trig_tag_data;
+          dpram1_dina <= trig_tag_data;
+        end if;
+        dpram0_wea <= not single_shot and ((samples_wr_en and sync_fifo_valid) or acq_in_trig_tag)
+                      and not multishot_buffer_sel;
+        dpram1_wea <= not single_shot and ((samples_wr_en and sync_fifo_valid) or acq_in_trig_tag)
+                      and multishot_buffer_sel;
+      end if;
+    end if;
+  end process;
 
   -- DPRAMs
   cmp_multishot_dpram0 : generic_dpram
@@ -1475,25 +1492,44 @@ begin
     if rising_edge(sys_clk_i) then
       if sys_rst_n_i = '0' or single_shot = '1' then
         dpram_valid_t <= '0';
-        dpram_valid   <= '0';
       else
         if trig_tag_done = '1' then
           dpram_addrb_cnt <= dpram_addra_trig - unsigned(pre_trig_value(c_DPRAM_DEPTH-1 downto 0));
           dpram_valid_t   <= '1';
-        elsif (dpram_addrb_cnt = dpram_addra_post_done + 2) then  -- reads 2 extra addresses -> trigger time-tag
+        elsif dpram_addrb_cnt = dpram_addra_post_done then
           dpram_valid_t <= '0';
         else
           dpram_addrb_cnt <= dpram_addrb_cnt + 1;
         end if;
-        dpram_valid <= dpram_valid_t;
       end if;
     end if;
   end process p_dpram_addrb_cnt;
 
   -- DPRAM output mux
-  dpram_dout   <= dpram0_doutb when multishot_buffer_sel = '1' else dpram1_doutb;
-  dpram0_addrb <= std_logic_vector(dpram_addrb_cnt);
-  dpram1_addrb <= std_logic_vector(dpram_addrb_cnt);
+  p_dpram_valid : process (sys_clk_i)
+  begin
+    if rising_edge(sys_clk_i) then
+      if sys_rst_n_i = '0' or single_shot = '1' then
+        dpram_valid   <= '0';
+        dpram_valid_d1 <= '0';
+        dpram_valid_d2 <= '0';
+      else
+        dpram0_addrb <= std_logic_vector(dpram_addrb_cnt);
+        dpram1_addrb <= std_logic_vector(dpram_addrb_cnt);
+    
+        --  dpram_valid is delayed by 2 cycles from dpram_valid_t.
+        --  1 for the dpram access, the second for the pipeline here.
+        dpram_valid_d1 <= dpram_valid_t;
+        dpram_valid_d2 <= dpram_valid_d1;
+        dpram_valid <= dpram_valid_d2;
+        if multishot_buffer_sel = '1' then
+          dpram_dout <= dpram0_doutb;
+        else
+          dpram_dout <= dpram1_doutb;
+        end if;
+      end if;
+    end if;
+  end process;
 
   ------------------------------------------------------------------------------
   -- Flow control FIFO for data to DDR
@@ -1585,11 +1621,7 @@ begin
     end if;
   end process p_ram_addr_cnt;
 
-  with acq_fsm_state select
-    wb_ddr_master_o.cyc <=
-    dpram_valid or not wb_ddr_fifo_empty when "001",
-    '1'         when others;
-
+  wb_ddr_master_o.cyc <= dpram_valid or not wb_ddr_fifo_empty when acq_fsm_state = "001" else '1';
   wb_ddr_master_o.stb <= not wb_ddr_fifo_empty;
   -- Convert to 32-bit word addressing for Wishbone
   wb_ddr_master_o.adr <= "00" & std_logic_vector(ram_addr_cnt) & "0";
@@ -1703,12 +1735,12 @@ begin
     trigout_trig <= f_reduce_or (trigout_triggers);
 
     -- Acquisition trigger delayed pulse
-    p_acq_end : process (sys_clk_i)
+    p_acq_trig : process (sys_clk_i)
     begin
       if rising_edge(sys_clk_i) then
         acq_trig_d <= acq_trig;
       end if;
-    end process p_acq_end;
+    end process p_acq_trig;
 
     trigout_fifo_wr <= trigout_trig and not trigout_fifo_full and acq_trig_d;
 

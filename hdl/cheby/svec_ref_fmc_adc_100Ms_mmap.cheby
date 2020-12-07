@@ -9,6 +9,7 @@ memory-map:
   size: 0x8000
   x-hdl:
     busgroup: True
+    pipeline: wr,rd
   children:
     - submap:
         name: metadata
