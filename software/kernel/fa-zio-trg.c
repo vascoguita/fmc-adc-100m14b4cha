@@ -382,7 +382,9 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_mem_off = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
-		dev_dbg(fa->msgdev, "Allocating block %d ...\n", i);
+		dev_dbg(fa->msgdev, "Allocating block %d of size %d (%d + %d)...\n",
+			i, size, interleave->current_ctrl->ssize * ti->nsamples,
+			FA_TRIG_TIMETAG_BYTES);
 		block = zio_buffer_alloc_block(interleave->bi, size,
 					       GFP_ATOMIC);
 		if (!block) {

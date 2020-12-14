@@ -582,7 +582,8 @@ static int zfad_dma_start(struct zio_cset *cset)
 		return err;
 	}
 
-        dev_dbg(fa->msgdev, "Start DMA transfer\n");
+        dev_dbg(fa->msgdev, "Start DMA transfer for %i shots of %i samples\n",
+		fa->n_shots, cset->ti->nsamples);
         err = fa_dma_request_channel_svec(fa);
 	if (err)
 		return err;
