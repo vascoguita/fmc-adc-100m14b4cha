@@ -753,8 +753,14 @@ static void zfad_dma_done(struct zio_cset *cset)
 
 		block = zfad_block[i].block;
 		err = zfad_block_timetag_extract(block, &timetag);
-		if (err)
+		if (err) {
+			dev_err(&fa->pdev->dev,
+				"Failed to extract Timetag from acquisition :0x%x 0x%x 0x%x 0x%x\n",
+				timetag.sec_high, timetag.sec_low,
+				timetag.ticks, timetag.status);
+
 			memset(&timetag, 0, sizeof(timetag));
+		}
 		zfad_block_ctrl_tstamp_start_update(block, &ztstamp);
 		zfad_block_ctrl_tstamp_update(block, &timetag);
 		zfad_block_ctrl_attr_update(block, &timetag, i);
