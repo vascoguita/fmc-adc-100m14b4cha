@@ -656,11 +656,10 @@ static int zfad_block_timetag_extract(struct zio_block *block,
 	struct zfad_timetag *tg;
 
 	tg = block->data + block->datalen - FA_TRIG_TIMETAG_BYTES;
-	if (unlikely((tg->sec_high >> 8) != 0xACCE55))
-		return -EINVAL;
-
 	/* resize the datalen, by removing the trigger tstamp */
 	block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES;
+	if (unlikely((tg->sec_high >> 8) != 0xACCE55))
+		return -EINVAL;
 
 	memcpy(timetag, tg, sizeof(*timetag));
 	return 0;
