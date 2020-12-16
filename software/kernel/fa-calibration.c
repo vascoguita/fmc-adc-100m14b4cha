@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 /*
@@ -12,7 +14,7 @@
 #include <linux/zio.h>
 #include <linux/moduleparam.h>
 #include <linux/jiffies.h>
-#include <fmc-adc-100m14b4cha.h>
+#include "fmc-adc-100m14b4cha-private.h"
 
 static int fa_calib_temp_period = 0;
 module_param_named(temp_calib_period, fa_calib_temp_period, int, 0444);
@@ -39,12 +41,20 @@ static bool fa_calib_is_busy(struct fa_dev *fa)
 
 static int fa_calib_apply(struct fa_dev *fa)
 {
-	if (fa_calib_is_busy(fa))
+	if (fa_calib_is_busy(fa)) {
+		dev_err(&fa->pdev->dev,
+			"%s Can't apply calibration values\n",
+			__func__);
 		return -EBUSY;
+	}
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CALIB_APPLY], 1);
         ndelay(100);
-	if (fa_calib_is_busy(fa))
+	if (fa_calib_is_busy(fa)) {
+		dev_err(&fa->pdev->dev,
+			"%s Calibration value applied but still 'busy'\n",
+			__func__);
 		return -EBUSY;
+	}
 
 	return 0;
 }
@@ -135,11 +145,11 @@ static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 
 static bool fa_calib_is_compensation_on(struct fa_dev *fa)
 {
-	if (unlikely(fa_calib_temp))
-		return true;
-
 	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
 		return false;
+
+        if (unlikely(fa_calib_temp))
+		return true;
 
 	return false;
 }
@@ -153,17 +163,16 @@ static bool fa_calib_is_compensation_on(struct fa_dev *fa)
  * You must hold &fa->zdev->cset->lock while calling this function
  */
 void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
-			      int32_t temperature)
+			      int32_t temperature, unsigned int flags)
 {
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int gain;
-	int err;
 
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
-		if (temperature == 0xFFFFFFFF)
+		if (flags & FA_CALIB_FLAG_READ_TEMP)
 			temperature = fa_temperature_read(fa);
 		delta_temp = (temperature / 10) - cal->temperature;
 		gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
@@ -182,9 +191,7 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 
 	fa_calib_gain_set(fa, chan, gain);
 	fa_calib_offset_set(fa, chan, cal->offset[chan]);
-	err = fa_calib_apply(fa);
-	if (err)
-		dev_err(&fa->pdev->dev, "Can't apply calibration values\n");
+	fa_calib_apply(fa);
 }
 
 /**
@@ -253,7 +260,7 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
  * You must hold &fa->zdev->cset->lock while calling this function
  */
 int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
-			     int32_t temperature)
+			     int32_t temperature, unsigned int flags)
 {
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
 	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
@@ -265,7 +272,7 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
-		if (temperature == 0xFFFFFFFF)
+		if (flags & FA_CALIB_FLAG_READ_TEMP)
 			temperature = fa_temperature_read(fa);
 		delta_temp = (temperature / 10) - cal->temperature;
 		gain = fa_calib_dac_gain_fix(range, cal->gain[chan],
@@ -294,8 +301,8 @@ void fa_calib_config(struct fa_dev *fa)
         temperature = fa_temperature_read(fa);
 	spin_lock(&fa->zdev->cset->lock);
         for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
-		fa_calib_adc_config_chan(fa, i, temperature);
-		fa_calib_dac_config_chan(fa, i, temperature);
+		fa_calib_adc_config_chan(fa, i, temperature, 0);
+		fa_calib_dac_config_chan(fa, i, temperature, 0);
 	}
 	spin_unlock(&fa->zdev->cset->lock);
 }
@@ -326,14 +333,10 @@ static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 	for (i = 0; i < ARRAY_SIZE(cal->offset); i++) {
 		if (abs(cal->offset[i] - iden->offset[i])
 		    > FA_CALIB_MAX_DELTA_OFFSET) {
-			dev_err(msgdev, "wrong offset (%i) 0x%x\n",
-				i, cal->offset[i]);
 			return -EINVAL;
 		}
 		if (abs((s16)(cal->gain[i] - iden->gain[i]))
 		    > FA_CALIB_MAX_DELTA_GAIN) {
-			dev_err(msgdev, "invalid gain   (%i) 0x%x\n",
-				i, cal->gain[i]);
 			return -EINVAL;
 		}
 	}
@@ -348,9 +351,11 @@ static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 
 static int fa_verify_calib(struct device *msgdev, struct fa_calib *calib)
 {
-	int i, err = 0;
+	int i;
 
 	for (i = 0; i < ARRAY_SIZE(calib->adc); i++) {
+		int err;
+
 		err = fa_verify_calib_stanza(msgdev, "adc", i, calib->adc + i);
 		if (err)
 			return err;
@@ -411,7 +416,8 @@ static void fa_calib_write(struct fa_dev *fa, struct fa_calib *calib)
 	fa_calib_le16_to_cpus(calib);
 	err = fa_verify_calib(fa->msgdev, calib);
 	if (err) {
-		dev_info(fa->msgdev, "Apply Calibration Identity\n");
+		dev_info(fa->msgdev,
+			 "Apply Calibration Identity (invalid calibration values)\n");
 		fa_identity_calib_set(&fa->calib);
 	} else {
 		memcpy(&fa->calib, calib, sizeof(*calib));

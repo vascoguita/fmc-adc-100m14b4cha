@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 files = [
     "svec_ref_fmc_adc_100Ms.vhd",
     "../../cheby/svec_ref_fmc_adc_100Ms_mmap.vhd",

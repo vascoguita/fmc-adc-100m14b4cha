@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # include parent_common.mk for buildsystem's defines
 # use absolute path for REPO_PARENT
 -include $(REPO_PARENT)/parent_common.mk
@@ -6,7 +10,7 @@ all: kernel tools
 
 DIRS =kernel tools
 
-.PHONY: all clean modules install modules_install $(DIRS)
+.PHONY: all clean modules install modules_install cppcheck $(DIRS)
 
 install modules_install:
 
@@ -20,3 +24,6 @@ modules_install: TARGET = modules_install
 
 $(DIRS):
 	$(MAKE) -C $@ $(TARGET)
+
+cppcheck:
+	@$(MAKE) -C tools $@

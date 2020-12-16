@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
+// SPDX-License-Identifier: CC0-1.0
+
 `define TIMETAG_CORE_REGS_SIZE 128
 `define ADDR_TIMETAG_CORE_REGS_SECONDS_UPPER 'h0
 `define TIMETAG_CORE_REGS_SECONDS_UPPER_OFFSET 0

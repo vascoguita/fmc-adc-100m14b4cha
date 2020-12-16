@@ -10,10 +10,10 @@
 #include <linux/version.h>
 #include <linux/dmaengine.h>
 #include <linux/mod_devicetable.h>
-#include <linux/ipmi-fru.h>
+#include <uapi/linux/ipmi/fru.h>
 #include <linux/fmc.h>
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 #include <platform_data/fmc-adc-100m14b4cha.h>
 
 static int fa_enable_test_data_fpga;
@@ -97,7 +97,11 @@ int32_t fa_temperature_read(struct fa_dev *fa)
 	uint32_t reg;
 	int16_t raw_temp;
 
-        reg = fa_readl(fa, fa->fa_ow_base, &zfad_regs[ZFA_DS18B20_TEMP]);
+	reg = fa_ioread(fa, fa->fa_ow_base + 0x08);
+	if (reg & BIT(31)) {
+		dev_err(&fa->pdev->dev, "Temperature sensor failure\n");
+		return 45000; /* 45.000 degrees as save value */
+	}
 	raw_temp = reg & 0xFFFF;
 
 	return (raw_temp * 1000UL + 8) / 16;
@@ -300,7 +304,19 @@ int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 
 	dev_dbg(&fa->pdev->dev, "%s {patter: 0x%04x, enable: %d}\n", __func__, pattern, enable);
 
-        spin_lock(&fa->zdev->cset->lock);
+	spin_lock(&fa->zdev->cset->lock);
+	/* Disable before Setting the pattern data */
+	frame_tx  = 0x0000; /* write mode */
+	frame_tx |= 0x0300; /* A3 pattern + enable */
+	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
+	if (err)
+		goto err;
+
+	if (!enable) {
+		fa->flags &= ~FA_DEV_F_PATTERN_DATA;
+		goto err;
+	}
+
 	frame_tx  = 0x0000; /* write mode */
 	frame_tx |= 0x0400; /* A4 pattern */
 	frame_tx |= pattern & 0xFF; /* LSB pattern */
@@ -310,17 +326,14 @@ int fa_adc_data_pattern_set(struct fa_dev *fa, uint16_t pattern,
 
 	frame_tx  = 0x0000; /* write mode */
 	frame_tx |= 0x0300; /* A3 pattern + enable */
-	frame_tx |= (pattern & 0xFF00) >> 8; /* MSB pattern */
-	frame_tx |= (enable ? 0x80 : 0x00); /* Enable the pattern data */
+	frame_tx |= (pattern & 0x3F00) >> 8; /* MSB pattern */
+	frame_tx |= 0x80; /* Enable the pattern data */
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, frame_tx, NULL);
 	if (err)
 		goto err;
 
 
-	if (enable)
-		fa->flags |= FA_DEV_F_PATTERN_DATA;
-	else
-		fa->flags &= ~FA_DEV_F_PATTERN_DATA;
+	fa->flags |= FA_DEV_F_PATTERN_DATA;
 err:
 	spin_unlock(&fa->zdev->cset->lock);
 	return err;
@@ -354,6 +367,38 @@ int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
 	return 0;
 }
 
+static bool fa_adc_is_serdes_pll_locked(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base,
+			&zfad_regs[ZFA_STA_SERDES_PLL]);
+}
+
+static bool fa_adc_is_serdes_synced(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base,
+			&zfad_regs[ZFA_STA_SERDES_SYNCED]);
+}
+
+static bool fa_adc_is_serdes_ready(struct fa_dev *fa)
+{
+	return fa_adc_is_serdes_pll_locked(fa) && fa_adc_is_serdes_synced(fa);
+}
+
+static int fa_adc_wait_serdes_ready(struct fa_dev *fa, unsigned int timeout)
+{
+	unsigned long j;
+
+	j = jiffies + timeout;
+
+	while (!fa_adc_is_serdes_ready(fa)) {
+		if (time_after(jiffies, j))
+			return -ETIMEDOUT;
+		cpu_relax();
+	}
+
+	return 0;
+}
+
 /*
  * zfad_fsm_command
  * @fa: the fmc-adc descriptor
@@ -365,7 +410,6 @@ int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
 int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 {
 	struct zio_cset *cset = fa->zdev->cset;
-	uint32_t val;
 
 	if (command != FA100M14B4C_CMD_START &&
 	    command != FA100M14B4C_CMD_STOP) {
@@ -396,20 +440,11 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 
 	/* If START, check if we can start */
 	if (command == FA100M14B4C_CMD_START) {
-		/* Verify that SerDes PLL is lockes */
-		val = fa_readl(fa, fa->fa_adc_csr_base,
-			       &zfad_regs[ZFA_STA_SERDES_PLL]);
-		if (!val) {
-			dev_info(fa->msgdev, "Cannot start acquisition: "
-				 "SerDes PLL not locked\n");
-			return -EBUSY;
-		}
-		/* Verify that SerDes is synched */
-		val = fa_readl(fa, fa->fa_adc_csr_base,
-			       &zfad_regs[ZFA_STA_SERDES_SYNCED]);
-		if (!val) {
-			dev_info(fa->msgdev, "Cannot start acquisition: "
-				 "SerDes not synchronized\n");
+		if (!fa_adc_is_serdes_ready(fa)) {
+			dev_err(fa->msgdev,
+				"Cannot start acquisition: "
+				"SerDes PLL not locked or synchronized (0x%08x)\n",
+				fa_ioread(fa, fa->fa_adc_csr_base + ADC_CSR_STA_REG_OFFSET));
 			return -EBUSY;
 		}
 
@@ -455,13 +490,23 @@ static void fa_init_timetag(struct fa_dev *fa)
 		  (seconds >> 00) & 0xFFFFFFFF);
 }
 
+static void fa_clock_enable(struct fa_dev *fa)
+{
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
+}
+
+static void fa_clock_disable(struct fa_dev *fa)
+{
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 0);
+}
+
 /*
  * Specific check and init
  */
 static int __fa_init(struct fa_dev *fa)
 {
 	struct zio_device *zdev = fa->zdev;
-	int i, addr;
+	int i;
 
 	/* Use identity calibration */
 	fa->mshot_max_samples = fa_readl(fa, fa->fa_adc_csr_base,
@@ -472,8 +517,8 @@ static int __fa_init(struct fa_dev *fa)
 		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
-		addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
-					  zdev->cset->chan[i].index);
+		int addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
+					      zdev->cset->chan[i].index);
 		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
 			  FA100M14B4C_RANGE_1V);
 	        fa_adc_range_set(fa, &zdev->cset->chan[i],
@@ -483,10 +528,7 @@ static int __fa_init(struct fa_dev *fa)
 		fa->zero_offset[i] = 0;
 
 	}
-	fa_calib_config(fa);
 
-	/* Enable mezzanine clock */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CLK_EN], 1);
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
 	/* Set test data register */
@@ -685,9 +727,23 @@ int fa_probe(struct platform_device *pdev)
 	if(!fa_fmc_slot_is_valid(fa))
 		goto out_fmc_err;
 
+	err = sysfs_create_link(&fa->pdev->dev.kobj, &fa->slot->dev.kobj,
+				dev_name(&fa->slot->dev));
+	if (err) {
+		dev_err(&fa->pdev->dev, "Failed to create FMC symlink to %s\n",
+			dev_name(&fa->slot->dev));
+		goto err_fmc_link;
+	}
+
 	err = fa_dma_request_channel(fa);
 	if (err)
 		goto out_dma;
+
+	fa_clock_enable(fa);
+
+	err = fa_adc_wait_serdes_ready(fa, msecs_to_jiffies(10));
+	if (err)
+		goto out_serdes;
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
@@ -716,8 +772,12 @@ out:
 		if (m->exit)
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
+out_serdes:
+	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 out_dma:
+	sysfs_remove_link(&fa->pdev->dev.kobj, dev_name(&fa->slot->dev));
+err_fmc_link:
 out_fmc_err:
 out_fmc_eeprom:
 out_fmc_pre:
@@ -731,7 +791,6 @@ out_fmc:
 int fa_remove(struct platform_device *pdev)
 {
 	struct fa_dev *fa = platform_get_drvdata(pdev);
-	struct fa_modlist *m;
 	int i = ARRAY_SIZE(mods);
 
 	if (WARN(!fa, "asked to remove fmc-adc-100m device but it does not exists\n"))
@@ -741,14 +800,16 @@ int fa_remove(struct platform_device *pdev)
 	flush_workqueue(fa_workqueue);
 
 	while (--i >= 0) {
-		m = mods + i;
+		struct fa_modlist *m = mods + i;
 		if (m->exit)
 			m->exit(fa);
 	}
+	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 
 	iounmap(fa->fa_top_level);
 
+	sysfs_remove_link(&fa->pdev->dev.kobj, dev_name(&fa->slot->dev));
 	fmc_slot_put(fa->slot);
 
 	return 0;

@@ -1,4 +1,5 @@
 -------------------------------------------------------------------------------
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
 -- Title      : FMC ADC 100Ms/s core
 -- Project    : FMC ADC 100M 14B 4CHA gateware
 -- URL        : http://www.ohwr.org/projects/fmc-adc-100m14b4cha-gw
@@ -11,18 +12,6 @@
 -- Description: FMC ADC 100Ms/s core.
 -------------------------------------------------------------------------------
 -- Copyright (c) 2011-2020 CERN (BE-CO-HT)
--------------------------------------------------------------------------------
--- GNU LESSER GENERAL PUBLIC LICENSE
--------------------------------------------------------------------------------
--- This source file is free software; you can redistribute it and/or modify it
--- under the terms of the GNU Lesser General Public License as published by the
--- Free Software Foundation; either version 2.1 of the License, or (at your
--- option) any later version. This source is distributed in the hope that it
--- will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
--- of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
--- See the GNU Lesser General Public License for more details. You should have
--- received a copy of the GNU Lesser General Public License along with this
--- source; if not, download it from http://www.gnu.org/licenses/lgpl-2.1.html
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -492,6 +481,11 @@ begin
       fmc_adc_ch4_i       => wb_channel_out(4),
       fmc_adc_ch4_o       => wb_channel_in(4));
 
+  csr_regin.ctl_fsm_cmd         <= fsm_cmd;
+  csr_regin.ctl_man_bitslip     <= serdes_man_bitslip;
+  csr_regin.ctl_clear_trig_stat <= trig_storage_clear;
+  csr_regin.ctl_calib_apply     <= sync_calib_apply;
+
   csr_regin.sta_fsm           <= acq_fsm_state;
   csr_regin.sta_serdes_pll    <= serdes_locked_sync;
   csr_regin.sta_serdes_synced <= serdes_synced_sync;
@@ -514,12 +508,8 @@ begin
   csr_regin.multi_depth       <= c_MULTISHOT_SAMPLE_DEPTH;
 
   ctl_reg_wr                <= csr_regout.ctl_wr;
-  fsm_cmd                   <= csr_regout.ctl_fsm_cmd;
-  serdes_man_bitslip        <= csr_regout.ctl_man_bitslip and ctl_reg_wr;
   trig_led_man              <= csr_regout.ctl_trig_led;
   acq_led_man               <= csr_regout.ctl_acq_led;
-  trig_storage_clear        <= csr_regout.ctl_clear_trig_stat and ctl_reg_wr;
-  sync_calib_apply          <= csr_regout.ctl_calib_apply and ctl_reg_wr;
   int_trig_en_in(1)         <= csr_regout.trig_en_ch1;
   int_trig_en_in(2)         <= csr_regout.trig_en_ch2;
   int_trig_en_in(3)         <= csr_regout.trig_en_ch3;
@@ -531,6 +521,24 @@ begin
   shots_value               <= csr_regout.shots_nbr;
   pre_trig_value            <= csr_regout.pre_samples;
   post_trig_value           <= csr_regout.post_samples;
+
+  -- external register for "wire" bits of the control register
+  p_ext_reg_ctl : process (sys_clk_i) is
+  begin
+    if rising_edge(sys_clk_i) then
+      if ctl_reg_wr = '1' then
+        fsm_cmd            <= csr_regout.ctl_fsm_cmd;
+        serdes_man_bitslip <= csr_regout.ctl_man_bitslip;
+        trig_storage_clear <= csr_regout.ctl_clear_trig_stat;
+        sync_calib_apply   <= csr_regout.ctl_calib_apply;
+      else
+        fsm_cmd            <= (others => '0');
+        serdes_man_bitslip <= '0';
+        trig_storage_clear <= '0';
+        sync_calib_apply   <= '0';
+      end if;
+    end if;
+  end process p_ext_reg_ctl;
 
   -- Delays for user-controlled GPIO outputs to help with timing
   p_delay_gpio_ssr : process (sys_clk_i) is
@@ -1166,8 +1174,8 @@ begin
   acq_end_p_o <= acq_end and not(acq_end_d);
 
   -- FSM commands
-  acq_start <= '1' when ctl_reg_wr = '1' and fsm_cmd = "01" else '0';
-  acq_stop  <= '1' when ctl_reg_wr = '1' and fsm_cmd = "10" else '0';
+  acq_start <= '1' when fsm_cmd = "01" else '0';
+  acq_stop  <= '1' when fsm_cmd = "10" else '0';
   acq_trig  <= sync_fifo_valid and sync_fifo_dout(64) and acq_in_wait_trig;
   acq_end   <= trig_tag_done and shots_done;
 

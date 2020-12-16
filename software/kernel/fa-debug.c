@@ -4,7 +4,7 @@
  * Author: Federico Vaga <federico.vaga@cern.ch>
  */
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 #define FA_DBG_REG32_CH(_n) \
 	{.name = "ADC-CSR:ch"#_n"_ctl", .offset = ADC_CSR_OFF + 0x080 + ((_n - 1) * 0x40)}, \
@@ -114,17 +114,34 @@ static const struct debugfs_reg32 fa_debugfs_reg32[] = {
 	FA_DBG_REG32_TIM(acq_start_tag, 0x24),
 	FA_DBG_REG32_TIM(acq_stop_tag, 0x30),
 	FA_DBG_REG32_TIM(acq_end_tag, 0x3C),
+	{
+		.name = "TEMP:serial_u",
+		.offset = ADC_OW_OFF + 0x0,
+	},
+	{
+		.name = "TEMP:serial_l",
+		.offset = ADC_OW_OFF + 0x4,
+	},
+	{
+		.name = "TEMP:temperature",
+		.offset = ADC_OW_OFF + 0x8,
+	},
+	{
+		.name = "TEMP:status",
+		.offset = ADC_OW_OFF + 0xC,
+	}
 };
 
 
 static void fa_regdump_seq_read_spi(struct fa_dev *fa, struct seq_file *s)
 {
-	int i, err;
+	int i;
 
 	seq_printf(s, "ADC SPI registers\n");
 	seq_printf(s, "Address   Data\n");
 	for (i = 0; i < 5; ++i) {
 		uint32_t tx, rx;
+		int err;
 
 		tx = 0x8000 | (i << 8);
 		err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
@@ -211,12 +228,20 @@ static int fa_data_pattern_adc_write(struct fa_dev *fa, const char __user *buf,
 	}
 }
 
+#define CMD_SIZE 4UL
 static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
 				     size_t count, loff_t *ppos)
 {
 	struct fa_dev *fa = file->private_data;
+	char buf_l[CMD_SIZE];
+	int err;
 
-	if (strncmp(buf, "adc ", 4) == 0) {
+	memset(buf_l, 0, CMD_SIZE);
+	err = copy_from_user(buf_l, buf, min(count, CMD_SIZE));
+	if (err)
+		return err;
+
+	if (strncmp(buf_l, "adc ", CMD_SIZE) == 0) {
 		int err;
 
 		err = fa_data_pattern_adc_write(fa, buf + 4, count - 4);
@@ -243,7 +268,7 @@ static ssize_t fa_data_pattern_read(struct file *file, char __user *buf,
         err = fa_adc_data_pattern_get(fa, &pattern, &enable);
 	if (err)
 		return err;
-	snprintf(buf_l, FA_ADC_DATA_PATTERN_CMD_SIZE, "adc %d 0x%02x\n",
+	snprintf(buf_l, FA_ADC_DATA_PATTERN_CMD_SIZE, "adc %u 0x%02x\n",
 		 enable, pattern);
 	count = min(count, strlen(buf_l));
 	err = copy_to_user(buf, buf_l, count);

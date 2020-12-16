@@ -9,7 +9,7 @@
 #include "vmebus.h"
 #endif
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 /* Endianess */
 #ifndef LITTLE_ENDIAN
@@ -40,18 +40,16 @@ static int __get_endian(void)
  */
 static void __endianness(unsigned int byte_length, void *buffer)
 {
-	int i, size;
-	uint32_t *ptr;
-
 	/* CPU may be little endian, VME is big endian */
 	if (__get_endian() == LITTLE_ENDIAN) {
-		ptr = buffer;
 		/* swap samples and trig timetag all seen as 32bits words */
-		size = byte_length/4;
+		int i;
+		int size = byte_length / 4;
+		uint32_t *ptr = buffer;
+
 		for (i = 0; i < size; ++i, ++ptr)
 			*ptr = __be32_to_cpu(*ptr);
 	}
-
 }
 
 struct zfad_timetag {
@@ -219,13 +217,18 @@ static unsigned int zfad_block_n_pages(struct zio_block *block)
 #define ADC_VME_DDR_ADDR 0x00
 #define ADC_VME_DDR_DATA 0x04
 #define SVEC_FUNC_NR 1 /* HARD coded in SVEC */
+
+static inline struct vme_dev *fa_to_vme_dev(struct fa_dev *fa)
+{
+	return to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
+}
+
 static unsigned long fa_ddr_data_vme_addr(struct fa_dev *fa)
 {
 	struct fmc_adc_platform_data *data = fa->pdev->dev.platform_data;
-	struct vme_dev *vdev;
+	struct vme_dev *vdev = fa_to_vme_dev(fa);
 	unsigned long addr;
 
-	vdev = to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
 	if (WARN(vdev->map[SVEC_FUNC_NR].kernel_va == NULL,
 		 "Invalid VME function\n"))
 		return ~0; /* invalid address, we will see VME errors */
@@ -240,10 +243,9 @@ static unsigned long fa_ddr_data_vme_addr(struct fa_dev *fa)
 static void *fa_ddr_addr_reg_off(struct fa_dev *fa)
 {
 	struct fmc_adc_platform_data *data = fa->pdev->dev.platform_data;
-	struct vme_dev *vdev;
+	struct vme_dev *vdev = fa_to_vme_dev(fa);
 	void *addr;
 
-	vdev = to_vme_dev(fa->pdev->dev.parent->parent->parent->parent);
 	if (WARN(vdev->map[SVEC_FUNC_NR].kernel_va == NULL,
 		 "Invalid VME function\n"))
 		return NULL; /* invalid address, we will see VME errors */
@@ -460,7 +462,8 @@ static int zfad_dma_prep_slave_sg(struct dma_chan *dchan,
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct dma_async_tx_descriptor *tx;
 	struct page **pages;
-	unsigned int nr_pages, sg_mapped;
+	unsigned int nr_pages;
+	int sg_mapped;
 	size_t max_segment_size;
 	int err;
 
@@ -579,7 +582,8 @@ static int zfad_dma_start(struct zio_cset *cset)
 		return err;
 	}
 
-        dev_dbg(fa->msgdev, "Start DMA transfer\n");
+        dev_dbg(fa->msgdev, "Start DMA transfer for %i shots of %i samples\n",
+		fa->n_shots, cset->ti->nsamples);
         err = fa_dma_request_channel_svec(fa);
 	if (err)
 		return err;
@@ -653,11 +657,10 @@ static int zfad_block_timetag_extract(struct zio_block *block,
 	struct zfad_timetag *tg;
 
 	tg = block->data + block->datalen - FA_TRIG_TIMETAG_BYTES;
-	if (unlikely((tg->sec_high >> 8) != 0xACCE55))
-		return -EINVAL;
-
 	/* resize the datalen, by removing the trigger tstamp */
 	block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES;
+	if (unlikely((tg->sec_high >> 8) != 0xACCE55))
+		return -EINVAL;
 
 	memcpy(timetag, tg, sizeof(*timetag));
 	return 0;
@@ -751,8 +754,14 @@ static void zfad_dma_done(struct zio_cset *cset)
 
 		block = zfad_block[i].block;
 		err = zfad_block_timetag_extract(block, &timetag);
-		if (err)
+		if (err) {
+			dev_err(&fa->pdev->dev,
+				"Failed to extract Timetag from acquisition :0x%x 0x%x 0x%x 0x%x\n",
+				timetag.sec_high, timetag.sec_low,
+				timetag.ticks, timetag.status);
+
 			memset(&timetag, 0, sizeof(timetag));
+		}
 		zfad_block_ctrl_tstamp_start_update(block, &ztstamp);
 		zfad_block_ctrl_tstamp_update(block, &timetag);
 		zfad_block_ctrl_attr_update(block, &timetag, i);

@@ -1,18 +1,8 @@
-*~
-*.aux
-*.cp
-*.cps
-*.fn
-*.fns
-*.html
-*.info
-*.ky
-*.log
-/*.pdf
-*.pg
-*.texi
-*.toc
-*.tp
-/*.txt
-*.vr
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
+build_env
 _build
+*.htm
+*.pdf

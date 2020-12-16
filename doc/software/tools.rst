@@ -102,7 +102,7 @@ the graphic appearance of Tk-8.4 (and earlier versions). If you prefer the
 older one, run *wish8.4 tools/fau-config-if* instead of
 ``tools/fau-config-if`` (or set the previous version as default Tk interpreter).
 
-.. figure:: ../img/config-if.gif
+.. figure:: ../fig/config-if.*
    :alt: Two snapshots of fa-config-if
    :align: center
 

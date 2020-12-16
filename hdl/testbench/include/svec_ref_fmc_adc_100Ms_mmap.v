@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
+// SPDX-License-Identifier: CC0-1.0
+
 `define SVEC_REF_FMC_ADC_100M_MMAP_SIZE 32768
 `define ADDR_SVEC_REF_FMC_ADC_100M_MMAP_METADATA 'h2000
 `define SVEC_REF_FMC_ADC_100M_MMAP_METADATA_SIZE 64

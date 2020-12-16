@@ -1,27 +1,19 @@
-..
-  SPDX-License-Identifier: CC-BY-SA-4.0
-  SPDX-FileCopyrightText: 2020 CERN
+.. Copyright (c) 2013-2020 CERN (home.cern)
+   SPDX-License-Identifier: CC-BY-SA-4.0
 
-Welcome to FMC ADC 100M 14 bit 4 Channel's documentation!
-=========================================================
-This is the user manual of the driver for the `FMC ADC 100M 14b 4cha`_
-board developed on the `Open Hardware Repository`_. FMC is the form
-factor of the card, ADC is its role, 100M means it can acquire
-100Msample per second, 14b is the numbers of meaningful bits and 4cha
-states it has 4 input channels (plus a trigger input).
+.. FMC-ADC-100M-14B-4CHA documentation master file, created by
+   sphinx-quickstart on Thu Aug  6 14:57:13 2020.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-.. _`Open Hardware Repository`: http://www.ohwr.org/
-.. _`FMC ADC 100M 14b 4cha`: http://www.ohwr.org/projects/fmc-adc-100m14b4cha
+FMC-ADC-100M-14B-4CHA documentation
+===================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Table of Contents
 
+   introduction
    software/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   gateware/index
+   gateware/memory-map

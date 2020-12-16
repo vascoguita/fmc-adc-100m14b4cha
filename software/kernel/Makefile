@@ -1,6 +1,7 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
-#
 # Copyright (C) 2019 CERN
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
 
 -include Makefile.specific
 # include parent_common.mk for buildsystem's defines
@@ -25,6 +26,11 @@ ifeq ($(DKMS), 1)
 ZIO_VERSION ?= $(shell basename $(shell ls -d $(DKMSTREE)/zio/* | grep -E "\/[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -n 1))
 ZIO_ABS ?= $(DKMSTREE)/zio/$(ZIO_VERSION)/source
 ZIO_EXTRA_SYMBOLS-y = $(DKMSTREE)/zio/kernel-$(KVERSION)-$(shell uname -p)/module/Module.symvers
+
+# Take last installed version (if installed using RPM it should be OK)
+FMC_VERSION ?= $(shell basename $(shell ls -d $(DKMSTREE)/fmc-sw/* | grep -E "\/[0-9]+\.[0-9]+\.[0-9]+" | sort -V | tail -n 1))
+FMC_ABS ?= $(DKMSTREE)/zio/$(FMC_VERSION)/source
+FMC_EXTRA_SYMBOLS-y = $(DKMSTREE)/fmc-sw/kernel-$(KVERSION)-$(shell uname -p)/module/Module.symvers
 else
 
 ifndef ZIO
@@ -48,16 +54,15 @@ VMEBUS_ABS ?= $(abspath $(VMEBUS) )
 
 GIT_VERSION = $(shell git describe --always --dirty --long --tags)
 
-all modules:
+all: modules
+
+clean modules help modules_install coccicheck:
 	$(MAKE) -C $(LINUX) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) FMC_ABS=$(FMC_ABS) \
 		ZIO_EXTRA_SYMBOLS-y=$(ZIO_EXTRA_SYMBOLS-y) \
 		FMC_EXTRA_SYMBOLS-y=$(FMC_EXTRA_SYMBOLS-y) \
 		ZIO_VERSION=$(ZIO_VERSION) \
 		GIT_VERSION=$(GIT_VERSION) \
-		VMEBUS_ABS=$(VMEBUS_ABS) modules
-
-install modules_install: modules
-	$(MAKE) -C $(LINUX) M=$(CURDIR) modules_install
+		VMEBUS_ABS=$(VMEBUS_ABS) $@
 
 # be able to run the "clean" rule even if $(LINUX) is not valid
 clean:
@@ -65,4 +70,6 @@ clean:
 		Module.markers modules.order
 
 cppcheck:
-	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --enable=all *.c *.h
+	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --suppress=missingIncludeSystem --enable=all *.c *.h
+
+.PHONY: all install coccicheck cppcheck

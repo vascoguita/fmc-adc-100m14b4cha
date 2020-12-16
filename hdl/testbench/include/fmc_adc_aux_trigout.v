@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
+// SPDX-License-Identifier: CC0-1.0
+
 `define AUX_TRIGOUT_SIZE 20
 `define ADDR_AUX_TRIGOUT_STATUS 'h0
 `define AUX_TRIGOUT_WR_ENABLE_OFFSET 0

@@ -41,7 +41,8 @@ static void print_version(char *pname)
 
 int main(int argc, char **argv)
 {
-	int fd, addr, count, usec, ret;
+	unsigned int addr;
+	int fd, count, usec, ret;
 	int64_t tics;
 
 	if ((argc == 2) &&
@@ -84,8 +85,12 @@ int main(int argc, char **argv)
 
 		lseek(fd, addr, SEEK_SET);
 		ret = write(fd, b + 1, 1);
+		if (ret < 0)
+			break;
 		lseek(fd, addr, SEEK_SET);
 		ret = write(fd, b + 0, 1);
+		if (ret < 0)
+			break;
 
 		if (count > 1) {
 			tics += usec;

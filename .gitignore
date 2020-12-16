@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
 hdl/ip_cores/.lso
 hdl/ip_cores/_xmsgs
 hdl/*/sim/*/transcript
@@ -106,3 +110,5 @@ TAGS*
 GTAGS
 GPATH
 GRTAGS
+.clangd
+compile_commands.json

@@ -11,7 +11,7 @@
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 
-#include "fmc-adc-100m14b4cha.h"
+#include "fmc-adc-100m14b4cha-private.h"
 
 struct zfat_instance {
 	struct zio_ti ti;
@@ -382,7 +382,9 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	dev_mem_off = 0;
 	/* Allocate ZIO blocks */
 	for (i = 0; i < fa->n_shots; ++i) {
-		dev_dbg(fa->msgdev, "Allocating block %d ...\n", i);
+		dev_dbg(fa->msgdev, "Allocating block %d of size %d (%d + %d)...\n",
+			i, size, interleave->current_ctrl->ssize * ti->nsamples,
+			FA_TRIG_TIMETAG_BYTES);
 		block = zio_buffer_alloc_block(interleave->bi, size,
 					       GFP_ATOMIC);
 		if (!block) {

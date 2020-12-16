@@ -16,15 +16,17 @@ The fmcadc100m14b4ch device driver has been developed and tested on Linux
 3.10. Other Linux versions might work as well but it is not guaranteed.
 
 This driver depends on the `zio`_ framework and `fmc`_ library; we
-developed and tested against version `zio`_ 1.4 and `fmc`_ 1.0.
+developed and tested against version `zio`_ 1.4 and `fmc`_ 1.1.
 
 The FPGA address space must be visible on the host system. This requires
 a driver for the FPGA carrier that exports the FPGA address space to the
 host. As of today we support `SPEC`_ and `SVEC`_.
 
 
+.. _drv_build_install:
+
 Compile And Install
-====================
+===================
 
 The compile and install the fmcadc100m14b4ch device driver you need
 first to export the path to its direct dependencies, and then you
@@ -554,11 +556,12 @@ into a meaningful grep-friendly text stream.
 User Header Files
 =================
 
-Internally the driver uses the header file ``fmc-adc-100m14b4cha.h`` for the
-declaration of all the functions, constants and structures. Some of these are
-also available for the user-space programs; especially the constants to be
-used to properly interpret the ``zio_control`` attributes, or the bitmask
-fields definitions.
+Internally the driver uses the header file
+``fmc-adc-100m14b4cha-private.h`` for the declaration of all the
+functions, constants and structures. Then there is the header file
+``fmc-adc-100m14b4cha.h`` that contains useful symbols for user-space
+programs; especially the constants to be used to properly interpret
+the ``zio_control`` attributes, or the bitmask fields definitions.
 
 Troubleshooting
 '''''''''''''''

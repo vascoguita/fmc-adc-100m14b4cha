@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
+//
+// SPDX-License-Identifier: CC0-1.0
+
 `define SPEC_CARRIER_CSR_SIZE 16
 `define ADDR_SPEC_CARRIER_CSR_CARRIER 'h0
 `define SPEC_CARRIER_CSR_CARRIER_PCB_REV_OFFSET 0

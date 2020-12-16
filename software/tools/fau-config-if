@@ -1,5 +1,9 @@
 #!/usr/bin/wish
 
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 set base "/sys/bus/zio/devices/adc-100m14b-"
 
 # We trace the "v" (values) array to write to sysfs

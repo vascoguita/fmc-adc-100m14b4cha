@@ -1,0 +1,74 @@
+# SPDX-FileCopyrightText: 2019 CERN
+# SPDX-FileCopyrightText: 2020 CERN (home.cern)
+#
+# SPDX-License-Identifier: CC0-1.0
+
+---
+variables:
+  KOJI_TARGET: 'ohwr7'
+  KOJI_DISTTAG: '.el7.cern'
+  DIST_PATH: distribution
+  BUILD_PATH: distribution/build
+
+stages:
+  - static-analysis
+  - build
+  - dkms
+  - srpm
+  - kscratch
+  - kbuild
+
+reuse:
+  stage: static-analysis
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+    - reuse lint
+
+cppcheck:
+  stage: static-analysis
+  script:
+    - yum install -y cppcheck
+    - make -C software cppcheck
+
+build:
+  stage: build
+  script:
+    - yum install -y kernel-devel
+    - LINUX=/usr/src/kernels/*/ make -C software
+
+build_dkms_rpm:
+  stage: dkms
+  script:
+    - yum install -y dkms
+    - make -C distribution dkms-rpm
+
+build_srpm:
+  stage: srpm
+  script:
+    - yum-builddep -y ${DIST_PATH}/*.spec
+    - LINUX=/usr/src/kernels/*/ make -C distribution srpm
+  artifacts:
+    paths:
+      - distribution/build/SRPMS/${CI_PROJECT_NAME}*src.rpm
+    expire_in: 1 day
+
+.koji_deps_template: &koji_deps
+  before_script:
+    - yum install -y koji krb5-workstation rpm-build
+    - echo ${OHWR_PASSWORD} | kinit ${OHWR_USER}
+
+kscratch:
+  <<: *koji_deps
+  stage: kscratch
+  script:
+    - koji --config=.koji build --wait --scratch ${KOJI_TARGET} distribution/build/SRPMS/${CI_PROJECT_NAME}*src.rpm
+
+kbuild-ohwr:
+  <<: *koji_deps
+  stage: kbuild
+  only:
+    - tags
+  script:
+    - koji --config=.koji build --wait ${KOJI_TARGET} distribution/build/SRPMS/${CI_PROJECT_NAME}*src.rpm
