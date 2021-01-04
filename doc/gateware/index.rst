@@ -103,11 +103,20 @@ There are two different Wishbone bus interconnects in the design.
 
 Mapped WB bus (blue)
   This bus connects all the peripherals to the GN4142 core.
-  Data: 32-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
+  Data: 32-bit, address: 32-bit (word aligned),
+  Clock: system clock (125MHz) and system clock / 2 (62.5MHz), see note below.
 
 ADC core to memory controller (orange)
   This bus is used to write samples from the ADC core to the DDR memory.
   Data: 64-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
+
+.. note::
+   The SPEC-base core works internally at 62.5MHz, especially for the WR PTP
+   core. On the other hand, the ADC core needs to work at 125MHz in order to
+   be able to retrieve and process the incoming ADC samples at 100MHz (from
+   the ``fs_clk`` domain). Therefore, a Wishbone clock crossing component is
+   inserted between the SPEC-base core and the ADC core. With this topology,
+   only the SPEC-base core runs at a lower frequency.
 
 Note that some of the cores from the `General Cores`_ library are
 based on cores from `OpenCores`_. Therefore, the documentation for
@@ -116,28 +125,31 @@ those cores is hosted on the OpenCores website.
 Clock Domains
 ~~~~~~~~~~~~~
 
-The SPEC version of the fmc-adc design has five different clock domains.
+The SPEC version of the fmc-adc design has six different clock domains.
 They are listed in the following table.
 
-+-----------------+-----------------+-----------------+-----------------+
-| Name            | Description     | Frequency       | Source          |
-+=================+=================+=================+=================+
-| ``sys_clk_125`` | Main system     | 125.00 MHz      | 20MHz TCXO      |
-|                 | clock           |                 | (carrier)       |
-+-----------------+-----------------+-----------------+-----------------+
-| ``ddr_clk``     | DDR interface   | 333.33 MHz      | 20MHz TCXO      |
-|                 | clock           |                 | (carrier)       |
-+-----------------+-----------------+-----------------+-----------------+
-| ``fs_clk``      | Sampling clock  | 100.00 MHz      | 400MHz LTC2174  |
-|                 |                 |                 | (mezzanine)     |
-+-----------------+-----------------+-----------------+-----------------+
-| ``serdes_clk``  | ADC data        | 800.00 MHz      | 400MHz LTC2174  |
-|                 | de-serialiser   |                 | (mezzanine)     |
-|                 | clock           |                 |                 |
-+-----------------+-----------------+-----------------+-----------------+
-| ``p2l_clk``     | Local bus clock | 200.00 MHz      | 200MHz GN4124   |
-|                 |                 |                 | (carrier)       |
-+-----------------+-----------------+-----------------+-----------------+
++------------------+-----------------+-----------------+-----------------+
+| Name             | Description     | Frequency       | Source          |
++==================+=================+=================+=================+
+| ``clk_ref_125m`` | Main system     | 125.00 MHz      | 125MHz VCXO     |
+|                  | clock           |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
+| ``clk_sys_62m5`` | System clock    | 62.50 MHz       | 125MHz VCXO     |
+|                  | for spec-base   |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
+| ``clk_333m_ddr`` | DDR interface   | 333.33 MHz      | 125MHz VCXO     |
+|                  | clock           |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
+| ``fs_clk``       | Sampling clock  | 100.00 MHz      | 400MHz LTC2174  |
+|                  |                 |                 | (mezzanine)     |
++------------------+-----------------+-----------------+-----------------+
+| ``adc_dco``      | ADC data        | 800.00 MHz      | 400MHz LTC2174  |
+|                  | de-serialiser   |                 | (mezzanine)     |
+|                  | clock           |                 |                 |
++------------------+-----------------+-----------------+-----------------+
+| ``p2l_clk``      | PCI to Local    | 200.00 MHz      | 200MHz GN4124   |
+|                  | bus clock       |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
 
 SVEC (VME64x carrier)
 ---------------------
@@ -167,39 +179,49 @@ ADC cores to memory controllers (2x, orange)
   Data: 64-bit, address: 32-bit (word aligned), clock: system clock (125MHz).
 
 .. note::
-   The VME64x core cannot work with a clock frequency as high as
-   125MHz, therefore it is clocked with half the system clock
-   frequency. As the fmc-adc core needs 125MHz to work properly, a
-   Wishbone clock crossing component is inserted between the VME64x core
-   and the first Wishbone crossbar component. With this topology, only
-   the VME64x core runs at a lower frequency.
+   The SVEC-base core works internally at 62.5MHz, especially for the WR PTP
+   core. On the other hand, the ADC core needs to work at 125MHz in order to
+   be able to retrieve and process the incoming ADC samples at 100MHz (from
+   the ``fs_clk`` domain). Therefore, a Wishbone clock crossing component is
+   inserted between the SVEC-base core and the ADC core. With this topology,
+   only the SVEC-base core runs at a lower frequency.
 
+Note that some of the cores from the `General Cores`_ library are
+based on cores from `OpenCores`_. Therefore, the documentation for
+those cores is hosted on the OpenCores website.
 
 Clock Domains
 ~~~~~~~~~~~~~
 
-The SVEC version of the fmc-adc design has five different clock domains.
+The SVEC version of the fmc-adc design has seven different clock domains.
 They are listed in the following table.
 
-+-----------------+-----------------+-----------------+-----------------+
-| Name            | Description     | Frequency       | Source          |
-+=================+=================+=================+=================+
-|   sys_clk_125   | Main system     | 125.00 MHz      | 20MHz TCXO      |
-|                 | clock           |                 | (carrier)       |
-+-----------------+-----------------+-----------------+-----------------+
-|   sys_clk_62_5  | System clock /  | 62.50 MHz       | 20MHz TCXO      |
-|                 | 2               |                 | (carrier)       |
-+-----------------+-----------------+-----------------+-----------------+
-|   ddr_clk       | DDR interface   | 333.33 MHz      | 20MHz TCXO      |
-|                 | clock           |                 | (carrier)       |
-+-----------------+-----------------+-----------------+-----------------+
-|   fs_clk        | Sampling clock  | 100.00 MHz      | 400MHz LTC2174  |
-|                 |                 |                 | (mezzanine)     |
-+-----------------+-----------------+-----------------+-----------------+
-|   serdes_clk    | ADC data        | 800.00 MHz      | 400MHz LTC2174  |
-|                 | de-serialiser   |                 | (mezzanine)     |
-|                 | clock           |                 |                 |
-+-----------------+-----------------+-----------------+-----------------+
++------------------+-----------------+-----------------+-----------------+
+| Name             | Description     | Frequency       | Source          |
++==================+=================+=================+=================+
+| ``clk_ref_125m`` | Main system     | 125.00 MHz      | 125MHz VCXO     |
+|                  | clock           |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
+| ``clk_sys_62m5`` | System clock    | 62.50 MHz       | 125MHz VCXO     |
+|                  | for spec-base   |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
+| ``clk_ddr_333m`` | DDR interface   | 333.33 MHz      | 125MHz VCXO     |
+|                  | clock           |                 | (carrier)       |
++------------------+-----------------+-----------------+-----------------+
+| ``fs_clk1``      | Sampling clock  | 100.00 MHz      | 400MHz LTC2174  |
+|                  |                 |                 | (mezzanine #1)  |
++------------------+-----------------+-----------------+-----------------+
+| ``adc_dco1``     | ADC data        | 800.00 MHz      | 400MHz LTC2174  |
+|                  | de-serialiser   |                 | (mezzanine #1)  |
+|                  | clock           |                 |                 |
++------------------+-----------------+-----------------+-----------------+
+| ``fs_clk2``      | Sampling clock  | 100.00 MHz      | 400MHz LTC2174  |
+|                  |                 |                 | (mezzanine #2)  |
++------------------+-----------------+-----------------+-----------------+
+| ``adc_dco2``     | ADC data        | 800.00 MHz      | 400MHz LTC2174  |
+|                  | de-serialiser   |                 | (mezzanine #2)  |
+|                  | clock           |                 |                 |
++------------------+-----------------+-----------------+-----------------+
 
 Common Cores
 ------------
