@@ -171,7 +171,7 @@ static int sg_alloc_table_from_pages_no_squash(struct sg_table *sgt,
 		unsigned long chunk_size;
 
 		chunk_size = PAGE_SIZE - offset;
-		sg_set_page(sg, pages[i], min(size, chunk_size), offset);
+		sg_set_page(sg, pages[i], min_t(unsigned long, size, chunk_size), offset);
 		offset = 0;
 		size -= chunk_size;
 	}
