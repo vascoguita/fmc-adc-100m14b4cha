@@ -22,7 +22,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'FMC-ADC-100M-14B-4CHA'
-copyright = u'2013-2020, CERN, documentation released under CC-BY-SA-4.0'
+copyright = u'2013-2021, CERN, documentation released under CC-BY-SA-4.0'
 author = 'Matthieu Cattin, Dimitris Lampridis <dimitrios.lampridis@cern.ch>, Federico Vaga <federico.vaga@cern.ch>'
 
 # The suffix(es) of source filenames.

@@ -140,12 +140,7 @@ architecture rtl of fmc_adc_100Ms_core is
   signal serdes_arst : std_logic;
 
   -- Clocks and PLL
-  signal clk_fb        : std_logic;
-  signal clk_fb_buf    : std_logic;
-  signal locked_in     : std_logic;
-  signal serdes_clk    : std_logic;
   signal fs_clk        : std_logic;
-  signal fs_clk_buf    : std_logic;
   signal fs_freq       : std_logic_vector(31 downto 0);
   signal fs_freq_t     : std_logic_vector(31 downto 0);
   signal fs_freq_valid : std_logic;
