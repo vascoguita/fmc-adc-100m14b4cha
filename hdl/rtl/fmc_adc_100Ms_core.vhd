@@ -299,6 +299,12 @@ architecture rtl of fmc_adc_100Ms_core is
   signal wb_ddr_fifo_rd    : std_logic;
   signal wb_ddr_fifo_wr_en : std_logic;
 
+  signal wb_ddr_skidpad_stb_in : std_logic;
+  signal wb_ddr_skidpad_stb_out : std_logic;
+  signal wb_ddr_skidpad_stall : std_logic;
+  signal wb_ddr_skidpad_adr_in : std_logic_vector(28 downto 0);
+  signal wb_ddr_skidpad_adr_out : std_logic_vector(28 downto 0);
+  
   -- RAM address counter
   signal ram_addr_cnt : unsigned(28 downto 0);
   signal trig_addr    : std_logic_vector(31 downto 0);
@@ -1599,7 +1605,7 @@ begin
 
   wb_ddr_fifo_wr <= wb_ddr_fifo_wr_en and not(wb_ddr_fifo_full);
 
-  wb_ddr_fifo_rd <= not(wb_ddr_fifo_empty or wb_ddr_master_i.stall);
+  wb_ddr_fifo_rd <= not(wb_ddr_fifo_empty or wb_ddr_skidpad_stall);
 
   ------------------------------------------------------------------------------
   -- Wishbone master (to DDR)
@@ -1614,20 +1620,45 @@ begin
       else
         if acq_start = '1' then
           ram_addr_cnt <= (others => '0');
-        elsif wb_ddr_fifo_empty = '0' and wb_ddr_master_i.stall = '0' then
+        elsif wb_ddr_fifo_empty = '0' and wb_ddr_skidpad_stall = '0' then
           ram_addr_cnt <= ram_addr_cnt + 1;
         end if;
       end if;
     end if;
   end process p_ram_addr_cnt;
 
-  wb_ddr_master_o.cyc <= dpram_valid or not wb_ddr_fifo_empty when acq_fsm_state = "001" else '1';
-  wb_ddr_master_o.stb <= not wb_ddr_fifo_empty;
+  wb_ddr_skidpad_stb_in <= not wb_ddr_fifo_empty;
   -- Convert to 32-bit word addressing for Wishbone
-  wb_ddr_master_o.adr <= "00" & std_logic_vector(ram_addr_cnt) & "0";
+  wb_ddr_skidpad_adr_in <= std_logic_vector(ram_addr_cnt);
+
+  inst_skidpad: entity work.wb_skidpad2
+    generic map (
+      g_adrbits => ram_addr_cnt'length,
+      g_datbits => 64
+    )
+    port map (
+      clk_i   => wb_ddr_clk_i,
+      rst_n_i => wb_ddr_rst_n_i,
+
+      stb_i => wb_ddr_skidpad_stb_in,
+      adr_i => wb_ddr_skidpad_adr_in,
+      dat_i => wb_ddr_fifo_dout(63 downto 0),
+      sel_i => (others => '1'),
+      we_i  => '1',
+      stall_o => wb_ddr_skidpad_stall,
+
+      stb_o => wb_ddr_skidpad_stb_out,
+      adr_o => wb_ddr_skidpad_adr_out,
+      dat_o => wb_ddr_master_o.dat,
+      sel_o => open,
+      we_o => open,
+      stall_i => wb_ddr_master_i.stall
+    );
   wb_ddr_master_o.we  <= '1';
   wb_ddr_master_o.sel <= X"FF";
-  wb_ddr_master_o.dat <= wb_ddr_fifo_dout(63 downto 0);
+  wb_ddr_master_o.cyc <= dpram_valid or wb_ddr_skidpad_stb_out when acq_fsm_state = "001" else '1';
+  wb_ddr_master_o.stb <= wb_ddr_skidpad_stb_out;
+  wb_ddr_master_o.adr <= "00" & wb_ddr_skidpad_adr_out & "0";
 
   -- Store trigger DDR address (byte address)
   p_trig_addr : process (wb_ddr_clk_i)
