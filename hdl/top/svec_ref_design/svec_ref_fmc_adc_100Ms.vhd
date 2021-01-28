@@ -503,9 +503,9 @@ begin -- architecture arch
   gen_fmc_mezzanine : for I in 0 to g_NB_FMC_SLOTS - 1 generate
 
     cmp_xwb_clock_bridge : xwb_clock_bridge
-    generic map (
-      g_SLAVE_PORT_WB_MODE  => CLASSIC,
-      g_MASTER_PORT_WB_MODE => PIPELINED)
+      generic map (
+        g_SLAVE_PORT_WB_MODE  => CLASSIC,
+        g_MASTER_PORT_WB_MODE => PIPELINED)
       port map (
         slave_clk_i    => clk_sys_62m5,
         slave_rst_n_i  => rst_sys_62m5_n,

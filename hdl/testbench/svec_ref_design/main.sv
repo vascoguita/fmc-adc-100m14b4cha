@@ -6,14 +6,24 @@
 
 `include "vme64x_bfm.svh"
 `include "svec_vme_buffers.svh"
+`include "svec_ref_fmc_adc_100Ms_mmap.v"
+`include "fmc_adc_mezzanine_mmap.v"
 `include "fmc_adc_100Ms_csr.v"
+`include "fmc_adc_100Ms_channel_regs.v"
+`include "fmc_adc_eic_regs.v"
+`include "timetag_core_regs.v"
 
 `define VME_OFFSET 'h80000000
-`define ADC_OFFSET 'h4000
+`define ADC1_OFFSET `VME_OFFSET + `ADDR_SVEC_REF_FMC_ADC_100M_MMAP_FMC1_ADC_MEZZANINE
+`define ADC2_OFFSET `VME_OFFSET + `ADDR_SVEC_REF_FMC_ADC_100M_MMAP_FMC2_ADC_MEZZANINE
 
-`define CSR_BASE `VME_OFFSET + `ADC_OFFSET + 'h1000
-`define OWC_BASE `VME_OFFSET + `ADC_OFFSET + 'h1700
-`define TAG_BASE `VME_OFFSET + `ADC_OFFSET + 'h1900
+`define CSR_BASE   `ADC1_OFFSET + `ADDR_FMC_ADC_MEZZANINE_MMAP_FMC_ADC_100M_CSR
+`define CH1_BASE   `CSR_BASE   + `ADDR_FMC_ADC_100MS_CSR_FMC_ADC_CH1
+`define CH2_BASE   `CSR_BASE   + `ADDR_FMC_ADC_100MS_CSR_FMC_ADC_CH2
+`define CH3_BASE   `CSR_BASE   + `ADDR_FMC_ADC_100MS_CSR_FMC_ADC_CH3
+`define CH4_BASE   `CSR_BASE   + `ADDR_FMC_ADC_100MS_CSR_FMC_ADC_CH4
+`define EIC_BASE   `ADC1_OFFSET + `ADDR_FMC_ADC_MEZZANINE_MMAP_FMC_ADC_EIC
+`define TAG_BASE   `ADC1_OFFSET + `ADDR_FMC_ADC_MEZZANINE_MMAP_TIMETAG_CORE
 
 module main;
 
@@ -255,13 +265,12 @@ module main;
 
       /* map func0 to 0x80000000, A32 */
 
-      acc.write('h7ff63, 'h80, A32|CR_CSR|D08Byte3);
-      acc.write('h7ff67, 0, CR_CSR|A32|D08Byte3);
-      acc.write('h7ff6b, 0, CR_CSR|A32|D08Byte3);
-      acc.write('h7ff6f, 36, CR_CSR|A32|D08Byte3);
-      acc.write('h7ff33, 1, CR_CSR|A32|D08Byte3);
+      acc.write('h7ff63, 'h80, CR_CSR|A32|D08Byte3);
+      acc.write('h7ff67, 0,    CR_CSR|A32|D08Byte3);
+      acc.write('h7ff6b, 0,    CR_CSR|A32|D08Byte3);
+      acc.write('h7ff6f, 36,   CR_CSR|A32|D08Byte3);
+      acc.write('h7ff33, 1,    CR_CSR|A32|D08Byte3);
       acc.write('h7fffb, 'h10, CR_CSR|A32|D08Byte3); /* enable module (BIT_SET = 0x10) */
-
 
       acc.set_default_modifiers(A32 | D32 | SINGLE);
    endtask // init_vme64x_core
@@ -309,22 +318,23 @@ module main;
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS,        'h00000001);
 
       // FMC-ADC core channel configuration
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_CALIB, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_CALIB, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_CALIB, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_CALIB, 'h00008000);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_SAT,   'h00007fff);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_SAT,   'h00007fff);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_SAT,   'h00007fff);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_SAT,   'h00007fff);
+      acc.write(`CH1_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_CALIB, 'h00008000);
+      acc.write(`CH2_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_CALIB, 'h00008000);
+      acc.write(`CH3_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_CALIB, 'h00008000);
+      acc.write(`CH4_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_CALIB, 'h00008000);
+      acc.write(`CH1_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_SAT,   'h00007fff);
+      acc.write(`CH2_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_SAT,   'h00007fff);
+      acc.write(`CH3_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_SAT,   'h00007fff);
+      acc.write(`CH4_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_SAT,   'h00007fff);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, `FMC_ADC_100MS_CSR_CTL_CALIB_APPLY);
 
       // FMC-ADC core trigger configuration
-      val = (16'h100 << `FMC_ADC_100MS_CSR_CH1_TRIG_THRES_HYST_OFFSET) |
-	    (16'h300 << `FMC_ADC_100MS_CSR_CH1_TRIG_THRES_VAL_OFFSET);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH1_TRIG_THRES, val);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH2_TRIG_THRES, val);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH3_TRIG_THRES, val);
-      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CH4_TRIG_THRES, val);
+      val = (16'h100 << `FMC_ADC_100MS_CHANNEL_REGS_TRIG_THRES_HYST_OFFSET) |
+	    (16'h300 << `FMC_ADC_100MS_CHANNEL_REGS_TRIG_THRES_VAL_OFFSET);
+      acc.write(`CH1_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_TRIG_THRES, val);
+      acc.write(`CH2_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_TRIG_THRES, val);
+      acc.write(`CH3_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_TRIG_THRES, val);
+      acc.write(`CH4_BASE + `ADDR_FMC_ADC_100MS_CHANNEL_REGS_TRIG_THRES, val);
       val = (1'b1 << `FMC_ADC_100MS_CSR_TRIG_EN_SW_OFFSET);
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
 

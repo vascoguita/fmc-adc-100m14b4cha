@@ -5,14 +5,15 @@
 `timescale 1ns/1ps
 
 `include "vhd_wishbone_master.svh"
+`include "fmc_adc_mezzanine_mmap.v"
 `include "fmc_adc_100Ms_csr.v"
 `include "timetag_core_regs.v"
 `include "fmc_adc_aux_trigin.v"
 `include "fmc_adc_aux_trigout.v"
 
 `define SDB_ADDR 'h0000
-`define CSR_BASE 'h1000
-`define TAG_BASE 'h1900
+`define CSR_BASE `ADDR_FMC_ADC_MEZZANINE_MMAP_FMC_ADC_100M_CSR
+`define TAG_BASE `ADDR_FMC_ADC_MEZZANINE_MMAP_TIMETAG_CORE
 
 module main;
 
