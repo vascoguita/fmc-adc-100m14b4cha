@@ -240,7 +240,7 @@ architecture arch of svec_ref_fmc_adc_100Ms is
   constant c_WB_SLAVE_FMC1_ADC : integer := 2;  -- FMC slot 2 ADC mezzanine
 
   -- Convention metadata base address
-  constant c_METADATA_ADDR : t_wishbone_address := x"0000_2000";
+  constant c_METADATA_ADDR : t_wishbone_address := x"0000_4000";
 
   ------------------------------------------------------------------------------
   -- Signals declaration
@@ -475,7 +475,7 @@ begin -- architecture arch
     generic map (
       g_VENDOR_ID    => x"0000_10DC",
       g_DEVICE_ID    => x"4144_4302", -- "ADC2"
-      g_VERSION      => x"0500_0000",
+      g_VERSION      => x"0500_0002",
       g_CAPABILITIES => x"0000_0000",
       g_COMMIT_ID    => (others => '0'))
     port map (
