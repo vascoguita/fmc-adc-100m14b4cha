@@ -309,6 +309,7 @@ begin -- architecture arch
 
   inst_svec_base : entity work.svec_base_wr
     generic map (
+      g_DECODE_AM     => FALSE,
       g_WITH_VIC      => TRUE,
       g_WITH_ONEWIRE  => FALSE,
       g_WITH_SPI      => FALSE,
