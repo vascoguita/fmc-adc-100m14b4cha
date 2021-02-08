@@ -282,8 +282,7 @@ static void build_dma_desc(struct vme_dma *desc, unsigned long vme_addr,
 	desc->ctrl.vme_backoff_time = VME_DMA_BACKOFF_0;
 
 	vme->data_width = VME_D32;
-	vme->am         = VME_A24_USER_DATA_SCT;
-	/*vme->am         = VME_A24_USER_MBLT;*/
+	vme->am         = VME_A24_USER_MBLT;
 	vme->addru	= upper_32_bits(vme_addr);
 	vme->addrl	= lower_32_bits(vme_addr);
 
@@ -337,28 +336,27 @@ static int zfad_dma_context_init_svec(struct zio_cset *cset,
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct vme_dma *desc;
 	int err;
+	void *addr;
 
 	dev_dbg(&fa->pdev->dev, "SVEC build DMA context\n");
+
+	addr = fa_ddr_addr_reg_off(fa);
+	if (!addr) {
+		err = -ENODEV;
+		goto err_reg_addr;
+	}
 
 	desc = kmalloc(sizeof(struct vme_dma), GFP_ATOMIC);
 	if (!desc)
 		return -ENOMEM;
 
-	if (zfad_block == cset->interleave->priv_d) {
-		void *addr = fa_ddr_addr_reg_off(fa);
-
-		if (!addr) {
-			err = -ENODEV;
-			goto err_reg_addr;
-		}
-		/*
-		 * Only for the first block:
-		 * write the data address in the ddr_addr register: this
-		 * address has been computed after ACQ_END by looking to the
-		 * trigger position see fa-irq.c::irq_acq_end.
-                 */
-		fa_iowrite(fa, zfad_block->sconfig.src_addr, addr);
-	}
+	/*
+	 * For the first block of each shot:
+	 * write the start address to the ddr_reg register: this
+	 * address has been computed after ACQ_END by looking to the
+	 * trigger position see fa-irq.c::irq_acq_end.
+	 */
+	fa_iowrite(fa, zfad_block->sconfig.src_addr, addr);
 
 	zfad_block->dma_ctx = desc;
 	build_dma_desc(desc, fa_ddr_data_vme_addr(fa),
