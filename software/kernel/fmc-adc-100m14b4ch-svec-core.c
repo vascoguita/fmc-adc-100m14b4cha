@@ -23,15 +23,15 @@
  */
 #define SVEC_BASE_REGS_CSR 0x40UL
 #define SVEC_FPGA_CSR_DDR4_ADDR (SVEC_BASE_REGS_CSR + 0x18)
-#define SVEC_FPGA_CSR_DDR4_DATA (SVEC_BASE_REGS_CSR + 0x1C)
-#define SVEC_FPGA_CSR_DDR5_ADDR (SVEC_BASE_REGS_CSR + 0x20)
-#define SVEC_FPGA_CSR_DDR5_DATA (SVEC_BASE_REGS_CSR + 0x24)
+#define SVEC_FPGA_DDR4_DMA (0x2000)
+#define SVEC_FPGA_CSR_DDR5_ADDR (SVEC_BASE_REGS_CSR + 0x1C)
+#define SVEC_FPGA_DDR5_DMA (0x3000)
 
 enum fa_svec_dev_offsets {
-  FA_SVEC_ADC1_MEM_START = 0x000002000,
-  FA_SVEC_ADC1_MEM_END = 0x00003FFF,
+  FA_SVEC_ADC1_MEM_START = 0x00002000,
+  FA_SVEC_ADC1_MEM_END   = 0x00003FFF,
   FA_SVEC_ADC2_MEM_START = 0x00004000,
-  FA_SVEC_ADC2_MEM_END = 0x000005FFF,
+  FA_SVEC_ADC2_MEM_END   = 0x00005FFF,
 };
 
 static inline struct platform_device *platform_device_register_resndata_mask(
@@ -59,7 +59,8 @@ static struct fmc_adc_platform_data fa_svec_adc_pdata[] = {
 		.flags = FMC_ADC_BIG_ENDIAN |
 		         FMC_ADC_SVEC |
 		         FMC_ADC_NOSQUASH_SCATTERLIST,
-		.vme_ddr_offset = SVEC_FPGA_CSR_DDR4_ADDR,
+		.vme_reg_offset = SVEC_FPGA_CSR_DDR4_ADDR,
+                .vme_dma_offset = SVEC_FPGA_DDR4_DMA,
 		.calib_trig_time = 0,
 		.calib_trig_threshold = 0,
 		.calib_trig_internal = 0,
@@ -67,7 +68,8 @@ static struct fmc_adc_platform_data fa_svec_adc_pdata[] = {
 		.flags = FMC_ADC_BIG_ENDIAN |
 		         FMC_ADC_SVEC |
 		         FMC_ADC_NOSQUASH_SCATTERLIST,
-		.vme_ddr_offset = SVEC_FPGA_CSR_DDR5_ADDR,
+		.vme_reg_offset = SVEC_FPGA_CSR_DDR5_ADDR,
+                .vme_dma_offset = SVEC_FPGA_DDR5_DMA,
 		.calib_trig_time = 0,
 		.calib_trig_threshold = 0,
 		.calib_trig_internal = 0,

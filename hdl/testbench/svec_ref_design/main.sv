@@ -363,6 +363,33 @@ module main;
       wait (acq_fsm_state == 1);
       $display("<%t> END ACQ 1/4", $realtime);
 
+      #100ns;
+
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_PRE_SAMPLES,  'h00000004);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_POST_SAMPLES, 'h00000008);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS,        'h00000001);
+
+      val = (1'b1    << `FMC_ADC_100MS_CSR_TRIG_EN_CH1_OFFSET);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_EN, val);
+
+      $display("<%t> START ACQ 1b/4", $realtime);
+      acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_CTL, 'h00000001); // FSM sta
+
+      #1us;
+      wait (acq_fsm_state == 1);
+      $display("<%t> END ACQ 1b/4", $realtime);
+
+      //  TODO: check results (they are only displayed)
+      acc.read(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_TRIG_POS, val);
+      $display("trig pos: %x", val);
+      acc.write(`VME_OFFSET + 16'h58, val);
+      for(i = 0; i < 8*2 + 4; i+=1) begin
+         acc.read(`VME_OFFSET + 16'h2000, val);
+         $display("%d: %08x", i, val);
+      end
+
+      $stop;
+      
       #200ns;
 
       acc.write(`CSR_BASE + `ADDR_FMC_ADC_100MS_CSR_SHOTS, 'h00000003); // #nshots: 3x multi-shot acq

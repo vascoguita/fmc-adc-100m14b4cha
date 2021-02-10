@@ -32,7 +32,7 @@ entity svec_ref_fmc_adc_100m_mmap is
 end svec_ref_fmc_adc_100m_mmap;
 
 architecture syn of svec_ref_fmc_adc_100m_mmap is
-  signal adr_int                        : std_logic_vector(14 downto 2);
+  signal adr_int                        : std_logic_vector(15 downto 2);
   signal rd_req_int                     : std_logic;
   signal wr_req_int                     : std_logic;
   signal rd_ack_int                     : std_logic;
@@ -63,7 +63,7 @@ architecture syn of svec_ref_fmc_adc_100m_mmap is
   signal fmc2_adc_mezzanine_wack        : std_logic;
   signal fmc2_adc_mezzanine_rack        : std_logic;
   signal rd_req_d0                      : std_logic;
-  signal rd_adr_d0                      : std_logic_vector(14 downto 2);
+  signal rd_adr_d0                      : std_logic_vector(15 downto 2);
   signal rd_ack_d0                      : std_logic;
   signal rd_dat_d0                      : std_logic_vector(31 downto 0);
   signal wr_req_d0                      : std_logic;
@@ -73,7 +73,7 @@ architecture syn of svec_ref_fmc_adc_100m_mmap is
 begin
 
   -- WB decode signals
-  adr_int <= wb_i.adr(14 downto 2);
+  adr_int <= wb_i.adr(15 downto 2);
   wb_en <= wb_i.cyc and wb_i.stb;
 
   process (clk_i) begin
@@ -196,16 +196,16 @@ begin
     metadata_we <= '0';
     fmc1_adc_mezzanine_we <= '0';
     fmc2_adc_mezzanine_we <= '0';
-    case rd_adr_d0(14 downto 13) is
-    when "01" =>
+    case rd_adr_d0(15 downto 13) is
+    when "010" =>
       -- Submap metadata
       metadata_we <= wr_req_d0;
       wr_ack_d0 <= metadata_wack;
-    when "10" =>
+    when "011" =>
       -- Submap fmc1_adc_mezzanine
       fmc1_adc_mezzanine_we <= wr_req_d0;
       wr_ack_d0 <= fmc1_adc_mezzanine_wack;
-    when "11" =>
+    when "100" =>
       -- Submap fmc2_adc_mezzanine
       fmc2_adc_mezzanine_we <= wr_req_d0;
       wr_ack_d0 <= fmc2_adc_mezzanine_wack;
@@ -221,18 +221,18 @@ begin
     metadata_re <= '0';
     fmc1_adc_mezzanine_re <= '0';
     fmc2_adc_mezzanine_re <= '0';
-    case rd_adr_d0(14 downto 13) is
-    when "01" =>
+    case rd_adr_d0(15 downto 13) is
+    when "010" =>
       -- Submap metadata
       metadata_re <= rd_req_d0;
       rd_dat_d0 <= metadata_i.dat;
       rd_ack_d0 <= metadata_rack;
-    when "10" =>
+    when "011" =>
       -- Submap fmc1_adc_mezzanine
       fmc1_adc_mezzanine_re <= rd_req_d0;
       rd_dat_d0 <= fmc1_adc_mezzanine_i.dat;
       rd_ack_d0 <= fmc1_adc_mezzanine_rack;
-    when "11" =>
+    when "100" =>
       -- Submap fmc2_adc_mezzanine
       fmc2_adc_mezzanine_re <= rd_req_d0;
       rd_dat_d0 <= fmc2_adc_mezzanine_i.dat;
