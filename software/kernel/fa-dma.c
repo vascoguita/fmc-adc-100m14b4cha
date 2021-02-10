@@ -335,16 +335,14 @@ static int zfad_dma_context_init_svec(struct zio_cset *cset,
 #ifdef CONFIG_FMC_ADC_SVEC
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct vme_dma *desc;
-	int err;
 	void *addr;
 
 	dev_dbg(&fa->pdev->dev, "SVEC build DMA context\n");
+	zfad_block->dma_ctx = NULL;
 
 	addr = fa_ddr_addr_reg_off(fa);
-	if (!addr) {
-		err = -ENODEV;
-		goto err_reg_addr;
-	}
+	if (!addr)
+		return -ENODEV;
 
 	desc = kmalloc(sizeof(struct vme_dma), GFP_ATOMIC);
 	if (!desc)
@@ -363,11 +361,6 @@ static int zfad_dma_context_init_svec(struct zio_cset *cset,
 		       zfad_block->block->data,
 		       zfad_block->block->datalen);
 	return 0;
-
-err_reg_addr:
-	kfree(desc);
-	zfad_block->dma_ctx = NULL;
-	return err;
 #else
 	return 0;
 #endif
