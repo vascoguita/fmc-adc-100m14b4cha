@@ -15,6 +15,7 @@
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
 #include <linux/fmc.h>
+#include <linux/completion.h>
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
@@ -347,6 +348,8 @@ struct fa_dev {
 					 unsigned long size,
 					 unsigned int max_segment,
 					 gfp_t gfp_mask);
+
+	struct completion shot_done;
 };
 
 /*

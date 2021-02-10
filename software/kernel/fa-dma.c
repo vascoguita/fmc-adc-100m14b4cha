@@ -430,6 +430,8 @@ static void fa_dma_complete(void *arg,
 		fa_dma_release_channel_svec(fa);
 		zfad_dma_done(cset);
 	}
+
+	complete(&fa->shot_done);
 }
 
 
@@ -549,6 +551,37 @@ static int fa_dmaengine_slave_config(struct fa_dev *fa,
 	return dmaengine_slave_config(fa->dchan, sconfig);
 }
 
+
+static int fa_dma_shot_wait(struct fa_dev *fa, struct zfad_block *zfad_block,
+			    unsigned int timeout_ms)
+{
+	int err;
+
+        if (fa->n_shots == 1)
+		return 0;
+	/*
+	 * In multishot mode we must wait for the previous
+	 * transfer to complete because:
+	 * - of the MBLT prefetch, so we need to do separate DMA
+	 *   transfers;
+	 * - of the SVEC DMA DDR offset register that can't be
+	 *   overwritten while running a DMA transfer
+	 */
+
+	err = wait_for_completion_interruptible_timeout(&fa->shot_done,
+							msecs_to_jiffies(timeout_ms));
+
+	/* Check the status of our transfer */
+	if (err <= 0) {
+		/* timeout elapsed or signal interruption */
+		dev_err(&fa->pdev->dev, "%s\n", (err == 0) ? "DMA timeout elapsed" :
+			"DMA interrupted by a signal");
+		return -EINVAL;
+	}
+
+        return 0;
+}
+
 /**
  * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
  * from the ADC to the host memory.
@@ -580,6 +613,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	 * different DMA transfers required for multi-shots
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
+	fa->transfers_left = fa->n_shots;
 	for (i = 0; i < fa->n_shots; ++i) {
 		/*
 		 * TODO
@@ -601,24 +635,28 @@ static int zfad_dma_start(struct zio_cset *cset)
 		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
 		if (err)
 			goto err_prep;
-	}
+		dma_async_issue_pending(fa->dchan);
 
-	fa->transfers_left = fa->n_shots;
-	dma_async_issue_pending(fa->dchan);
+		err = fa_dma_shot_wait(fa, &zfad_block[i], 60000);
+		if (err)
+			goto err_wait;
+	}
 
 	return 0;
 
+err_wait:
+	dmaengine_terminate_all(fa->dchan);
+	dma_unmap_sg(&fa->pdev->dev,
+		     zfad_block[i].sgt.sgl,
+		     zfad_block[i].sgt.nents,
+		     DMA_DEV_TO_MEM);
+	sg_free_table(&zfad_block[i].sgt);
+
+	/* Clean/fix the context */
+	zfad_dma_context_exit(cset, &zfad_block[i]);
 err_prep:
 err_config:
-	dmaengine_terminate_all(fa->dchan);
 	fa_dma_release_channel_svec(fa);
-	while (--i >= 0) {
-		dma_unmap_sg(&fa->pdev->dev,
-			     zfad_block[i].sgt.sgl,
-			     zfad_block[i].sgt.nents,
-			     DMA_DEV_TO_MEM);
-		sg_free_table(&zfad_block[i].sgt);
-	}
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
 		  cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
 	dev_err(fa->msgdev, "Failed to run a DMA transfer (%d)\n", err);
