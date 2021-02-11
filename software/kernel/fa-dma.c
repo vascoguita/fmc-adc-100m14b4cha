@@ -826,7 +826,8 @@ static void zfad_dma_done(struct zio_cset *cset)
 		err = zfad_block_timetag_extract(block, &timetag);
 		if (err) {
 			dev_err(&fa->pdev->dev,
-				"Failed to extract Timetag from acquisition :0x%x 0x%x 0x%x 0x%x\n",
+				"Failed to extract Timetag from acquisition from shot %i :0x%x 0x%x 0x%x 0x%x\n",
+				i + 1,
 				timetag.sec_high, timetag.sec_low,
 				timetag.ticks, timetag.status);
 
