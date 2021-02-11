@@ -335,26 +335,13 @@ static int zfad_dma_context_init_svec(struct zio_cset *cset,
 #ifdef CONFIG_FMC_ADC_SVEC
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct vme_dma *desc;
-	void *addr;
 
 	dev_dbg(&fa->pdev->dev, "SVEC build DMA context\n");
 	zfad_block->dma_ctx = NULL;
 
-	addr = fa_ddr_addr_reg_off(fa);
-	if (!addr)
-		return -ENODEV;
-
 	desc = kmalloc(sizeof(struct vme_dma), GFP_ATOMIC);
 	if (!desc)
 		return -ENOMEM;
-
-	/*
-	 * For the first block of each shot:
-	 * write the start address to the ddr_reg register: this
-	 * address has been computed after ACQ_END by looking to the
-	 * trigger position see fa-irq.c::irq_acq_end.
-	 */
-	fa_iowrite(fa, zfad_block->sconfig.src_addr, addr);
 
 	zfad_block->dma_ctx = desc;
 	build_dma_desc(desc, fa_ddr_data_vme_addr(fa),
@@ -540,14 +527,35 @@ err_alloc_pages:
 	return err;
 }
 
+/**
+ * Configure the DDR window offset
+ */
+static int fa_svec_ddr_window_set(struct fa_dev *fa, unsigned int offset)
+{
+	void *addr = fa_ddr_addr_reg_off(fa);
+
+	if (!addr)
+		return -ENODEV;
+	fa_iowrite(fa, offset, addr);
+
+        return 0;
+}
+
 static int fa_dmaengine_slave_config(struct fa_dev *fa,
 				     struct dma_slave_config *sconfig)
 {
-	/*
-	 * For SVEC we must set the DMA context, there is not slave config
-	 */
-	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
-		return 0;
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC)) {
+		/*
+		 * For SVEC we must set the DMA context, there is not a real
+		 * slave config. The SVEC HDL implementation requires some
+		 * cooridination between the DMA engine (the VME bridge),
+		 * and the SVEC card. This coordination happens here by
+		 * setting the DDR window for the next acquisition.
+		 *
+		 * This is necessary becasue the SVEC can't map the entire DDR.
+		 */
+		return fa_svec_ddr_window_set(fa, sconfig->src_addr);
+	}
 	return dmaengine_slave_config(fa->dchan, sconfig);
 }
 
