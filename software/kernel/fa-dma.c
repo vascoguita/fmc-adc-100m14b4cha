@@ -552,21 +552,22 @@ static int fa_dmaengine_slave_config(struct fa_dev *fa,
 }
 
 
-static int fa_dma_shot_wait(struct fa_dev *fa, struct zfad_block *zfad_block,
-			    unsigned int timeout_ms)
+/*
+ * In multishot mode we must wait for the previous
+ * transfer to complete because:
+ * - of the MBLT prefetch, so we need to do separate DMA
+ *   transfers;
+ * - of the SVEC DMA DDR offset register that can't be
+ *   overwritten while running a DMA transfer
+ */
+static int fa_dma_shot_wait_svec(struct fa_dev *fa,
+				 struct zfad_block *zfad_block,
+				 unsigned int timeout_ms)
 {
 	int err;
 
         if (fa->n_shots == 1)
 		return 0;
-	/*
-	 * In multishot mode we must wait for the previous
-	 * transfer to complete because:
-	 * - of the MBLT prefetch, so we need to do separate DMA
-	 *   transfers;
-	 * - of the SVEC DMA DDR offset register that can't be
-	 *   overwritten while running a DMA transfer
-	 */
 
 	err = wait_for_completion_interruptible_timeout(&fa->shot_done,
 							msecs_to_jiffies(timeout_ms));
@@ -582,50 +583,18 @@ static int fa_dma_shot_wait(struct fa_dev *fa, struct zfad_block *zfad_block,
         return 0;
 }
 
-/**
- * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
- * from the ADC to the host memory.
- *
- * @param cset
- */
-static int zfad_dma_start(struct zio_cset *cset)
+static int fa_dma_start_svec(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	int err, i;
 
-	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
-	if (err) {
-		dev_warn(fa->msgdev,
-			 "Can't start DMA on the last acquisition, "
-			 "State Machine is not IDLE\n");
-		return err;
-	}
-
-        dev_dbg(fa->msgdev, "Start DMA transfer for %i shots of %i samples\n",
-		fa->n_shots, cset->ti->nsamples);
         err = fa_dma_request_channel_svec(fa);
 	if (err)
 		return err;
 
-	/*
-	 * Disable all triggers to prevent fires between
-	 * different DMA transfers required for multi-shots
-	 */
-	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
 	fa->transfers_left = fa->n_shots;
 	for (i = 0; i < fa->n_shots; ++i) {
-		/*
-		 * TODO
-		 * Let's see what to do with SVEC. SVEC need to set
-		 * the DMA_DDR_ADDR in hardware before starting the DMA
-		 * (it configures the DMA window).
-		 * In single shot is not a big deal, in multishot we may have
-		 * to issue_pending many time since we can't update the
-		 * DMA_DDR_ADDR for each block submitted to the dma engine.
-		 * But sice the blocks are contigous, perhaps there is no need
-		 * because the address of shot 2 is exactly after shot 1
-		 */
 		zfad_block[i].sconfig.direction = DMA_DEV_TO_MEM;
 		zfad_block[i].sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
 		zfad_block[i].sconfig.src_addr = fa_ddr_offset(fa, i);
@@ -637,7 +606,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 			goto err_prep;
 		dma_async_issue_pending(fa->dchan);
 
-		err = fa_dma_shot_wait(fa, &zfad_block[i], 60000);
+		err = fa_dma_shot_wait_svec(fa, &zfad_block[i], 60000);
 		if (err)
 			goto err_wait;
 	}
@@ -657,9 +626,86 @@ err_wait:
 err_prep:
 err_config:
 	fa_dma_release_channel_svec(fa);
+	return err;
+}
+
+static int fa_dma_start_spec(struct zio_cset *cset)
+{
+	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
+	int err, i;
+
+	for (i = 0; i < fa->n_shots; ++i) {
+		zfad_block[i].sconfig.direction = DMA_DEV_TO_MEM;
+		zfad_block[i].sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+		zfad_block[i].sconfig.src_addr = fa_ddr_offset(fa, i);
+		err = fa_dmaengine_slave_config(fa, &zfad_block[i].sconfig);
+		if (err)
+			goto err_config;
+		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
+		if (err)
+			goto err_prep;
+	}
+	fa->transfers_left = fa->n_shots;
+	dma_async_issue_pending(fa->dchan);
+
+	return 0;
+
+err_prep:
+err_config:
+	dmaengine_terminate_all(fa->dchan);
+	while (--i >= 0) {
+		dma_unmap_sg(&fa->pdev->dev,
+			     zfad_block[i].sgt.sgl,
+			     zfad_block[i].sgt.nents,
+			     DMA_DEV_TO_MEM);
+		sg_free_table(&zfad_block[i].sgt);
+	}
+	return err;
+
+}
+
+/**
+ * It maps the ZIO blocks with an sg table, then it starts the DMA transfer
+ * from the ADC to the host memory.
+ *
+ * @param cset
+ */
+static int zfad_dma_start(struct zio_cset *cset)
+{
+	struct fa_dev *fa = cset->zdev->priv_d;
+	int err;
+
+	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
+	if (err) {
+		dev_warn(&fa->pdev->dev,
+			 "Can't start DMA on the last acquisition, "
+			 "State Machine is not IDLE\n");
+		return err;
+	}
+
+        dev_dbg(&fa->pdev->dev,
+		"Start DMA transfer for %i shots of %i samples\n",
+		fa->n_shots, cset->ti->nsamples);
+
+	/*
+	 * Disable all triggers to prevent fires between
+	 * different DMA transfers required for multi-shots
+	 */
+	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
+        if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		err = fa_dma_start_svec(cset);
+	else
+		err = fa_dma_start_spec(cset);
+	if (err)
+		goto err_start;
+
+        return 0;
+
+err_start:
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
 		  cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
-	dev_err(fa->msgdev, "Failed to run a DMA transfer (%d)\n", err);
+	dev_err(&fa->pdev->dev, "Failed to run a DMA transfer (%d)\n", err);
 	return err;
 }
 
