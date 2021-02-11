@@ -348,8 +348,6 @@ struct fa_dev {
 					 unsigned long size,
 					 unsigned int max_segment,
 					 gfp_t gfp_mask);
-
-	struct completion shot_done;
 };
 
 /*
@@ -370,6 +368,7 @@ struct zfad_block {
 	void *dma_ctx;
 	unsigned int shot_n;
 	struct dma_slave_config sconfig;
+	struct completion shot_done;
 };
 
 /*

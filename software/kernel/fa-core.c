@@ -688,7 +688,6 @@ int fa_probe(struct platform_device *pdev)
 		pdev->dev.platform_data = &fmc_adc_pdata_default;
 	}
 
-	init_completion(&fa->shot_done);
 	fa_memops_detect(fa);
 	fa_sg_alloc_table_init(fa);
 

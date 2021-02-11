@@ -431,7 +431,7 @@ static void fa_dma_complete(void *arg,
 		zfad_dma_done(cset);
 	}
 
-	complete(&fa->shot_done);
+	complete(&zfad_block->shot_done);
 }
 
 
@@ -569,7 +569,7 @@ static int fa_dma_shot_wait_svec(struct fa_dev *fa,
         if (fa->n_shots == 1)
 		return 0;
 
-	err = wait_for_completion_interruptible_timeout(&fa->shot_done,
+	err = wait_for_completion_interruptible_timeout(&zfad_block->shot_done,
 							msecs_to_jiffies(timeout_ms));
 
 	/* Check the status of our transfer */
@@ -604,6 +604,7 @@ static int fa_dma_start_svec(struct zio_cset *cset)
 		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
 		if (err)
 			goto err_prep;
+		init_completion(&zfad_block[i].shot_done);
 		dma_async_issue_pending(fa->dchan);
 
 		err = fa_dma_shot_wait_svec(fa, &zfad_block[i], 60000);
