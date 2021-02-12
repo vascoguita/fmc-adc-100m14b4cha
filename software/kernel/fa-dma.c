@@ -654,6 +654,8 @@ static int fa_dma_start_spec(struct zio_cset *cset)
 		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
 		if (err)
 			goto err_prep;
+
+		init_completion(&zfad_block[i].shot_done);
 	}
 	fa->transfers_left = fa->n_shots;
 	dma_async_issue_pending(fa->dchan);
