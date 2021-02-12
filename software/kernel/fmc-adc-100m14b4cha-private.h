@@ -15,6 +15,7 @@
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
 #include <linux/fmc.h>
+#include <linux/completion.h>
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
@@ -367,6 +368,7 @@ struct zfad_block {
 	void *dma_ctx;
 	unsigned int shot_n;
 	struct dma_slave_config sconfig;
+	struct completion shot_done;
 };
 
 /*

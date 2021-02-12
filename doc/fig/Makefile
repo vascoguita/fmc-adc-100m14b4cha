@@ -9,7 +9,7 @@ PDF=$(SVG:.svg=.pdf)
 all: $(PDF)
 
 %.pdf : %.svg
-	inkscape --without-gui $< -A $@
+	inkscape $< -o $@ || inkscape --without-gui $< -A $@
 
 clean:
 	rm -f $(PDF)

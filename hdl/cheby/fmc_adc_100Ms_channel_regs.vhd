@@ -40,7 +40,6 @@ entity fmc_adc_100ms_channel_regs is
     clk_i                : in    std_logic;
     wb_i                 : in    t_wishbone_slave_in;
     wb_o                 : out   t_wishbone_slave_out;
-
     -- Wires and registers
     fmc_adc_100ms_ch_i   : in    t_fmc_adc_100ms_ch_master_in;
     fmc_adc_100ms_ch_o   : out   t_fmc_adc_100ms_ch_master_out
@@ -48,8 +47,9 @@ entity fmc_adc_100ms_channel_regs is
 end fmc_adc_100ms_channel_regs;
 
 architecture syn of fmc_adc_100ms_channel_regs is
-  signal rd_int                         : std_logic;
-  signal wr_int                         : std_logic;
+  signal adr_int                        : std_logic_vector(4 downto 2);
+  signal rd_req_int                     : std_logic;
+  signal wr_req_int                     : std_logic;
   signal rd_ack_int                     : std_logic;
   signal wr_ack_int                     : std_logic;
   signal wb_en                          : std_logic;
@@ -57,17 +57,32 @@ architecture syn of fmc_adc_100ms_channel_regs is
   signal wb_rip                         : std_logic;
   signal wb_wip                         : std_logic;
   signal ctl_ssr_reg                    : std_logic_vector(6 downto 0);
+  signal ctl_wreq                       : std_logic;
+  signal ctl_wack                       : std_logic;
   signal calib_gain_reg                 : std_logic_vector(15 downto 0);
   signal calib_offset_reg               : std_logic_vector(15 downto 0);
+  signal calib_wreq                     : std_logic;
+  signal calib_wack                     : std_logic;
   signal sat_val_reg                    : std_logic_vector(14 downto 0);
+  signal sat_wreq                       : std_logic;
+  signal sat_wack                       : std_logic;
   signal trig_thres_val_reg             : std_logic_vector(15 downto 0);
   signal trig_thres_hyst_reg            : std_logic_vector(15 downto 0);
+  signal trig_thres_wreq                : std_logic;
+  signal trig_thres_wack                : std_logic;
   signal trig_dly_reg                   : std_logic_vector(31 downto 0);
-  signal reg_rdat_int                   : std_logic_vector(31 downto 0);
-  signal rd_ack1_int                    : std_logic;
+  signal trig_dly_wreq                  : std_logic;
+  signal trig_dly_wack                  : std_logic;
+  signal rd_ack_d0                      : std_logic;
+  signal rd_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_req_d0                      : std_logic;
+  signal wr_adr_d0                      : std_logic_vector(4 downto 2);
+  signal wr_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_sel_d0                      : std_logic_vector(3 downto 0);
 begin
 
   -- WB decode signals
+  adr_int <= wb_i.adr(4 downto 2);
   wb_en <= wb_i.cyc and wb_i.stb;
 
   process (clk_i) begin
@@ -79,7 +94,7 @@ begin
       end if;
     end if;
   end process;
-  rd_int <= (wb_en and not wb_i.we) and not wb_rip;
+  rd_req_int <= (wb_en and not wb_i.we) and not wb_rip;
 
   process (clk_i) begin
     if rising_edge(clk_i) then
@@ -90,7 +105,7 @@ begin
       end if;
     end if;
   end process;
-  wr_int <= (wb_en and wb_i.we) and not wb_wip;
+  wr_req_int <= (wb_en and wb_i.we) and not wb_wip;
 
   ack_int <= rd_ack_int or wr_ack_int;
   wb_o.ack <= ack_int;
@@ -98,144 +113,183 @@ begin
   wb_o.rty <= '0';
   wb_o.err <= '0';
 
-  -- Assign outputs
-  fmc_adc_100ms_ch_o.ctl_ssr <= ctl_ssr_reg;
-  fmc_adc_100ms_ch_o.calib_gain <= calib_gain_reg;
-  fmc_adc_100ms_ch_o.calib_offset <= calib_offset_reg;
-  fmc_adc_100ms_ch_o.sat_val <= sat_val_reg;
-  fmc_adc_100ms_ch_o.trig_thres_val <= trig_thres_val_reg;
-  fmc_adc_100ms_ch_o.trig_thres_hyst <= trig_thres_hyst_reg;
-  fmc_adc_100ms_ch_o.trig_dly <= trig_dly_reg;
-
-  -- Process for write requests.
+  -- pipelining for wr-in+rd-out
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        wr_ack_int <= '0';
-        ctl_ssr_reg <= "0000000";
-        calib_gain_reg <= "0000000000000000";
-        calib_offset_reg <= "0000000000000000";
-        sat_val_reg <= "000000000000000";
-        trig_thres_val_reg <= "0000000000000000";
-        trig_thres_hyst_reg <= "0000000000000000";
-        trig_dly_reg <= "00000000000000000000000000000000";
+        rd_ack_int <= '0';
+        wr_req_d0 <= '0';
       else
-        wr_ack_int <= '0';
-        case wb_i.adr(4 downto 2) is
-        when "000" => 
-          -- Register ctl
-          if wr_int = '1' then
-            ctl_ssr_reg <= wb_i.dat(6 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "001" => 
-          -- Register sta
-        when "010" => 
-          -- Register calib
-          if wr_int = '1' then
-            calib_gain_reg <= wb_i.dat(15 downto 0);
-            calib_offset_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "011" => 
-          -- Register sat
-          if wr_int = '1' then
-            sat_val_reg <= wb_i.dat(14 downto 0);
-          end if;
-          wr_ack_int <= wr_int;
-        when "100" => 
-          -- Register trig_thres
-          if wr_int = '1' then
-            trig_thres_val_reg <= wb_i.dat(15 downto 0);
-            trig_thres_hyst_reg <= wb_i.dat(31 downto 16);
-          end if;
-          wr_ack_int <= wr_int;
-        when "101" => 
-          -- Register trig_dly
-          if wr_int = '1' then
-            trig_dly_reg <= wb_i.dat;
-          end if;
-          wr_ack_int <= wr_int;
-        when others =>
-          wr_ack_int <= wr_int;
-        end case;
+        rd_ack_int <= rd_ack_d0;
+        wb_o.dat <= rd_dat_d0;
+        wr_req_d0 <= wr_req_int;
+        wr_adr_d0 <= adr_int;
+        wr_dat_d0 <= wb_i.dat;
+        wr_sel_d0 <= wb_i.sel;
       end if;
     end if;
   end process;
 
-  -- Process for registers read.
+  -- Register ctl
+  fmc_adc_100ms_ch_o.ctl_ssr <= ctl_ssr_reg;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        rd_ack1_int <= '0';
+        ctl_ssr_reg <= "0000000";
+        ctl_wack <= '0';
       else
-        reg_rdat_int <= (others => 'X');
-        case wb_i.adr(4 downto 2) is
-        when "000" => 
-          -- ctl
-          reg_rdat_int(6 downto 0) <= ctl_ssr_reg;
-          rd_ack1_int <= rd_int;
-        when "001" => 
-          -- sta
-          reg_rdat_int(15 downto 0) <= fmc_adc_100ms_ch_i.sta_val;
-          rd_ack1_int <= rd_int;
-        when "010" => 
-          -- calib
-          reg_rdat_int(15 downto 0) <= calib_gain_reg;
-          reg_rdat_int(31 downto 16) <= calib_offset_reg;
-          rd_ack1_int <= rd_int;
-        when "011" => 
-          -- sat
-          reg_rdat_int(14 downto 0) <= sat_val_reg;
-          rd_ack1_int <= rd_int;
-        when "100" => 
-          -- trig_thres
-          reg_rdat_int(15 downto 0) <= trig_thres_val_reg;
-          reg_rdat_int(31 downto 16) <= trig_thres_hyst_reg;
-          rd_ack1_int <= rd_int;
-        when "101" => 
-          -- trig_dly
-          reg_rdat_int <= trig_dly_reg;
-          rd_ack1_int <= rd_int;
-        when others =>
-          reg_rdat_int <= (others => 'X');
-          rd_ack1_int <= rd_int;
-        end case;
+        if ctl_wreq = '1' then
+          ctl_ssr_reg <= wr_dat_d0(6 downto 0);
+        end if;
+        ctl_wack <= ctl_wreq;
       end if;
     end if;
+  end process;
+
+  -- Register sta
+
+  -- Register calib
+  fmc_adc_100ms_ch_o.calib_gain <= calib_gain_reg;
+  fmc_adc_100ms_ch_o.calib_offset <= calib_offset_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        calib_gain_reg <= "0000000000000000";
+        calib_offset_reg <= "0000000000000000";
+        calib_wack <= '0';
+      else
+        if calib_wreq = '1' then
+          calib_gain_reg <= wr_dat_d0(15 downto 0);
+          calib_offset_reg <= wr_dat_d0(31 downto 16);
+        end if;
+        calib_wack <= calib_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register sat
+  fmc_adc_100ms_ch_o.sat_val <= sat_val_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        sat_val_reg <= "000000000000000";
+        sat_wack <= '0';
+      else
+        if sat_wreq = '1' then
+          sat_val_reg <= wr_dat_d0(14 downto 0);
+        end if;
+        sat_wack <= sat_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register trig_thres
+  fmc_adc_100ms_ch_o.trig_thres_val <= trig_thres_val_reg;
+  fmc_adc_100ms_ch_o.trig_thres_hyst <= trig_thres_hyst_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        trig_thres_val_reg <= "0000000000000000";
+        trig_thres_hyst_reg <= "0000000000000000";
+        trig_thres_wack <= '0';
+      else
+        if trig_thres_wreq = '1' then
+          trig_thres_val_reg <= wr_dat_d0(15 downto 0);
+          trig_thres_hyst_reg <= wr_dat_d0(31 downto 16);
+        end if;
+        trig_thres_wack <= trig_thres_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Register trig_dly
+  fmc_adc_100ms_ch_o.trig_dly <= trig_dly_reg;
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        trig_dly_reg <= "00000000000000000000000000000000";
+        trig_dly_wack <= '0';
+      else
+        if trig_dly_wreq = '1' then
+          trig_dly_reg <= wr_dat_d0;
+        end if;
+        trig_dly_wack <= trig_dly_wreq;
+      end if;
+    end if;
+  end process;
+
+  -- Process for write requests.
+  process (wr_adr_d0, wr_req_d0, ctl_wack, calib_wack, sat_wack, trig_thres_wack, trig_dly_wack) begin
+    ctl_wreq <= '0';
+    calib_wreq <= '0';
+    sat_wreq <= '0';
+    trig_thres_wreq <= '0';
+    trig_dly_wreq <= '0';
+    case wr_adr_d0(4 downto 2) is
+    when "000" =>
+      -- Reg ctl
+      ctl_wreq <= wr_req_d0;
+      wr_ack_int <= ctl_wack;
+    when "001" =>
+      -- Reg sta
+      wr_ack_int <= wr_req_d0;
+    when "010" =>
+      -- Reg calib
+      calib_wreq <= wr_req_d0;
+      wr_ack_int <= calib_wack;
+    when "011" =>
+      -- Reg sat
+      sat_wreq <= wr_req_d0;
+      wr_ack_int <= sat_wack;
+    when "100" =>
+      -- Reg trig_thres
+      trig_thres_wreq <= wr_req_d0;
+      wr_ack_int <= trig_thres_wack;
+    when "101" =>
+      -- Reg trig_dly
+      trig_dly_wreq <= wr_req_d0;
+      wr_ack_int <= trig_dly_wack;
+    when others =>
+      wr_ack_int <= wr_req_d0;
+    end case;
   end process;
 
   -- Process for read requests.
-  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int) begin
+  process (adr_int, rd_req_int, ctl_ssr_reg, fmc_adc_100ms_ch_i.sta_val, calib_gain_reg, calib_offset_reg, sat_val_reg, trig_thres_val_reg, trig_thres_hyst_reg, trig_dly_reg) begin
     -- By default ack read requests
-    wb_o.dat <= (others => '0');
-    case wb_i.adr(4 downto 2) is
-    when "000" => 
-      -- ctl
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "001" => 
-      -- sta
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "010" => 
-      -- calib
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "011" => 
-      -- sat
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "100" => 
-      -- trig_thres
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
-    when "101" => 
-      -- trig_dly
-      wb_o.dat <= reg_rdat_int;
-      rd_ack_int <= rd_ack1_int;
+    rd_dat_d0 <= (others => 'X');
+    case adr_int(4 downto 2) is
+    when "000" =>
+      -- Reg ctl
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(6 downto 0) <= ctl_ssr_reg;
+      rd_dat_d0(31 downto 7) <= (others => '0');
+    when "001" =>
+      -- Reg sta
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(15 downto 0) <= fmc_adc_100ms_ch_i.sta_val;
+      rd_dat_d0(31 downto 16) <= (others => '0');
+    when "010" =>
+      -- Reg calib
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(15 downto 0) <= calib_gain_reg;
+      rd_dat_d0(31 downto 16) <= calib_offset_reg;
+    when "011" =>
+      -- Reg sat
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(14 downto 0) <= sat_val_reg;
+      rd_dat_d0(31 downto 15) <= (others => '0');
+    when "100" =>
+      -- Reg trig_thres
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(15 downto 0) <= trig_thres_val_reg;
+      rd_dat_d0(31 downto 16) <= trig_thres_hyst_reg;
+    when "101" =>
+      -- Reg trig_dly
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0 <= trig_dly_reg;
     when others =>
-      rd_ack_int <= rd_int;
+      rd_ack_d0 <= rd_req_int;
     end case;
   end process;
 end syn;

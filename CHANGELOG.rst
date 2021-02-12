@@ -6,7 +6,7 @@
 Changelog
 =========
 
-5.0.0 - 2020-01-01
+5.0.0 - 2021-02-11
 ==================
 Changes
 -------
@@ -26,9 +26,9 @@ Added
 - add tool to get/set run-time calibration data
 - periodically update gain calibration for DAC and ADC
 - trigger time
+- MBLT support for SVEC
 
 Removed
 -------
 - library is not supported anymore, use adc-lib (https://www.ohwr.org/projects/adc-lib)
 - fald-acq tool is not supported anymore, use adc-acq from adc-lib (https://www.ohwr.org/projects/adc-lib)
-

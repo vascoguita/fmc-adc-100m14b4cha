@@ -171,7 +171,7 @@ static int sg_alloc_table_from_pages_no_squash(struct sg_table *sgt,
 		unsigned long chunk_size;
 
 		chunk_size = PAGE_SIZE - offset;
-		sg_set_page(sg, pages[i], min(size, chunk_size), offset);
+		sg_set_page(sg, pages[i], min_t(unsigned long, size, chunk_size), offset);
 		offset = 0;
 		size -= chunk_size;
 	}
@@ -656,7 +656,8 @@ static void fa_sg_alloc_table_init(struct fa_dev *fa)
 
 static struct fmc_adc_platform_data fmc_adc_pdata_default = {
 	.flags = 0,
-	.vme_ddr_offset = 0,
+	.vme_reg_offset = 0,
+        .vme_dma_offset = 0,
 	.calib_trig_time = 0,
 	.calib_trig_threshold = 0,
 	.calib_trig_internal = 0,

@@ -139,14 +139,11 @@ architecture rtl of fmc_adc_mezzanine is
   -- Signals declaration
   ------------------------------------------------------------------------------
 
-  -- Wishbone buse(s) from master(s) to crossbar slave port(s)
-  signal cnx_master_out : t_wishbone_master_out;
-  signal cnx_master_in  : t_wishbone_master_in;
-
   -- Wishbone buse(s) from crossbar master port(s) to slave(s)
   signal cnx_slave_out : t_wishbone_slave_out_array(c_NUM_WB_SLAVES-1 downto 0);
   signal cnx_slave_in  : t_wishbone_slave_in_array(c_NUM_WB_SLAVES-1 downto 0);
 
+  -- Wishbone buse(s) from master(s) to crossbar slave port(s)
   signal wb_csr_out : t_wishbone_slave_in;
   signal wb_csr_in  : t_wishbone_slave_out;
 
@@ -205,24 +202,12 @@ begin
       master_i  => wb_csr_in,
       master_o  => wb_csr_out);
 
-  -- Additional register to help timing
-  cmp_xwb_register : xwb_register
-    generic map (
-      g_WB_MODE => PIPELINED)
-    port map (
-      rst_n_i  => sys_rst_n_i,
-      clk_i    => sys_clk_i,
-      slave_i  => wb_csr_out,
-      slave_o  => wb_csr_in,
-      master_i => cnx_master_in,
-      master_o => cnx_master_out);
-
   cmp_crossbar : entity work.fmc_adc_mezzanine_mmap
     port map (
       rst_n_i                  => sys_rst_n_i,
       clk_i                    => sys_clk_i,
-      wb_i                     => cnx_master_out,
-      wb_o                     => cnx_master_in,
+      wb_i                     => wb_csr_out,
+      wb_o                     => wb_csr_in,
       fmc_adc_100m_csr_i       => cnx_slave_out(c_WB_SLAVE_FMC_ADC),
       fmc_adc_100m_csr_o       => cnx_slave_in(c_WB_SLAVE_FMC_ADC),
       fmc_adc_eic_i            => cnx_slave_out(c_WB_SLAVE_FMC_EIC),
@@ -317,7 +302,7 @@ begin
   --    ADC core control and status
   ------------------------------------------------------------------------------
 
-  cmp_fmc_adc_100Ms_core : fmc_adc_100Ms_core
+  cmp_fmc_adc_100Ms_core : entity work.fmc_adc_100Ms_core
     generic map (
       g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
       g_SPARTAN6_USE_PLL   => g_SPARTAN6_USE_PLL,

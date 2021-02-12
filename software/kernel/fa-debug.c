@@ -233,10 +233,10 @@ static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
 				     size_t count, loff_t *ppos)
 {
 	struct fa_dev *fa = file->private_data;
-	char buf_l[CMD_SIZE];
+	char buf_l[CMD_SIZE + 1];
 	int err;
 
-	memset(buf_l, 0, CMD_SIZE);
+	memset(buf_l, 0, sizeof(buf_l));
 	err = copy_from_user(buf_l, buf, min(count, CMD_SIZE));
 	if (err)
 		return err;
@@ -248,7 +248,7 @@ static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
 
 		return err ? err : count;
 	} else {
-		dev_err(&fa->pdev->dev, "Unknown command \"%s\"\n", buf);
+		dev_err(&fa->pdev->dev, "Unknown command \"%s\"\n", buf_l);
 		return -EINVAL;
 	}
 }

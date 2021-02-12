@@ -8,7 +8,7 @@ memory-map:
   description: FMC ADC aux trigger out registers
   x-hdl:
     busgroup: True
-    reg_prefix: False
+    reg-prefix: False
   children:
   - reg:
      name: status

@@ -44,8 +44,9 @@ entity fmc_adc_mezzanine_mmap is
 end fmc_adc_mezzanine_mmap;
 
 architecture syn of fmc_adc_mezzanine_mmap is
-  signal rd_int                         : std_logic;
-  signal wr_int                         : std_logic;
+  signal adr_int                        : std_logic_vector(12 downto 2);
+  signal rd_req_int                     : std_logic;
+  signal wr_req_int                     : std_logic;
   signal rd_ack_int                     : std_logic;
   signal wr_ack_int                     : std_logic;
   signal wb_en                          : std_logic;
@@ -53,46 +54,59 @@ architecture syn of fmc_adc_mezzanine_mmap is
   signal wb_rip                         : std_logic;
   signal wb_wip                         : std_logic;
   signal fmc_adc_100m_csr_re            : std_logic;
+  signal fmc_adc_100m_csr_we            : std_logic;
   signal fmc_adc_100m_csr_wt            : std_logic;
   signal fmc_adc_100m_csr_rt            : std_logic;
   signal fmc_adc_100m_csr_tr            : std_logic;
   signal fmc_adc_100m_csr_wack          : std_logic;
   signal fmc_adc_100m_csr_rack          : std_logic;
   signal fmc_adc_eic_re                 : std_logic;
+  signal fmc_adc_eic_we                 : std_logic;
   signal fmc_adc_eic_wt                 : std_logic;
   signal fmc_adc_eic_rt                 : std_logic;
   signal fmc_adc_eic_tr                 : std_logic;
   signal fmc_adc_eic_wack               : std_logic;
   signal fmc_adc_eic_rack               : std_logic;
   signal si570_i2c_master_re            : std_logic;
+  signal si570_i2c_master_we            : std_logic;
   signal si570_i2c_master_wt            : std_logic;
   signal si570_i2c_master_rt            : std_logic;
   signal si570_i2c_master_tr            : std_logic;
   signal si570_i2c_master_wack          : std_logic;
   signal si570_i2c_master_rack          : std_logic;
   signal ds18b20_onewire_master_re      : std_logic;
+  signal ds18b20_onewire_master_we      : std_logic;
   signal ds18b20_onewire_master_wt      : std_logic;
   signal ds18b20_onewire_master_rt      : std_logic;
   signal ds18b20_onewire_master_tr      : std_logic;
   signal ds18b20_onewire_master_wack    : std_logic;
   signal ds18b20_onewire_master_rack    : std_logic;
   signal fmc_spi_master_re              : std_logic;
+  signal fmc_spi_master_we              : std_logic;
   signal fmc_spi_master_wt              : std_logic;
   signal fmc_spi_master_rt              : std_logic;
   signal fmc_spi_master_tr              : std_logic;
   signal fmc_spi_master_wack            : std_logic;
   signal fmc_spi_master_rack            : std_logic;
   signal timetag_core_re                : std_logic;
+  signal timetag_core_we                : std_logic;
   signal timetag_core_wt                : std_logic;
   signal timetag_core_rt                : std_logic;
   signal timetag_core_tr                : std_logic;
   signal timetag_core_wack              : std_logic;
   signal timetag_core_rack              : std_logic;
-  signal reg_rdat_int                   : std_logic_vector(31 downto 0);
-  signal rd_ack1_int                    : std_logic;
+  signal rd_req_d0                      : std_logic;
+  signal rd_adr_d0                      : std_logic_vector(12 downto 2);
+  signal rd_ack_d0                      : std_logic;
+  signal rd_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_req_d0                      : std_logic;
+  signal wr_dat_d0                      : std_logic_vector(31 downto 0);
+  signal wr_sel_d0                      : std_logic_vector(3 downto 0);
+  signal wr_ack_d0                      : std_logic;
 begin
 
   -- WB decode signals
+  adr_int <= wb_i.adr(12 downto 2);
   wb_en <= wb_i.cyc and wb_i.stb;
 
   process (clk_i) begin
@@ -104,7 +118,7 @@ begin
       end if;
     end if;
   end process;
-  rd_int <= (wb_en and not wb_i.we) and not wb_rip;
+  rd_req_int <= (wb_en and not wb_i.we) and not wb_rip;
 
   process (clk_i) begin
     if rising_edge(clk_i) then
@@ -115,7 +129,7 @@ begin
       end if;
     end if;
   end process;
-  wr_int <= (wb_en and wb_i.we) and not wb_wip;
+  wr_req_int <= (wb_en and wb_i.we) and not wb_wip;
 
   ack_int <= rd_ack_int or wr_ack_int;
   wb_o.ack <= ack_int;
@@ -123,16 +137,37 @@ begin
   wb_o.rty <= '0';
   wb_o.err <= '0';
 
-  -- Assign outputs
+  -- pipelining for rd-in+rd-out+wr-in+wr-out
+  process (clk_i) begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        rd_req_d0 <= '0';
+        rd_ack_int <= '0';
+        wr_req_d0 <= '0';
+        wr_ack_int <= '0';
+      else
+        rd_req_d0 <= rd_req_int;
+        rd_adr_d0 <= adr_int;
+        rd_ack_int <= rd_ack_d0;
+        wb_o.dat <= rd_dat_d0;
+        wr_req_d0 <= wr_req_int;
+        wr_dat_d0 <= wb_i.dat;
+        wr_sel_d0 <= wb_i.sel;
+        wr_ack_int <= wr_ack_d0;
+      end if;
+    end if;
+  end process;
 
-  -- Assignments for submap fmc_adc_100m_csr
+  -- Interface fmc_adc_100m_csr
   fmc_adc_100m_csr_tr <= fmc_adc_100m_csr_wt or fmc_adc_100m_csr_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_adc_100m_csr_rt <= '0';
+        fmc_adc_100m_csr_wt <= '0';
       else
         fmc_adc_100m_csr_rt <= (fmc_adc_100m_csr_rt or fmc_adc_100m_csr_re) and not fmc_adc_100m_csr_rack;
+        fmc_adc_100m_csr_wt <= (fmc_adc_100m_csr_wt or fmc_adc_100m_csr_we) and not fmc_adc_100m_csr_wack;
       end if;
     end if;
   end process;
@@ -140,19 +175,21 @@ begin
   fmc_adc_100m_csr_o.stb <= fmc_adc_100m_csr_tr;
   fmc_adc_100m_csr_wack <= fmc_adc_100m_csr_i.ack and fmc_adc_100m_csr_wt;
   fmc_adc_100m_csr_rack <= fmc_adc_100m_csr_i.ack and fmc_adc_100m_csr_rt;
-  fmc_adc_100m_csr_o.adr <= ((22 downto 0 => '0') & wb_i.adr(8 downto 2)) & (1 downto 0 => '0');
-  fmc_adc_100m_csr_o.sel <= (others => '1');
+  fmc_adc_100m_csr_o.adr <= ((22 downto 0 => '0') & rd_adr_d0(8 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_100m_csr_o.sel <= wr_sel_d0;
   fmc_adc_100m_csr_o.we <= fmc_adc_100m_csr_wt;
-  fmc_adc_100m_csr_o.dat <= wb_i.dat;
+  fmc_adc_100m_csr_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap fmc_adc_eic
+  -- Interface fmc_adc_eic
   fmc_adc_eic_tr <= fmc_adc_eic_wt or fmc_adc_eic_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_adc_eic_rt <= '0';
+        fmc_adc_eic_wt <= '0';
       else
         fmc_adc_eic_rt <= (fmc_adc_eic_rt or fmc_adc_eic_re) and not fmc_adc_eic_rack;
+        fmc_adc_eic_wt <= (fmc_adc_eic_wt or fmc_adc_eic_we) and not fmc_adc_eic_wack;
       end if;
     end if;
   end process;
@@ -160,19 +197,21 @@ begin
   fmc_adc_eic_o.stb <= fmc_adc_eic_tr;
   fmc_adc_eic_wack <= fmc_adc_eic_i.ack and fmc_adc_eic_wt;
   fmc_adc_eic_rack <= fmc_adc_eic_i.ack and fmc_adc_eic_rt;
-  fmc_adc_eic_o.adr <= ((27 downto 0 => '0') & wb_i.adr(3 downto 2)) & (1 downto 0 => '0');
-  fmc_adc_eic_o.sel <= (others => '1');
+  fmc_adc_eic_o.adr <= ((27 downto 0 => '0') & rd_adr_d0(3 downto 2)) & (1 downto 0 => '0');
+  fmc_adc_eic_o.sel <= wr_sel_d0;
   fmc_adc_eic_o.we <= fmc_adc_eic_wt;
-  fmc_adc_eic_o.dat <= wb_i.dat;
+  fmc_adc_eic_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap si570_i2c_master
+  -- Interface si570_i2c_master
   si570_i2c_master_tr <= si570_i2c_master_wt or si570_i2c_master_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         si570_i2c_master_rt <= '0';
+        si570_i2c_master_wt <= '0';
       else
         si570_i2c_master_rt <= (si570_i2c_master_rt or si570_i2c_master_re) and not si570_i2c_master_rack;
+        si570_i2c_master_wt <= (si570_i2c_master_wt or si570_i2c_master_we) and not si570_i2c_master_wack;
       end if;
     end if;
   end process;
@@ -180,19 +219,21 @@ begin
   si570_i2c_master_o.stb <= si570_i2c_master_tr;
   si570_i2c_master_wack <= si570_i2c_master_i.ack and si570_i2c_master_wt;
   si570_i2c_master_rack <= si570_i2c_master_i.ack and si570_i2c_master_rt;
-  si570_i2c_master_o.adr <= ((23 downto 0 => '0') & wb_i.adr(7 downto 2)) & (1 downto 0 => '0');
-  si570_i2c_master_o.sel <= (others => '1');
+  si570_i2c_master_o.adr <= ((23 downto 0 => '0') & rd_adr_d0(7 downto 2)) & (1 downto 0 => '0');
+  si570_i2c_master_o.sel <= wr_sel_d0;
   si570_i2c_master_o.we <= si570_i2c_master_wt;
-  si570_i2c_master_o.dat <= wb_i.dat;
+  si570_i2c_master_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap ds18b20_onewire_master
+  -- Interface ds18b20_onewire_master
   ds18b20_onewire_master_tr <= ds18b20_onewire_master_wt or ds18b20_onewire_master_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         ds18b20_onewire_master_rt <= '0';
+        ds18b20_onewire_master_wt <= '0';
       else
         ds18b20_onewire_master_rt <= (ds18b20_onewire_master_rt or ds18b20_onewire_master_re) and not ds18b20_onewire_master_rack;
+        ds18b20_onewire_master_wt <= (ds18b20_onewire_master_wt or ds18b20_onewire_master_we) and not ds18b20_onewire_master_wack;
       end if;
     end if;
   end process;
@@ -200,19 +241,21 @@ begin
   ds18b20_onewire_master_o.stb <= ds18b20_onewire_master_tr;
   ds18b20_onewire_master_wack <= ds18b20_onewire_master_i.ack and ds18b20_onewire_master_wt;
   ds18b20_onewire_master_rack <= ds18b20_onewire_master_i.ack and ds18b20_onewire_master_rt;
-  ds18b20_onewire_master_o.adr <= ((27 downto 0 => '0') & wb_i.adr(3 downto 2)) & (1 downto 0 => '0');
-  ds18b20_onewire_master_o.sel <= (others => '1');
+  ds18b20_onewire_master_o.adr <= ((27 downto 0 => '0') & rd_adr_d0(3 downto 2)) & (1 downto 0 => '0');
+  ds18b20_onewire_master_o.sel <= wr_sel_d0;
   ds18b20_onewire_master_o.we <= ds18b20_onewire_master_wt;
-  ds18b20_onewire_master_o.dat <= wb_i.dat;
+  ds18b20_onewire_master_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap fmc_spi_master
+  -- Interface fmc_spi_master
   fmc_spi_master_tr <= fmc_spi_master_wt or fmc_spi_master_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         fmc_spi_master_rt <= '0';
+        fmc_spi_master_wt <= '0';
       else
         fmc_spi_master_rt <= (fmc_spi_master_rt or fmc_spi_master_re) and not fmc_spi_master_rack;
+        fmc_spi_master_wt <= (fmc_spi_master_wt or fmc_spi_master_we) and not fmc_spi_master_wack;
       end if;
     end if;
   end process;
@@ -220,19 +263,21 @@ begin
   fmc_spi_master_o.stb <= fmc_spi_master_tr;
   fmc_spi_master_wack <= fmc_spi_master_i.ack and fmc_spi_master_wt;
   fmc_spi_master_rack <= fmc_spi_master_i.ack and fmc_spi_master_rt;
-  fmc_spi_master_o.adr <= ((26 downto 0 => '0') & wb_i.adr(4 downto 2)) & (1 downto 0 => '0');
-  fmc_spi_master_o.sel <= (others => '1');
+  fmc_spi_master_o.adr <= ((26 downto 0 => '0') & rd_adr_d0(4 downto 2)) & (1 downto 0 => '0');
+  fmc_spi_master_o.sel <= wr_sel_d0;
   fmc_spi_master_o.we <= fmc_spi_master_wt;
-  fmc_spi_master_o.dat <= wb_i.dat;
+  fmc_spi_master_o.dat <= wr_dat_d0;
 
-  -- Assignments for submap timetag_core
+  -- Interface timetag_core
   timetag_core_tr <= timetag_core_wt or timetag_core_rt;
   process (clk_i) begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         timetag_core_rt <= '0';
+        timetag_core_wt <= '0';
       else
         timetag_core_rt <= (timetag_core_rt or timetag_core_re) and not timetag_core_rack;
+        timetag_core_wt <= (timetag_core_wt or timetag_core_we) and not timetag_core_wack;
       end if;
     end if;
   end process;
@@ -240,159 +285,112 @@ begin
   timetag_core_o.stb <= timetag_core_tr;
   timetag_core_wack <= timetag_core_i.ack and timetag_core_wt;
   timetag_core_rack <= timetag_core_i.ack and timetag_core_rt;
-  timetag_core_o.adr <= ((24 downto 0 => '0') & wb_i.adr(6 downto 2)) & (1 downto 0 => '0');
-  timetag_core_o.sel <= (others => '1');
+  timetag_core_o.adr <= ((24 downto 0 => '0') & rd_adr_d0(6 downto 2)) & (1 downto 0 => '0');
+  timetag_core_o.sel <= wr_sel_d0;
   timetag_core_o.we <= timetag_core_wt;
-  timetag_core_o.dat <= wb_i.dat;
+  timetag_core_o.dat <= wr_dat_d0;
 
   -- Process for write requests.
-  process (clk_i) begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        wr_ack_int <= '0';
-        fmc_adc_100m_csr_wt <= '0';
-        fmc_adc_eic_wt <= '0';
-        si570_i2c_master_wt <= '0';
-        ds18b20_onewire_master_wt <= '0';
-        fmc_spi_master_wt <= '0';
-        timetag_core_wt <= '0';
-      else
-        wr_ack_int <= '0';
-        fmc_adc_100m_csr_wt <= '0';
-        fmc_adc_eic_wt <= '0';
-        si570_i2c_master_wt <= '0';
-        ds18b20_onewire_master_wt <= '0';
-        fmc_spi_master_wt <= '0';
-        timetag_core_wt <= '0';
-        case wb_i.adr(12 downto 9) is
-        when "1000" => 
-          -- Submap fmc_adc_100m_csr
-          fmc_adc_100m_csr_wt <= (fmc_adc_100m_csr_wt or wr_int) and not fmc_adc_100m_csr_wack;
-          wr_ack_int <= fmc_adc_100m_csr_wack;
-        when "1010" => 
-          -- Submap fmc_adc_eic
-          fmc_adc_eic_wt <= (fmc_adc_eic_wt or wr_int) and not fmc_adc_eic_wack;
-          wr_ack_int <= fmc_adc_eic_wack;
-        when "1011" => 
-          case wb_i.adr(8 downto 8) is
-          when "0" => 
-            -- Submap si570_i2c_master
-            si570_i2c_master_wt <= (si570_i2c_master_wt or wr_int) and not si570_i2c_master_wack;
-            wr_ack_int <= si570_i2c_master_wack;
-          when "1" => 
-            -- Submap ds18b20_onewire_master
-            ds18b20_onewire_master_wt <= (ds18b20_onewire_master_wt or wr_int) and not ds18b20_onewire_master_wack;
-            wr_ack_int <= ds18b20_onewire_master_wack;
-          when others =>
-            wr_ack_int <= wr_int;
-          end case;
-        when "1100" => 
-          case wb_i.adr(8 downto 7) is
-          when "00" => 
-            -- Submap fmc_spi_master
-            fmc_spi_master_wt <= (fmc_spi_master_wt or wr_int) and not fmc_spi_master_wack;
-            wr_ack_int <= fmc_spi_master_wack;
-          when "10" => 
-            -- Submap timetag_core
-            timetag_core_wt <= (timetag_core_wt or wr_int) and not timetag_core_wack;
-            wr_ack_int <= timetag_core_wack;
-          when others =>
-            wr_ack_int <= wr_int;
-          end case;
-        when others =>
-          wr_ack_int <= wr_int;
-        end case;
-      end if;
-    end if;
-  end process;
-
-  -- Process for registers read.
-  process (clk_i) begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        rd_ack1_int <= '0';
-      else
-        reg_rdat_int <= (others => 'X');
-        case wb_i.adr(12 downto 9) is
-        when "1000" => 
-        when "1010" => 
-        when "1011" => 
-          case wb_i.adr(8 downto 8) is
-          when "0" => 
-          when "1" => 
-          when others =>
-            reg_rdat_int <= (others => 'X');
-            rd_ack1_int <= rd_int;
-          end case;
-        when "1100" => 
-          case wb_i.adr(8 downto 7) is
-          when "00" => 
-          when "10" => 
-          when others =>
-            reg_rdat_int <= (others => 'X');
-            rd_ack1_int <= rd_int;
-          end case;
-        when others =>
-          reg_rdat_int <= (others => 'X');
-          rd_ack1_int <= rd_int;
-        end case;
-      end if;
-    end if;
+  process (rd_adr_d0, wr_req_d0, fmc_adc_100m_csr_wack, fmc_adc_eic_wack, si570_i2c_master_wack, ds18b20_onewire_master_wack, fmc_spi_master_wack, timetag_core_wack) begin
+    fmc_adc_100m_csr_we <= '0';
+    fmc_adc_eic_we <= '0';
+    si570_i2c_master_we <= '0';
+    ds18b20_onewire_master_we <= '0';
+    fmc_spi_master_we <= '0';
+    timetag_core_we <= '0';
+    case rd_adr_d0(12 downto 9) is
+    when "1000" =>
+      -- Submap fmc_adc_100m_csr
+      fmc_adc_100m_csr_we <= wr_req_d0;
+      wr_ack_d0 <= fmc_adc_100m_csr_wack;
+    when "1010" =>
+      -- Submap fmc_adc_eic
+      fmc_adc_eic_we <= wr_req_d0;
+      wr_ack_d0 <= fmc_adc_eic_wack;
+    when "1011" =>
+      case rd_adr_d0(8 downto 8) is
+      when "0" =>
+        -- Submap si570_i2c_master
+        si570_i2c_master_we <= wr_req_d0;
+        wr_ack_d0 <= si570_i2c_master_wack;
+      when "1" =>
+        -- Submap ds18b20_onewire_master
+        ds18b20_onewire_master_we <= wr_req_d0;
+        wr_ack_d0 <= ds18b20_onewire_master_wack;
+      when others =>
+        wr_ack_d0 <= wr_req_d0;
+      end case;
+    when "1100" =>
+      case rd_adr_d0(8 downto 7) is
+      when "00" =>
+        -- Submap fmc_spi_master
+        fmc_spi_master_we <= wr_req_d0;
+        wr_ack_d0 <= fmc_spi_master_wack;
+      when "10" =>
+        -- Submap timetag_core
+        timetag_core_we <= wr_req_d0;
+        wr_ack_d0 <= timetag_core_wack;
+      when others =>
+        wr_ack_d0 <= wr_req_d0;
+      end case;
+    when others =>
+      wr_ack_d0 <= wr_req_d0;
+    end case;
   end process;
 
   -- Process for read requests.
-  process (wb_i.adr, reg_rdat_int, rd_ack1_int, rd_int, rd_int, fmc_adc_100m_csr_i.dat, fmc_adc_100m_csr_rack, fmc_adc_100m_csr_rt, rd_int, fmc_adc_eic_i.dat, fmc_adc_eic_rack, fmc_adc_eic_rt, rd_int, si570_i2c_master_i.dat, si570_i2c_master_rack, si570_i2c_master_rt, rd_int, ds18b20_onewire_master_i.dat, ds18b20_onewire_master_rack, ds18b20_onewire_master_rt, rd_int, fmc_spi_master_i.dat, fmc_spi_master_rack, fmc_spi_master_rt, rd_int, timetag_core_i.dat, timetag_core_rack, timetag_core_rt) begin
+  process (rd_adr_d0, rd_req_d0, fmc_adc_100m_csr_i.dat, fmc_adc_100m_csr_rack, fmc_adc_eic_i.dat, fmc_adc_eic_rack, si570_i2c_master_i.dat, si570_i2c_master_rack, ds18b20_onewire_master_i.dat, ds18b20_onewire_master_rack, fmc_spi_master_i.dat, fmc_spi_master_rack, timetag_core_i.dat, timetag_core_rack) begin
     -- By default ack read requests
-    wb_o.dat <= (others => '0');
+    rd_dat_d0 <= (others => 'X');
     fmc_adc_100m_csr_re <= '0';
     fmc_adc_eic_re <= '0';
     si570_i2c_master_re <= '0';
     ds18b20_onewire_master_re <= '0';
     fmc_spi_master_re <= '0';
     timetag_core_re <= '0';
-    case wb_i.adr(12 downto 9) is
-    when "1000" => 
+    case rd_adr_d0(12 downto 9) is
+    when "1000" =>
       -- Submap fmc_adc_100m_csr
-      fmc_adc_100m_csr_re <= rd_int;
-      wb_o.dat <= fmc_adc_100m_csr_i.dat;
-      rd_ack_int <= fmc_adc_100m_csr_rack;
-    when "1010" => 
+      fmc_adc_100m_csr_re <= rd_req_d0;
+      rd_dat_d0 <= fmc_adc_100m_csr_i.dat;
+      rd_ack_d0 <= fmc_adc_100m_csr_rack;
+    when "1010" =>
       -- Submap fmc_adc_eic
-      fmc_adc_eic_re <= rd_int;
-      wb_o.dat <= fmc_adc_eic_i.dat;
-      rd_ack_int <= fmc_adc_eic_rack;
-    when "1011" => 
-      case wb_i.adr(8 downto 8) is
-      when "0" => 
+      fmc_adc_eic_re <= rd_req_d0;
+      rd_dat_d0 <= fmc_adc_eic_i.dat;
+      rd_ack_d0 <= fmc_adc_eic_rack;
+    when "1011" =>
+      case rd_adr_d0(8 downto 8) is
+      when "0" =>
         -- Submap si570_i2c_master
-        si570_i2c_master_re <= rd_int;
-        wb_o.dat <= si570_i2c_master_i.dat;
-        rd_ack_int <= si570_i2c_master_rack;
-      when "1" => 
+        si570_i2c_master_re <= rd_req_d0;
+        rd_dat_d0 <= si570_i2c_master_i.dat;
+        rd_ack_d0 <= si570_i2c_master_rack;
+      when "1" =>
         -- Submap ds18b20_onewire_master
-        ds18b20_onewire_master_re <= rd_int;
-        wb_o.dat <= ds18b20_onewire_master_i.dat;
-        rd_ack_int <= ds18b20_onewire_master_rack;
+        ds18b20_onewire_master_re <= rd_req_d0;
+        rd_dat_d0 <= ds18b20_onewire_master_i.dat;
+        rd_ack_d0 <= ds18b20_onewire_master_rack;
       when others =>
-        rd_ack_int <= rd_int;
+        rd_ack_d0 <= rd_req_d0;
       end case;
-    when "1100" => 
-      case wb_i.adr(8 downto 7) is
-      when "00" => 
+    when "1100" =>
+      case rd_adr_d0(8 downto 7) is
+      when "00" =>
         -- Submap fmc_spi_master
-        fmc_spi_master_re <= rd_int;
-        wb_o.dat <= fmc_spi_master_i.dat;
-        rd_ack_int <= fmc_spi_master_rack;
-      when "10" => 
+        fmc_spi_master_re <= rd_req_d0;
+        rd_dat_d0 <= fmc_spi_master_i.dat;
+        rd_ack_d0 <= fmc_spi_master_rack;
+      when "10" =>
         -- Submap timetag_core
-        timetag_core_re <= rd_int;
-        wb_o.dat <= timetag_core_i.dat;
-        rd_ack_int <= timetag_core_rack;
+        timetag_core_re <= rd_req_d0;
+        rd_dat_d0 <= timetag_core_i.dat;
+        rd_ack_d0 <= timetag_core_rack;
       when others =>
-        rd_ack_int <= rd_int;
+        rd_ack_d0 <= rd_req_d0;
       end case;
     when others =>
-      rd_ack_int <= rd_int;
+      rd_ack_d0 <= rd_req_d0;
     end case;
   end process;
 end syn;

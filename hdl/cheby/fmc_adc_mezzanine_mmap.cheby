@@ -9,6 +9,7 @@ memory-map:
   size: 0x2000
   x-hdl:
     busgroup: True
+    pipeline: wr,rd
   children:
     - submap:
         name: fmc_adc_100m_csr

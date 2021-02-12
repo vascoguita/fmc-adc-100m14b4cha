@@ -214,8 +214,6 @@ static unsigned int zfad_block_n_pages(struct zio_block *block)
 
 #ifdef CONFIG_FMC_ADC_SVEC
 
-#define ADC_VME_DDR_ADDR 0x00
-#define ADC_VME_DDR_DATA 0x04
 #define SVEC_FUNC_NR 1 /* HARD coded in SVEC */
 
 static inline struct vme_dev *fa_to_vme_dev(struct fa_dev *fa)
@@ -233,9 +231,9 @@ static unsigned long fa_ddr_data_vme_addr(struct fa_dev *fa)
 		 "Invalid VME function\n"))
 		return ~0; /* invalid address, we will see VME errors */
 
-	WARN(data->vme_ddr_offset == 0, "Invalid DDR DATA offset");
+	WARN(data->vme_dma_offset == 0, "Invalid DDR DMA offset");
 	addr = vdev->map[SVEC_FUNC_NR].vme_addrl;
-	addr += data->vme_ddr_offset + ADC_VME_DDR_DATA;
+	addr += data->vme_dma_offset;
 
 	return addr;
 }
@@ -251,7 +249,7 @@ static void *fa_ddr_addr_reg_off(struct fa_dev *fa)
 		return NULL; /* invalid address, we will see VME errors */
 
 	addr = vdev->map[SVEC_FUNC_NR].kernel_va;
-	addr += data->vme_ddr_offset + ADC_VME_DDR_ADDR;
+	addr += data->vme_reg_offset;
 
 	return addr;
 }
@@ -284,8 +282,7 @@ static void build_dma_desc(struct vme_dma *desc, unsigned long vme_addr,
 	desc->ctrl.vme_backoff_time = VME_DMA_BACKOFF_0;
 
 	vme->data_width = VME_D32;
-	vme->am         = VME_A24_USER_DATA_SCT;
-	/*vme->am         = VME_A24_USER_MBLT;*/
+	vme->am         = VME_A24_USER_MBLT;
 	vme->addru	= upper_32_bits(vme_addr);
 	vme->addrl	= lower_32_bits(vme_addr);
 
@@ -338,42 +335,19 @@ static int zfad_dma_context_init_svec(struct zio_cset *cset,
 #ifdef CONFIG_FMC_ADC_SVEC
 	struct fa_dev *fa = cset->zdev->priv_d;
 	struct vme_dma *desc;
-	int err;
 
 	dev_dbg(&fa->pdev->dev, "SVEC build DMA context\n");
+	zfad_block->dma_ctx = NULL;
 
 	desc = kmalloc(sizeof(struct vme_dma), GFP_ATOMIC);
 	if (!desc)
 		return -ENOMEM;
-
-	if (zfad_block == cset->interleave->priv_d) {
-		void *addr = fa_ddr_addr_reg_off(fa);
-
-		if (!addr) {
-			err = -ENODEV;
-			goto err_reg_addr;
-		}
-		/*
-		 * Only for the first block:
-		 * write the data address in the ddr_addr register: this
-		 * address has been computed after ACQ_END by looking to the
-		 * trigger position see fa-irq.c::irq_acq_end.
-		 * Be careful: the SVEC HW version expects an address of 32bits word
-		 * therefore mem-offset in byte is translated into 32bit word
-		 */
-		fa_iowrite(fa, zfad_block->sconfig.src_addr / 4, addr);
-	}
 
 	zfad_block->dma_ctx = desc;
 	build_dma_desc(desc, fa_ddr_data_vme_addr(fa),
 		       zfad_block->block->data,
 		       zfad_block->block->datalen);
 	return 0;
-
-err_reg_addr:
-	kfree(desc);
-	zfad_block->dma_ctx = NULL;
-	return err;
 #else
 	return 0;
 #endif
@@ -443,6 +417,8 @@ static void fa_dma_complete(void *arg,
 		fa_dma_release_channel_svec(fa);
 		zfad_dma_done(cset);
 	}
+
+	complete(&zfad_block->shot_done);
 }
 
 
@@ -551,15 +527,153 @@ err_alloc_pages:
 	return err;
 }
 
+/**
+ * Configure the DDR window offset
+ */
+static int fa_svec_ddr_window_set(struct fa_dev *fa, unsigned int offset)
+{
+	void *addr = fa_ddr_addr_reg_off(fa);
+
+	if (!addr)
+		return -ENODEV;
+	fa_iowrite(fa, offset, addr);
+
+        return 0;
+}
+
 static int fa_dmaengine_slave_config(struct fa_dev *fa,
 				     struct dma_slave_config *sconfig)
 {
-	/*
-	 * For SVEC we must set the DMA context, there is not slave config
-	 */
-	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
-		return 0;
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC)) {
+		/*
+		 * For SVEC we must set the DMA context, there is not a real
+		 * slave config. The SVEC HDL implementation requires some
+		 * cooridination between the DMA engine (the VME bridge),
+		 * and the SVEC card. This coordination happens here by
+		 * setting the DDR window for the next acquisition.
+		 *
+		 * This is necessary becasue the SVEC can't map the entire DDR.
+		 */
+		return fa_svec_ddr_window_set(fa, sconfig->src_addr);
+	}
 	return dmaengine_slave_config(fa->dchan, sconfig);
+}
+
+
+/*
+ * In multishot mode we must wait for the previous
+ * transfer to complete because:
+ * - of the MBLT prefetch, so we need to do separate DMA
+ *   transfers;
+ * - of the SVEC DMA DDR offset register that can't be
+ *   overwritten while running a DMA transfer
+ */
+static int fa_dma_shot_wait_svec(struct fa_dev *fa,
+				 struct zfad_block *zfad_block,
+				 unsigned int timeout_ms)
+{
+	int err;
+
+        if (fa->n_shots == 1)
+		return 0;
+
+	err = wait_for_completion_interruptible_timeout(&zfad_block->shot_done,
+							msecs_to_jiffies(timeout_ms));
+
+	/* Check the status of our transfer */
+	if (err <= 0) {
+		/* timeout elapsed or signal interruption */
+		dev_err(&fa->pdev->dev, "%s\n", (err == 0) ? "DMA timeout elapsed" :
+			"DMA interrupted by a signal");
+		return -EINVAL;
+	}
+
+        return 0;
+}
+
+static int fa_dma_start_svec(struct zio_cset *cset)
+{
+	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
+	int err, i;
+
+        err = fa_dma_request_channel_svec(fa);
+	if (err)
+		return err;
+
+	fa->transfers_left = fa->n_shots;
+	for (i = 0; i < fa->n_shots; ++i) {
+		zfad_block[i].sconfig.direction = DMA_DEV_TO_MEM;
+		zfad_block[i].sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+		zfad_block[i].sconfig.src_addr = fa_ddr_offset(fa, i);
+		err = fa_dmaengine_slave_config(fa, &zfad_block[i].sconfig);
+		if (err)
+			goto err_config;
+		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
+		if (err)
+			goto err_prep;
+		init_completion(&zfad_block[i].shot_done);
+		dma_async_issue_pending(fa->dchan);
+
+		err = fa_dma_shot_wait_svec(fa, &zfad_block[i], 60000);
+		if (err)
+			goto err_wait;
+	}
+
+	return 0;
+
+err_wait:
+	dmaengine_terminate_all(fa->dchan);
+	dma_unmap_sg(&fa->pdev->dev,
+		     zfad_block[i].sgt.sgl,
+		     zfad_block[i].sgt.nents,
+		     DMA_DEV_TO_MEM);
+	sg_free_table(&zfad_block[i].sgt);
+
+	/* Clean/fix the context */
+	zfad_dma_context_exit(cset, &zfad_block[i]);
+err_prep:
+err_config:
+	fa_dma_release_channel_svec(fa);
+	return err;
+}
+
+static int fa_dma_start_spec(struct zio_cset *cset)
+{
+	struct fa_dev *fa = cset->zdev->priv_d;
+	struct zfad_block *zfad_block = cset->interleave->priv_d;
+	int err, i;
+
+	for (i = 0; i < fa->n_shots; ++i) {
+		zfad_block[i].sconfig.direction = DMA_DEV_TO_MEM;
+		zfad_block[i].sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
+		zfad_block[i].sconfig.src_addr = fa_ddr_offset(fa, i);
+		err = fa_dmaengine_slave_config(fa, &zfad_block[i].sconfig);
+		if (err)
+			goto err_config;
+		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
+		if (err)
+			goto err_prep;
+
+		init_completion(&zfad_block[i].shot_done);
+	}
+	fa->transfers_left = fa->n_shots;
+	dma_async_issue_pending(fa->dchan);
+
+	return 0;
+
+err_prep:
+err_config:
+	dmaengine_terminate_all(fa->dchan);
+	while (--i >= 0) {
+		dma_unmap_sg(&fa->pdev->dev,
+			     zfad_block[i].sgt.sgl,
+			     zfad_block[i].sgt.nents,
+			     DMA_DEV_TO_MEM);
+		sg_free_table(&zfad_block[i].sgt);
+	}
+	return err;
+
 }
 
 /**
@@ -571,70 +685,38 @@ static int fa_dmaengine_slave_config(struct fa_dev *fa,
 static int zfad_dma_start(struct zio_cset *cset)
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
-	struct zfad_block *zfad_block = cset->interleave->priv_d;
-	int err, i;
+	int err;
 
 	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
 	if (err) {
-		dev_warn(fa->msgdev,
+		dev_warn(&fa->pdev->dev,
 			 "Can't start DMA on the last acquisition, "
 			 "State Machine is not IDLE\n");
 		return err;
 	}
 
-        dev_dbg(fa->msgdev, "Start DMA transfer for %i shots of %i samples\n",
+        dev_dbg(&fa->pdev->dev,
+		"Start DMA transfer for %i shots of %i samples\n",
 		fa->n_shots, cset->ti->nsamples);
-        err = fa_dma_request_channel_svec(fa);
-	if (err)
-		return err;
 
 	/*
 	 * Disable all triggers to prevent fires between
 	 * different DMA transfers required for multi-shots
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
-	for (i = 0; i < fa->n_shots; ++i) {
-		/*
-		 * TODO
-		 * Let's see what to do with SVEC. SVEC need to set
-		 * the DMA_DDR_ADDR in hardware before starting the DMA
-		 * (it configures the DMA window).
-		 * In single shot is not a big deal, in multishot we may have
-		 * to issue_pending many time since we can't update the
-		 * DMA_DDR_ADDR for each block submitted to the dma engine.
-		 * But sice the blocks are contigous, perhaps there is no need
-		 * because the address of shot 2 is exactly after shot 1
-		 */
-		zfad_block[i].sconfig.direction = DMA_DEV_TO_MEM;
-		zfad_block[i].sconfig.src_addr_width = 8; /* 2 bytes for each channel (4) */
-		zfad_block[i].sconfig.src_addr = fa_ddr_offset(fa, i);
-		err = fa_dmaengine_slave_config(fa, &zfad_block[i].sconfig);
-		if (err)
-			goto err_config;
-		err = zfad_dma_prep_slave_sg(fa->dchan, cset, &zfad_block[i]);
-		if (err)
-			goto err_prep;
-	}
+        if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+		err = fa_dma_start_svec(cset);
+	else
+		err = fa_dma_start_spec(cset);
+	if (err)
+		goto err_start;
 
-	fa->transfers_left = fa->n_shots;
-	dma_async_issue_pending(fa->dchan);
+        return 0;
 
-	return 0;
-
-err_prep:
-err_config:
-	dmaengine_terminate_all(fa->dchan);
-	fa_dma_release_channel_svec(fa);
-	while (--i >= 0) {
-		dma_unmap_sg(&fa->pdev->dev,
-			     zfad_block[i].sgt.sgl,
-			     zfad_block[i].sgt.nents,
-			     DMA_DEV_TO_MEM);
-		sg_free_table(&zfad_block[i].sgt);
-	}
+err_start:
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
 		  cset->ti->zattr_set.ext_zattr[FA100M14B4C_TATTR_SRC].value);
-	dev_err(fa->msgdev, "Failed to run a DMA transfer (%d)\n", err);
+	dev_err(&fa->pdev->dev, "Failed to run a DMA transfer (%d)\n", err);
 	return err;
 }
 
@@ -659,10 +741,9 @@ static int zfad_block_timetag_extract(struct zio_block *block,
 	tg = block->data + block->datalen - FA_TRIG_TIMETAG_BYTES;
 	/* resize the datalen, by removing the trigger tstamp */
 	block->datalen = block->datalen - FA_TRIG_TIMETAG_BYTES;
+	memcpy(timetag, tg, sizeof(*timetag));
 	if (unlikely((tg->sec_high >> 8) != 0xACCE55))
 		return -EINVAL;
-
-	memcpy(timetag, tg, sizeof(*timetag));
 	return 0;
 }
 
@@ -756,7 +837,8 @@ static void zfad_dma_done(struct zio_cset *cset)
 		err = zfad_block_timetag_extract(block, &timetag);
 		if (err) {
 			dev_err(&fa->pdev->dev,
-				"Failed to extract Timetag from acquisition :0x%x 0x%x 0x%x 0x%x\n",
+				"Failed to extract Timetag from acquisition from shot %i :0x%x 0x%x 0x%x 0x%x\n",
+				i + 1,
 				timetag.sec_high, timetag.sec_low,
 				timetag.ticks, timetag.status);
 

@@ -12,6 +12,7 @@ memory-map:
   x-hdl:
     busgroup: True
     iogroup: fmc_adc_100ms_csr
+    pipeline: wr,rd
   children:
   - reg:
       name: ctl

@@ -203,14 +203,14 @@ NET "gen_fmc_mezzanine[1].*/cmp_fmc_adc_100Ms_core/fs_clk" TNM_NET = fs1_clk;
 TIMEGRP "adc0_sync_ffs" = "sync_ffs" EXCEPT "fs0_clk";
 TIMEGRP "adc1_sync_ffs" = "sync_ffs" EXCEPT "fs1_clk";
 
-TIMESPEC TS_adc0_sync_ffs = FROM fs0_clk TO "adc0_sync_ffs" TIG;
-TIMESPEC TS_adc1_sync_ffs = FROM fs1_clk TO "adc1_sync_ffs" TIG;
+#TIMESPEC TS_adc0_sync_ffs = FROM fs0_clk TO "adc0_sync_ffs" TIG;
+#TIMESPEC TS_adc1_sync_ffs = FROM fs1_clk TO "adc1_sync_ffs" TIG;
 
 TIMEGRP "adc0_sync_reg" = "sync_reg" EXCEPT "fs0_clk";
 TIMEGRP "adc1_sync_reg" = "sync_reg" EXCEPT "fs1_clk";
 
-TIMESPEC TS_adc0_sync_reg = FROM fs0_clk TO "adc0_sync_reg" 10ns DATAPATHONLY;
-TIMESPEC TS_adc1_sync_reg = FROM fs1_clk TO "adc1_sync_reg" 10ns DATAPATHONLY;
+TIMESPEC TS_adc0_sync_reg = FROM fs0_clk TO "adc0_sync_reg" 8ns DATAPATHONLY;
+TIMESPEC TS_adc1_sync_reg = FROM fs1_clk TO "adc1_sync_reg" 8ns DATAPATHONLY;
 
 # No sync words used in FMC-ADC
 #TIMESPEC TS_adc0_sync_word = FROM sync_word TO fs0_clk 30ns DATAPATHONLY;
