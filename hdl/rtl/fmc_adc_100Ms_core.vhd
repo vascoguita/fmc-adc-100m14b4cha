@@ -40,6 +40,8 @@ entity fmc_adc_100Ms_core is
     g_TRIG_DELAY_SW      : natural                        := 9;
     -- FMC-ADC identification number
     g_FMC_ADC_NR         : natural                        := 0;
+    -- Data endianness.  If set, swap memory data byte
+    g_BYTE_SWAP          : boolean                        := false;
     -- WB interface configuration
     g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
     g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);
@@ -71,7 +73,7 @@ entity fmc_adc_100Ms_core is
     acq_stop_p_o  : out std_logic;
     acq_end_p_o   : out std_logic;
 
-    -- Trigger time-tag inputs
+    -- Trigger time-tag inputs (sys_clk_i)
     trigger_tag_i   : in t_timetag;
     time_trig_i     : in std_logic;
     aux_time_trig_i : in std_logic;
@@ -293,6 +295,7 @@ architecture rtl of fmc_adc_100Ms_core is
   -- Wishbone to DDR flowcontrol FIFO
   signal wb_ddr_fifo_din   : std_logic_vector(64 downto 0);
   signal wb_ddr_fifo_dout  : std_logic_vector(64 downto 0);
+  signal wb_ddr_fifo_dout2 : std_logic_vector(63 downto 0);
   signal wb_ddr_fifo_empty : std_logic;
   signal wb_ddr_fifo_full  : std_logic;
   signal wb_ddr_fifo_wr    : std_logic;
@@ -1633,6 +1636,20 @@ begin
   -- Convert to 32-bit word addressing for Wishbone
   wb_ddr_skidpad_adr_in <= std_logic_vector(ram_addr_cnt);
 
+  gen_no_byte_swap: if not g_BYTE_SWAP generate
+    wb_ddr_fifo_dout2 <= wb_ddr_fifo_dout(63 downto 0);
+  end generate;
+  gen_byte_swap: if g_BYTE_SWAP generate
+    wb_ddr_fifo_dout2 (63 downto 32) <= (  wb_ddr_fifo_dout(39 downto 32)
+                                         & wb_ddr_fifo_dout(47 downto 40)
+                                         & wb_ddr_fifo_dout(55 downto 48)
+                                         & wb_ddr_fifo_dout(63 downto 56));
+    wb_ddr_fifo_dout2 (31 downto  0) <= (  wb_ddr_fifo_dout(7  downto  0)
+                                         & wb_ddr_fifo_dout(15 downto  8)
+                                         & wb_ddr_fifo_dout(23 downto 16)
+                                         & wb_ddr_fifo_dout(31 downto 24));
+  end generate;
+
   inst_skidpad: entity work.wb_skidpad2
     generic map (
       g_adrbits => ram_addr_cnt'length,
@@ -1644,7 +1661,7 @@ begin
 
       stb_i => wb_ddr_skidpad_stb_in,
       adr_i => wb_ddr_skidpad_adr_in,
-      dat_i => wb_ddr_fifo_dout(63 downto 0),
+      dat_i => wb_ddr_fifo_dout2,
       sel_i => (others => '1'),
       we_i  => '1',
       stall_o => wb_ddr_skidpad_stall,

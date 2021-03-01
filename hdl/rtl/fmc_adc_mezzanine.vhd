@@ -41,6 +41,8 @@ entity fmc_adc_mezzanine is
     g_TAG_ADJUST         : natural                        := 27;
     -- FMC-ADC identification number
     g_FMC_ADC_NR         : natural                        := 0;
+    -- Data endianness.  If set, swap memory data byte
+    g_BYTE_SWAP          : boolean                        := false;
     -- WB interface configuration
     g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
     g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
@@ -309,6 +311,7 @@ begin
       g_TRIG_DELAY_EXT     => g_TRIG_DELAY_EXT,
       g_TRIG_DELAY_SW      => g_TRIG_DELAY_SW,
       g_FMC_ADC_NR         => g_FMC_ADC_NR,
+      g_BYTE_SWAP          => g_BYTE_SWAP,
       g_WB_CSR_MODE        => PIPELINED,
       g_WB_CSR_GRANULARITY => BYTE)
     port map (
