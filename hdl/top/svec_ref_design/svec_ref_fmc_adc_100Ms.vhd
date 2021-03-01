@@ -535,6 +535,7 @@ begin -- architecture arch
       generic map (
         g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
         g_SPARTAN6_USE_PLL   => TRUE,
+        g_BYTE_SWAP          => TRUE,
         g_FMC_ADC_NR         => I,
         g_WB_MODE            => PIPELINED,
         g_WB_GRANULARITY     => BYTE)
