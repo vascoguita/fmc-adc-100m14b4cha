@@ -83,11 +83,11 @@ architecture arch of ltc2174_2l16b_receiver is
   signal serdes_m2s_shift  : std_logic_vector(8 downto 0) := (others => '0');
   signal serdes_s2m_shift  : std_logic_vector(8 downto 0) := (others => '0');
   signal serdes_serial_in  : std_logic_vector(8 downto 0) := (others => '0');
-  signal serdes_out_fr     : std_logic_vector(7 downto 0) := (others => '0');
+  signal serdes_out_fr     : std_logic_vector(6 downto 0) := (others => '0');
 
   signal bitslip_sreg : unsigned(7 downto 0) := to_unsigned(1, 8);
 
-  type serdes_array is array (0 to 8) of std_logic_vector(7 downto 0);
+  type serdes_array is array (0 to 8) of std_logic_vector(6 downto 0);
   signal serdes_parallel_out : serdes_array := (others => (others => '0'));
 
   -- used to select the data rate of the ISERDES blocks
@@ -183,7 +183,7 @@ begin  -- architecture arch
         I_INVERT      => FALSE,
         USE_DOUBLER   => FALSE)
       port map (
-        I            => adc_dco,
+        I            => adc_dco,  --  350Mhz
         IOCLK        => open,
         DIVCLK       => l_pll_clkin,
         SERDESSTROBE => open);
@@ -194,42 +194,42 @@ begin  -- architecture arch
         DIVIDE_BYPASS => TRUE)
       port map (
         O => l_pll_clkfbin,
-        I => clk_serdes_p);
+        I => clk_serdes_p);             --  100Mhz
 
     cmp_dco_pll : PLL_BASE
       generic map (
         BANDWIDTH      => "OPTIMIZED",
-        CLKFBOUT_MULT  => 2,
-        CLKIN_PERIOD   => 2.5,
+        CLKFBOUT_MULT  => 2,           --  M=2, Fvco=700Mhz
+        CLKIN_PERIOD   => 2.86,
         CLKOUT0_DIVIDE => 1,
-        CLKOUT1_DIVIDE => 8,
+        CLKOUT1_DIVIDE => 7,
         CLK_FEEDBACK   => "CLKOUT0",
         COMPENSATION   => "SOURCE_SYNCHRONOUS",
         DIVCLK_DIVIDE  => 1,
         REF_JITTER     => 0.01)
       port map (
-        CLKOUT0 => l_pll_clkout0,
-        CLKOUT1 => l_pll_clkout1,
+        CLKOUT0 => l_pll_clkout0,      --  700Mhz (to BUFPLL)
+        CLKOUT1 => l_pll_clkout1,      --  100Mhz
         LOCKED  => l_pll_locked,
         CLKFBIN => l_pll_clkfbin,
-        CLKIN   => l_pll_clkin,
+        CLKIN   => l_pll_clkin,        --  350Mhz
         RST     => '0');
 
     cmp_clk_div_buf : BUFG
       port map (
-        I => l_pll_clkout1,
+        I => l_pll_clkout1,            --  100Mhz
         O => clk_div_buf);
 
     cmp_dco_bufpll : BUFPLL
       generic map (
-        DIVIDE => 8)
+        DIVIDE => 7)
       port map (
-        IOCLK        => clk_serdes_p,
+        IOCLK        => clk_serdes_p,    -- 700Mhz (to BUFIO2FB and serdes)
         LOCK         => serdes_locked_o,
-        SERDESSTROBE => serdes_strobe,
+        SERDESSTROBE => serdes_strobe,   -- 100Mhz
         GCLK         => clk_div_buf,
         LOCKED       => l_pll_locked,
-        PLLIN        => l_pll_clkout0);
+        PLLIN        => l_pll_clkout0);  -- 700Mhz
 
     -- not used in this case
     clk_serdes_n <= '0';
@@ -247,7 +247,7 @@ begin  -- architecture arch
 
     cmp_dco_bufio_p : BUFIO2
       generic map (
-        DIVIDE        => 8,
+        DIVIDE        => 7,
         DIVIDE_BYPASS => FALSE,
         I_INVERT      => FALSE,
         USE_DOUBLER   => TRUE)
@@ -259,7 +259,7 @@ begin  -- architecture arch
 
     cmp_dco_bufio_n : BUFIO2
       generic map (
-        DIVIDE        => 8,
+        DIVIDE        => 7,
         DIVIDE_BYPASS => FALSE,
         I_INVERT      => TRUE,
         USE_DOUBLER   => FALSE)
@@ -293,9 +293,8 @@ begin  -- architecture arch
       bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
 
       -- Generate bitslip and synced signal
-      if(bitslip_sreg(bitslip_sreg'LEFT) = '1') then
-        -- use fr_n pattern (fr_p and fr_n are swapped on the adc mezzanine)
-        if(serdes_out_fr /= "00001111") then
+      if bitslip_sreg(bitslip_sreg'LEFT) = '1' then
+        if serdes_out_fr /= "0000000" and serdes_out_fr /= "1111111" then
           serdes_auto_bslip <= '1';
           serdes_synced     <= '0';
         else
@@ -332,7 +331,7 @@ begin  -- architecture arch
       generic map (
         BITSLIP_ENABLE => TRUE,
         DATA_RATE      => f_data_rate_sel(g_USE_PLL),
-        DATA_WIDTH     => 8,
+        DATA_WIDTH     => 7,
         INTERFACE_TYPE => "RETIMED",
         SERDES_MODE    => "MASTER")
       port map (
@@ -361,7 +360,7 @@ begin  -- architecture arch
       generic map (
         BITSLIP_ENABLE => TRUE,
         DATA_RATE      => f_data_rate_sel(g_USE_PLL),
-        DATA_WIDTH     => 8,
+        DATA_WIDTH     => 7,
         INTERFACE_TYPE => "RETIMED",
         SERDES_MODE    => "SLAVE")
       port map (
@@ -370,7 +369,7 @@ begin  -- architecture arch
         DFB       => open,
         FABRICOUT => open,
         INCDEC    => open,
-        Q1        => serdes_parallel_out(I)(7),
+        Q1        => open,
         Q2        => serdes_parallel_out(I)(6),
         Q3        => serdes_parallel_out(I)(5),
         Q4        => serdes_parallel_out(I)(4),
@@ -393,12 +392,14 @@ begin  -- architecture arch
 
   -- Data re-ordering for serdes outputs
   gen_serdes_dout_reorder : for I in 0 to 3 generate
-    gen_serdes_dout_reorder_bits : for J in 0 to 7 generate
+    gen_serdes_dout_reorder_bits : for J in 0 to 6 generate
       -- OUT#B: even bits
-      adc_data_o(I*16 + 2*J)     <= serdes_parallel_out(2*I)(J);
+      adc_data_o(I*16 + 2*J + 2)     <= serdes_parallel_out(2*I)(J);
       -- OUT#A: odd bits
-      adc_data_o(I*16 + 2*J + 1) <= serdes_parallel_out(2*I + 1)(J);
+      adc_data_o(I*16 + 2*J + 3) <= serdes_parallel_out(2*I + 1)(J);
     end generate gen_serdes_dout_reorder_bits;
+    adc_data_o(I*16 + 0) <= '0';
+    adc_data_o(I*16 + 1) <= '0';
   end generate gen_serdes_dout_reorder;
 
 end architecture arch;
