@@ -487,8 +487,13 @@ int fa_calib_init(struct fa_dev *fa)
 
 	fa_calib_write(fa, &calib);
 
-	/* Prepare the timely recalibration */
+	/* First calibration.
+	   The board has just been reset by the carrier before calling this
+	   driver and reading the temperature read needs at least 350ms */
+	msleep(400);
 	fa_calib_config(fa);
+
+	/* Prepare the timely recalibration */
 	if (fa_calib_is_compensation_on(fa) && fa_calib_temp_period) {
 		setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
 		mod_timer(&fa->calib_timer,
