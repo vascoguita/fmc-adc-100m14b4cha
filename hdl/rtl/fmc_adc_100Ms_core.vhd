@@ -610,6 +610,8 @@ begin
       data_i      => csr_regout.downsample,
       data_o      => downsample_factor);
 
+  --  Sync data to the current value register.
+  --  So, timing and loss of samples are not important.
   cmp_ch_sta_sync : gc_sync_word_wr
     generic map (
       g_AUTO_WR => TRUE,
