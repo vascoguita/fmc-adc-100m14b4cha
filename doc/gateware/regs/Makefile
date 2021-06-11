@@ -2,16 +2,23 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
-SOURCES = $(wildcard *.cheby) ../../../hdl/cheby/fmc_adc_mezzanine_mmap.cheby
-TARGETS = $(SOURCES:.cheby=.htm)
+all: spec_base_regs.htm svec_base_regs.htm svec_ref_fmc_adc_100Ms_mmap.htm spec_ref_fmc_adc_100Ms_mmap.htm
 
-all: $(TARGETS)
+.PHONY: clean
 
-.PHONY: $(TARGETS) clean
+CHEBY_BUILD=(cd $(dir $<); cheby -i $(notdir $<) --gen-doc --doc html) > $@
 
-$(TARGETS): %.htm : %.cheby
-	@echo -e "\n\033[34m\033[1m-> Processing file $<\033[0m"
-	@cheby -i $< --gen-doc=$(shell basename $@) --doc html
+spec_ref_fmc_adc_100Ms_mmap.htm: ../../../hdl/cheby/spec_ref_fmc_adc_100Ms_mmap.cheby
+	$(CHEBY_BUILD)
+
+svec_ref_fmc_adc_100Ms_mmap.htm: ../../../hdl/cheby/svec_ref_fmc_adc_100Ms_mmap.cheby
+	$(CHEBY_BUILD)
+
+svec_base_regs.htm: ../../../hdl/ip_cores/svec/hdl/rtl/svec_base_regs.cheby
+	$(CHEBY_BUILD)
+
+spec_base_regs.htm: ../../../hdl/ip_cores/spec/hdl/rtl/spec_base_regs.cheby
+	$(CHEBY_BUILD)
 
 clean:
 	@rm -f *.md *.rst *.htm
