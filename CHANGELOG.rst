@@ -6,6 +6,15 @@
 Changelog
 =========
 
+5.0.0 - 2021-06-11
+==================
+Fixed
+-----
+- sw: concurrent DMA transfers are possible thanks to a wait and retry algorithm
+- sw: wait 400ms before reading the temperature the first time (the hardware
+  takes time to setup the thermometers)
+- doc: use cheby files from hdl instead of special implementations
+
 5.0.0 - 2021-02-11
 ==================
 Changes
