@@ -112,21 +112,28 @@ int fa_dma_request_channel(struct fa_dev *fa)
  * DMA channels. Then we will request a channel only once at probe like
  * on SPEC
  */
-static int fa_dma_request_channel_svec(struct fa_dev *fa)
+static int fa_dma_request_channel_svec(struct fa_dev *fa,
+									   unsigned int timeout_ms)
 {
+	unsigned long j = jiffies + msecs_to_jiffies(timeout_ms);
 	dma_cap_mask_t dma_mask;
 
-        if (!fa_is_flag_set(fa, FMC_ADC_SVEC))
+	if (!fa_is_flag_set(fa, FMC_ADC_SVEC))
 		return 0;
 
 	dma_cap_zero(dma_mask);
 	dma_cap_set(DMA_SLAVE, dma_mask);
 	dma_cap_set(DMA_PRIVATE, dma_mask);
-	fa->dchan = dma_request_channel(dma_mask,
-					fa_dmaengine_filter_svec, fa);
-	if (!fa->dchan)
-		return -ENODEV;
-	return 0;
+
+	do {
+		fa->dchan = dma_request_channel(dma_mask,
+										fa_dmaengine_filter_svec, fa);
+		if (fa->dchan)
+			return 0;
+		cpu_relax();
+	} while (!fa->dchan && time_after(jiffies, j) == 0);
+
+	return -ETIMEDOUT;
 }
 
 static void __fa_dma_release_channel(struct fa_dev *fa)
@@ -597,7 +604,7 @@ static int fa_dma_start_svec(struct zio_cset *cset)
 	struct zfad_block *zfad_block = cset->interleave->priv_d;
 	int err, i;
 
-        err = fa_dma_request_channel_svec(fa);
+	err = fa_dma_request_channel_svec(fa, 60000);
 	if (err)
 		return err;
 
