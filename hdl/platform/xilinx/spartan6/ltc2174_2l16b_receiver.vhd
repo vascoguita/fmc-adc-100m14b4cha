@@ -252,9 +252,9 @@ begin  -- architecture arch
         I_INVERT      => FALSE,
         USE_DOUBLER   => TRUE)
       port map (
-        I            => adc_dco,
-        IOCLK        => clk_serdes_p,
-        DIVCLK       => l_clk_div,
+        I            => adc_dco,        -- 350Mhz DDR
+        IOCLK        => clk_serdes_p,   -- 350Mhz
+        DIVCLK       => l_clk_div,      -- 100Mhz (2*350/7)
         SERDESSTROBE => serdes_strobe);
 
     cmp_dco_bufio_n : BUFIO2
@@ -265,7 +265,7 @@ begin  -- architecture arch
         USE_DOUBLER   => FALSE)
       port map (
         I            => adc_dco,
-        IOCLK        => clk_serdes_n,
+        IOCLK        => clk_serdes_n,   --  350Mhz, 180 phase shift.
         DIVCLK       => open,
         SERDESSTROBE => open);
 
