@@ -526,7 +526,6 @@ static int __fa_init(struct fa_dev *fa)
 		/* reset channel offset */
 		fa->user_offset[i] = 0;
 		fa->zero_offset[i] = 0;
-
 	}
 
 	/* Set decimation to minimum */
