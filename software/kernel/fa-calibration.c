@@ -298,7 +298,7 @@ void fa_calib_config(struct fa_dev *fa)
 	int32_t temperature;
 	int i;
 
-        temperature = fa_temperature_read(fa);
+	temperature = fa_temperature_read(fa);
 	spin_lock(&fa->zdev->cset->lock);
         for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
 		fa_calib_adc_config_chan(fa, i, temperature, 0);

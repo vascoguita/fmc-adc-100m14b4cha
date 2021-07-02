@@ -3,20 +3,9 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
----
-variables:
-  KOJI_TARGET: 'ohwr7'
-  KOJI_DISTTAG: '.el7.cern'
-  DIST_PATH: distribution
-  BUILD_PATH: distribution/build
-
 stages:
   - static-analysis
   - build
-  - dkms
-  - srpm
-  - kscratch
-  - kbuild
 
 reuse:
   stage: static-analysis
@@ -28,47 +17,70 @@ reuse:
 
 cppcheck:
   stage: static-analysis
+  image:
+    name: gitlab-registry.cern.ch/coht/common-containers/static-analysis:latest
   script:
-    - yum install -y cppcheck
     - make -C software cppcheck
 
-build:
+documentation:
   stage: build
+  image:
+    name: gitlab-registry.cern.ch/coht/common-containers/documentation:latest
   script:
-    - yum install -y kernel-devel
-    - LINUX=/usr/src/kernels/*/ make -C software
+    - make -C doc html
+  allow_failure: true
 
-build_dkms_rpm:
-  stage: dkms
-  script:
-    - yum install -y dkms
-    - make -C distribution dkms-rpm
+.script_fetch_kernel_dep: &script_fetch_kernel_dep
+  - git clone --depth 1 https://gitlab.cern.ch/coht/fmc.git ~/git/fmc
+  - export FMC=~/git/fmc
 
-build_srpm:
-  stage: srpm
-  script:
-    - yum-builddep -y ${DIST_PATH}/*.spec
-    - LINUX=/usr/src/kernels/*/ make -C distribution srpm
-  artifacts:
-    paths:
-      - distribution/build/SRPMS/${CI_PROJECT_NAME}*src.rpm
-    expire_in: 1 day
+.script_build_kernel_dep: &script_build_kernel_dep
+  - make -C $FMC/drivers/fmc all
 
-.koji_deps_template: &koji_deps
+build-centos-7:
+  stage: build
+  variables:
+    LINUX: /usr/src/kernels/*/
+  image:
+    name: gitlab-registry.cern.ch/coht/common-containers/build-centos-7:latest
   before_script:
-    - yum install -y koji krb5-workstation rpm-build
-    - echo ${OHWR_PASSWORD} | kinit ${OHWR_USER}
-
-kscratch:
-  <<: *koji_deps
-  stage: kscratch
+    - *script_fetch_kernel_dep
+    - *script_build_kernel_dep
   script:
-    - koji --config=.koji build --wait --scratch ${KOJI_TARGET} distribution/build/SRPMS/${CI_PROJECT_NAME}*src.rpm
+    - make -C software
 
-kbuild-ohwr:
-  <<: *koji_deps
-  stage: kbuild
-  only:
-    - tags
+.script_build_kernel_ver: &script_build_kernel_ver
+  - source /linux-versions.sh
+  - fetch $VERSION && prepare $VERSION && export LINUX=$(linux $VERSION)
+  - *script_build_kernel_dep
+  - make -C software/kernel all
+
+build-kernel-5.4.129:
+  stage: build
+  allow_failure: true
+  variables:
+    VERSION: 5.4.129
+  image:
+    name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
+  before_script:
+    - *script_fetch_kernel_dep
   script:
-    - koji --config=.koji build --wait ${KOJI_TARGET} distribution/build/SRPMS/${CI_PROJECT_NAME}*src.rpm
+    - *script_build_kernel_ver
+
+.script_build_kernel_ver: &script_build_kernel_ver
+  - source /linux-versions.sh
+  - fetch $VERSION && prepare $VERSION && export LINUX=$(linux $VERSION)
+  - *script_build_kernel_dep
+  - make -C software/kernel all
+
+build-kernel-5.10.47:
+  stage: build
+  allow_failure: true
+  variables:
+    VERSION: 5.10.47
+  image:
+    name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
+  before_script:
+    - *script_fetch_kernel_dep
+  script:
+    - *script_build_kernel_ver
