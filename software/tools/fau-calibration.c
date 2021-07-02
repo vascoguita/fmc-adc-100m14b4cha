@@ -66,7 +66,7 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 	return ret;
 }
 
-static void fau_calibration_dump_stanza(struct fa_calib_stanza *stanza)
+static void fau_calibration_dump_stanza(const struct fa_calib_stanza *stanza)
 {
 	fprintf(stdout, "  temperature: %f C\n",
 		stanza->temperature * 0.01);
@@ -86,7 +86,7 @@ static void fau_calibration_dump_stanza(struct fa_calib_stanza *stanza)
  * Print calibration data on stdout in humand readable format
  * @calib: calibration data
  */
-static void fau_calibration_dump_human(struct fa_calib *calib)
+static void fau_calibration_dump_human(const struct fa_calib *calib)
 {
 	uint16_t *data16 = (uint16_t *)calib;
 	int i;
