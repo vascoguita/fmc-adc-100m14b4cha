@@ -166,7 +166,7 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 			      int32_t temperature, unsigned int flags)
 {
 	int range = fa->range[chan];
-	struct fa_calib_stanza *cal = &fa->calib.dac[range];
+	struct fa_calib_stanza *cal = &fa->calib.adc[range];
 	int gain;
 
 	if (fa_calib_is_compensation_on(fa)) {

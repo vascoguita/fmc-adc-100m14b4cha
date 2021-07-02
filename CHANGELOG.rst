@@ -6,7 +6,13 @@
 Changelog
 =========
 
-5.0.0 - 2021-06-11
+5.0.2 - 2021-07-03
+==================
+Fixed
+-----
+- sw: calibration value for ADC were not applied correctly
+
+5.0.1 - 2021-06-11
 ==================
 Fixed
 -----
