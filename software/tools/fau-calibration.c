@@ -68,18 +68,14 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 
 static void fau_calibration_dump_stanza(const struct fa_calib_stanza *stanza)
 {
-	fprintf(stdout, "  temperature: %f C\n",
-		le16toh(stanza->temperature) * 0.01);
-	fprintf(stdout, "  gain: [0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16"]\n",
-		le16toh(stanza->gain[0]),
-		le16toh(stanza->gain[1]),
-		le16toh(stanza->gain[2]),
-		le16toh(stanza->gain[3]));
-	fprintf(stdout, "  offset: [0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16"]\n",
-		le16toh(stanza->offset[0]),
-		le16toh(stanza->offset[1]),
-		le16toh(stanza->offset[2]),
-		le16toh(stanza->offset[3]));
+	int i;
+	fprintf(stdout, "    temperature: %f C\n",
+			le16toh(stanza->temperature) * 0.01);
+	fputs("    calibration:\n", stdout);
+	for (i = 0; i < 4; ++i)
+		fprintf(stdout, "      - {channel: %d, gain: 0x%04"PRIx16", offset: 0x%04"PRIx16"}\n",
+				i + 1, (uint16_t)le16toh(stanza->gain[i]),
+				(uint16_t)le16toh(stanza->offset[i]));
 }
 
 /**
@@ -88,19 +84,20 @@ static void fau_calibration_dump_stanza(const struct fa_calib_stanza *stanza)
  */
 static void fau_calibration_dump_human(const struct fa_calib *calib)
 {
-	fputs("ADC Range 100mV\n", stdout);
+	fputs("ADC:\n", stdout);
+	fputs("  - Range: 100mV\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_100mV]);
-	fputs("ADC Range 1V\n", stdout);
+	fputs("  - Range: 1V\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_1V]);
-	fputs("ADC Range 10V\n", stdout);
+	fputs("  - Range: 10V\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_10V]);
 
-
-	fputs("DAC Range 100mV\n", stdout);
+	fputs("DAC:\n", stdout);
+	fputs("  - Range: 100mV\n", stdout);
 	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_100mV]);
-	fputs("DAC Range 1V\n", stdout);
+	fputs("  - Range: 1V\n", stdout);
 	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_1V]);
-	fputs("DAC Range 10V\n", stdout);
+	fputs("  - Range: 10V\n", stdout);
 	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_10V]);
 
 	fputc('\n', stdout);
