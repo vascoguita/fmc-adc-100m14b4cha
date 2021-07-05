@@ -70,9 +70,7 @@ end entity ltc2174_2l16b_receiver;
 architecture arch of ltc2174_2l16b_receiver is
 
   signal adc_dco           : std_logic;
-  signal adc_fr            : std_logic;
-  signal adc_outa          : std_logic_vector(3 downto 0);
-  signal adc_outb          : std_logic_vector(3 downto 0);
+  signal adc_out           : std_logic_vector(8 downto 0);
   signal clk_serdes_p      : std_logic;
   signal clk_serdes_n      : std_logic;
   signal clk_div_buf       : std_logic;
@@ -82,7 +80,6 @@ architecture arch of ltc2174_2l16b_receiver is
   signal serdes_synced     : std_logic                    := '0';
   signal serdes_m2s_shift  : std_logic_vector(8 downto 0) := (others => '0');
   signal serdes_s2m_shift  : std_logic_vector(8 downto 0) := (others => '0');
-  signal serdes_serial_in  : std_logic_vector(8 downto 0) := (others => '0');
   signal serdes_out_fr     : std_logic_vector(6 downto 0) := (others => '0');
 
   signal bitslip_sreg : unsigned(7 downto 0) := to_unsigned(1, 8);
@@ -128,7 +125,7 @@ begin  -- architecture arch
     port map (
       I  => adc_fr_p_i,
       IB => adc_fr_n_i,
-      O  => adc_fr);
+      O  => adc_out(8));
 
   gen_adc_data_buf : for I in 0 to 3 generate
 
@@ -140,7 +137,7 @@ begin  -- architecture arch
       port map (
         I  => adc_outa_p_i(i),
         IB => adc_outa_n_i(i),
-        O  => adc_outa(i));
+        O  => adc_out(2 * i + 1));
 
     cmp_adc_outb_buf : IBUFDS
       generic map (
@@ -150,7 +147,7 @@ begin  -- architecture arch
       port map (
         I  => adc_outb_p_i(i),
         IB => adc_outb_n_i(i),
-        O  => adc_outb(i));
+        O  => adc_out(2 * i));
 
   end generate gen_adc_data_buf;
 
@@ -319,13 +316,7 @@ begin  -- architecture arch
   ------------------------------------------------------------------------------
 
   -- serdes inputs forming
-  serdes_serial_in <= adc_fr
-                      & adc_outa(3) & adc_outb(3)
-                      & adc_outa(2) & adc_outb(2)
-                      & adc_outa(1) & adc_outb(1)
-                      & adc_outa(0) & adc_outb(0);
-
-  gen_adc_data_iserdes : for I in 0 to 8 generate
+    gen_adc_data_iserdes : for I in 0 to 8 generate
 
     cmp_adc_iserdes_master : ISERDES2
       generic map (
@@ -351,7 +342,7 @@ begin  -- architecture arch
         CLK0      => clk_serdes_p,
         CLK1      => clk_serdes_n,
         CLKDIV    => clk_div_buf,
-        D         => serdes_serial_in(I),
+        D         => adc_out(I),
         IOCE      => serdes_strobe,
         RST       => serdes_arst_i,
         SHIFTIN   => serdes_s2m_shift(I));
