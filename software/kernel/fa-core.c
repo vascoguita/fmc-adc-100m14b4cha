@@ -251,7 +251,7 @@ int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan, int range)
 
 	spin_lock(&fa->zdev->cset->lock);
 	fa->range[chan->index] = range;
-	fa_calib_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
+	fa_calib_config_chan(fa, chan->index, 0, FA_CALIB_FLAG_READ_TEMP);
 	spin_unlock(&fa->zdev->cset->lock);
 
 	return 0;
