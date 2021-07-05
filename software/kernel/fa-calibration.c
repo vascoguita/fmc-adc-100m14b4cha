@@ -293,17 +293,22 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
         return  fa_dac_offset_set(fa, chan, hwval);
 }
 
+void fa_calib_config_chan(struct fa_dev *fa, unsigned int chan,
+			     int32_t temperature, unsigned int flags)
+{
+	fa_calib_adc_config_chan(fa, chan, temperature, flags);
+	fa_calib_dac_config_chan(fa, chan, temperature, flags);
+}
+
 void fa_calib_config(struct fa_dev *fa)
 {
 	int32_t temperature;
 	int i;
 
-        temperature = fa_temperature_read(fa);
+	temperature = fa_temperature_read(fa);
 	spin_lock(&fa->zdev->cset->lock);
-        for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
-		fa_calib_adc_config_chan(fa, i, temperature, 0);
-		fa_calib_dac_config_chan(fa, i, temperature, 0);
-	}
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
+		fa_calib_config_chan(fa, i, temperature, 0);
 	spin_unlock(&fa->zdev->cset->lock);
 }
 /**

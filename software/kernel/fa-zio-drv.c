@@ -295,27 +295,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		range = zfad_convert_user_range(usr_val);
 		if (range < 0)
 			return range;
-		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
-		if (err)
-			return err;
-		spin_lock(&fa->zdev->cset->lock);
-		fa_calib_adc_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
-		fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
-		spin_unlock(&fa->zdev->cset->lock);
-		return 0;
+		return fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
 
 	case ZFA_CHx_CTL_RANGE:
 		range = zfad_convert_user_range(usr_val);
 		if (range < 0)
 			return range;
-		err = fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
-		if (err)
-			return err;
-		spin_lock(&fa->zdev->cset->lock);
-		fa_calib_adc_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
-		fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
-		spin_unlock(&fa->zdev->cset->lock);
-		return 0;
+		return fa_adc_range_set(fa, &to_zio_cset(dev)->chan[i], range);
 
 	case ZFA_UTC_COARSE:
 		if (usr_val >= FA100M14B4C_UTC_CLOCK_FREQ) {

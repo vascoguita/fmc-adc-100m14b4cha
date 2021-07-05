@@ -251,6 +251,7 @@ int fa_adc_range_set(struct fa_dev *fa, struct zio_channel *chan, int range)
 
 	spin_lock(&fa->zdev->cset->lock);
 	fa->range[chan->index] = range;
+	fa_calib_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
 	spin_unlock(&fa->zdev->cset->lock);
 
 	return 0;
@@ -517,16 +518,10 @@ static int __fa_init(struct fa_dev *fa)
 		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
 	for (i = 0; i < 4; ++i) {
-		int addr = zfad_get_chx_index(ZFA_CHx_CTL_RANGE,
-					      zdev->cset->chan[i].index);
-		fa_writel(fa,  fa->fa_adc_csr_base, &zfad_regs[addr],
-			  FA100M14B4C_RANGE_1V);
-	        fa_adc_range_set(fa, &zdev->cset->chan[i],
-				 FA100M14B4C_RANGE_1V);
+		fa_adc_range_set(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
 		/* reset channel offset */
 		fa->user_offset[i] = 0;
 		fa->zero_offset[i] = 0;
-
 	}
 
 	/* Set decimation to minimum */

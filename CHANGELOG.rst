@@ -6,6 +6,18 @@
 Changelog
 =========
 
+5.0.3 - 2021-07-05
+==================
+Added:
+-----
+- bld: CI support
+
+Fixed
+-----
+- doc: add offset units
+- sw: calibration value at boot time incorrect
+- sw: use YAML for fau-calibration
+
 5.0.2 - 2021-07-03
 ==================
 Fixed

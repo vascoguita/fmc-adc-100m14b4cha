@@ -4,6 +4,8 @@
  * Author: Federico Vaga <federico.vaga@cern.ch>
  */
 
+#include <linux/uaccess.h>
+#include <linux/debugfs.h>
 #include "fmc-adc-100m14b4cha-private.h"
 
 #define FA_DBG_REG32_CH(_n) \
