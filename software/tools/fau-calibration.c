@@ -90,16 +90,16 @@ static void fau_calibration_dump_human(const struct fa_calib *calib)
 {
 	fputs("ADC Range 100mV\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_100mV]);
-	fputs("DAC Range 100mV\n", stdout);
-	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_100mV]);
-
 	fputs("ADC Range 1V\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_1V]);
-	fputs("DAC Range 1V\n", stdout);
-	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_1V]);
-
 	fputs("ADC Range 10V\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_10V]);
+
+
+	fputs("DAC Range 100mV\n", stdout);
+	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_100mV]);
+	fputs("DAC Range 1V\n", stdout);
+	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_1V]);
 	fputs("DAC Range 10V\n", stdout);
 	fau_calibration_dump_stanza(&calib->dac[FA100M14B4C_RANGE_10V]);
 
