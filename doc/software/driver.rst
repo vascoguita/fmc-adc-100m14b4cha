@@ -124,6 +124,10 @@ the actual input connectors, and their software counterpart is used to
 configure the channels; the last channel is called *i*, and is the
 interleave channel where data is retrieved.
 
+.. note::
+   Unless specified, the units are the same as for the ADC HDL design.
+   Therefore, this driver does not perform any data processing.
+
 The Overall Device
 ''''''''''''''''''
 
@@ -191,8 +195,8 @@ chN-50ohm-term
      turn on the termination resistor. Default is 0.
 
 chN-offset
-     The user offset is an integer value in the range [-5000,5000], and
-     it represents millivolts.  The offset represents the center-scale
+     The user offset is an integer value in the range [-5000000,5000000], and
+     it represents microvolts.  The offset represents the center-scale
      of conversion for the input channel.  Internally, a DAC is used to
      generate the requested voltage, which is then subtracted from the
      input signal.  DAC values are corrected according to the
@@ -200,7 +204,8 @@ chN-offset
      the offset may saturate at values less than +/- 5V.
 
 chN-offset-zero
-     The necessary offset to to bring the signal to 0.
+     The necessary offset to to bring the signal to 0 in microvolts (it must be
+     withing the range of chN-offset).
 
 chN-vref
      The "voltage reference" used for conversion. This attribute may be
