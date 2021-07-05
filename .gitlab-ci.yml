@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: CC0-1.0
 
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
 stages:
   - static-analysis
   - build
