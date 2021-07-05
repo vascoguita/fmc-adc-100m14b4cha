@@ -69,17 +69,17 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 static void fau_calibration_dump_stanza(const struct fa_calib_stanza *stanza)
 {
 	fprintf(stdout, "  temperature: %f C\n",
-		stanza->temperature * 0.01);
+		le16toh(stanza->temperature) * 0.01);
 	fprintf(stdout, "  gain: [0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16"]\n",
-		stanza->gain[0],
-		stanza->gain[1],
-		stanza->gain[2],
-		stanza->gain[3]);
+		le16toh(stanza->gain[0]),
+		le16toh(stanza->gain[1]),
+		le16toh(stanza->gain[2]),
+		le16toh(stanza->gain[3]));
 	fprintf(stdout, "  offset: [0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16", 0x%04"PRIx16"]\n",
-		stanza->offset[0],
-		stanza->offset[1],
-		stanza->offset[2],
-		stanza->offset[3]);
+		le16toh(stanza->offset[0]),
+		le16toh(stanza->offset[1]),
+		le16toh(stanza->offset[2]),
+		le16toh(stanza->offset[3]));
 }
 
 /**
@@ -88,13 +88,6 @@ static void fau_calibration_dump_stanza(const struct fa_calib_stanza *stanza)
  */
 static void fau_calibration_dump_human(const struct fa_calib *calib)
 {
-	uint16_t *data16 = (uint16_t *)calib;
-	int i;
-
-	/* Fix endianess */
-	for (i = 0; i < sizeof(*calib) / sizeof(uint16_t); ++i)
-		data16[i] = le16toh(data16[i]);
-
 	fputs("ADC Range 100mV\n", stdout);
 	fau_calibration_dump_stanza(&calib->adc[FA100M14B4C_RANGE_100mV]);
 	fputs("DAC Range 100mV\n", stdout);
