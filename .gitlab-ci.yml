@@ -29,7 +29,6 @@ documentation:
     name: gitlab-registry.cern.ch/coht/common-containers/documentation:latest
   script:
     - make -C doc html
-  allow_failure: true
 
 .script_fetch_kernel_dep: &script_fetch_kernel_dep
   - git clone --depth 1 https://gitlab.cern.ch/coht/fmc.git ~/git/fmc
