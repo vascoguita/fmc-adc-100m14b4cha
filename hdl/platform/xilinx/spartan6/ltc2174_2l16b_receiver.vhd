@@ -88,6 +88,12 @@ architecture arch of ltc2174_2l16b_receiver is
   type serdes_array is array (0 to 8) of std_logic_vector(6 downto 0);
   signal serdes_parallel_out : serdes_array := (others => (others => '0'));
 
+  signal iodelay_cal_s, iodelay_cal_m : std_logic;
+  signal iodelay_rst : std_logic;
+  signal iodelay_busy : std_logic;
+  signal iodelay_recal : std_logic;
+  signal iodelay_busy_m, iodelay_busy_s : std_logic_vector(8 downto 0);
+
   -- used to select the data rate of the ISERDES blocks
   function f_data_rate_sel (
     constant SDR : boolean)
@@ -153,8 +159,8 @@ begin  -- architecture arch
   end generate gen_adc_data_buf;
 
   gen_adc_idelay: for I in adc_out'range generate
-    signal cal_m, inc_m, ce_m, rst_m, busy_m : std_logic;
-    signal cal_s, inc_s, ce_s, rst_s, busy_s : std_logic;
+    signal inc, ce : std_logic;
+    signal phasediff : unsigned(4 downto 0);
   begin
     cmp_idelay_master: IODELAY2
       generic map (
@@ -172,18 +178,18 @@ begin  -- architecture arch
         IDATAIN  		=> adc_out(i), 	-- data from primary IOB
         TOUT     		=> open, 		-- tri-state signal to IOB
         DOUT     		=> open, 		-- output data to IOB
-        T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2 				
+        T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2
         ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
         DATAOUT  		=> adc_out_dly_m(i), 		-- Output data 1 to ILOGIC/ISERDES2
         DATAOUT2 		=> open, 		-- Output data 2 to ILOGIC/ISERDES2
         IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
         IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
         CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
-        CAL      		=> cal_m,	          -- Calibrate control signal
-        INC      		=> inc_m,		        -- Increment counter
-        CE       		=> ce_m,      		  -- Clock Enable
-        RST      		=> rst_m,	        	-- Reset delay line
-        BUSY      	=> busy_m) ;        -- output signal indicating sync circuit has finished / calibration has finished 
+        CAL      		=> iodelay_cal_m,	  -- Calibrate control signal
+        INC      		=> inc,		          -- Increment counter
+        CE       		=> ce,      		    -- Clock Enable
+        RST      		=> iodelay_rst,	  	-- Reset delay line
+        BUSY      	=> iodelay_busy_m(i));   -- output signal indicating sync circuit has finished / calibration has finished
 
       cmp_idelay_slave: IODELAY2
         generic map (
@@ -201,26 +207,105 @@ begin  -- architecture arch
           IDATAIN  		=> adc_out(i), 	-- data from primary IOB
           TOUT     		=> open, 		-- tri-state signal to IOB
           DOUT     		=> open, 		-- output data to IOB
-          T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2 				
+          T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2
           ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
           DATAOUT  		=> adc_out_dly_s(i), 		-- Output data 1 to ILOGIC/ISERDES2
-          DATAOUT2 		=> open, 		-- Output data 2 to ILOGIC/ISERDES2
+          DATAOUT2 		=> open, 		        -- Output data 2 to ILOGIC/ISERDES2
           IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
           IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
           CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
-          CAL      		=> cal_s,	          -- Calibrate control signal
-          INC      		=> inc_s,		        -- Increment counter
-          CE       		=> ce_s,      		  -- Clock Enable
-          RST      		=> rst_s,	        	-- Reset delay line
-          BUSY      	=> busy_s) ;        -- output signal indicating sync circuit has finished / calibration has finished 
+          CAL      		=> iodelay_cal_s,	          -- Calibrate control signal
+          INC      		=> inc,		        -- Increment counter
+          CE       		=> ce,      		  -- Clock Enable
+          RST      		=> iodelay_rst,	        	-- Reset delay line
+          BUSY      	=> iodelay_busy_s(i));      -- output signal indicating sync circuit has finished / calibration has finished
 
-      cal_m <= '0';
-      cal_s <= '0';
-      ce_s <= '0';
-      ce_m <= '0';
-      rst_m <= '0';
-      rst_s <= '0';
-    end generate;
+      process (clk_div_buf)
+      begin
+        if rising_edge(clk_div_buf) then
+          ce <= '0';
+          inc <= '0';
+
+          if iodelay_recal = '1' then
+            phasediff <= "10000";
+          elsif serdes_valid (i) = '1' then
+            if serdes_incdec (i) = '1' then
+              if phasediff = "111111" then
+                ce <= '1';
+                inc <= '1';
+                phasediff <= "10000";
+              else
+                phasediff <= phasediff + 1;
+              end if;
+            else
+              if phasediff = "00000" then
+                ce <= '1';
+                inc <= '0';
+                phasediff <= "10000";
+              else
+                phasediff <= phasediff - 1;
+              end if;
+            end if;
+          end if;
+        end if;
+      end process;
+  end generate;
+
+  iodelay_busy <= '0' when iodelay_busy_s = (iodelay_busy_s'range => '0') and iodelay_busy_m = (iodelay_busy_m'range => '0') else '1';
+
+  --  IODELAY calibration
+  process(clk_div_buf, serdes_arst_i)
+    type t_state is (S_RESET, S_RSTCAL, S_RSTBUSY, S_WAIT, S_BUSY);
+    variable state : t_state;
+    variable counter : natural;
+  begin
+    if serdes_arst_i = '1' then
+      iodelay_cal_m <= '0';
+      iodelay_cal_s <= '0';
+      iodelay_rst <= '0';
+      iodelay_recal <= '1';
+      state := S_RESET;
+    elsif rising_edge(clk_div_buf) then
+      iodelay_cal_m <= '0';
+      iodelay_cal_s <= '0';
+      iodelay_rst <= '0';
+      iodelay_recal <= '1';
+      case state is
+        when S_RESET =>
+          if iodelay_busy = '0' then
+            state := S_RSTCAL;
+          end if;
+        when S_RSTCAL =>
+          --  Issue CAL on reset
+          iodelay_cal_m <= '1';
+          iodelay_cal_s <= '1';
+          state := S_BUSY;
+        when S_RSTBUSY =>
+          --  And then RESET
+          if iodelay_busy = '0' then
+            counter := 0;
+            iodelay_rst <= '1';
+            state := S_WAIT;
+          end if;
+        when S_WAIT =>
+          --  Periodically calibrate
+          if counter = 2**20 then
+            if iodelay_busy = '0' then
+              iodelay_cal_s <= '1';
+              state := S_BUSY;
+            end if;
+          else
+            counter := counter + 1;
+            iodelay_recal <= '0';
+          end if;
+        when S_BUSY =>
+          if iodelay_busy = '0' then
+            counter := 0;
+            state := S_WAIT;
+          end if;
+        end case;
+    end if;
+  end process;
 
   ------------------------------------------------------------------------------
   -- Clock generation for deserializer
@@ -358,7 +443,7 @@ begin  -- architecture arch
   begin
     if rising_edge(clk_div_buf) then
       -- Shift register to generate bitslip enable once every 8 clock ticks
-      bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
+      bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'left downto 1);
 
       -- Generate bitslip and synced signal
       if bitslip_sreg(bitslip_sreg'LEFT) = '1' then
