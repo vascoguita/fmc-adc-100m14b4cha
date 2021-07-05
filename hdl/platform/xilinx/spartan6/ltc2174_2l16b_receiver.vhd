@@ -70,7 +70,8 @@ end entity ltc2174_2l16b_receiver;
 architecture arch of ltc2174_2l16b_receiver is
 
   signal adc_dco           : std_logic;
-  signal adc_out           : std_logic_vector(8 downto 0);
+  signal adc_out, adc_out_dly_m, adc_out_dly_s : std_logic_vector(8 downto 0);
+  signal serdes_incdec, serdes_valid : std_logic_vector(8 downto 0);
   signal clk_serdes_p      : std_logic;
   signal clk_serdes_n      : std_logic;
   signal clk_div_buf       : std_logic;
@@ -150,6 +151,76 @@ begin  -- architecture arch
         O  => adc_out(2 * i));
 
   end generate gen_adc_data_buf;
+
+  gen_adc_idelay: for I in adc_out'range generate
+    signal cal_m, inc_m, ce_m, rst_m, busy_m : std_logic;
+    signal cal_s, inc_s, ce_s, rst_s, busy_s : std_logic;
+  begin
+    cmp_idelay_master: IODELAY2
+      generic map (
+        DATA_RATE      		 => f_data_rate_sel(g_USE_PLL),   -- <SDR>, DDR
+        IDELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY2_VALUE 		 => 0, 			-- {0 ... 255}
+        IDELAY_MODE  		   => "NORMAL",-- NORMAL, PCI
+        ODELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY_TYPE   		 => "DIFF_PHASE_DETECTOR",-- "DEFAULT", "DIFF_PHASE_DETECTOR", "FIXED", "VARIABLE_FROM_HALF_MAX", "VARIABLE_FROM_ZERO"
+        COUNTER_WRAPAROUND => "WRAPAROUND", 	-- <STAY_AT_LIMIT>, WRAPAROUND
+        DELAY_SRC     		 => "IDATAIN", 		-- "IO", "IDATAIN", "ODATAIN"
+        SERDES_MODE   		 => "MASTER", 		-- <NONE>, MASTER, SLAVE
+        SIM_TAPDELAY_VALUE => 49) 			--
+      port map (
+        IDATAIN  		=> adc_out(i), 	-- data from primary IOB
+        TOUT     		=> open, 		-- tri-state signal to IOB
+        DOUT     		=> open, 		-- output data to IOB
+        T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2 				
+        ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
+        DATAOUT  		=> adc_out_dly_m(i), 		-- Output data 1 to ILOGIC/ISERDES2
+        DATAOUT2 		=> open, 		-- Output data 2 to ILOGIC/ISERDES2
+        IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
+        IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
+        CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
+        CAL      		=> cal_m,	          -- Calibrate control signal
+        INC      		=> inc_m,		        -- Increment counter
+        CE       		=> ce_m,      		  -- Clock Enable
+        RST      		=> rst_m,	        	-- Reset delay line
+        BUSY      	=> busy_m) ;        -- output signal indicating sync circuit has finished / calibration has finished 
+
+      cmp_idelay_slave: IODELAY2
+        generic map (
+          DATA_RATE      		 => f_data_rate_sel(g_USE_PLL),   -- <SDR>, DDR
+          IDELAY_VALUE  		 => 0, 			-- {0 ... 255}
+          IDELAY2_VALUE 		 => 0, 			-- {0 ... 255}
+          IDELAY_MODE  		   => "NORMAL",-- NORMAL, PCI
+          ODELAY_VALUE  		 => 0, 			-- {0 ... 255}
+          IDELAY_TYPE   		 => "DIFF_PHASE_DETECTOR",-- "DEFAULT", "DIFF_PHASE_DETECTOR", "FIXED", "VARIABLE_FROM_HALF_MAX", "VARIABLE_FROM_ZERO"
+          COUNTER_WRAPAROUND => "WRAPAROUND", 	-- <STAY_AT_LIMIT>, WRAPAROUND
+          DELAY_SRC     		 => "IDATAIN", 		-- "IO", "IDATAIN", "ODATAIN"
+          SERDES_MODE   		 => "SLAVE", 		-- <NONE>, MASTER, SLAVE
+          SIM_TAPDELAY_VALUE => 49) 			--
+        port map (
+          IDATAIN  		=> adc_out(i), 	-- data from primary IOB
+          TOUT     		=> open, 		-- tri-state signal to IOB
+          DOUT     		=> open, 		-- output data to IOB
+          T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2 				
+          ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
+          DATAOUT  		=> adc_out_dly_s(i), 		-- Output data 1 to ILOGIC/ISERDES2
+          DATAOUT2 		=> open, 		-- Output data 2 to ILOGIC/ISERDES2
+          IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
+          IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
+          CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
+          CAL      		=> cal_s,	          -- Calibrate control signal
+          INC      		=> inc_s,		        -- Increment counter
+          CE       		=> ce_s,      		  -- Clock Enable
+          RST      		=> rst_s,	        	-- Reset delay line
+          BUSY      	=> busy_s) ;        -- output signal indicating sync circuit has finished / calibration has finished 
+
+      cal_m <= '0';
+      cal_s <= '0';
+      ce_s <= '0';
+      ce_m <= '0';
+      rst_m <= '0';
+      rst_s <= '0';
+    end generate;
 
   ------------------------------------------------------------------------------
   -- Clock generation for deserializer
@@ -316,7 +387,7 @@ begin  -- architecture arch
   ------------------------------------------------------------------------------
 
   -- serdes inputs forming
-    gen_adc_data_iserdes : for I in 0 to 8 generate
+  gen_adc_data_iserdes : for I in 0 to 8 generate
 
     cmp_adc_iserdes_master : ISERDES2
       generic map (
@@ -330,19 +401,19 @@ begin  -- architecture arch
         CFB1      => open,
         DFB       => open,
         FABRICOUT => open,
-        INCDEC    => open,
+        INCDEC    => serdes_incdec(i),
         Q1        => serdes_parallel_out(I)(3),
         Q2        => serdes_parallel_out(I)(2),
         Q3        => serdes_parallel_out(I)(1),
         Q4        => serdes_parallel_out(I)(0),
         SHIFTOUT  => serdes_m2s_shift(I),
-        VALID     => open,
+        VALID     => serdes_valid(i),
         BITSLIP   => serdes_bitslip,
         CE0       => '1',
         CLK0      => clk_serdes_p,
         CLK1      => clk_serdes_n,
         CLKDIV    => clk_div_buf,
-        D         => adc_out(I),
+        D         => adc_out_dly_m(i),
         IOCE      => serdes_strobe,
         RST       => serdes_arst_i,
         SHIFTIN   => serdes_s2m_shift(I));
@@ -371,7 +442,7 @@ begin  -- architecture arch
         CLK0      => clk_serdes_p,
         CLK1      => clk_serdes_n,
         CLKDIV    => clk_div_buf,
-        D         => '0',
+        D         => adc_out_dly_s(i),
         IOCE      => serdes_strobe,
         RST       => serdes_arst_i,
         SHIFTIN   => serdes_m2s_shift(I));
