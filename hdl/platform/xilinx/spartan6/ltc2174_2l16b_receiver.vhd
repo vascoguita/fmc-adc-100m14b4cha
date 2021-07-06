@@ -134,8 +134,8 @@ begin  -- architecture arch
       IB => adc_fr_n_i,
       O  => adc_out(8));
 
+  --  ADC data
   gen_adc_data_buf : for I in 0 to 3 generate
-
     cmp_adc_outa_buf : IBUFDS
       generic map (
         DIFF_TERM    => TRUE,
@@ -155,9 +155,9 @@ begin  -- architecture arch
         I  => adc_outb_p_i(i),
         IB => adc_outb_n_i(i),
         O  => adc_out(2 * i));
-
   end generate gen_adc_data_buf;
 
+  --  IDELAY (master and slave) on data and frame inputs.
   gen_adc_idelay: for I in adc_out'range generate
     signal inc, ce : std_logic;
     signal phasediff : unsigned(4 downto 0);
@@ -220,6 +220,7 @@ begin  -- architecture arch
           RST      		=> iodelay_rst,	        	-- Reset delay line
           BUSY      	=> iodelay_busy_s(i));      -- output signal indicating sync circuit has finished / calibration has finished
 
+      --  Adjust delay
       process (clk_div_buf)
       begin
         if rising_edge(clk_div_buf) then
