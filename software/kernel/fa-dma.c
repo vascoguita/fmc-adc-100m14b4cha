@@ -320,9 +320,11 @@ static int zfad_dma_block_to_pages(struct page **pages, unsigned int nr_pages,
 static void zfad_dma_context_exit_svec(struct zio_cset *cset,
 				       struct zfad_block *zfad_block)
 {
+	struct fa_dev *fa = cset->zdev->priv_d;
 
-	__endianness(zfad_block->block->datalen,
-		     zfad_block->block->data);
+	if (fa_is_flag_set(fa, FMC_ADC_BIG_ENDIAN))
+		__endianness(zfad_block->block->datalen,
+					 zfad_block->block->data);
 
 	kfree(zfad_block->dma_ctx);
 }
