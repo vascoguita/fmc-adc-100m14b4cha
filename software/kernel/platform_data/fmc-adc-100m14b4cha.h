@@ -9,6 +9,8 @@
 
 #define FMC_ADC_BIG_ENDIAN BIT(0)
 #define FMC_ADC_NOSQUASH_SCATTERLIST BIT(1)
+#define FMC_ADC_DATA_NO_SWAP BIT(2)
+
 /*
  * In principle this should not be necessary. The two variants should
  * be as close as possible to each other. But this is not the case, the DMA

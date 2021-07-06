@@ -322,11 +322,10 @@ static void zfad_dma_context_exit_svec(struct zio_cset *cset,
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
-	if (fa_is_flag_set(fa, FMC_ADC_BIG_ENDIAN))
-		__endianness(zfad_block->block->datalen,
-					 zfad_block->block->data);
-
 	kfree(zfad_block->dma_ctx);
+	if (fa_is_flag_set(fa, FMC_ADC_DATA_NO_SWAP))
+		return;
+	__endianness(zfad_block->block->datalen, zfad_block->block->data);
 }
 
 static void zfad_dma_context_exit(struct zio_cset *cset,
