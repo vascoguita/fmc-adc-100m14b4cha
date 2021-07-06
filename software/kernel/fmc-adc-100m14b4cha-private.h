@@ -91,6 +91,7 @@ enum zfadc_dregs_enum {
 	ZFA_STA_FSM,
 	ZFA_STA_SERDES_PLL,
 	ZFA_STA_SERDES_SYNCED,
+	ZFA_STA_ACQ_CFG,
 	ZFA_STA_FMC_NR,
 	ZFA_STA_CALIB_BUSY,
 	/* Configuration register */
