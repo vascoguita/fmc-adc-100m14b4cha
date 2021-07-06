@@ -738,8 +738,10 @@ int fa_probe(struct platform_device *pdev)
 	fa_clock_enable(fa);
 
 	err = fa_adc_wait_serdes_ready(fa, msecs_to_jiffies(10));
-	if (err)
+	if (err) {
+		dev_err(&fa->pdev->dev, "The SERDES did not syncronize\n");
 		goto out_serdes;
+	}
 
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
