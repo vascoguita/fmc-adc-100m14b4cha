@@ -12,6 +12,7 @@ Changelog
 Fixed
 -----
 - sw: fix endianess only when required
+- sw: ADC chip reset is BIT(7)
 
 5.0.3 - 2021-07-05
 ==================
