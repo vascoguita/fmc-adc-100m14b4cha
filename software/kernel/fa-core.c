@@ -282,7 +282,7 @@ int fa_fsm_wait_state(struct fa_dev *fa,
 			return -ETIMEDOUT;
 	}
 
-        return 0;
+	return 0;
 }
 
 static void fa_fpga_data_pattern_set(struct fa_dev *fa, unsigned int enable)
