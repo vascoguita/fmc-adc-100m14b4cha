@@ -191,65 +191,64 @@ begin  -- architecture arch
         RST      		=> iodelay_rst,	  	-- Reset delay line
         BUSY      	=> iodelay_busy_m(i));   -- output signal indicating sync circuit has finished / calibration has finished
 
-      cmp_idelay_slave: IODELAY2
-        generic map (
-          DATA_RATE      		 => f_data_rate_sel(g_USE_PLL),   -- <SDR>, DDR
-          IDELAY_VALUE  		 => 0, 			-- {0 ... 255}
-          IDELAY2_VALUE 		 => 0, 			-- {0 ... 255}
-          IDELAY_MODE  		   => "NORMAL",-- NORMAL, PCI
-          ODELAY_VALUE  		 => 0, 			-- {0 ... 255}
-          IDELAY_TYPE   		 => "DIFF_PHASE_DETECTOR",-- "DEFAULT", "DIFF_PHASE_DETECTOR", "FIXED", "VARIABLE_FROM_HALF_MAX", "VARIABLE_FROM_ZERO"
-          COUNTER_WRAPAROUND => "WRAPAROUND", 	-- <STAY_AT_LIMIT>, WRAPAROUND
-          DELAY_SRC     		 => "IDATAIN", 		-- "IO", "IDATAIN", "ODATAIN"
-          SERDES_MODE   		 => "SLAVE", 		-- <NONE>, MASTER, SLAVE
-          SIM_TAPDELAY_VALUE => 49) 			--
-        port map (
-          IDATAIN  		=> adc_out(i), 	-- data from primary IOB
-          TOUT     		=> open, 		-- tri-state signal to IOB
-          DOUT     		=> open, 		-- output data to IOB
-          T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2
-          ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
-          DATAOUT  		=> adc_out_dly_s(i), 		-- Output data 1 to ILOGIC/ISERDES2
-          DATAOUT2 		=> open, 		        -- Output data 2 to ILOGIC/ISERDES2
-          IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
-          IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
-          CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
-          CAL      		=> iodelay_cal_s,	          -- Calibrate control signal
-          INC      		=> inc,		        -- Increment counter
-          CE       		=> ce,      		  -- Clock Enable
-          RST      		=> iodelay_rst,	        	-- Reset delay line
-          BUSY      	=> iodelay_busy_s(i));      -- output signal indicating sync circuit has finished / calibration has finished
+    cmp_idelay_slave: IODELAY2
+      generic map (
+        DATA_RATE      		 => f_data_rate_sel(g_USE_PLL),   -- <SDR>, DDR
+        IDELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY2_VALUE 		 => 0, 			-- {0 ... 255}
+        IDELAY_MODE  		   => "NORMAL",-- NORMAL, PCI
+        ODELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY_TYPE   		 => "DIFF_PHASE_DETECTOR",-- "DEFAULT", "DIFF_PHASE_DETECTOR", "FIXED", "VARIABLE_FROM_HALF_MAX", "VARIABLE_FROM_ZERO"
+        COUNTER_WRAPAROUND => "WRAPAROUND", 	-- <STAY_AT_LIMIT>, WRAPAROUND
+        DELAY_SRC     		 => "IDATAIN", 		-- "IO", "IDATAIN", "ODATAIN"
+        SERDES_MODE   		 => "SLAVE", 		-- <NONE>, MASTER, SLAVE
+        SIM_TAPDELAY_VALUE => 49) 			--
+      port map (
+        IDATAIN  		=> adc_out(i), 	-- data from primary IOB
+        TOUT     		=> open, 		-- tri-state signal to IOB
+        DOUT     		=> open, 		-- output data to IOB
+        T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2
+        ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
+        DATAOUT  		=> adc_out_dly_s(i), 		-- Output data 1 to ILOGIC/ISERDES2
+        DATAOUT2 		=> open, 		        -- Output data 2 to ILOGIC/ISERDES2
+        IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
+        IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
+        CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
+        CAL      		=> iodelay_cal_s,	          -- Calibrate control signal
+        INC      		=> inc,		        -- Increment counter
+        CE       		=> ce,      		  -- Clock Enable
+        RST      		=> iodelay_rst,	        	-- Reset delay line
+        BUSY      	=> iodelay_busy_s(i));      -- output signal indicating sync circuit has finished / calibration has finished
 
-      --  Adjust delay
-      process (clk_div_buf)
-      begin
-        if rising_edge(clk_div_buf) then
-          ce <= '0';
-          inc <= '0';
-
-          if iodelay_recal = '1' then
-            phasediff <= "10000";
-          elsif serdes_valid (i) = '1' then
-            if serdes_incdec (i) = '1' then
-              if phasediff = "111111" then
-                ce <= '1';
-                inc <= '1';
-                phasediff <= "10000";
-              else
-                phasediff <= phasediff + 1;
-              end if;
+    --  Adjust delay
+    process (clk_div_buf)
+    begin
+      if rising_edge(clk_div_buf) then
+        ce <= '0';
+        inc <= '0';
+        if iodelay_recal = '1' then
+          phasediff <= "10000";
+        elsif serdes_valid (i) = '1' then
+          if serdes_incdec (i) = '1' then
+            if phasediff = "11111" then
+              ce <= '1';
+              inc <= '1';
+              phasediff <= "10000";
             else
-              if phasediff = "00000" then
-                ce <= '1';
-                inc <= '0';
-                phasediff <= "10000";
-              else
-                phasediff <= phasediff - 1;
-              end if;
+              phasediff <= phasediff + 1;
+            end if;
+          else
+            if phasediff = "00000" then
+              ce <= '1';
+              inc <= '0';
+              phasediff <= "10000";
+            else
+              phasediff <= phasediff - 1;
             end if;
           end if;
         end if;
-      end process;
+      end if;
+    end process;
   end generate;
 
   iodelay_busy <= '0' when iodelay_busy_s = (iodelay_busy_s'range => '0') and iodelay_busy_m = (iodelay_busy_m'range => '0') else '1';
