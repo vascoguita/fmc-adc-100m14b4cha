@@ -317,6 +317,11 @@ static int zfat_data_done(struct zio_cset *cset)
 	return 0;
 }
 
+static bool fa_adc_is_acquisition_valid(struct fa_dev *fa)
+{
+	return fa_readl(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_STA_ACQ_CFG]);
+}
+
 /*
  * zfat_arm_trigger
  * @ti: trigger instance
@@ -335,6 +340,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	int i, err = 0;
 
 	dev_dbg(fa->msgdev, "Arming trigger\n");
+	if (!fa_adc_is_acquisition_valid(fa)) {
+		dev_err(fa->msgdev, "Hardware detected invalid ADC acquistion\n");
+		return -EINVAL;
+	}
 
 	/* Update the current control: sequence, nsamples and tstamp */
 	interleave->current_ctrl->nsamples = ti->nsamples;
@@ -374,7 +383,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	if (size % 4) {
 		/* should never happen: increase the size accordling */
 		dev_warn(fa->msgdev,
-			"\nzio data block size should 32bit word aligned."
+			"zio data block size should 32bit word aligned."
 			"original size:%d was increased by %d bytes\n",
 			size, size%4);
 		size += size % 4;
@@ -389,7 +398,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 					       GFP_ATOMIC);
 		if (!block) {
 			dev_err(fa->msgdev,
-				"\narm trigger fail, cannot allocate block\n");
+					"arm trigger fail, cannot allocate block (%d/%d size: %d (%d + %d))\n",
+					i, fa->n_shots, size,
+					interleave->current_ctrl->ssize * ti->nsamples,
+					FA_TRIG_TIMETAG_BYTES);
 			err = -ENOMEM;
 			goto out_allocate;
 		}

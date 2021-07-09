@@ -6,17 +6,27 @@
 Changelog
 =========
 
+5.0.4 - 2021-07-09
+==================
+Fixed
+-----
+- sw: fix endianess only when required
+- sw: ADC chip reset is BIT(7)
+
 5.0.3 - 2021-07-05
 ==================
 Added:
 -----
 - bld: CI support
 
+Changed
+-------
+- sw: use YAML for fau-calibration
+
 Fixed
 -----
 - doc: add offset units
 - sw: calibration value at boot time incorrect
-- sw: use YAML for fau-calibration
 
 5.0.2 - 2021-07-03
 ==================
@@ -35,7 +45,7 @@ Fixed
 
 5.0.0 - 2021-02-11
 ==================
-Changes
+Changed
 -------
 - channel sysfs attribute 'chx-offset' does not accept mV (milli-volts) values
   anymore. Now the unit is uV (micro-Volts)
