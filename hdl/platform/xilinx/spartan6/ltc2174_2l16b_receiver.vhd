@@ -50,8 +50,8 @@ entity ltc2174_2l16b_receiver is
     adc_outb_n_i    : in  std_logic_vector(3 downto 0);
     -- Async reset input (active high) for iserdes
     serdes_arst_i   : in  std_logic := '0';
-    -- Manual bitslip command (optional)
-    serdes_bslip_i  : in  std_logic := '0';
+    -- Enable serdes calibration (start with an initial calibration)
+    serdes_calib_i  : in  std_logic := '0';
     -- SERDES BUFPLL lock status flag
     -- (used when g_USE_PLL=TRUE, otherwise it is tied to '1')
     serdes_locked_o : out std_logic;
@@ -76,7 +76,6 @@ architecture arch of ltc2174_2l16b_receiver is
   signal clk_serdes_n      : std_logic;
   signal clk_div_buf       : std_logic;
   signal serdes_strobe     : std_logic                    := '0';
-  signal serdes_auto_bslip : std_logic                    := '0';
   signal serdes_bitslip    : std_logic                    := '0';
   signal serdes_synced     : std_logic                    := '0';
   signal serdes_m2s_shift  : std_logic_vector(8 downto 0) := (others => '0');
@@ -226,7 +225,7 @@ begin  -- architecture arch
       if rising_edge(clk_div_buf) then
         ce <= '0';
         inc <= '0';
-        if iodelay_recal = '1' then
+        if serdes_calib_i = '0' or iodelay_recal = '1' then
           phasediff <= "10000";
         elsif serdes_valid (i) = '1' then
           if serdes_incdec (i) = '1' then
@@ -272,7 +271,7 @@ begin  -- architecture arch
       iodelay_recal <= '1';
       case state is
         when S_RESET =>
-          if iodelay_busy = '0' then
+          if serdes_calib_i = '1' and iodelay_busy = '0' then
             state := S_RSTCAL;
           end if;
         when S_RSTCAL =>
@@ -289,7 +288,9 @@ begin  -- architecture arch
           end if;
         when S_WAIT =>
           --  Periodically calibrate
-          if counter = 2**20 then
+          if serdes_calib_i = '0' then
+            state := S_RESET;
+          elsif counter = 2**20 then
             if iodelay_busy = '0' then
               iodelay_cal_s <= '1';
               state := S_BUSY;
@@ -448,19 +449,18 @@ begin  -- architecture arch
       -- Generate bitslip and synced signal
       if bitslip_sreg(bitslip_sreg'LEFT) = '1' then
         if serdes_out_fr /= "0000000" and serdes_out_fr /= "1111111" then
-          serdes_auto_bslip <= '1';
+          serdes_bitslip <= '1';
           serdes_synced     <= '0';
         else
-          serdes_auto_bslip <= '0';
+          serdes_bitslip <= '0';
           serdes_synced     <= '1';
         end if;
       else
-        serdes_auto_bslip <= '0';
+        serdes_bitslip <= '0';
       end if;
     end if;
   end process p_auto_bitslip;
 
-  serdes_bitslip  <= serdes_auto_bslip or serdes_bslip_i;
   serdes_synced_o <= serdes_synced;
 
   ------------------------------------------------------------------------------

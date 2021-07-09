@@ -153,8 +153,7 @@ architecture rtl of fmc_adc_100Ms_core is
   -- SerDes
   signal serdes_out_data         : std_logic_vector(63 downto 0);
   signal serdes_out_data_synced  : std_logic_vector(63 downto 0);
-  signal serdes_man_bitslip      : std_logic;
-  signal serdes_man_bitslip_sync : std_logic;
+  signal serdes_calib_sync       : std_logic;
   signal serdes_locked           : std_logic;
   signal serdes_locked_sync      : std_logic;
   signal serdes_synced           : std_logic;
@@ -430,8 +429,8 @@ begin
     port map (
       clk_i     => fs_clk,
       rst_n_a_i => '1',
-      d_i       => serdes_man_bitslip,
-      q_o       => serdes_man_bitslip_sync);
+      d_i       => csr_regout.ctl_serdes_calib,
+      q_o       => serdes_calib_sync);
 
   cmp_adc_serdes : entity work.ltc2174_2l16b_receiver
     generic map (
@@ -446,7 +445,7 @@ begin
       adc_outb_p_i    => adc_outb_p_i,
       adc_outb_n_i    => adc_outb_n_i,
       serdes_arst_i   => serdes_arst,
-      serdes_bslip_i  => serdes_man_bitslip_sync,
+      serdes_calib_i  => serdes_calib_sync,
       serdes_locked_o => serdes_locked,
       serdes_synced_o => serdes_synced,
       adc_data_o      => serdes_out_data,
@@ -487,7 +486,6 @@ begin
       fmc_adc_ch4_o       => wb_channel_in(4));
 
   csr_regin.ctl_fsm_cmd         <= fsm_cmd;
-  csr_regin.ctl_man_bitslip     <= serdes_man_bitslip;
   csr_regin.ctl_clear_trig_stat <= trig_storage_clear;
   csr_regin.ctl_calib_apply     <= sync_calib_apply;
 
@@ -533,12 +531,10 @@ begin
     if rising_edge(sys_clk_i) then
       if ctl_reg_wr = '1' then
         fsm_cmd            <= csr_regout.ctl_fsm_cmd;
-        serdes_man_bitslip <= csr_regout.ctl_man_bitslip;
         trig_storage_clear <= csr_regout.ctl_clear_trig_stat;
         sync_calib_apply   <= csr_regout.ctl_calib_apply;
       else
         fsm_cmd            <= (others => '0');
-        serdes_man_bitslip <= '0';
         trig_storage_clear <= '0';
         sync_calib_apply   <= '0';
       end if;

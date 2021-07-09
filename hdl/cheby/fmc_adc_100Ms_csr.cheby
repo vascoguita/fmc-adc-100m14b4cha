@@ -41,11 +41,9 @@ memory-map:
           range: 3
           description: Offset DACs clear (active low)
       - field:
-          name: man_bitslip
+          name: serdes_calib
           range: 4
-          description: Manual serdes bitslip (ignore on read)
-          x-hdl:
-            type: wire
+          description: Initial serdes calibration
       - field:
           name: trig_led
           range: 6
