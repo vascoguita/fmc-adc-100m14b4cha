@@ -6,9 +6,8 @@
 Changelog
 =========
 
-5.0.4 - 2021-07-xx
+5.0.4 - 2021-07-09
 ==================
-
 Fixed
 -----
 - sw: fix endianess only when required
