@@ -383,7 +383,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	if (size % 4) {
 		/* should never happen: increase the size accordling */
 		dev_warn(fa->msgdev,
-			"\nzio data block size should 32bit word aligned."
+			"zio data block size should 32bit word aligned."
 			"original size:%d was increased by %d bytes\n",
 			size, size%4);
 		size += size % 4;
@@ -398,7 +398,10 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 					       GFP_ATOMIC);
 		if (!block) {
 			dev_err(fa->msgdev,
-				"\narm trigger fail, cannot allocate block\n");
+					"arm trigger fail, cannot allocate block (%d/%d size: %d (%d + %d))\n",
+					i, fa->n_shots, size,
+					interleave->current_ctrl->ssize * ti->nsamples,
+					FA_TRIG_TIMETAG_BYTES);
 			err = -ENOMEM;
 			goto out_allocate;
 		}
