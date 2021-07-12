@@ -11,6 +11,11 @@ Changelog
 Added
 -----
 - hdl: configurable auto byte swap in hardware, useful for SVEC to reduce software complexity
+- bld: flawfinder check on software tools
+
+Fixed
+-----
+- security fixes detected by flawfinder
 
 5.0.4 - 2021-07-09
 ==================
