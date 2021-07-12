@@ -26,6 +26,13 @@ cppcheck:
   script:
     - make -C software cppcheck
 
+flawfinder:
+  stage: static-analysis
+  image:
+    name: gitlab-registry.cern.ch/coht/common-containers/static-analysis:latest
+  script:
+    - make -C software/tools flawfinder
+
 documentation:
   stage: build
   image:

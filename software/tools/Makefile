@@ -19,6 +19,7 @@ CFLAGS += -I../kernel -Wno-trigraphs -Wall -Werror -ggdb -O2  $(EXTRACFLAGS)
 CFLAGS += -DGIT_VERSION="\"$(GIT_VERSION)\""
 
 CPPCHECK ?= cppcheck
+FLAWFINDER ?= flawfinder
 CC ?= $(CROSS_COMPILE)gcc
 
 progs := fau-trg-config
@@ -45,3 +46,6 @@ install:
 
 cppcheck:
 	$(CPPCHECK) -q -I. --suppress=missingIncludeSystem --enable=all *.c *.h  --error-exitcode=1
+
+flawfinder:
+	$(FLAWFINDER) -SQDC --error-level=4 .
