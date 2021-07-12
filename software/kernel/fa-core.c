@@ -12,6 +12,7 @@
 #include <linux/mod_devicetable.h>
 #include <uapi/linux/ipmi/fru.h>
 #include <linux/fmc.h>
+#include <linux/io.h>
 
 #include "fmc-adc-100m14b4cha-private.h"
 #include <platform_data/fmc-adc-100m14b4cha.h>
