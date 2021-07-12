@@ -16,6 +16,7 @@
 #include <linux/platform_device.h>
 #include <linux/fmc.h>
 #include <linux/completion.h>
+#include <linux/version.h>
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
@@ -64,7 +65,11 @@ enum fa_bus_resource {
 };
 
 struct fa_memory_ops {
+#if KERNEL_VERSION(5, 8, 0) <= LINUX_VERSION_CODE
+	u32 (*read)(const void *addr);
+#else
 	u32 (*read)(void *addr);
+#endif
 	void (*write)(u32 value, void *addr);
 };
 
