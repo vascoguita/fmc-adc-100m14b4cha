@@ -507,7 +507,11 @@ static void fa_init_timetag(struct fa_dev *fa)
 {
 	unsigned long seconds;
 
+#if KERNEL_VERSION(5, 11, 0) <= LINUX_VERSION_CODE
+	seconds = ktime_get_real_seconds();
+#else
 	seconds = get_seconds();
+#endif
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_U],
 		  (seconds >> 32) & 0xFFFFFFFF);
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_L],
