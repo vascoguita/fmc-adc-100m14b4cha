@@ -37,6 +37,28 @@ static const int zfad_hw_range[] = {
 struct workqueue_struct *fa_workqueue;
 
 
+static int fa_sg_alloc_table_from_pages(struct sg_table *sgt,
+						struct page **pages,
+						unsigned int n_pages,
+						unsigned int offset,
+						unsigned long size,
+						unsigned int max_segment,
+						gfp_t gfp_mask)
+{
+#if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
+	struct scatterlist *sg;
+	sg =  __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
+			max_segment, NULL, 0, gfp_mask);
+	if (IS_ERR(sg))
+		return PTR_ERR(sg);
+	else
+		return 0;
+#else
+	return __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
+			max_segment, gfp_mask);
+#endif
+}
+
 /**
  * Enable/Disable Data Output Randomizer
  * @fa: the adc descriptor
@@ -646,7 +668,7 @@ static void fa_sg_alloc_table_init(struct fa_dev *fa)
 	if (fa_is_flag_set(fa, FMC_ADC_NOSQUASH_SCATTERLIST))
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
 	else
-		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
+		fa->sg_alloc_table_from_pages = fa_sg_alloc_table_from_pages;
 
 }
 
