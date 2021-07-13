@@ -311,6 +311,14 @@ void fa_calib_config(struct fa_dev *fa)
 		fa_calib_config_chan(fa, i, temperature, 0);
 	spin_unlock(&fa->zdev->cset->lock);
 }
+
+static void __fa_calib_gain_update(struct fa_dev *fa)
+{
+	fa_calib_config(fa);
+	mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_temp_period);
+}
+
+
 /**
  * Periodically update gain calibration values
  * @fa: FMC ADC device
@@ -320,14 +328,17 @@ void fa_calib_config(struct fa_dev *fa)
  * linear behavior with respect to the temperature.
  *
  */
+#if KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE
+static void fa_calib_gain_update(struct timer_list *timer)
+{
+	__fa_calib_gain_update(from_timer(fa, timer, calib_timer));
+}
+#else
 static void fa_calib_gain_update(unsigned long arg)
 {
-	struct fa_dev *fa = (void *)arg;
-
-	fa_calib_config(fa);
-	mod_timer(&fa->calib_timer, jiffies + HZ * fa_calib_temp_period);
+	__fa_calib_gain_update((void *)arg);
 }
-
+#endif
 /* Actual verification code */
 static int fa_verify_calib_stanza(struct device *msgdev, char *name, int r,
 				    struct fa_calib_stanza *cal)
@@ -500,7 +511,11 @@ int fa_calib_init(struct fa_dev *fa)
 
 	/* Prepare the timely recalibration */
 	if (fa_calib_is_compensation_on(fa) && fa_calib_temp_period) {
+#if KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE
+		timer_setup(&fa->calib_timer, fa_calib_gain_update, 0);
+#else
 		setup_timer(&fa->calib_timer, fa_calib_gain_update, (unsigned long)fa);
+#endif
 		mod_timer(&fa->calib_timer,
 			  jiffies + HZ * fa_calib_temp_period);
 	}
