@@ -341,7 +341,6 @@ struct fa_dev {
 
 	struct dentry *dbg_dir;
 	struct debugfs_regset32 dbg_reg32;
-	struct dentry *dbg_reg;
 	struct dentry *dbg_reg_spi;
 	struct dentry *dbg_trg_sw;
 	struct dentry *dbg_data_pattern;

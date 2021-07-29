@@ -301,18 +301,7 @@ int fa_debug_init(struct fa_dev *fa)
 	fa->dbg_reg32.regs = fa_debugfs_reg32;
 	fa->dbg_reg32.nregs = ARRAY_SIZE(fa_debugfs_reg32);
 	fa->dbg_reg32.base = fa->fa_top_level;
-#if KERNEL_VERSION(5, 6, 0) <= LINUX_VERSION_CODE
 	debugfs_create_regset32("regs", 0444, fa->dbg_dir, &fa->dbg_reg32);
-#else
-	fa->dbg_reg = debugfs_create_regset32("regs", 0444, fa->dbg_dir,
-					      &fa->dbg_reg32);
-	if (IS_ERR_OR_NULL(fa->dbg_reg)) {
-		err = PTR_ERR(fa->dbg_reg);
-		dev_warn(&fa->pdev->dev,
-			"Cannot create debugfs file \"regs\" (%d)\n",
-			 err);
-	}
-#endif
 
 	fa->dbg_reg_spi = debugfs_create_file("spi-regs", 0444,
 					      fa->dbg_dir, fa,
