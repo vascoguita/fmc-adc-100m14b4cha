@@ -546,7 +546,7 @@ static int fa_svec_ddr_window_set(struct fa_dev *fa, unsigned int offset)
 		return -ENODEV;
 	fa_iowrite(fa, offset, addr);
 
-        return 0;
+	return 0;
 }
 
 static int fa_dmaengine_slave_config(struct fa_dev *fa,
@@ -582,7 +582,7 @@ static int fa_dma_shot_wait_svec(struct fa_dev *fa,
 {
 	int err;
 
-        if (fa->n_shots == 1)
+	if (fa->n_shots == 1)
 		return 0;
 
 	err = wait_for_completion_interruptible_timeout(&zfad_block->shot_done,
@@ -596,7 +596,7 @@ static int fa_dma_shot_wait_svec(struct fa_dev *fa,
 		return -EINVAL;
 	}
 
-        return 0;
+	return 0;
 }
 
 static int fa_dma_start_svec(struct zio_cset *cset)
@@ -703,7 +703,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 		return err;
 	}
 
-        dev_dbg(&fa->pdev->dev,
+	dev_dbg(&fa->pdev->dev,
 		"Start DMA transfer for %i shots of %i samples\n",
 		fa->n_shots, cset->ti->nsamples);
 
@@ -712,7 +712,7 @@ static int zfad_dma_start(struct zio_cset *cset)
 	 * different DMA transfers required for multi-shots
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
-        if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
 		err = fa_dma_start_svec(cset);
 	else
 		err = fa_dma_start_spec(cset);
