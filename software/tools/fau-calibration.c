@@ -18,6 +18,7 @@
 
 #include <fmc-adc-100m14b4cha.h>
 
+#define MAX_OPT_NR 5
 static char options[] = "hf:o:D:b";
 
 static void fau_calibration_help(void)
@@ -155,6 +156,19 @@ int main(int argc, char *argv[])
 	unsigned int devid = 0;
 	int show_bin = 0, write = 0;
 	struct fa_calib calib;
+
+	if (argc <= 0) {
+		fprintf(stderr, "What is going on here?\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (argc > MAX_OPT_NR) {
+		fprintf(stderr, "This program accepts no more that %d arguments, you provides %d\n",
+				MAX_OPT_NR, argc);
+		fau_calibration_help();
+		exit(EXIT_FAILURE);
+	}
+
 
 	while ((c = getopt(argc, argv, options)) != -1) {
 		switch (c) {
