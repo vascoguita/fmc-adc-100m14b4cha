@@ -6,19 +6,20 @@
 Changelog
 =========
 
-5.1.0 - 2021
+6.0.0 - 2021
 ============
 Added
 -----
 - hdl: configurable auto byte swap in hardware, useful for SVEC to reduce software complexity
+- hdl,sw: DMA data is always little-endian
+- sw: software version validation against FPGA version
 - bld: flawfinder check on software tools
 
 Fixed
 -----
-- security fixes detected by flawfinder
-
-Fixed
------
+- sw: security fixes detected by flawfinder
+- sw: fixes detected by checkpatch.pl
+- sw: style fixes detected by checkpatch.pl
 - sw: improve compatibility with newer ( > 3.10) Linux kernel versions
 
 5.0.4 - 2021-07-09
