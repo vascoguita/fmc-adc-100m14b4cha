@@ -550,12 +550,8 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
 		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
-	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
 		fa_adc_range_set(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
-		/* reset channel offset */
-		fa->user_offset[i] = 0x8000;
-		fa->zero_offset[i] = 0x8000;
-	}
 
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
@@ -849,6 +845,11 @@ int fa_probe(struct platform_device *pdev)
 		goto out_serdes;
 	}
 
+	/* reset channel offset before calibration */
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
+		fa->user_offset[i] = 0x8000;
+		fa->zero_offset[i] = 0x8000;
+	}
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
 		dev_dbg(fa->msgdev, "Calling init for \"%s\"\n", m->name);
