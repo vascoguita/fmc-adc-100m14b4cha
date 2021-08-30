@@ -57,8 +57,7 @@ enum fa100m14b4c_trg_ext_attr_krn {
 #define ADC_SPI_OFF 0x1800
 #define ADC_UTC_OFF 0x1900
 
-#define DAC_SAT_LOW -5000000
-#define DAC_SAT_UP 5000000
+#define DAC_VAL_MASK 0xFFFF
 
 #define ADC_DMA 0
 
@@ -292,8 +291,8 @@ struct fa_dev; /* forward declaration */
  * @n_fires: number of trigger fire occurred within an acquisition
  *
  * @n_dma_err: number of errors
- * @user_offset: user offset (micro-Volts)
- * @zero_offset: necessary offset to push the channel to zero (micro-Volts)
+ * @user_offset: user offset
+ * @zero_offset: necessary offset to push the channel to zero
  */
 struct fa_dev {
 	unsigned long flags;
@@ -341,8 +340,8 @@ struct fa_dev {
 	unsigned int		n_dma_err;
 
 	/* Configuration */
-	int32_t		user_offset[4]; /* one per channel */
-	int32_t		zero_offset[FA100M14B4C_NCHAN];
+	uint16_t		user_offset[4]; /* one per channel */
+	uint16_t		zero_offset[FA100M14B4C_NCHAN];
 	/* one-wire */
 	uint8_t ds18_id[8];
 	unsigned long		next_t;

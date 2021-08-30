@@ -553,8 +553,8 @@ static int __fa_init(struct fa_dev *fa)
 	for (i = 0; i < 4; ++i) {
 		fa_adc_range_set(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
 		/* reset channel offset */
-		fa->user_offset[i] = 0;
-		fa->zero_offset[i] = 0;
+		fa->user_offset[i] = 0x8000;
+		fa->zero_offset[i] = 0x8000;
 	}
 
 	/* Set decimation to minimum */
@@ -710,8 +710,8 @@ static int fa_metadata_get(struct fa_dev *fa)
 	}
 
 	/* Dump meta*/
-	for (i = 0; i < sizeof(fa->meta); i += 4)
-		*(((char *)&fa->meta) + i) = fa_ioread(fa, mem + i);
+	for (i = 0; i < sizeof(fa->meta) / 4; ++i)
+		((uint32_t *)&fa->meta)[i] = fa_ioread(fa, mem + (i * 4));
 
 	iounmap(mem);
 	return 0;
