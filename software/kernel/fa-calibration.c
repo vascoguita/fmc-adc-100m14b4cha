@@ -207,47 +207,52 @@ static int fa_dac_offset_set(struct fa_dev *fa, unsigned int chan,
 	return fa_spi_xfer(fa, FA_SPI_SS_DAC(chan), 16, val, NULL);
 }
 
-static int64_t fa_dac_offset_raw_get(int32_t offset)
+static uint16_t fa_dac_offset_raw_calibrate(struct fa_dev *fa,
+					    uint16_t raw_offset,
+					    int gain, int offset)
 {
+	int32_t signed_offset = raw_offset - 0x8000;
 	int64_t hwval;
 
-	hwval = offset * 0x8000LL / 5000000;
-	if (hwval == 0x8000)
-		hwval = 0x7fff; /* -32768 .. 32767 */
-	return hwval;
-}
-
-static int64_t fa_dac_offset_raw_calibrate(int32_t raw_offset,
-					   int gain, int offset)
-{
-	int64_t hwval;
-
-	hwval = ((raw_offset + offset) * gain) >> 15; /* signed */
+	hwval = ((signed_offset + offset) * gain) >> 15; /* signed */
 	hwval += 0x8000; /* offset binary */
-	if (hwval < 0)
+	dev_dbg(&fa->pdev->dev,
+		"Final DAC calibrated value: (0x%08x + 0x%08x) * 0x%08x = 0x%08llx\n",
+		signed_offset, offset, gain, hwval);
+
+	/* Saturate */
+	if (hwval < 0) {
 		hwval = 0;
-	if (hwval > 0xffff)
+		dev_warn(&fa->pdev->dev,
+			 "Final DAC calibrated value: lower saturation, set 0x%04llx",
+			 hwval);
+	}
+	if (hwval > 0xffff) {
 		hwval = 0xffff;
+		dev_warn(&fa->pdev->dev,
+			 "Final DAC calibrated value: lower saturation, set 0x%04llx",
+			 hwval);
+	}
 
 	return hwval;
 }
 
-static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
+static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan, uint16_t *offset)
 {
-	int32_t off_uv = fa->user_offset[chan] + fa->zero_offset[chan];
+	int32_t user = fa->user_offset[chan];
+	int32_t zero = fa->zero_offset[chan];
+	int32_t __offset = (user + zero) - 0x8000; /* Bring back to DAC format */
 
-	if (WARN(off_uv < DAC_SAT_LOW,
-		 "DAC lower saturation %d < %d\n",
-		 off_uv, DAC_SAT_LOW)) {
-		off_uv = DAC_SAT_LOW;
-	}
-	if (WARN(off_uv > DAC_SAT_UP,
-		 "DAC upper saturation %d > %d\n",
-		 off_uv, DAC_SAT_UP)) {
-		off_uv = DAC_SAT_UP;
+	if (__offset & ~DAC_VAL_MASK) {
+		dev_err(&fa->pdev->dev,
+			 "DAC offset value overflows 16bits. {user: 0x%04x, zero: 0x%04x, sum: 0x%08x}\n",
+			user, zero, __offset);
+		return -EINVAL;
 	}
 
-	return off_uv;
+	*offset = __offset;
+
+	return 0;
 }
 
 /**
@@ -261,12 +266,16 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
 int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 			     int32_t temperature, unsigned int flags)
 {
-	int32_t off_uv = fa_dac_offset_get(fa, chan);
-	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
+	uint16_t value;
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int gain;
 	int hwval;
+	int err;
+
+	err = fa_dac_offset_get(fa, chan, &value);
+	if (err)
+		return err;
 
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
@@ -286,7 +295,7 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 			__func__, chan, range, gain, cal->offset[chan]);
 	}
 
-	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain,
+	hwval = fa_dac_offset_raw_calibrate(fa, value, gain,
 					    cal->offset[chan]);
 
 	return fa_dac_offset_set(fa, chan, hwval);

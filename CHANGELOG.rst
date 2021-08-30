@@ -15,6 +15,10 @@ Added
 - sw: software version validation against FPGA version
 - bld: flawfinder check on software tools
 
+Changed
+-------
+- sw: offsets are not anymore in uV but they are just raw values
+
 Fixed
 -----
 - sw: security fixes detected by flawfinder

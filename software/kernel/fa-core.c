@@ -553,8 +553,8 @@ static int __fa_init(struct fa_dev *fa)
 	for (i = 0; i < 4; ++i) {
 		fa_adc_range_set(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
 		/* reset channel offset */
-		fa->user_offset[i] = 0;
-		fa->zero_offset[i] = 0;
+		fa->user_offset[i] = 0x8000;
+		fa->zero_offset[i] = 0x8000;
 	}
 
 	/* Set decimation to minimum */
