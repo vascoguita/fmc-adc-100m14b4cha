@@ -340,7 +340,7 @@ struct fa_dev {
 	unsigned int		n_dma_err;
 
 	/* Configuration */
-	uint16_t		user_offset[4]; /* one per channel */
+	uint16_t		user_offset[FA100M14B4C_NCHAN]; /* one per channel */
 	uint16_t		zero_offset[FA100M14B4C_NCHAN];
 	/* one-wire */
 	uint8_t ds18_id[8];
