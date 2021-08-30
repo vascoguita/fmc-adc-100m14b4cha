@@ -49,7 +49,7 @@ int fa_spi_xfer(struct fa_dev *fa, int cs, int num_bits,
 	/* Wait transfer complete */
 	while (fa_ioread(fa, fa->fa_spi_base + FA_SPI_CTRL)
 	       & FA_SPI_CTRL_BUSY) {
-		if (jiffies > j) {
+		if (time_after(jiffies, j)) {
 			dev_err(fa->msgdev, "SPI transfer error cs:%d, ctrl: 0x%x\n",
 				cs, fa_ioread(fa, fa->fa_spi_base + FA_SPI_CTRL));
 			err = -EIO;
@@ -77,7 +77,7 @@ int fa_spi_init(struct fa_dev *fa)
 
 	/* software reset the ADC chip (register 0) */
 	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16,  BIT(7), &rx);
-	msleep(5);
+	msleep(20);
 
 	/* Force 2's complement data output (register 1, bit 5) */
 	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, BIT(8) | BIT(5), &rx);
