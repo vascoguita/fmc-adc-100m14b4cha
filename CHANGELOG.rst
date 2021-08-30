@@ -17,6 +17,10 @@ Fixed
 -----
 - security fixes detected by flawfinder
 
+Fixed
+-----
+- sw: improve compatibility with newer ( > 3.10) Linux kernel versions
+
 5.0.4 - 2021-07-09
 ==================
 Fixed
