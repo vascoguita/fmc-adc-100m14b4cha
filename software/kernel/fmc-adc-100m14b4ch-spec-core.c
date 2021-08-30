@@ -12,6 +12,8 @@
 #include "platform_data/fmc-adc-100m14b4cha.h"
 
 enum fa_spec_dev_offsets {
+	FA_SPEC_DBL_ADC_META_START = 0x00000000,
+	FA_SPEC_DBL_ADC_META_END   = 0x00000040,
 	FA_SPEC_ADC_MEM_START = 0x000002000,
 	FA_SPEC_ADC_MEM_END = 0x000003FFF,
 };
@@ -36,7 +38,14 @@ static int fa_spec_probe(struct platform_device *pdev) {
 		{
 			.name = "fmc-adc-irq",
 			.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
-		}};
+		},
+		{
+		.name = "fmc-adc-meta",
+		.flags = IORESOURCE_MEM,
+		.start = FA_SPEC_DBL_ADC_META_START,
+		.end = FA_SPEC_DBL_ADC_META_END,
+		},
+	};
 	struct platform_device_info pdevinfo = {
 		.parent = &pdev->dev,
 		.name = "fmc-adc-100m",
@@ -93,6 +102,8 @@ static int fa_spec_probe(struct platform_device *pdev) {
 	fa_spec_fdt_res[0].end = rmem->start + FA_SPEC_ADC_MEM_END;
 	fa_spec_fdt_res[1].start = dma_dev_chan;
 	fa_spec_fdt_res[2].start = irq;
+	fa_spec_fdt_res[3].start = rmem->start + FA_SPEC_DBL_ADC_META_START;
+	fa_spec_fdt_res[3].end = rmem->start + FA_SPEC_DBL_ADC_META_END;
 
 	pdev_child = platform_device_register_full(&pdevinfo);
 	if (IS_ERR(pdev_child))
