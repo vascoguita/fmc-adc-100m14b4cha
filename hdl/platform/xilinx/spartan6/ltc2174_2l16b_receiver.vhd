@@ -50,8 +50,8 @@ entity ltc2174_2l16b_receiver is
     adc_outb_n_i    : in  std_logic_vector(3 downto 0);
     -- Async reset input (active high) for iserdes
     serdes_arst_i   : in  std_logic := '0';
-    -- Manual bitslip command (optional)
-    serdes_bslip_i  : in  std_logic := '0';
+    -- Enable serdes calibration (start with an initial calibration)
+    serdes_calib_i  : in  std_logic := '0';
     -- SERDES BUFPLL lock status flag
     -- (used when g_USE_PLL=TRUE, otherwise it is tied to '1')
     serdes_locked_o : out std_logic;
@@ -70,25 +70,28 @@ end entity ltc2174_2l16b_receiver;
 architecture arch of ltc2174_2l16b_receiver is
 
   signal adc_dco           : std_logic;
-  signal adc_fr            : std_logic;
-  signal adc_outa          : std_logic_vector(3 downto 0);
-  signal adc_outb          : std_logic_vector(3 downto 0);
+  signal adc_out, adc_out_dly_m, adc_out_dly_s : std_logic_vector(8 downto 0);
+  signal serdes_incdec, serdes_valid : std_logic_vector(8 downto 0);
   signal clk_serdes_p      : std_logic;
   signal clk_serdes_n      : std_logic;
   signal clk_div_buf       : std_logic;
   signal serdes_strobe     : std_logic                    := '0';
-  signal serdes_auto_bslip : std_logic                    := '0';
   signal serdes_bitslip    : std_logic                    := '0';
   signal serdes_synced     : std_logic                    := '0';
   signal serdes_m2s_shift  : std_logic_vector(8 downto 0) := (others => '0');
   signal serdes_s2m_shift  : std_logic_vector(8 downto 0) := (others => '0');
-  signal serdes_serial_in  : std_logic_vector(8 downto 0) := (others => '0');
-  signal serdes_out_fr     : std_logic_vector(7 downto 0) := (others => '0');
+  signal serdes_out_fr     : std_logic_vector(6 downto 0) := (others => '0');
 
   signal bitslip_sreg : unsigned(7 downto 0) := to_unsigned(1, 8);
 
-  type serdes_array is array (0 to 8) of std_logic_vector(7 downto 0);
+  type serdes_array is array (0 to 8) of std_logic_vector(6 downto 0);
   signal serdes_parallel_out : serdes_array := (others => (others => '0'));
+
+  signal iodelay_cal_s, iodelay_cal_m : std_logic;
+  signal iodelay_rst : std_logic;
+  signal iodelay_busy : std_logic;
+  signal iodelay_recal : std_logic;
+  signal iodelay_busy_m, iodelay_busy_s : std_logic_vector(8 downto 0);
 
   -- used to select the data rate of the ISERDES blocks
   function f_data_rate_sel (
@@ -128,10 +131,10 @@ begin  -- architecture arch
     port map (
       I  => adc_fr_p_i,
       IB => adc_fr_n_i,
-      O  => adc_fr);
+      O  => adc_out(8));
 
+  --  ADC data
   gen_adc_data_buf : for I in 0 to 3 generate
-
     cmp_adc_outa_buf : IBUFDS
       generic map (
         DIFF_TERM    => TRUE,
@@ -140,7 +143,7 @@ begin  -- architecture arch
       port map (
         I  => adc_outa_p_i(i),
         IB => adc_outa_n_i(i),
-        O  => adc_outa(i));
+        O  => adc_out(2 * i + 1));
 
     cmp_adc_outb_buf : IBUFDS
       generic map (
@@ -150,9 +153,160 @@ begin  -- architecture arch
       port map (
         I  => adc_outb_p_i(i),
         IB => adc_outb_n_i(i),
-        O  => adc_outb(i));
-
+        O  => adc_out(2 * i));
   end generate gen_adc_data_buf;
+
+  --  IDELAY (master and slave) on data and frame inputs.
+  gen_adc_idelay: for I in adc_out'range generate
+    signal inc, ce : std_logic;
+    signal phasediff : unsigned(4 downto 0);
+  begin
+    cmp_idelay_master: IODELAY2
+      generic map (
+        DATA_RATE      		 => f_data_rate_sel(g_USE_PLL),   -- <SDR>, DDR
+        IDELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY2_VALUE 		 => 0, 			-- {0 ... 255}
+        IDELAY_MODE  		   => "NORMAL",-- NORMAL, PCI
+        ODELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY_TYPE   		 => "DIFF_PHASE_DETECTOR",-- "DEFAULT", "DIFF_PHASE_DETECTOR", "FIXED", "VARIABLE_FROM_HALF_MAX", "VARIABLE_FROM_ZERO"
+        COUNTER_WRAPAROUND => "WRAPAROUND", 	-- <STAY_AT_LIMIT>, WRAPAROUND
+        DELAY_SRC     		 => "IDATAIN", 		-- "IO", "IDATAIN", "ODATAIN"
+        SERDES_MODE   		 => "MASTER", 		-- <NONE>, MASTER, SLAVE
+        SIM_TAPDELAY_VALUE => 49) 			--
+      port map (
+        IDATAIN  		=> adc_out(i), 	-- data from primary IOB
+        TOUT     		=> open, 		-- tri-state signal to IOB
+        DOUT     		=> open, 		-- output data to IOB
+        T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2
+        ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
+        DATAOUT  		=> adc_out_dly_m(i), 		-- Output data 1 to ILOGIC/ISERDES2
+        DATAOUT2 		=> open, 		-- Output data 2 to ILOGIC/ISERDES2
+        IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
+        IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
+        CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
+        CAL      		=> iodelay_cal_m,	  -- Calibrate control signal
+        INC      		=> inc,		          -- Increment counter
+        CE       		=> ce,      		    -- Clock Enable
+        RST      		=> iodelay_rst,	  	-- Reset delay line
+        BUSY      	=> iodelay_busy_m(i));   -- output signal indicating sync circuit has finished / calibration has finished
+
+    cmp_idelay_slave: IODELAY2
+      generic map (
+        DATA_RATE      		 => f_data_rate_sel(g_USE_PLL),   -- <SDR>, DDR
+        IDELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY2_VALUE 		 => 0, 			-- {0 ... 255}
+        IDELAY_MODE  		   => "NORMAL",-- NORMAL, PCI
+        ODELAY_VALUE  		 => 0, 			-- {0 ... 255}
+        IDELAY_TYPE   		 => "DIFF_PHASE_DETECTOR",-- "DEFAULT", "DIFF_PHASE_DETECTOR", "FIXED", "VARIABLE_FROM_HALF_MAX", "VARIABLE_FROM_ZERO"
+        COUNTER_WRAPAROUND => "WRAPAROUND", 	-- <STAY_AT_LIMIT>, WRAPAROUND
+        DELAY_SRC     		 => "IDATAIN", 		-- "IO", "IDATAIN", "ODATAIN"
+        SERDES_MODE   		 => "SLAVE", 		-- <NONE>, MASTER, SLAVE
+        SIM_TAPDELAY_VALUE => 49) 			--
+      port map (
+        IDATAIN  		=> adc_out(i), 	-- data from primary IOB
+        TOUT     		=> open, 		-- tri-state signal to IOB
+        DOUT     		=> open, 		-- output data to IOB
+        T        		=> '1', 		-- tri-state control from OLOGIC/OSERDES2
+        ODATAIN  		=> '0', 		-- data from OLOGIC/OSERDES2
+        DATAOUT  		=> adc_out_dly_s(i), 		-- Output data 1 to ILOGIC/ISERDES2
+        DATAOUT2 		=> open, 		        -- Output data 2 to ILOGIC/ISERDES2
+        IOCLK0   		=> clk_serdes_p, 		-- High speed clock for calibration
+        IOCLK1   		=> clk_serdes_n, 		-- High speed clock for calibration
+        CLK      		=> clk_div_buf,   	-- Fabric clock (GCLK) for control signals
+        CAL      		=> iodelay_cal_s,	          -- Calibrate control signal
+        INC      		=> inc,		        -- Increment counter
+        CE       		=> ce,      		  -- Clock Enable
+        RST      		=> iodelay_rst,	        	-- Reset delay line
+        BUSY      	=> iodelay_busy_s(i));      -- output signal indicating sync circuit has finished / calibration has finished
+
+    --  Adjust delay
+    process (clk_div_buf)
+    begin
+      if rising_edge(clk_div_buf) then
+        ce <= '0';
+        inc <= '0';
+        if serdes_calib_i = '0' or iodelay_recal = '1' then
+          phasediff <= "10000";
+        elsif serdes_valid (i) = '1' then
+          if serdes_incdec (i) = '1' then
+            if phasediff = "11111" then
+              ce <= '1';
+              inc <= '1';
+              phasediff <= "10000";
+            else
+              phasediff <= phasediff + 1;
+            end if;
+          else
+            if phasediff = "00000" then
+              ce <= '1';
+              inc <= '0';
+              phasediff <= "10000";
+            else
+              phasediff <= phasediff - 1;
+            end if;
+          end if;
+        end if;
+      end if;
+    end process;
+  end generate;
+
+  iodelay_busy <= '0' when iodelay_busy_s = (iodelay_busy_s'range => '0') and iodelay_busy_m = (iodelay_busy_m'range => '0') else '1';
+
+  --  IODELAY calibration
+  process(clk_div_buf, serdes_arst_i)
+    type t_state is (S_RESET, S_RSTCAL, S_RSTBUSY, S_WAIT, S_BUSY);
+    variable state : t_state;
+    variable counter : natural;
+  begin
+    if serdes_arst_i = '1' then
+      iodelay_cal_m <= '0';
+      iodelay_cal_s <= '0';
+      iodelay_rst <= '0';
+      iodelay_recal <= '1';
+      state := S_RESET;
+    elsif rising_edge(clk_div_buf) then
+      iodelay_cal_m <= '0';
+      iodelay_cal_s <= '0';
+      iodelay_rst <= '0';
+      iodelay_recal <= '1';
+      case state is
+        when S_RESET =>
+          if serdes_calib_i = '1' and iodelay_busy = '0' then
+            state := S_RSTCAL;
+          end if;
+        when S_RSTCAL =>
+          --  Issue CAL on reset
+          iodelay_cal_m <= '1';
+          iodelay_cal_s <= '1';
+          state := S_BUSY;
+        when S_RSTBUSY =>
+          --  And then RESET
+          if iodelay_busy = '0' then
+            counter := 0;
+            iodelay_rst <= '1';
+            state := S_WAIT;
+          end if;
+        when S_WAIT =>
+          --  Periodically calibrate
+          if serdes_calib_i = '0' then
+            state := S_RESET;
+          elsif counter = 2**20 then
+            if iodelay_busy = '0' then
+              iodelay_cal_s <= '1';
+              state := S_BUSY;
+            end if;
+          else
+            counter := counter + 1;
+            iodelay_recal <= '0';
+          end if;
+        when S_BUSY =>
+          if iodelay_busy = '0' then
+            counter := 0;
+            state := S_WAIT;
+          end if;
+        end case;
+    end if;
+  end process;
 
   ------------------------------------------------------------------------------
   -- Clock generation for deserializer
@@ -183,7 +337,7 @@ begin  -- architecture arch
         I_INVERT      => FALSE,
         USE_DOUBLER   => FALSE)
       port map (
-        I            => adc_dco,
+        I            => adc_dco,  --  350Mhz
         IOCLK        => open,
         DIVCLK       => l_pll_clkin,
         SERDESSTROBE => open);
@@ -194,42 +348,42 @@ begin  -- architecture arch
         DIVIDE_BYPASS => TRUE)
       port map (
         O => l_pll_clkfbin,
-        I => clk_serdes_p);
+        I => clk_serdes_p);             --  100Mhz
 
     cmp_dco_pll : PLL_BASE
       generic map (
         BANDWIDTH      => "OPTIMIZED",
-        CLKFBOUT_MULT  => 2,
-        CLKIN_PERIOD   => 2.5,
+        CLKFBOUT_MULT  => 2,           --  M=2, Fvco=700Mhz
+        CLKIN_PERIOD   => 2.86,
         CLKOUT0_DIVIDE => 1,
-        CLKOUT1_DIVIDE => 8,
+        CLKOUT1_DIVIDE => 7,
         CLK_FEEDBACK   => "CLKOUT0",
         COMPENSATION   => "SOURCE_SYNCHRONOUS",
         DIVCLK_DIVIDE  => 1,
         REF_JITTER     => 0.01)
       port map (
-        CLKOUT0 => l_pll_clkout0,
-        CLKOUT1 => l_pll_clkout1,
+        CLKOUT0 => l_pll_clkout0,      --  700Mhz (to BUFPLL)
+        CLKOUT1 => l_pll_clkout1,      --  100Mhz
         LOCKED  => l_pll_locked,
         CLKFBIN => l_pll_clkfbin,
-        CLKIN   => l_pll_clkin,
+        CLKIN   => l_pll_clkin,        --  350Mhz
         RST     => '0');
 
     cmp_clk_div_buf : BUFG
       port map (
-        I => l_pll_clkout1,
+        I => l_pll_clkout1,            --  100Mhz
         O => clk_div_buf);
 
     cmp_dco_bufpll : BUFPLL
       generic map (
-        DIVIDE => 8)
+        DIVIDE => 7)
       port map (
-        IOCLK        => clk_serdes_p,
+        IOCLK        => clk_serdes_p,    -- 700Mhz (to BUFIO2FB and serdes)
         LOCK         => serdes_locked_o,
-        SERDESSTROBE => serdes_strobe,
+        SERDESSTROBE => serdes_strobe,   -- 100Mhz
         GCLK         => clk_div_buf,
         LOCKED       => l_pll_locked,
-        PLLIN        => l_pll_clkout0);
+        PLLIN        => l_pll_clkout0);  -- 700Mhz
 
     -- not used in this case
     clk_serdes_n <= '0';
@@ -247,25 +401,25 @@ begin  -- architecture arch
 
     cmp_dco_bufio_p : BUFIO2
       generic map (
-        DIVIDE        => 8,
+        DIVIDE        => 7,
         DIVIDE_BYPASS => FALSE,
         I_INVERT      => FALSE,
         USE_DOUBLER   => TRUE)
       port map (
-        I            => adc_dco,
-        IOCLK        => clk_serdes_p,
-        DIVCLK       => l_clk_div,
+        I            => adc_dco,        -- 350Mhz DDR
+        IOCLK        => clk_serdes_p,   -- 350Mhz
+        DIVCLK       => l_clk_div,      -- 100Mhz (2*350/7)
         SERDESSTROBE => serdes_strobe);
 
     cmp_dco_bufio_n : BUFIO2
       generic map (
-        DIVIDE        => 8,
+        DIVIDE        => 7,
         DIVIDE_BYPASS => FALSE,
         I_INVERT      => TRUE,
         USE_DOUBLER   => FALSE)
       port map (
         I            => adc_dco,
-        IOCLK        => clk_serdes_n,
+        IOCLK        => clk_serdes_n,   --  350Mhz, 180 phase shift.
         DIVCLK       => open,
         SERDESSTROBE => open);
 
@@ -290,25 +444,23 @@ begin  -- architecture arch
   begin
     if rising_edge(clk_div_buf) then
       -- Shift register to generate bitslip enable once every 8 clock ticks
-      bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'length-1 downto 1);
+      bitslip_sreg <= bitslip_sreg(0) & bitslip_sreg(bitslip_sreg'left downto 1);
 
       -- Generate bitslip and synced signal
-      if(bitslip_sreg(bitslip_sreg'LEFT) = '1') then
-        -- use fr_n pattern (fr_p and fr_n are swapped on the adc mezzanine)
-        if(serdes_out_fr /= "00001111") then
-          serdes_auto_bslip <= '1';
+      if bitslip_sreg(bitslip_sreg'LEFT) = '1' then
+        if serdes_out_fr /= "0000000" and serdes_out_fr /= "1111111" then
+          serdes_bitslip <= '1';
           serdes_synced     <= '0';
         else
-          serdes_auto_bslip <= '0';
+          serdes_bitslip <= '0';
           serdes_synced     <= '1';
         end if;
       else
-        serdes_auto_bslip <= '0';
+        serdes_bitslip <= '0';
       end if;
     end if;
   end process p_auto_bitslip;
 
-  serdes_bitslip  <= serdes_auto_bslip or serdes_bslip_i;
   serdes_synced_o <= serdes_synced;
 
   ------------------------------------------------------------------------------
@@ -320,19 +472,13 @@ begin  -- architecture arch
   ------------------------------------------------------------------------------
 
   -- serdes inputs forming
-  serdes_serial_in <= adc_fr
-                      & adc_outa(3) & adc_outb(3)
-                      & adc_outa(2) & adc_outb(2)
-                      & adc_outa(1) & adc_outb(1)
-                      & adc_outa(0) & adc_outb(0);
-
   gen_adc_data_iserdes : for I in 0 to 8 generate
 
     cmp_adc_iserdes_master : ISERDES2
       generic map (
         BITSLIP_ENABLE => TRUE,
         DATA_RATE      => f_data_rate_sel(g_USE_PLL),
-        DATA_WIDTH     => 8,
+        DATA_WIDTH     => 7,
         INTERFACE_TYPE => "RETIMED",
         SERDES_MODE    => "MASTER")
       port map (
@@ -340,19 +486,19 @@ begin  -- architecture arch
         CFB1      => open,
         DFB       => open,
         FABRICOUT => open,
-        INCDEC    => open,
+        INCDEC    => serdes_incdec(i),
         Q1        => serdes_parallel_out(I)(3),
         Q2        => serdes_parallel_out(I)(2),
         Q3        => serdes_parallel_out(I)(1),
         Q4        => serdes_parallel_out(I)(0),
         SHIFTOUT  => serdes_m2s_shift(I),
-        VALID     => open,
+        VALID     => serdes_valid(i),
         BITSLIP   => serdes_bitslip,
         CE0       => '1',
         CLK0      => clk_serdes_p,
         CLK1      => clk_serdes_n,
         CLKDIV    => clk_div_buf,
-        D         => serdes_serial_in(I),
+        D         => adc_out_dly_m(i),
         IOCE      => serdes_strobe,
         RST       => serdes_arst_i,
         SHIFTIN   => serdes_s2m_shift(I));
@@ -361,7 +507,7 @@ begin  -- architecture arch
       generic map (
         BITSLIP_ENABLE => TRUE,
         DATA_RATE      => f_data_rate_sel(g_USE_PLL),
-        DATA_WIDTH     => 8,
+        DATA_WIDTH     => 7,
         INTERFACE_TYPE => "RETIMED",
         SERDES_MODE    => "SLAVE")
       port map (
@@ -370,7 +516,7 @@ begin  -- architecture arch
         DFB       => open,
         FABRICOUT => open,
         INCDEC    => open,
-        Q1        => serdes_parallel_out(I)(7),
+        Q1        => open,
         Q2        => serdes_parallel_out(I)(6),
         Q3        => serdes_parallel_out(I)(5),
         Q4        => serdes_parallel_out(I)(4),
@@ -381,7 +527,7 @@ begin  -- architecture arch
         CLK0      => clk_serdes_p,
         CLK1      => clk_serdes_n,
         CLKDIV    => clk_div_buf,
-        D         => '0',
+        D         => adc_out_dly_s(i),
         IOCE      => serdes_strobe,
         RST       => serdes_arst_i,
         SHIFTIN   => serdes_m2s_shift(I));
@@ -393,12 +539,14 @@ begin  -- architecture arch
 
   -- Data re-ordering for serdes outputs
   gen_serdes_dout_reorder : for I in 0 to 3 generate
-    gen_serdes_dout_reorder_bits : for J in 0 to 7 generate
+    gen_serdes_dout_reorder_bits : for J in 0 to 6 generate
       -- OUT#B: even bits
-      adc_data_o(I*16 + 2*J)     <= serdes_parallel_out(2*I)(J);
+      adc_data_o(I*16 + 2*J + 2)     <= serdes_parallel_out(2*I)(J);
       -- OUT#A: odd bits
-      adc_data_o(I*16 + 2*J + 1) <= serdes_parallel_out(2*I + 1)(J);
+      adc_data_o(I*16 + 2*J + 3) <= serdes_parallel_out(2*I + 1)(J);
     end generate gen_serdes_dout_reorder_bits;
+    adc_data_o(I*16 + 0) <= '0';
+    adc_data_o(I*16 + 1) <= '0';
   end generate gen_serdes_dout_reorder;
 
 end architecture arch;

@@ -76,17 +76,20 @@ int fa_adc_output_randomizer_set(struct fa_dev *fa, bool enable)
 	uint32_t tx, rx;
 	int err;
 
+	/* Read register A1 */
 	tx  = 0x8000;
 	tx |= (1 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
 	if (err)
 		return err;
 
+        /* Set or clear RAND bit */
 	if (enable)
 		rx |= BIT(6);
 	else
 		rx &= ~BIT(6);
 
+        /* Write back A1 */
 	tx  = 0x0000;
 	tx |= (1 << 8);
 	tx |= (rx & 0xFF);
@@ -106,6 +109,7 @@ bool fa_adc_is_output_randomizer(struct fa_dev *fa)
 	uint32_t tx, rx;
 	int err;
 
+	/* Read register A1 */
 	tx  = 0x8000;
 	tx |= (1 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);

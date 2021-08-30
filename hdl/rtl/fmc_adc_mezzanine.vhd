@@ -69,11 +69,11 @@ entity fmc_adc_mezzanine is
     acq_cfg_ok_o        : out std_logic;
 
     -- Auxiliary trigger input wishbone interface
-    wb_trigin_slave_i : in  t_wishbone_slave_in;
+    wb_trigin_slave_i : in  t_wishbone_slave_in := c_DUMMY_WB_SLAVE_IN;
     wb_trigin_slave_o : out t_wishbone_slave_out;
 
     -- Trigout wishbone interface
-    wb_trigout_slave_i : in  t_wishbone_slave_in;
+    wb_trigout_slave_i : in  t_wishbone_slave_in := c_DUMMY_WB_SLAVE_IN;
     wb_trigout_slave_o : out t_wishbone_slave_out;
 
     -- FMC interface
