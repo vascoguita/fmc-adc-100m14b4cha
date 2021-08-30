@@ -12,6 +12,7 @@
 #include <linux/mfd/core.h>
 #include <linux/fmc.h>
 
+#include "fmc-adc-100m14b4cha-private.h"
 #include "platform_data/fmc-adc-100m14b4cha.h"
 
 #define SVEC_FMC_SLOTS 2
@@ -30,10 +31,10 @@
 enum fa_svec_dev_offsets {
 	FA_SVEC_DBL_ADC_META_START = 0x00000000,
 	FA_SVEC_DBL_ADC_META_END   = 0x00000040,
-  FA_SVEC_ADC1_MEM_START = 0x00002000,
-  FA_SVEC_ADC1_MEM_END   = 0x00003FFF,
-  FA_SVEC_ADC2_MEM_START = 0x00004000,
-  FA_SVEC_ADC2_MEM_END   = 0x00005FFF,
+	FA_SVEC_ADC1_MEM_START = 0x00002000,
+	FA_SVEC_ADC1_MEM_END   = 0x00003FFF,
+	FA_SVEC_ADC2_MEM_START = 0x00004000,
+	FA_SVEC_ADC2_MEM_END   = 0x00005FFF,
 };
 
 static inline struct platform_device *platform_device_register_resndata_mask(
@@ -59,19 +60,19 @@ static inline struct platform_device *platform_device_register_resndata_mask(
 static struct fmc_adc_platform_data fa_svec_adc_pdata[] = {
 	{
 		.flags = FMC_ADC_BIG_ENDIAN |
-		         FMC_ADC_SVEC |
-		         FMC_ADC_NOSQUASH_SCATTERLIST,
+				FMC_ADC_SVEC |
+				FMC_ADC_NOSQUASH_SCATTERLIST,
 		.vme_reg_offset = SVEC_FPGA_CSR_DDR4_ADDR,
-                .vme_dma_offset = SVEC_FPGA_DDR4_DMA,
+		.vme_dma_offset = SVEC_FPGA_DDR4_DMA,
 		.calib_trig_time = 0,
 		.calib_trig_threshold = 0,
 		.calib_trig_internal = 0,
 	}, {
 		.flags = FMC_ADC_BIG_ENDIAN |
-		         FMC_ADC_SVEC |
-		         FMC_ADC_NOSQUASH_SCATTERLIST,
+				FMC_ADC_SVEC |
+				FMC_ADC_NOSQUASH_SCATTERLIST,
 		.vme_reg_offset = SVEC_FPGA_CSR_DDR5_ADDR,
-                .vme_dma_offset = SVEC_FPGA_DDR5_DMA,
+		.vme_dma_offset = SVEC_FPGA_DDR5_DMA,
 		.calib_trig_time = 0,
 		.calib_trig_threshold = 0,
 		.calib_trig_internal = 0,
@@ -145,7 +146,7 @@ static int fa_svec_probe(struct platform_device *pdev)
 	int irq;
 	int i;
 
-        rmem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	rmem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!rmem) {
 		dev_err(&pdev->dev, "Missing memory resource\n");
 		return -EINVAL;
@@ -167,7 +168,7 @@ static int fa_svec_probe(struct platform_device *pdev)
 		struct fmc_slot *slot = fmc_slot_get(pdev->dev.parent, i + 1);
 		int present;
 
-                if (IS_ERR(slot)) {
+		if (IS_ERR(slot)) {
 			dev_err(&pdev->dev,
 				"Can't find FMC slot %d err: %ld\n",
 				i + 1, PTR_ERR(slot));
@@ -183,7 +184,7 @@ static int fa_svec_probe(struct platform_device *pdev)
 
 		memcpy(res, fa_svec_res[i], sizeof(res));
 
-	        res[0].parent = rmem;
+		res[0].parent = rmem;
 		res[0].start += rmem->start;
 		res[0].end += rmem->start;
 		res[2].start += irq;
@@ -207,7 +208,7 @@ static int fa_svec_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, pdev_data);
-        return 0;
+	return 0;
 }
 
 static int fa_svec_remove(struct platform_device *pdev)
@@ -218,12 +219,12 @@ static int fa_svec_remove(struct platform_device *pdev)
 	if (!pdev_data)
 		return 0;
 
-        for (i = 0; i < SVEC_FMC_SLOTS; ++i)
+	for (i = 0; i < SVEC_FMC_SLOTS; ++i)
 		if (pdev_data->adc[i])
 			platform_device_unregister(pdev_data->adc[i]);
 	kfree(pdev_data);
 
-        return 0;
+	return 0;
 }
 
 /**

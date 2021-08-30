@@ -1,6 +1,5 @@
-// SPDX-FileCopyrightText: 2020 CERN (home.cern)
-//
 // SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-FileCopyrightText: 2020 CERN (home.cern)
 
 /*
  * EEPROM calibration block retreival code for fa-dev
@@ -16,10 +15,10 @@
 #include <linux/jiffies.h>
 #include "fmc-adc-100m14b4cha-private.h"
 
-static int fa_calib_temp_period = 0;
+static int fa_calib_temp_period;
 module_param_named(temp_calib_period, fa_calib_temp_period, int, 0444);
 
-static int fa_calib_temp = 0;
+static int fa_calib_temp;
 module_param_named(temp_calib, fa_calib_temp, int, 0444);
 
 /* This identity calibration is used as default */
@@ -48,7 +47,7 @@ static int fa_calib_apply(struct fa_dev *fa)
 		return -EBUSY;
 	}
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_CALIB_APPLY], 1);
-        ndelay(100);
+	ndelay(100);
 	if (fa_calib_is_busy(fa)) {
 		dev_err(&fa->pdev->dev,
 			"%s Calibration value applied but still 'busy'\n",
@@ -134,7 +133,7 @@ static const int64_t gain_dac_error_slope_fix[] = {
 static int fa_calib_dac_gain_fix(int range, uint32_t gain_c,
 				 int32_t delta_temp)
 {
-        int64_t error;
+	int64_t error;
 
 	error = gain_dac_error_slope_fix[range] * delta_temp;
 	error /= 0x2000; /* see comment above for gain_dac_error_slope_fix */
@@ -148,7 +147,7 @@ static bool fa_calib_is_compensation_on(struct fa_dev *fa)
 	if (unlikely((fa->flags & FA_DEV_F_PATTERN_DATA)))
 		return false;
 
-        if (unlikely(fa_calib_temp))
+	if (unlikely(fa_calib_temp))
 		return true;
 
 	return false;
@@ -224,7 +223,7 @@ static int64_t fa_dac_offset_raw_calibrate(int32_t raw_offset,
 	int64_t hwval;
 
 	hwval = ((raw_offset + offset) * gain) >> 15; /* signed */
-        hwval += 0x8000; /* offset binary */
+	hwval += 0x8000; /* offset binary */
 	if (hwval < 0)
 		hwval = 0;
 	if (hwval > 0xffff)
@@ -248,7 +247,7 @@ static int fa_dac_offset_get(struct fa_dev *fa, unsigned int chan)
 		off_uv = DAC_SAT_UP;
 	}
 
-        return off_uv;
+	return off_uv;
 }
 
 /**
@@ -264,8 +263,8 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 {
 	int32_t off_uv = fa_dac_offset_get(fa, chan);
 	int32_t off_uv_raw = fa_dac_offset_raw_get(off_uv);
-        int range = fa->range[chan];
-        struct fa_calib_stanza *cal = &fa->calib.dac[range];
+	int range = fa->range[chan];
+	struct fa_calib_stanza *cal = &fa->calib.dac[range];
 	int gain;
 	int hwval;
 
@@ -290,7 +289,7 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	hwval = fa_dac_offset_raw_calibrate(off_uv_raw, gain,
 					    cal->offset[chan]);
 
-        return  fa_dac_offset_set(fa, chan, hwval);
+	return fa_dac_offset_set(fa, chan, hwval);
 }
 
 void fa_calib_config_chan(struct fa_dev *fa, unsigned int chan,
@@ -504,8 +503,9 @@ int fa_calib_init(struct fa_dev *fa)
 	fa_calib_write(fa, &calib);
 
 	/* First calibration.
-	   The board has just been reset by the carrier before calling this
-	   driver and reading the temperature read needs at least 350ms */
+	 * The board has just been reset by the carrier before calling this
+	 * driver and reading the temperature read needs at least 350ms
+	 */
 	msleep(400);
 	fa_calib_config(fa);
 
