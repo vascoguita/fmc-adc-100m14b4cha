@@ -550,7 +550,7 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
 		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
 		fa_adc_range_set(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
 		/* reset channel offset */
 		fa->user_offset[i] = 0x8000;
