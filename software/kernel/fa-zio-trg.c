@@ -297,8 +297,7 @@ static int zfat_data_done(struct zio_cset *cset)
 				i + 1, fa->n_shots);
 			zio_buffer_store_block(bi, zfad_block[i].block);
 		} else {	/* Free un-filled blocks */
-			dev_dbg(fa->msgdev, "Free un-acquired block %d/%d "
-					"(received %d shots)\n",
+			dev_dbg(fa->msgdev, "Free un-acquired block %d/%d (received %d shots)\n",
 					i + 1, fa->n_shots, fa->n_fires);
 			zio_buffer_free_block(bi, zfad_block[i].block);
 		}
@@ -383,8 +382,7 @@ static int zfat_arm_trigger(struct zio_ti *ti)
 	if (size % 4) {
 		/* should never happen: increase the size accordling */
 		dev_warn(fa->msgdev,
-			"zio data block size should 32bit word aligned."
-			"original size:%d was increased by %d bytes\n",
+			"zio data block size should 32bit word aligned. original size:%d was increased by %d bytes\n",
 			size, size%4);
 		size += size % 4;
 	}
@@ -496,8 +494,8 @@ int fa_trig_init(void)
 
 	err = zio_register_trig(&zfat_type, "adc-100m14b");
 	if (err)
-		pr_err("%s: Cannot register ZIO trigger type"
-		       " \"adc-100m14b\" (error %i)\n", KBUILD_MODNAME, err);
+		pr_err("%s: Cannot register ZIO trigger type \"adc-100m14b\" (error %i)\n",
+			   KBUILD_MODNAME, err);
 	return err;
 }
 

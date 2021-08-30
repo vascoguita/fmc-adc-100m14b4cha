@@ -25,7 +25,8 @@ static const struct fmc_adc_platform_data fmc_adc_pdata = {
 	.calib_trig_internal = 0,
 };
 
-static int fa_spec_probe(struct platform_device *pdev) {
+static int fa_spec_probe(struct platform_device *pdev)
+{
 	static struct resource fa_spec_fdt_res[] = {
 		{
 			.name = "fmc-adc-mem",
@@ -112,7 +113,8 @@ static int fa_spec_probe(struct platform_device *pdev) {
 	return 0;
 }
 
-static int fa_spec_remove(struct platform_device *pdev) {
+static int fa_spec_remove(struct platform_device *pdev)
+{
 	struct platform_device *pdev_child = platform_get_drvdata(pdev);
 
 	platform_device_unregister(pdev_child);
@@ -144,11 +146,10 @@ static const struct platform_device_id fa_spec_id_table[] = {
 };
 
 static struct platform_driver fa_spec_driver = {
-	.driver =
-        {
+	.driver = {
 		.name = "fmc-adc-100m-spec",
 		.owner = THIS_MODULE,
-        },
+	},
 	.id_table = fa_spec_id_table,
 	.probe = fa_spec_probe,
 	.remove = fa_spec_remove,

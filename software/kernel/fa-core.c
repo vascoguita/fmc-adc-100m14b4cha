@@ -20,7 +20,7 @@
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
 
-static int version_ignore = 0;
+static int version_ignore;
 module_param(version_ignore, int, 0644);
 MODULE_PARM_DESC(version_ignore,
 		 "Ignore the version declared in the FPGA and force the driver to load all components (default 0)");
@@ -44,17 +44,18 @@ struct workqueue_struct *fa_workqueue;
 
 
 static int fa_sg_alloc_table_from_pages(struct sg_table *sgt,
-						struct page **pages,
-						unsigned int n_pages,
-						unsigned int offset,
-						unsigned long size,
-						unsigned int max_segment,
-						gfp_t gfp_mask)
+					struct page **pages,
+					unsigned int n_pages,
+					unsigned int offset,
+					unsigned long size,
+					unsigned int max_segment,
+					gfp_t gfp_mask)
 {
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
 	struct scatterlist *sg;
+
 	sg =  __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
-			max_segment, NULL, 0, gfp_mask);
+					  max_segment, NULL, 0, gfp_mask);
 	if (IS_ERR(sg))
 		return PTR_ERR(sg);
 	else
@@ -75,7 +76,7 @@ int fa_adc_output_randomizer_set(struct fa_dev *fa, bool enable)
 	uint32_t tx, rx;
 	int err;
 
-        tx  = 0x8000;
+	tx  = 0x8000;
 	tx |= (1 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
 	if (err)
@@ -105,7 +106,7 @@ bool fa_adc_is_output_randomizer(struct fa_dev *fa)
 	uint32_t tx, rx;
 	int err;
 
-        tx  = 0x8000;
+	tx  = 0x8000;
 	tx |= (1 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
 	if (err)
@@ -156,13 +157,13 @@ int fa_trigger_software(struct fa_dev *fa)
 		return -EPERM;
 	}
 
-        /* Fire if nsamples!=0 */
+	/* Fire if nsamples!=0 */
 	if (!ti->nsamples) {
 		dev_info(&fa->pdev->dev, "pre + post = 0: cannot acquire\n");
 		return -EINVAL;
 	}
 
-        /*
+	/*
 	 * We can do a software trigger if the FSM is not in
 	 * the WAIT trigger status. Wait for it.
 	 * Remember that: timeout is in us, a sample takes 10ns
@@ -376,7 +377,7 @@ err:
  * @enable 0 to disable, 1 to enable
  */
 int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
-                            unsigned int *enable)
+							unsigned int *enable)
 {
 	uint32_t tx, rx;
 	int err;
@@ -472,8 +473,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	if (command == FA100M14B4C_CMD_START) {
 		if (!fa_adc_is_serdes_ready(fa)) {
 			dev_err(fa->msgdev,
-				"Cannot start acquisition: "
-				"SerDes PLL not locked or synchronized (0x%08x)\n",
+				"Cannot start acquisition: SerDes PLL not locked or synchronized (0x%08x)\n",
 				fa_ioread(fa, fa->fa_adc_csr_base + ADC_CSR_STA_REG_OFFSET));
 			return -EBUSY;
 		}
@@ -488,8 +488,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		 * from zfat_arm_trigger() or zfad_input_cset()
 		 */
 		if (!(cset->ti->flags & ZIO_TI_ARMED)) {
-			dev_info(fa->msgdev, "Cannot start acquisition: "
-				 "Trigger refuses to arm\n");
+			dev_info(fa->msgdev,
+					 "Cannot start acquisition: Trigger refuses to arm\n");
 			return -EIO;
 		}
 
@@ -587,8 +587,8 @@ static int __fa_init(struct fa_dev *fa)
 /* This structure lists the various subsystems */
 struct fa_modlist {
 	char *name;
-	int (*init)(struct fa_dev *);
-	void (*exit)(struct fa_dev *);
+	int (*init)(struct fa_dev *fa);
+	void (*exit)(struct fa_dev *fa);
 };
 
 static struct fa_modlist mods[] = {
@@ -685,7 +685,7 @@ static void fa_sg_alloc_table_init(struct fa_dev *fa)
 static struct fmc_adc_platform_data fmc_adc_pdata_default = {
 	.flags = 0,
 	.vme_reg_offset = 0,
-        .vme_dma_offset = 0,
+	.vme_dma_offset = 0,
 	.calib_trig_time = 0,
 	.calib_trig_threshold = 0,
 	.calib_trig_internal = 0,
@@ -737,14 +737,14 @@ static bool fa_is_fpga_valid(struct fa_dev *fa)
 	}
 
 	switch (fa->meta.device) {
-		case FA_META_DEVICE_ID_SVEC_DBL_ADC:
-			break;
-		case FA_META_DEVICE_ID_SPEC:
-			break;
-		default:
-			dev_err(&fa->pdev->dev,
-					"Unknow device ID: %08x\n", fa->meta.device);
-			return false;
+	case FA_META_DEVICE_ID_SVEC_DBL_ADC:
+		break;
+	case FA_META_DEVICE_ID_SPEC:
+		break;
+	default:
+		dev_err(&fa->pdev->dev, "Unknow device ID: %08x\n",
+				fa->meta.device);
+		return false;
 	}
 
 	if (!fa_is_fpga_version_valid(FA_VERSION_DRV, fa->meta.version)) {
@@ -819,7 +819,7 @@ int fa_probe(struct platform_device *pdev)
 		}
 	}
 
-	if(!fa_fmc_slot_is_valid(fa))
+	if (!fa_fmc_slot_is_valid(fa))
 		goto out_fmc_err;
 
 	err = sysfs_create_link(&fa->pdev->dev.kobj, &fa->slot->dev.kobj,
@@ -907,6 +907,7 @@ int fa_remove(struct platform_device *pdev)
 
 	while (--i >= 0) {
 		struct fa_modlist *m = mods + i;
+
 		if (m->exit)
 			m->exit(fa);
 	}
@@ -944,14 +945,14 @@ static int fa_init(void)
 {
 	int ret;
 
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0)
+#if KERNEL_VERSION(3, 15, 0) > LINUX_VERSION_CODE
 	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
 					WQ_NON_REENTRANT | WQ_UNBOUND |
 					WQ_MEM_RECLAIM, 1);
-	#else
+#else
 	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
 				       WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
-	#endif
+#endif
 	if (fa_workqueue == NULL)
 		return -ENOMEM;
 
