@@ -834,7 +834,7 @@ int fa_probe(struct platform_device *pdev)
 	if (err)
 		goto out_meta;
 
-	if (fa_is_fpga_valid(fa))
+	if (!fa_is_fpga_valid(fa))
 		goto out_valid;
 
 	err = fa_dma_request_channel(fa);
