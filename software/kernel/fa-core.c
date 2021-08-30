@@ -20,6 +20,12 @@
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
 
+static int version_ignore = 0;
+module_param(version_ignore, int, 0644);
+MODULE_PARM_DESC(version_ignore,
+		 "Ignore the version declared in the FPGA and force the driver to load all components (default 0)");
+
+
 #define FA_EEPROM_TYPE "at24c64"
 
 
@@ -685,6 +691,72 @@ static struct fmc_adc_platform_data fmc_adc_pdata_default = {
 	.calib_trig_internal = 0,
 };
 
+static int fa_metadata_get(struct fa_dev *fa)
+{
+	struct resource *r;
+	void *mem;
+	int i;
+
+	r = platform_get_resource(fa->pdev, IORESOURCE_MEM, ADC_MEM_META);
+	if (r == NULL) {
+		dev_err(&fa->pdev->dev, "Can't inspect ADC device metadata: missing resource\n");
+		return -ENODEV;
+	}
+
+	mem = ioremap(r->start, resource_size(r));
+	if (!mem) {
+		dev_err(&fa->pdev->dev, "Can't inspect ADC device metadata: failed to map\n");
+		return -ENODEV;
+	}
+
+	/* Dump meta*/
+	for (i = 0; i < sizeof(fa->meta) / 4; ++i)
+		((uint32_t *)&fa->meta)[i] = fa_ioread(fa, mem + (i * 4));
+
+	iounmap(mem);
+	return 0;
+}
+
+static bool fa_is_fpga_version_valid(uint32_t expected, uint32_t found)
+{
+	if (version_ignore)
+		return true;
+	if (FA_VERSION_MAJ(found) != FA_VERSION_MAJ(expected))
+		return false;
+	if (FA_VERSION_MIN(found) < FA_VERSION_MIN(expected))
+		return false;
+	return true;
+}
+
+static bool fa_is_fpga_valid(struct fa_dev *fa)
+{
+	if (fa->meta.vendor != FA_META_VENDOR_ID) {
+		dev_err(&fa->pdev->dev,
+				"Unknow vendor ID: %08x\n", fa->meta.vendor);
+		return false;
+	}
+
+	switch (fa->meta.device) {
+		case FA_META_DEVICE_ID_SVEC_DBL_ADC:
+			break;
+		case FA_META_DEVICE_ID_SPEC:
+			break;
+		default:
+			dev_err(&fa->pdev->dev,
+					"Unknow device ID: %08x\n", fa->meta.device);
+			return false;
+	}
+
+	if (!fa_is_fpga_version_valid(FA_VERSION_DRV, fa->meta.version)) {
+		dev_err(&fa->pdev->dev,
+				"Invalid version: %08x, expected: %08x\n",
+				fa->meta.version, FA_VERSION_DRV);
+		return false;
+	}
+
+	return true;
+}
+
 /* probe and remove are called by fa-spec.c */
 int fa_probe(struct platform_device *pdev)
 {
@@ -758,6 +830,13 @@ int fa_probe(struct platform_device *pdev)
 		goto err_fmc_link;
 	}
 
+	err = fa_metadata_get(fa);
+	if (err)
+		goto out_meta;
+
+	if (!fa_is_fpga_valid(fa))
+		goto out_valid;
+
 	err = fa_dma_request_channel(fa);
 	if (err)
 		goto out_dma;
@@ -801,6 +880,8 @@ out_serdes:
 	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 out_dma:
+out_valid:
+out_meta:
 	sysfs_remove_link(&fa->pdev->dev.kobj, dev_name(&fa->slot->dev));
 err_fmc_link:
 out_fmc_err:

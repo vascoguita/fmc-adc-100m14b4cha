@@ -28,6 +28,8 @@
 #define SVEC_FPGA_DDR5_DMA (0x3000)
 
 enum fa_svec_dev_offsets {
+	FA_SVEC_DBL_ADC_META_START = 0x00000000,
+	FA_SVEC_DBL_ADC_META_END   = 0x00000040,
   FA_SVEC_ADC1_MEM_START = 0x00002000,
   FA_SVEC_ADC1_MEM_END   = 0x00003FFF,
   FA_SVEC_ADC2_MEM_START = 0x00004000,
@@ -93,6 +95,12 @@ static struct resource fa_svec_res1[] = {
 		.start = 0,
 		.end = 0,
 	},
+	{
+		.name = "fmc-adc-100m-meta.1",
+		.flags = IORESOURCE_MEM,
+		.start = FA_SVEC_DBL_ADC_META_START,
+		.end = FA_SVEC_DBL_ADC_META_END,
+	},
 };
 
 static struct resource fa_svec_res2[] = {
@@ -111,6 +119,12 @@ static struct resource fa_svec_res2[] = {
 		.flags = IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHLEVEL,
 		.start = 1,
 		.end = 1,
+	},
+	{
+		.name = "fmc-adc-100m-meta.2",
+		.flags = IORESOURCE_MEM,
+		.start = FA_SVEC_DBL_ADC_META_START,
+		.end = FA_SVEC_DBL_ADC_META_END,
 	},
 };
 
@@ -173,6 +187,9 @@ static int fa_svec_probe(struct platform_device *pdev)
 		res[0].start += rmem->start;
 		res[0].end += rmem->start;
 		res[2].start += irq;
+		res[3].start = rmem->start + FA_SVEC_DBL_ADC_META_START;
+		res[3].end = rmem->start + FA_SVEC_DBL_ADC_META_END;
+
 		pdev_data->adc[i] = platform_device_register_resndata_mask(&pdev->dev,
 									   "fmc-adc-100m",
 									   PLATFORM_DEVID_AUTO,

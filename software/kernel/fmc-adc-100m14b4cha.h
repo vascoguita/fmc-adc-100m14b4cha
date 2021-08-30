@@ -139,4 +139,15 @@ struct fa_calib {
 	struct fa_calib_stanza dac[FA_CALIB_STANZA_N];  /* For user offset, one per range */
 };
 
+#define FA_VERSION_DRV FA_VERSION_BLD
+#define FA_VERSION_MAJ(_VER) ((_VER >> 24) & 0xFF)
+#define FA_VERSION_MIN(_VER) ((_VER >> 16) & 0xFF)
+#define FA_VERSION_PATCH(_VER) (_VER & 0xFFFF)
+
+#define PCI_VENDOR_ID_CERN      (0x10DC)
+
+#define FA_META_VENDOR_ID PCI_VENDOR_ID_CERN
+#define FA_META_DEVICE_ID_SPEC 0x41444301
+#define FA_META_DEVICE_ID_SVEC_DBL_ADC 0x41444302
+
 #endif /*  FMC_ADC_H_ */
