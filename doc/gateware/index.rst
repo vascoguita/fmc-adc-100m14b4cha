@@ -377,7 +377,7 @@ Mezzanine 1-wire Master
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
-   FIXME talk about the themometer core in general-cores
+   FIXME talk about the thermometer core in general-cores
 
 Mezzanine I2C Master
 ~~~~~~~~~~~~~~~~~~~~
@@ -470,8 +470,8 @@ register enables the sampling clock (Si570 chip), and the other
 internal components. Also, in order to use the input offset DACs, the
 ``OFFSET_DAC_CLR_N`` field must be set to one.
 
-The field ``MAN_BITSLIP`` allows to ’manually’ control the ADC data
-alignment in the de-serialiser. The fields ``TRIG_LED`` and
+The field ``SERDES_CALIB`` allows to ’manually’ restart the timing
+calibration and alignment in the de-serialiser. The fields ``TRIG_LED`` and
 ``ACQ_LED`` allows to control the FMC front panel LEDs. Those four
 fields are for test purpose only and must stay zero in normal
 operation.
@@ -1046,6 +1046,9 @@ state.
 .. note::
    The start of an acquisition is prohibited if either the number of
    shots or the number of post-trigger samples is equal to zero.
+
+.. note::
+   Acquired data are always stored to be read in little endian.
 
 Single-shot Mode
 ----------------
