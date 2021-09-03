@@ -203,6 +203,12 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
+		if (usr_val & 0xFFFF0000) {
+			dev_err(dev,
+				"Offset must be a 16bit unsigned value (0x%08x)\n",
+				usr_val);
+			return -EINVAL;
+		}
 		spin_lock(&fa->zdev->cset->lock);
 		fa->zero_offset[i] = usr_val;
 		err = fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
@@ -234,6 +240,12 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
+		if (usr_val & 0xFFFF0000) {
+			dev_err(dev,
+				"Offset must be a 16bit unsigned value (0x%08x)\n",
+				usr_val);
+			return -EINVAL;
+		}
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[i] = usr_val;
 		err = fa_calib_dac_config_chan(fa, i, 0,
@@ -242,6 +254,13 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		return err;
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev);
+		if (usr_val & 0xFFFF0000) {
+			dev_err(dev,
+				"Offset must be a 16bit unsigned value (0x%08x)\n",
+				usr_val);
+			return -EINVAL;
+		}
+
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
 		err = fa_calib_dac_config_chan(fa, chan->index, 0,
