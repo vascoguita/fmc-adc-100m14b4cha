@@ -531,10 +531,11 @@ begin -- architecture arch
         d_i       => fmc_irq(I),
         q_o       => irq_vector(I));
 
-    cmp_fmc_adc_mezzanine : fmc_adc_mezzanine
+    cmp_fmc_adc_mezzanine : entity work.fmc_adc_mezzanine
       generic map (
         g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
         g_SPARTAN6_USE_PLL   => TRUE,
+        g_BYTE_SWAP          => TRUE,
         g_FMC_ADC_NR         => I,
         g_WB_MODE            => PIPELINED,
         g_WB_GRANULARITY     => BYTE)

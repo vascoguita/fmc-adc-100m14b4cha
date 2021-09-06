@@ -15,7 +15,7 @@ package fmc_adc_100ms_csr_pkg is
     ctl_fsm_cmd      : std_logic_vector(1 downto 0);
     ctl_fmc_clk_oe   : std_logic;
     ctl_offset_dac_clr_n : std_logic;
-    ctl_man_bitslip  : std_logic;
+    ctl_serdes_calib : std_logic;
     ctl_trig_led     : std_logic;
     ctl_acq_led      : std_logic;
     ctl_clear_trig_stat : std_logic;
@@ -47,7 +47,6 @@ package fmc_adc_100ms_csr_pkg is
 
   type t_fmc_adc_100ms_csr_slave_out is record
     ctl_fsm_cmd      : std_logic_vector(1 downto 0);
-    ctl_man_bitslip  : std_logic;
     ctl_clear_trig_stat : std_logic;
     ctl_calib_apply  : std_logic;
     sta_fsm          : std_logic_vector(2 downto 0);
@@ -120,6 +119,7 @@ architecture syn of fmc_adc_100ms_csr is
   signal wb_wip                         : std_logic;
   signal ctl_fmc_clk_oe_reg             : std_logic;
   signal ctl_offset_dac_clr_n_reg       : std_logic;
+  signal ctl_serdes_calib_reg           : std_logic;
   signal ctl_trig_led_reg               : std_logic;
   signal ctl_acq_led_reg                : std_logic;
   signal ctl_wreq                       : std_logic;
@@ -250,7 +250,7 @@ begin
   fmc_adc_100ms_csr_o.ctl_fsm_cmd <= wr_dat_d0(1 downto 0);
   fmc_adc_100ms_csr_o.ctl_fmc_clk_oe <= ctl_fmc_clk_oe_reg;
   fmc_adc_100ms_csr_o.ctl_offset_dac_clr_n <= ctl_offset_dac_clr_n_reg;
-  fmc_adc_100ms_csr_o.ctl_man_bitslip <= wr_dat_d0(4);
+  fmc_adc_100ms_csr_o.ctl_serdes_calib <= ctl_serdes_calib_reg;
   fmc_adc_100ms_csr_o.ctl_trig_led <= ctl_trig_led_reg;
   fmc_adc_100ms_csr_o.ctl_acq_led <= ctl_acq_led_reg;
   fmc_adc_100ms_csr_o.ctl_clear_trig_stat <= wr_dat_d0(8);
@@ -260,6 +260,7 @@ begin
       if rst_n_i = '0' then
         ctl_fmc_clk_oe_reg <= '0';
         ctl_offset_dac_clr_n_reg <= '0';
+        ctl_serdes_calib_reg <= '0';
         ctl_trig_led_reg <= '0';
         ctl_acq_led_reg <= '0';
         ctl_wack <= '0';
@@ -267,6 +268,7 @@ begin
         if ctl_wreq = '1' then
           ctl_fmc_clk_oe_reg <= wr_dat_d0(2);
           ctl_offset_dac_clr_n_reg <= wr_dat_d0(3);
+          ctl_serdes_calib_reg <= wr_dat_d0(4);
           ctl_trig_led_reg <= wr_dat_d0(6);
           ctl_acq_led_reg <= wr_dat_d0(7);
         end if;
@@ -624,7 +626,7 @@ begin
   end process;
 
   -- Process for read requests.
-  process (rd_adr_d0, rd_req_d0, fmc_adc_100ms_csr_i.ctl_fsm_cmd, ctl_fmc_clk_oe_reg, ctl_offset_dac_clr_n_reg, fmc_adc_100ms_csr_i.ctl_man_bitslip, ctl_trig_led_reg, ctl_acq_led_reg, fmc_adc_100ms_csr_i.ctl_clear_trig_stat, fmc_adc_100ms_csr_i.ctl_calib_apply, fmc_adc_100ms_csr_i.sta_fsm, fmc_adc_100ms_csr_i.sta_serdes_pll, fmc_adc_100ms_csr_i.sta_serdes_synced, fmc_adc_100ms_csr_i.sta_acq_cfg, fmc_adc_100ms_csr_i.sta_fmc_nr, fmc_adc_100ms_csr_i.sta_calib_busy, fmc_adc_100ms_csr_i.trig_stat_ext, fmc_adc_100ms_csr_i.trig_stat_sw, fmc_adc_100ms_csr_i.trig_stat_time, fmc_adc_100ms_csr_i.trig_stat_ch1, fmc_adc_100ms_csr_i.trig_stat_ch2, fmc_adc_100ms_csr_i.trig_stat_ch3, fmc_adc_100ms_csr_i.trig_stat_ch4, trig_en_ext_reg, fmc_adc_100ms_csr_i.trig_en_sw, trig_en_time_reg, fmc_adc_100ms_csr_i.trig_en_aux_time, trig_en_ch1_reg, trig_en_ch2_reg, trig_en_ch3_reg, trig_en_ch4_reg, trig_pol_ext_reg, trig_pol_ch1_reg, trig_pol_ch2_reg, trig_pol_ch3_reg, trig_pol_ch4_reg, ext_trig_dly_reg, shots_nbr_reg, fmc_adc_100ms_csr_i.shots_remain, fmc_adc_100ms_csr_i.multi_depth, fmc_adc_100ms_csr_i.trig_pos, fmc_adc_100ms_csr_i.fs_freq, downsample_reg, pre_samples_reg, post_samples_reg, fmc_adc_100ms_csr_i.samples_cnt, fmc_adc_ch1_i.dat, fmc_adc_ch1_rack, fmc_adc_ch2_i.dat, fmc_adc_ch2_rack, fmc_adc_ch3_i.dat, fmc_adc_ch3_rack, fmc_adc_ch4_i.dat, fmc_adc_ch4_rack) begin
+  process (rd_adr_d0, rd_req_d0, fmc_adc_100ms_csr_i.ctl_fsm_cmd, ctl_fmc_clk_oe_reg, ctl_offset_dac_clr_n_reg, ctl_serdes_calib_reg, ctl_trig_led_reg, ctl_acq_led_reg, fmc_adc_100ms_csr_i.ctl_clear_trig_stat, fmc_adc_100ms_csr_i.ctl_calib_apply, fmc_adc_100ms_csr_i.sta_fsm, fmc_adc_100ms_csr_i.sta_serdes_pll, fmc_adc_100ms_csr_i.sta_serdes_synced, fmc_adc_100ms_csr_i.sta_acq_cfg, fmc_adc_100ms_csr_i.sta_fmc_nr, fmc_adc_100ms_csr_i.sta_calib_busy, fmc_adc_100ms_csr_i.trig_stat_ext, fmc_adc_100ms_csr_i.trig_stat_sw, fmc_adc_100ms_csr_i.trig_stat_time, fmc_adc_100ms_csr_i.trig_stat_ch1, fmc_adc_100ms_csr_i.trig_stat_ch2, fmc_adc_100ms_csr_i.trig_stat_ch3, fmc_adc_100ms_csr_i.trig_stat_ch4, trig_en_ext_reg, fmc_adc_100ms_csr_i.trig_en_sw, trig_en_time_reg, fmc_adc_100ms_csr_i.trig_en_aux_time, trig_en_ch1_reg, trig_en_ch2_reg, trig_en_ch3_reg, trig_en_ch4_reg, trig_pol_ext_reg, trig_pol_ch1_reg, trig_pol_ch2_reg, trig_pol_ch3_reg, trig_pol_ch4_reg, ext_trig_dly_reg, shots_nbr_reg, fmc_adc_100ms_csr_i.shots_remain, fmc_adc_100ms_csr_i.multi_depth, fmc_adc_100ms_csr_i.trig_pos, fmc_adc_100ms_csr_i.fs_freq, downsample_reg, pre_samples_reg, post_samples_reg, fmc_adc_100ms_csr_i.samples_cnt, fmc_adc_ch1_i.dat, fmc_adc_ch1_rack, fmc_adc_ch2_i.dat, fmc_adc_ch2_rack, fmc_adc_ch3_i.dat, fmc_adc_ch3_rack, fmc_adc_ch4_i.dat, fmc_adc_ch4_rack) begin
     -- By default ack read requests
     rd_dat_d0 <= (others => 'X');
     fmc_adc_ch1_re <= '0';
@@ -640,7 +642,7 @@ begin
         rd_dat_d0(1 downto 0) <= fmc_adc_100ms_csr_i.ctl_fsm_cmd;
         rd_dat_d0(2) <= ctl_fmc_clk_oe_reg;
         rd_dat_d0(3) <= ctl_offset_dac_clr_n_reg;
-        rd_dat_d0(4) <= fmc_adc_100ms_csr_i.ctl_man_bitslip;
+        rd_dat_d0(4) <= ctl_serdes_calib_reg;
         rd_dat_d0(5) <= '0';
         rd_dat_d0(6) <= ctl_trig_led_reg;
         rd_dat_d0(7) <= ctl_acq_led_reg;

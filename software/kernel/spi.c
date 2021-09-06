@@ -82,6 +82,9 @@ int fa_spi_init(struct fa_dev *fa)
 	/* Force 2's complement data output (register 1, bit 5) */
 	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, BIT(8) | BIT(5), &rx);
 
+	/* 2 lanes, 14-bit serializaion (register 2) */
+	fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, (2 << 8) | 0x1, &rx);
+
 	return 0;
 }
 
