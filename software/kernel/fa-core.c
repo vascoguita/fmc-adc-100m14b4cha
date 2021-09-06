@@ -592,7 +592,6 @@ struct fa_modlist {
 };
 
 static struct fa_modlist mods[] = {
-	{"spi", fa_spi_init, fa_spi_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
 	{"debug", fa_debug_init, fa_debug_exit},
 	{"calibration", fa_calib_init, fa_calib_exit},
@@ -843,6 +842,10 @@ int fa_probe(struct platform_device *pdev)
 
 	fa_clock_enable(fa);
 
+	err = fa_spi_init(fa);
+	if (err)
+		goto out_spi;
+
 	err = fa_adc_wait_serdes_ready(fa, msecs_to_jiffies(10));
 	if (err) {
 		dev_err(&fa->pdev->dev, "The SERDES did not syncronize\n");
@@ -882,6 +885,8 @@ out:
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
 out_serdes:
+	fa_spi_exit(fa);
+out_spi:
 	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 out_dma:
@@ -916,6 +921,8 @@ int fa_remove(struct platform_device *pdev)
 		if (m->exit)
 			m->exit(fa);
 	}
+	fa_spi_exit(fa);
+
 	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 
