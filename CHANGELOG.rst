@@ -6,8 +6,8 @@
 Changelog
 =========
 
-6.0.0 - 2021
-============
+6.0.0 - 2021-09-07
+==================
 Added
 -----
 - hdl: configurable auto byte swap in hardware, useful for SVEC to reduce software complexity
