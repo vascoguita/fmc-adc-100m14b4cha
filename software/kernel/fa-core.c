@@ -12,12 +12,19 @@
 #include <linux/mod_devicetable.h>
 #include <uapi/linux/ipmi/fru.h>
 #include <linux/fmc.h>
+#include <linux/io.h>
 
 #include "fmc-adc-100m14b4cha-private.h"
 #include <platform_data/fmc-adc-100m14b4cha.h>
 
 static int fa_enable_test_data_fpga;
 module_param_named(enable_test_data_fpga, fa_enable_test_data_fpga, int, 0444);
+
+static int version_ignore;
+module_param(version_ignore, int, 0644);
+MODULE_PARM_DESC(version_ignore,
+		 "Ignore the version declared in the FPGA and force the driver to load all components (default 0)");
+
 
 #define FA_EEPROM_TYPE "at24c64"
 
@@ -36,6 +43,29 @@ static const int zfad_hw_range[] = {
 struct workqueue_struct *fa_workqueue;
 
 
+static int fa_sg_alloc_table_from_pages(struct sg_table *sgt,
+					struct page **pages,
+					unsigned int n_pages,
+					unsigned int offset,
+					unsigned long size,
+					unsigned int max_segment,
+					gfp_t gfp_mask)
+{
+#if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
+	struct scatterlist *sg;
+
+	sg =  __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
+					  max_segment, NULL, 0, gfp_mask);
+	if (IS_ERR(sg))
+		return PTR_ERR(sg);
+	else
+		return 0;
+#else
+	return __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
+			max_segment, gfp_mask);
+#endif
+}
+
 /**
  * Enable/Disable Data Output Randomizer
  * @fa: the adc descriptor
@@ -46,17 +76,20 @@ int fa_adc_output_randomizer_set(struct fa_dev *fa, bool enable)
 	uint32_t tx, rx;
 	int err;
 
-        tx  = 0x8000;
+	/* Read register A1 */
+	tx  = 0x8000;
 	tx |= (1 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
 	if (err)
 		return err;
 
+        /* Set or clear RAND bit */
 	if (enable)
 		rx |= BIT(6);
 	else
 		rx &= ~BIT(6);
 
+        /* Write back A1 */
 	tx  = 0x0000;
 	tx |= (1 << 8);
 	tx |= (rx & 0xFF);
@@ -76,7 +109,8 @@ bool fa_adc_is_output_randomizer(struct fa_dev *fa)
 	uint32_t tx, rx;
 	int err;
 
-        tx  = 0x8000;
+	/* Read register A1 */
+	tx  = 0x8000;
 	tx |= (1 << 8);
 	err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
 	if (err)
@@ -127,13 +161,13 @@ int fa_trigger_software(struct fa_dev *fa)
 		return -EPERM;
 	}
 
-        /* Fire if nsamples!=0 */
+	/* Fire if nsamples!=0 */
 	if (!ti->nsamples) {
 		dev_info(&fa->pdev->dev, "pre + post = 0: cannot acquire\n");
 		return -EINVAL;
 	}
 
-        /*
+	/*
 	 * We can do a software trigger if the FSM is not in
 	 * the WAIT trigger status. Wait for it.
 	 * Remember that: timeout is in us, a sample takes 10ns
@@ -347,7 +381,7 @@ err:
  * @enable 0 to disable, 1 to enable
  */
 int fa_adc_data_pattern_get(struct fa_dev *fa, uint16_t *pattern,
-                            unsigned int *enable)
+							unsigned int *enable)
 {
 	uint32_t tx, rx;
 	int err;
@@ -443,8 +477,7 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 	if (command == FA100M14B4C_CMD_START) {
 		if (!fa_adc_is_serdes_ready(fa)) {
 			dev_err(fa->msgdev,
-				"Cannot start acquisition: "
-				"SerDes PLL not locked or synchronized (0x%08x)\n",
+				"Cannot start acquisition: SerDes PLL not locked or synchronized (0x%08x)\n",
 				fa_ioread(fa, fa->fa_adc_csr_base + ADC_CSR_STA_REG_OFFSET));
 			return -EBUSY;
 		}
@@ -459,8 +492,8 @@ int zfad_fsm_command(struct fa_dev *fa, uint32_t command)
 		 * from zfat_arm_trigger() or zfad_input_cset()
 		 */
 		if (!(cset->ti->flags & ZIO_TI_ARMED)) {
-			dev_info(fa->msgdev, "Cannot start acquisition: "
-				 "Trigger refuses to arm\n");
+			dev_info(fa->msgdev,
+					 "Cannot start acquisition: Trigger refuses to arm\n");
 			return -EIO;
 		}
 
@@ -484,7 +517,11 @@ static void fa_init_timetag(struct fa_dev *fa)
 {
 	unsigned long seconds;
 
+#if KERNEL_VERSION(5, 11, 0) <= LINUX_VERSION_CODE
+	seconds = ktime_get_real_seconds();
+#else
 	seconds = get_seconds();
+#endif
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_U],
 		  (seconds >> 32) & 0xFFFFFFFF);
 	fa_writel(fa, fa->fa_utc_base, &zfad_regs[ZFA_UTC_SECONDS_L],
@@ -517,12 +554,8 @@ static int __fa_init(struct fa_dev *fa)
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFA_CTL_FMS_CMD],
 		   FA100M14B4C_CMD_STOP);
 	/* Initialize channels to use 1V range */
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
 		fa_adc_range_set(fa, &zdev->cset->chan[i], FA100M14B4C_RANGE_1V);
-		/* reset channel offset */
-		fa->user_offset[i] = 0;
-		fa->zero_offset[i] = 0;
-	}
 
 	/* Set decimation to minimum */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_SR_UNDER], 1);
@@ -554,12 +587,11 @@ static int __fa_init(struct fa_dev *fa)
 /* This structure lists the various subsystems */
 struct fa_modlist {
 	char *name;
-	int (*init)(struct fa_dev *);
-	void (*exit)(struct fa_dev *);
+	int (*init)(struct fa_dev *fa);
+	void (*exit)(struct fa_dev *fa);
 };
 
 static struct fa_modlist mods[] = {
-	{"spi", fa_spi_init, fa_spi_exit},
 	{"zio", fa_zio_init, fa_zio_exit},
 	{"debug", fa_debug_init, fa_debug_exit},
 	{"calibration", fa_calib_init, fa_calib_exit},
@@ -645,18 +677,84 @@ static void fa_sg_alloc_table_init(struct fa_dev *fa)
 	if (fa_is_flag_set(fa, FMC_ADC_NOSQUASH_SCATTERLIST))
 		fa->sg_alloc_table_from_pages = sg_alloc_table_from_pages_no_squash;
 	else
-		fa->sg_alloc_table_from_pages = __sg_alloc_table_from_pages;
+		fa->sg_alloc_table_from_pages = fa_sg_alloc_table_from_pages;
 
 }
 
 static struct fmc_adc_platform_data fmc_adc_pdata_default = {
 	.flags = 0,
 	.vme_reg_offset = 0,
-        .vme_dma_offset = 0,
+	.vme_dma_offset = 0,
 	.calib_trig_time = 0,
 	.calib_trig_threshold = 0,
 	.calib_trig_internal = 0,
 };
+
+static int fa_metadata_get(struct fa_dev *fa)
+{
+	struct resource *r;
+	void *mem;
+	int i;
+
+	r = platform_get_resource(fa->pdev, IORESOURCE_MEM, ADC_MEM_META);
+	if (r == NULL) {
+		dev_err(&fa->pdev->dev, "Can't inspect ADC device metadata: missing resource\n");
+		return -ENODEV;
+	}
+
+	mem = ioremap(r->start, resource_size(r));
+	if (!mem) {
+		dev_err(&fa->pdev->dev, "Can't inspect ADC device metadata: failed to map\n");
+		return -ENODEV;
+	}
+
+	/* Dump meta*/
+	for (i = 0; i < sizeof(fa->meta) / 4; ++i)
+		((uint32_t *)&fa->meta)[i] = fa_ioread(fa, mem + (i * 4));
+
+	iounmap(mem);
+	return 0;
+}
+
+static bool fa_is_fpga_version_valid(uint32_t expected, uint32_t found)
+{
+	if (version_ignore)
+		return true;
+	if (FA_VERSION_MAJ(found) != FA_VERSION_MAJ(expected))
+		return false;
+	if (FA_VERSION_MIN(found) < FA_VERSION_MIN(expected))
+		return false;
+	return true;
+}
+
+static bool fa_is_fpga_valid(struct fa_dev *fa)
+{
+	if (fa->meta.vendor != FA_META_VENDOR_ID) {
+		dev_err(&fa->pdev->dev,
+				"Unknow vendor ID: %08x\n", fa->meta.vendor);
+		return false;
+	}
+
+	switch (fa->meta.device) {
+	case FA_META_DEVICE_ID_SVEC_DBL_ADC:
+		break;
+	case FA_META_DEVICE_ID_SPEC:
+		break;
+	default:
+		dev_err(&fa->pdev->dev, "Unknow device ID: %08x\n",
+				fa->meta.device);
+		return false;
+	}
+
+	if (!fa_is_fpga_version_valid(FA_VERSION_DRV, fa->meta.version)) {
+		dev_err(&fa->pdev->dev,
+				"Invalid version: %08x, expected: %08x\n",
+				fa->meta.version, FA_VERSION_DRV);
+		return false;
+	}
+
+	return true;
+}
 
 /* probe and remove are called by fa-spec.c */
 int fa_probe(struct platform_device *pdev)
@@ -720,7 +818,7 @@ int fa_probe(struct platform_device *pdev)
 		}
 	}
 
-	if(!fa_fmc_slot_is_valid(fa))
+	if (!fa_fmc_slot_is_valid(fa))
 		goto out_fmc_err;
 
 	err = sysfs_create_link(&fa->pdev->dev.kobj, &fa->slot->dev.kobj,
@@ -731,11 +829,22 @@ int fa_probe(struct platform_device *pdev)
 		goto err_fmc_link;
 	}
 
+	err = fa_metadata_get(fa);
+	if (err)
+		goto out_meta;
+
+	if (!fa_is_fpga_valid(fa))
+		goto out_valid;
+
 	err = fa_dma_request_channel(fa);
 	if (err)
 		goto out_dma;
 
 	fa_clock_enable(fa);
+
+	err = fa_spi_init(fa);
+	if (err)
+		goto out_spi;
 
 	err = fa_adc_wait_serdes_ready(fa, msecs_to_jiffies(10));
 	if (err) {
@@ -743,6 +852,11 @@ int fa_probe(struct platform_device *pdev)
 		goto out_serdes;
 	}
 
+	/* reset channel offset before calibration */
+	for (i = 0; i < FA100M14B4C_NCHAN; ++i) {
+		fa->user_offset[i] = 0x8000;
+		fa->zero_offset[i] = 0x8000;
+	}
 	/* init all subsystems */
 	for (i = 0, m = mods; i < ARRAY_SIZE(mods); i++, m++) {
 		dev_dbg(fa->msgdev, "Calling init for \"%s\"\n", m->name);
@@ -771,9 +885,13 @@ out:
 			m->exit(fa);
 	iounmap(fa->fa_top_level);
 out_serdes:
+	fa_spi_exit(fa);
+out_spi:
 	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 out_dma:
+out_valid:
+out_meta:
 	sysfs_remove_link(&fa->pdev->dev.kobj, dev_name(&fa->slot->dev));
 err_fmc_link:
 out_fmc_err:
@@ -799,9 +917,12 @@ int fa_remove(struct platform_device *pdev)
 
 	while (--i >= 0) {
 		struct fa_modlist *m = mods + i;
+
 		if (m->exit)
 			m->exit(fa);
 	}
+	fa_spi_exit(fa);
+
 	fa_clock_disable(fa);
 	fa_dma_release_channel(fa);
 
@@ -836,14 +957,14 @@ static int fa_init(void)
 {
 	int ret;
 
-	#if LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0)
+#if KERNEL_VERSION(3, 15, 0) > LINUX_VERSION_CODE
 	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
 					WQ_NON_REENTRANT | WQ_UNBOUND |
 					WQ_MEM_RECLAIM, 1);
-	#else
+#else
 	fa_workqueue = alloc_workqueue(fa_dev_drv.driver.name,
 				       WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
-	#endif
+#endif
 	if (fa_workqueue == NULL)
 		return -ENOMEM;
 

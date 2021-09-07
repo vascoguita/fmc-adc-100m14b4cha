@@ -4,53 +4,43 @@
  * Author: Federico Vaga <federico.vaga@cern.ch>
  */
 
+#include <linux/kernel.h>
 #include <linux/errno.h>
+#include <linux/types.h>
+
 #ifdef CONFIG_FMC_ADC_SVEC
 #include "vmebus.h"
 #endif
 
 #include "fmc-adc-100m14b4cha-private.h"
 
-/* Endianess */
-#ifndef LITTLE_ENDIAN
-#define LITTLE_ENDIAN 0
-#endif
-
-#ifndef BIG_ENDIAN
-#define BIG_ENDIAN 1
-#endif
-
 static void zfad_dma_done(struct zio_cset *cset);
 
 
-static int __get_endian(void)
-{
-	int i = 1;
-	char *p = (char *)&i;
-
-	if (p[0] == 1)
-		return LITTLE_ENDIAN;
-	else
-		return BIG_ENDIAN;
-}
-
-
 /**
- * Fix endianess from big to host endianess (32bit)
+ * Fix endianness from little to host endianess (32bit)
+ * @byte_lenght: number of bytes to fix (32bit aligned)
+ * @buffer: buffer to fix
+ *
+ * Data coming from the ADC IP-CORE are little-endian, so on big endian CPUs
+ * we have to swap the byte order.
  */
-static void __endianness(unsigned int byte_length, void *buffer)
+#ifdef __BIG_ENDIAN
+static void fix_endianness(unsigned int byte_length, void *buffer)
 {
-	/* CPU may be little endian, VME is big endian */
-	if (__get_endian() == LITTLE_ENDIAN) {
-		/* swap samples and trig timetag all seen as 32bits words */
-		int i;
-		int size = byte_length / 4;
-		uint32_t *ptr = buffer;
+	/* swap samples and trig timetag all seen as 32bits words */
+	int i;
+	int size = byte_length / 4;
+	uint32_t *ptr = buffer;
 
-		for (i = 0; i < size; ++i, ++ptr)
-			*ptr = __be32_to_cpu(*ptr);
-	}
+	for (i = 0; i < size; ++i, ++ptr)
+		le32_to_cpus(ptr);
 }
+#else
+static void fix_endianness(unsigned int byte_length, void *buffer)
+{
+}
+#endif
 
 struct zfad_timetag {
 	uint32_t sec_low;
@@ -76,7 +66,7 @@ static bool fa_dmaengine_filter_svec(struct dma_chan *dchan, void *arg)
 	struct fa_dev *fa = arg;
 	struct device *device_ref;
 
-        device_ref = fa->pdev->dev.parent->parent->parent->parent->parent->parent;
+	device_ref = fa->pdev->dev.parent->parent->parent->parent->parent->parent;
 
 	return (dchan->device->dev == device_ref);
 }
@@ -87,7 +77,7 @@ int fa_dma_request_channel(struct fa_dev *fa)
 	struct resource *r;
 	int dma_dev_id;
 
-        if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
 		return 0;
 
 	r = platform_get_resource(fa->pdev, IORESOURCE_DMA, ADC_DMA);
@@ -189,7 +179,7 @@ static uint32_t fa_ddr_offset_multi(struct fa_dev *fa, uint32_t shot_n)
 	struct zio_cset *cset = fa->zdev->cset;
 	uint32_t off;
 
-        off = cset->interleave->current_ctrl->ssize * cset->ti->nsamples;
+	off = cset->interleave->current_ctrl->ssize * cset->ti->nsamples;
 	off += FA_TRIG_TIMETAG_BYTES;
 	off *= shot_n;
 
@@ -200,11 +190,10 @@ static uint32_t fa_ddr_offset(struct fa_dev *fa, uint32_t shot_n)
 {
 	WARN(fa->n_shots == 1 && shot_n != 0,
 	     "Inconsistent shot number %d\n", shot_n);
-	if (fa->n_shots == 1) {
+	if (fa->n_shots == 1)
 		return fa_ddr_offset_single(fa);
-	} else {
+	else
 		return fa_ddr_offset_multi(fa, shot_n);
-	}
 }
 
 static unsigned int zfad_block_n_pages(struct zio_block *block)
@@ -320,12 +309,7 @@ static int zfad_dma_block_to_pages(struct page **pages, unsigned int nr_pages,
 static void zfad_dma_context_exit_svec(struct zio_cset *cset,
 				       struct zfad_block *zfad_block)
 {
-	struct fa_dev *fa = cset->zdev->priv_d;
-
 	kfree(zfad_block->dma_ctx);
-	if (fa_is_flag_set(fa, FMC_ADC_DATA_NO_SWAP))
-		return;
-	__endianness(zfad_block->block->datalen, zfad_block->block->data);
 }
 
 static void zfad_dma_context_exit(struct zio_cset *cset,
@@ -333,6 +317,7 @@ static void zfad_dma_context_exit(struct zio_cset *cset,
 {
 	struct fa_dev *fa = cset->zdev->priv_d;
 
+	fix_endianness(zfad_block->block->datalen, zfad_block->block->data);
 	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
 		zfad_dma_context_exit_svec(cset, zfad_block);
 }
@@ -546,7 +531,7 @@ static int fa_svec_ddr_window_set(struct fa_dev *fa, unsigned int offset)
 		return -ENODEV;
 	fa_iowrite(fa, offset, addr);
 
-        return 0;
+	return 0;
 }
 
 static int fa_dmaengine_slave_config(struct fa_dev *fa,
@@ -582,7 +567,7 @@ static int fa_dma_shot_wait_svec(struct fa_dev *fa,
 {
 	int err;
 
-        if (fa->n_shots == 1)
+	if (fa->n_shots == 1)
 		return 0;
 
 	err = wait_for_completion_interruptible_timeout(&zfad_block->shot_done,
@@ -596,7 +581,7 @@ static int fa_dma_shot_wait_svec(struct fa_dev *fa,
 		return -EINVAL;
 	}
 
-        return 0;
+	return 0;
 }
 
 static int fa_dma_start_svec(struct zio_cset *cset)
@@ -698,12 +683,11 @@ static int zfad_dma_start(struct zio_cset *cset)
 	err = fa_fsm_wait_state(fa, FA100M14B4C_STATE_IDLE, 10);
 	if (err) {
 		dev_warn(&fa->pdev->dev,
-			 "Can't start DMA on the last acquisition, "
-			 "State Machine is not IDLE\n");
+			 "Can't start DMA on the last acquisition, State Machine is not IDLE\n");
 		return err;
 	}
 
-        dev_dbg(&fa->pdev->dev,
+	dev_dbg(&fa->pdev->dev,
 		"Start DMA transfer for %i shots of %i samples\n",
 		fa->n_shots, cset->ti->nsamples);
 
@@ -712,14 +696,14 @@ static int zfad_dma_start(struct zio_cset *cset)
 	 * different DMA transfers required for multi-shots
 	 */
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC], 0);
-        if (fa_is_flag_set(fa, FMC_ADC_SVEC))
+	if (fa_is_flag_set(fa, FMC_ADC_SVEC))
 		err = fa_dma_start_svec(cset);
 	else
 		err = fa_dma_start_spec(cset);
 	if (err)
 		goto err_start;
 
-        return 0;
+	return 0;
 
 err_start:
 	fa_writel(fa, fa->fa_adc_csr_base, &zfad_regs[ZFAT_CFG_SRC],
@@ -774,7 +758,7 @@ static void zfad_block_ctrl_attr_update(struct zio_block *block,
 	struct zio_control *ctrl = zio_get_ctrl(block);
 	uint32_t *ext_val = ctrl->attr_channel.ext_val;
 
-	ext_val[FA100M14B4C_TATTR_STA]= timetag->status;
+	ext_val[FA100M14B4C_TATTR_STA] = timetag->status;
 	ctrl->seq_num = seq_num;
 }
 

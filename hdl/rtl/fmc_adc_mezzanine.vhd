@@ -41,6 +41,8 @@ entity fmc_adc_mezzanine is
     g_TAG_ADJUST         : natural                        := 27;
     -- FMC-ADC identification number
     g_FMC_ADC_NR         : natural                        := 0;
+    -- Data endianness.  If set, swap memory data byte
+    g_BYTE_SWAP          : boolean                        := false;
     -- WB interface configuration
     g_WB_MODE            : t_wishbone_interface_mode      := PIPELINED;
     g_WB_GRANULARITY     : t_wishbone_address_granularity := BYTE);
@@ -67,11 +69,11 @@ entity fmc_adc_mezzanine is
     acq_cfg_ok_o        : out std_logic;
 
     -- Auxiliary trigger input wishbone interface
-    wb_trigin_slave_i : in  t_wishbone_slave_in;
+    wb_trigin_slave_i : in  t_wishbone_slave_in := c_DUMMY_WB_SLAVE_IN;
     wb_trigin_slave_o : out t_wishbone_slave_out;
 
     -- Trigout wishbone interface
-    wb_trigout_slave_i : in  t_wishbone_slave_in;
+    wb_trigout_slave_i : in  t_wishbone_slave_in := c_DUMMY_WB_SLAVE_IN;
     wb_trigout_slave_o : out t_wishbone_slave_out;
 
     -- FMC interface
@@ -309,6 +311,7 @@ begin
       g_TRIG_DELAY_EXT     => g_TRIG_DELAY_EXT,
       g_TRIG_DELAY_SW      => g_TRIG_DELAY_SW,
       g_FMC_ADC_NR         => g_FMC_ADC_NR,
+      g_BYTE_SWAP          => g_BYTE_SWAP,
       g_WB_CSR_MODE        => PIPELINED,
       g_WB_CSR_GRANULARITY => BYTE)
     port map (

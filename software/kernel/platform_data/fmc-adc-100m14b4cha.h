@@ -7,9 +7,8 @@
 #ifndef __FMC_ADC_PDATA_H__
 #define __FMC_ADC_PDATA_H__
 
-#define FMC_ADC_BIG_ENDIAN BIT(0)
+#define FMC_ADC_BIG_ENDIAN BIT(0) /* Registers are in BIG ENDIAN */
 #define FMC_ADC_NOSQUASH_SCATTERLIST BIT(1)
-#define FMC_ADC_DATA_NO_SWAP BIT(2)
 
 /*
  * In principle this should not be necessary. The two variants should

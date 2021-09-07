@@ -12,16 +12,20 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <getopt.h>
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <errno.h>
 
 static char git_version[] = "version: " GIT_VERSION;
 
+#define path_len 200
 #define buf_len 50
+#define base_len 40
 /* user will edit by adding the device name */
-char basepath[40] = "/sys/bus/zio/devices/";
+char basepath[base_len] = "/sys/bus/zio/devices/";
 
 enum fau_attribute {
 	FAU_TRG_EN,
@@ -54,19 +58,21 @@ const char *attribute[] = {
 int fau_write_attribute(enum fau_attribute attr, uint32_t val)
 {
 	int  ret, fd;
-	char buf[buf_len], fullpath[200];
+	char buf[buf_len], fullpath[path_len];
 
 	/* convert val to string */
-	sprintf(buf,"%u",val);
+	snprintf(buf, buf_len, "%u",val);
 	/* build the attribute path */
-	strcpy(fullpath, basepath);
-	strcat(fullpath, attribute[attr]);
+	strncpy(fullpath, basepath, path_len);
+	if (path_len > 0)
+		fullpath[path_len -1] = '\0';
+	strncat(fullpath, attribute[attr], path_len);
 	/* Write the attribute */
 	printf("Writing %s in %s\n", buf, fullpath);
 	fd = open(fullpath, O_WRONLY);
 	if (fd < 0)
 		return -ENOENT;
-	ret = write(fd, buf, strlen(buf));
+	ret = write(fd, buf, strnlen(buf, buf_len));
 	close(fd);
 	return ret;
 }
@@ -100,6 +106,19 @@ static void fau_help()
 static void print_version(char *pname)
 {
 	printf("%s %s\n", pname, git_version);
+}
+
+
+static long strtol_or_die(const char *arg)
+{
+	long val = strtol(arg, NULL, 0);
+
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) || (errno != 0 && val == 0)) {
+		fprintf(stderr, "Can't convert \"%s\" to integer\n", optarg);
+		exit(EXIT_FAILURE);
+	}
+
+	return val;
 }
 
 int main(int argc, char *argv[])
@@ -137,22 +156,22 @@ int main(int argc, char *argv[])
 						options, &opt_index)) >=0 ){
 		switch(c){
 		case 'p':
-			attrval[FAU_TRG_PRE] = atoi(optarg);
+			attrval[FAU_TRG_PRE] = strtol_or_die(optarg);
 			break;
 		case 'P':
-			attrval[FAU_TRG_PST] = atoi(optarg);
+			attrval[FAU_TRG_PST] = strtol_or_die(optarg);
 			break;
 		case 'n':
-			attrval[FAU_TRG_RE_EN] = atoi(optarg);
+			attrval[FAU_TRG_RE_EN] = strtol_or_die(optarg);
 			break;
 		case 'd':
-			attrval[FAU_TRG_DLY] = atoi(optarg);
+			attrval[FAU_TRG_DLY] = strtol_or_die(optarg);
 			break;
 		case 't':
-			attrval[FAU_TRG_THR] = atoi(optarg);
+			attrval[FAU_TRG_THR] = strtol_or_die(optarg);
 			break;
 		case 'c':
-			attrval[FAU_TRG_CHN] = atoi(optarg);
+			attrval[FAU_TRG_CHN] = strtol_or_die(optarg);
 			break;
 		case 'V':
 			print_version(argv[0]);
@@ -171,7 +190,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	strcat(basepath, argv[optind]);
+	strncat(basepath, argv[optind], base_len);
 	printf("Sysfs path to device is: %s\n", basepath);
 
 	for (i = 0; i < FAU_TRIG_NUM_ATTR; ++i) {

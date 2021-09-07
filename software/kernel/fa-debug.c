@@ -9,22 +9,22 @@
 #include "fmc-adc-100m14b4cha-private.h"
 
 #define FA_DBG_REG32_CH(_n) \
-	{.name = "ADC-CSR:ch"#_n"_ctl", .offset = ADC_CSR_OFF + 0x080 + ((_n - 1) * 0x40)}, \
-	{.name = "ADC-CSR:ch"#_n"_sta", .offset = ADC_CSR_OFF + 0x084 + ((_n - 1) * 0x40)}, \
-	{.name = "ADC-CSR:ch"#_n"_cal_nb", .offset = ADC_CSR_OFF + 0x088 + ((_n - 1) * 0x40)}, \
-	{.name = "ADC-CSR:ch"#_n"_sat", .offset = ADC_CSR_OFF + 0x08C + ((_n - 1) * 0x40)}, \
-	{.name = "ADC-CSR:ch"#_n"_trig_thres", .offset = ADC_CSR_OFF + 0x090 + ((_n - 1) * 0x40)}, \
+	{.name = "ADC-CSR:ch"#_n"_ctl", .offset = ADC_CSR_OFF + 0x080 + ((_n - 1) * 0x40)},			\
+	{.name = "ADC-CSR:ch"#_n"_sta", .offset = ADC_CSR_OFF + 0x084 + ((_n - 1) * 0x40)},			\
+	{.name = "ADC-CSR:ch"#_n"_cal_nb", .offset = ADC_CSR_OFF + 0x088 + ((_n - 1) * 0x40)},		\
+	{.name = "ADC-CSR:ch"#_n"_sat", .offset = ADC_CSR_OFF + 0x08C + ((_n - 1) * 0x40)},			\
+	{.name = "ADC-CSR:ch"#_n"_trig_thres", .offset = ADC_CSR_OFF + 0x090 + ((_n - 1) * 0x40)},	\
 	{.name = "ADC-CSR:ch"#_n"_trig_dly", .offset = ADC_CSR_OFF + 0x094 + ((_n - 1) * 0x40)}
 
-#define FA_DBG_REG32_TIM(_name, _off)					\
-	{								\
-		.name = "TIME-TAG:"#_name"_seconds_upper",		\
+#define FA_DBG_REG32_TIM(_name, _off)				\
+	{												\
+		.name = "TIME-TAG:"#_name"_seconds_upper",	\
 		.offset = ADC_UTC_OFF + _off				\
-	}, {								\
-		.name = "TIME-TAG:"#_name"_seconds_lower",		\
+	}, {											\
+		.name = "TIME-TAG:"#_name"_seconds_lower",	\
 		.offset = ADC_UTC_OFF + _off + 0x4,			\
-	}, {								\
-		.name = "TIME-TAG:"#_name"_coarse", 			\
+	}, {											\
+		.name = "TIME-TAG:"#_name"_coarse",			\
 		.offset = ADC_UTC_OFF + _off + 0x8,			\
 	}
 
@@ -139,8 +139,8 @@ static void fa_regdump_seq_read_spi(struct fa_dev *fa, struct seq_file *s)
 {
 	int i;
 
-	seq_printf(s, "ADC SPI registers\n");
-	seq_printf(s, "Address   Data\n");
+	seq_puts(s, "ADC SPI registers\n");
+	seq_puts(s, "Address   Data\n");
 	for (i = 0; i < 5; ++i) {
 		uint32_t tx, rx;
 		int err;
@@ -149,11 +149,9 @@ static void fa_regdump_seq_read_spi(struct fa_dev *fa, struct seq_file *s)
 		err = fa_spi_xfer(fa, FA_SPI_SS_ADC, 16, tx, &rx);
 		rx &= 0xFF; /* the value is 8bit */
 		if (err)
-			seq_printf(s, "A%d %02xh    read failure!\n",
-				   i, i);
+			seq_printf(s, "A%d %02xh    read failure!\n", i, i);
 		else
-			seq_printf(s, "A%d %02xh    0x%02x\n",
-				   i, i, rx);
+			seq_printf(s, "A%d %02xh    0x%02x\n", i, i, rx);
 	}
 }
 
@@ -183,7 +181,7 @@ static const struct file_operations fa_regdump_ops = {
 
 
 static ssize_t fa_trg_sw_write(struct file *file, const char __user *buf,
-                               size_t count, loff_t *ppos)
+							   size_t count, loff_t *ppos)
 {
 	struct fa_dev *fa = file->private_data;
 	int err;
@@ -212,7 +210,7 @@ static int fa_data_pattern_adc_write(struct fa_dev *fa, const char __user *buf,
 	if (err)
 		return -EFAULT;
 
-	if ((count == 1 || count == 2)&& buf_l[0] == '0') {
+	if ((count == 1 || count == 2) && buf_l[0] == '0') {
 		err = fa_adc_data_pattern_set(fa, 0, 0);
 		fa_calib_init(fa);
 		return err;
@@ -249,10 +247,10 @@ static ssize_t fa_data_pattern_write(struct file *file, const char __user *buf,
 		err = fa_data_pattern_adc_write(fa, buf + 4, count - 4);
 
 		return err ? err : count;
-	} else {
-		dev_err(&fa->pdev->dev, "Unknown command \"%s\"\n", buf_l);
-		return -EINVAL;
 	}
+
+	dev_err(&fa->pdev->dev, "Unknown command \"%s\"\n", buf_l);
+	return -EINVAL;
 }
 
 static ssize_t fa_data_pattern_read(struct file *file, char __user *buf,
@@ -264,10 +262,10 @@ static ssize_t fa_data_pattern_read(struct file *file, char __user *buf,
 	unsigned int enable;
 	int err;
 
-        if (*ppos > 0)
+	if (*ppos > 0)
 		return 0;
 
-        err = fa_adc_data_pattern_get(fa, &pattern, &enable);
+	err = fa_adc_data_pattern_get(fa, &pattern, &enable);
 	if (err)
 		return err;
 	snprintf(buf_l, FA_ADC_DATA_PATTERN_CMD_SIZE, "adc %u 0x%02x\n",
@@ -301,14 +299,7 @@ int fa_debug_init(struct fa_dev *fa)
 	fa->dbg_reg32.regs = fa_debugfs_reg32;
 	fa->dbg_reg32.nregs = ARRAY_SIZE(fa_debugfs_reg32);
 	fa->dbg_reg32.base = fa->fa_top_level;
-	fa->dbg_reg = debugfs_create_regset32("regs", 0444, fa->dbg_dir,
-					      &fa->dbg_reg32);
-	if (IS_ERR_OR_NULL(fa->dbg_reg)) {
-		err = PTR_ERR(fa->dbg_reg);
-		dev_warn(&fa->pdev->dev,
-			"Cannot create debugfs file \"regs\" (%d)\n",
-			 err);
-	}
+	debugfs_create_regset32("regs", 0444, fa->dbg_dir, &fa->dbg_reg32);
 
 	fa->dbg_reg_spi = debugfs_create_file("spi-regs", 0444,
 					      fa->dbg_dir, fa,

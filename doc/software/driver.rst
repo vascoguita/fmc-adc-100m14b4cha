@@ -195,16 +195,16 @@ chN-50ohm-term
      turn on the termination resistor. Default is 0.
 
 chN-offset
-     The user offset is an integer value in the range [-5000000,5000000], and
-     it represents microvolts.  The offset represents the center-scale
-     of conversion for the input channel.  Internally, a DAC is used to
+     The user offset is an integer value in the range [-5.000V, +4.999V]. It
+     follows the DAC data format, so the range is describe by 16bits from 0x0000
+     (-5.000V) to 0xFFFF (+4.999V). Internally, a DAC is used to
      generate the requested voltage, which is then subtracted from the
      input signal.  DAC values are corrected according to the
      calibration values retrieved from the FMC EEPROM. For this reason,
      the offset may saturate at values less than +/- 5V.
 
 chN-offset-zero
-     The necessary offset to to bring the signal to 0 in microvolts (it must be
+     The necessary offset to to bring the signal to 0 in Volts (it must be
      withing the range of chN-offset).
 
 chN-vref

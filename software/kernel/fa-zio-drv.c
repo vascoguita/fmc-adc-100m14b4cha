@@ -44,15 +44,15 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 */
 	ZIO_ATTR_EXT("undersample", ZIO_RW_PERM, ZFAT_SR_UNDER, 1),
 
-	ZIO_ATTR_EXT("ch0-offset", ZIO_RW_PERM, ZFA_CH1_OFFSET, 0),
-	ZIO_ATTR_EXT("ch1-offset", ZIO_RW_PERM, ZFA_CH2_OFFSET, 0),
-	ZIO_ATTR_EXT("ch2-offset", ZIO_RW_PERM, ZFA_CH3_OFFSET, 0),
-	ZIO_ATTR_EXT("ch3-offset", ZIO_RW_PERM, ZFA_CH4_OFFSET, 0),
+	ZIO_ATTR_EXT("ch0-offset", ZIO_RW_PERM, ZFA_CH1_OFFSET, 0x8000),
+	ZIO_ATTR_EXT("ch1-offset", ZIO_RW_PERM, ZFA_CH2_OFFSET, 0x8000),
+	ZIO_ATTR_EXT("ch2-offset", ZIO_RW_PERM, ZFA_CH3_OFFSET, 0x8000),
+	ZIO_ATTR_EXT("ch3-offset", ZIO_RW_PERM, ZFA_CH4_OFFSET, 0x8000),
 
-	ZIO_ATTR_EXT("ch0-offset-zero", ZIO_RW_PERM, ZFA_SW_CH1_OFFSET_ZERO, 0),
-	ZIO_ATTR_EXT("ch1-offset-zero", ZIO_RW_PERM, ZFA_SW_CH2_OFFSET_ZERO, 0),
-	ZIO_ATTR_EXT("ch2-offset-zero", ZIO_RW_PERM, ZFA_SW_CH3_OFFSET_ZERO, 0),
-	ZIO_ATTR_EXT("ch3-offset-zero", ZIO_RW_PERM, ZFA_SW_CH4_OFFSET_ZERO, 0),
+	ZIO_ATTR_EXT("ch0-offset-zero", ZIO_RW_PERM, ZFA_SW_CH1_OFFSET_ZERO, 0x8000),
+	ZIO_ATTR_EXT("ch1-offset-zero", ZIO_RW_PERM, ZFA_SW_CH2_OFFSET_ZERO, 0x8000),
+	ZIO_ATTR_EXT("ch2-offset-zero", ZIO_RW_PERM, ZFA_SW_CH3_OFFSET_ZERO, 0x8000),
+	ZIO_ATTR_EXT("ch3-offset-zero", ZIO_RW_PERM, ZFA_SW_CH4_OFFSET_ZERO, 0x8000),
 
 	ZIO_ATTR_EXT("ch0-vref", ZIO_RW_PERM, ZFA_CH1_CTL_RANGE, 0),
 	ZIO_ATTR_EXT("ch1-vref", ZIO_RW_PERM, ZFA_CH2_CTL_RANGE, 0),
@@ -104,7 +104,7 @@ static struct zio_attribute zfad_cset_ext_zattr[] = {
 	 * 4: POST_TRIG
 	 * 5: DECR_SHOT
 	 * 7: Illegal
-	 * */
+	 */
 	ZIO_PARAM_EXT("fsm-state", ZIO_RO_PERM, ZFA_STA_FSM, 0),
 	/* last acquisition end time stamp */
 	ZIO_PARAM_EXT("tstamp-acq-end-su", ZIO_RO_PERM,
@@ -160,12 +160,6 @@ int zfad_convert_user_range(uint32_t user_val)
 	return zfad_convert_hw_range(user_val);
 }
 
-static bool fa_is_dac_offset_valid(int32_t user, int32_t zero)
-{
-	int32_t offset = user + zero;
-
-	return (offset >= DAC_SAT_LOW && offset <= DAC_SAT_UP);
-}
 /*
  * zfad_conf_set
  *
@@ -209,15 +203,17 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		/*fallthrough*/
 	case ZFA_SW_CH4_OFFSET_ZERO:
 		i--;
-		chan = to_zio_cset(dev)->chan + i;
-		if (!fa_is_dac_offset_valid(fa->user_offset[chan->index],
-					    usr_val))
+		if (usr_val & 0xFFFF0000) {
+			dev_err(dev,
+				"Offset must be a 16bit unsigned value (0x%08x)\n",
+				usr_val);
 			return -EINVAL;
+		}
 		spin_lock(&fa->zdev->cset->lock);
 		fa->zero_offset[i] = usr_val;
-		fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
+		err = fa_calib_dac_config_chan(fa, i, 0, FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
-		return 0;
+		return err;
 	case ZFA_CHx_SAT:
 		/* TODO when TLV */
 		break;
@@ -244,18 +240,27 @@ static int zfad_conf_set(struct device *dev, struct zio_attribute *zattr,
 		/*fallthrough*/
 	case ZFA_CH4_OFFSET:
 		i--;
-                chan = to_zio_cset(dev)->chan + i;
-                if (!fa_is_dac_offset_valid(usr_val,
-					    fa->zero_offset[chan->index]))
+		if (usr_val & 0xFFFF0000) {
+			dev_err(dev,
+				"Offset must be a 16bit unsigned value (0x%08x)\n",
+				usr_val);
 			return -EINVAL;
+		}
 		spin_lock(&fa->zdev->cset->lock);
-		fa->user_offset[chan->index] = usr_val;
+		fa->user_offset[i] = usr_val;
 		err = fa_calib_dac_config_chan(fa, i, 0,
 					       FA_CALIB_FLAG_READ_TEMP);
 		spin_unlock(&fa->zdev->cset->lock);
 		return err;
 	case ZFA_CHx_OFFSET:
 		chan = to_zio_chan(dev);
+		if (usr_val & 0xFFFF0000) {
+			dev_err(dev,
+				"Offset must be a 16bit unsigned value (0x%08x)\n",
+				usr_val);
+			return -EINVAL;
+		}
+
 		spin_lock(&fa->zdev->cset->lock);
 		fa->user_offset[chan->index] = usr_val;
 		err = fa_calib_dac_config_chan(fa, chan->index, 0,
@@ -425,18 +430,16 @@ static inline int zfat_overflow_detection(struct zio_ti *ti)
 	nsamples = ti_zattr[ZIO_ATTR_TRIG_PRE_SAMP].value +
 		   ti_zattr[ZIO_ATTR_TRIG_POST_SAMP].value;
 	shot_size = ((nsamples + 2) * ti->cset->ssize) * FA100M14B4C_NCHAN;
-	if ( (shot_size * nshot_t) > FA100M14B4C_MAX_ACQ_BYTE ) {
+	if ((shot_size * nshot_t) > FA100M14B4C_MAX_ACQ_BYTE) {
 		dev_err(fa->msgdev, "Cannot acquire, dev memory overflow\n");
 		return -ENOMEM;
 	}
 
 	/* in case of multi shot, each shot cannot exceed the dpram size */
-	if ( (nshot_t > 1) &&
-	     (nsamples > fa->mshot_max_samples) ) {
-		dev_err(fa->msgdev, "Cannot acquire such amount of samples "
-				"(req: %d , max: %d) in multi shot mode."
-				"dev memory overflow\n",
-			        nsamples, fa->mshot_max_samples);
+	if ((nshot_t > 1) && (nsamples > fa->mshot_max_samples)) {
+		dev_err(fa->msgdev,
+				"Cannot acquire such amount of samples (req: %d , max: %d) in multi shot mode. dev memory overflow\n",
+				nsamples, fa->mshot_max_samples);
 		return -ENOMEM;
 	}
 	return 0;
@@ -634,9 +637,8 @@ static struct zio_driver fa_zdrv = {
 	.remove = zfad_zio_remove,
 	/* Take the version from ZIO git sub-module */
 	.min_version = ZIO_VERSION(__ZIO_MIN_MAJOR_VERSION,
-				   __ZIO_MIN_MINOR_VERSION,
-				   0), /* Change it if you use new features from
-					  a specific patch */
+							   __ZIO_MIN_MINOR_VERSION,
+							   0),
 };
 
 

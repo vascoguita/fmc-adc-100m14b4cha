@@ -16,6 +16,7 @@
 #include <linux/platform_device.h>
 #include <linux/fmc.h>
 #include <linux/completion.h>
+#include <linux/version.h>
 
 #include <linux/zio.h>
 #include <linux/zio-dma.h>
@@ -31,6 +32,20 @@ enum fa_versions {
 	ADC_VER = 0,
 };
 
+/**
+ * struct device_meta_id Metadata
+ */
+struct device_meta_id {
+	uint32_t vendor;
+	uint32_t device;
+	uint32_t version;
+	uint32_t bom;
+	uint32_t src[4];
+	uint32_t cap;
+	uint32_t uuid[4];
+};
+
+
 enum fa100m14b4c_trg_ext_attr_krn {
        FA100M14B4C_TATTR_TRG_SU = __FA100M14B4C_TATTR_TRG_MAX,
        FA100M14B4C_TATTR_TRG_SL,
@@ -42,8 +57,7 @@ enum fa100m14b4c_trg_ext_attr_krn {
 #define ADC_SPI_OFF 0x1800
 #define ADC_UTC_OFF 0x1900
 
-#define DAC_SAT_LOW -5000000
-#define DAC_SAT_UP 5000000
+#define DAC_VAL_MASK 0xFFFF
 
 #define ADC_DMA 0
 
@@ -57,6 +71,7 @@ enum fa_irq_resource {
 
 enum fa_mem_resource {
 	ADC_MEM_BASE = 0,
+	ADC_MEM_META,
 };
 
 enum fa_bus_resource {
@@ -64,7 +79,11 @@ enum fa_bus_resource {
 };
 
 struct fa_memory_ops {
+#if KERNEL_VERSION(5, 8, 0) <= LINUX_VERSION_CODE
+	u32 (*read)(const void *addr);
+#else
 	u32 (*read)(void *addr);
+#endif
 	void (*write)(u32 value, void *addr);
 };
 
@@ -272,8 +291,8 @@ struct fa_dev; /* forward declaration */
  * @n_fires: number of trigger fire occurred within an acquisition
  *
  * @n_dma_err: number of errors
- * @user_offset: user offset (micro-Volts)
- * @zero_offset: necessary offset to push the channel to zero (micro-Volts)
+ * @user_offset: user offset
+ * @zero_offset: necessary offset to push the channel to zero
  */
 struct fa_dev {
 	unsigned long flags;
@@ -288,6 +307,8 @@ struct fa_dev {
 
 	struct fmc_slot	*slot;
 	struct fa_memory_ops	memops;
+
+	struct device_meta_id meta;
 
 	/* carrier common base offset addresses */
 	void *fa_adc_csr_base;
@@ -319,8 +340,8 @@ struct fa_dev {
 	unsigned int		n_dma_err;
 
 	/* Configuration */
-	int32_t		user_offset[4]; /* one per channel */
-	int32_t		zero_offset[FA100M14B4C_NCHAN];
+	uint16_t		user_offset[FA100M14B4C_NCHAN]; /* one per channel */
+	uint16_t		zero_offset[FA100M14B4C_NCHAN];
 	/* one-wire */
 	uint8_t ds18_id[8];
 	unsigned long		next_t;
@@ -336,7 +357,6 @@ struct fa_dev {
 
 	struct dentry *dbg_dir;
 	struct debugfs_regset32 dbg_reg32;
-	struct dentry *dbg_reg;
 	struct dentry *dbg_reg_spi;
 	struct dentry *dbg_trg_sw;
 	struct dentry *dbg_data_pattern;

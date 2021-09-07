@@ -40,6 +40,8 @@ entity fmc_adc_100Ms_core is
     g_TRIG_DELAY_SW      : natural                        := 9;
     -- FMC-ADC identification number
     g_FMC_ADC_NR         : natural                        := 0;
+    -- Data endianness.  If set, swap memory data byte
+    g_BYTE_SWAP          : boolean                        := false;
     -- WB interface configuration
     g_WB_CSR_MODE        : t_wishbone_interface_mode      := PIPELINED;
     g_WB_CSR_GRANULARITY : t_wishbone_address_granularity := BYTE);
@@ -71,7 +73,7 @@ entity fmc_adc_100Ms_core is
     acq_stop_p_o  : out std_logic;
     acq_end_p_o   : out std_logic;
 
-    -- Trigger time-tag inputs
+    -- Trigger time-tag inputs (sys_clk_i)
     trigger_tag_i   : in t_timetag;
     time_trig_i     : in std_logic;
     aux_time_trig_i : in std_logic;
@@ -151,8 +153,7 @@ architecture rtl of fmc_adc_100Ms_core is
   -- SerDes
   signal serdes_out_data         : std_logic_vector(63 downto 0);
   signal serdes_out_data_synced  : std_logic_vector(63 downto 0);
-  signal serdes_man_bitslip      : std_logic;
-  signal serdes_man_bitslip_sync : std_logic;
+  signal serdes_calib_sync       : std_logic;
   signal serdes_locked           : std_logic;
   signal serdes_locked_sync      : std_logic;
   signal serdes_synced           : std_logic;
@@ -293,6 +294,7 @@ architecture rtl of fmc_adc_100Ms_core is
   -- Wishbone to DDR flowcontrol FIFO
   signal wb_ddr_fifo_din   : std_logic_vector(64 downto 0);
   signal wb_ddr_fifo_dout  : std_logic_vector(64 downto 0);
+  signal wb_ddr_fifo_dout2 : std_logic_vector(63 downto 0);
   signal wb_ddr_fifo_empty : std_logic;
   signal wb_ddr_fifo_full  : std_logic;
   signal wb_ddr_fifo_wr    : std_logic;
@@ -427,8 +429,8 @@ begin
     port map (
       clk_i     => fs_clk,
       rst_n_a_i => '1',
-      d_i       => serdes_man_bitslip,
-      q_o       => serdes_man_bitslip_sync);
+      d_i       => csr_regout.ctl_serdes_calib,
+      q_o       => serdes_calib_sync);
 
   cmp_adc_serdes : entity work.ltc2174_2l16b_receiver
     generic map (
@@ -443,7 +445,7 @@ begin
       adc_outb_p_i    => adc_outb_p_i,
       adc_outb_n_i    => adc_outb_n_i,
       serdes_arst_i   => serdes_arst,
-      serdes_bslip_i  => serdes_man_bitslip_sync,
+      serdes_calib_i  => serdes_calib_sync,
       serdes_locked_o => serdes_locked,
       serdes_synced_o => serdes_synced,
       adc_data_o      => serdes_out_data,
@@ -484,7 +486,6 @@ begin
       fmc_adc_ch4_o       => wb_channel_in(4));
 
   csr_regin.ctl_fsm_cmd         <= fsm_cmd;
-  csr_regin.ctl_man_bitslip     <= serdes_man_bitslip;
   csr_regin.ctl_clear_trig_stat <= trig_storage_clear;
   csr_regin.ctl_calib_apply     <= sync_calib_apply;
 
@@ -530,12 +531,10 @@ begin
     if rising_edge(sys_clk_i) then
       if ctl_reg_wr = '1' then
         fsm_cmd            <= csr_regout.ctl_fsm_cmd;
-        serdes_man_bitslip <= csr_regout.ctl_man_bitslip;
         trig_storage_clear <= csr_regout.ctl_clear_trig_stat;
         sync_calib_apply   <= csr_regout.ctl_calib_apply;
       else
         fsm_cmd            <= (others => '0');
-        serdes_man_bitslip <= '0';
         trig_storage_clear <= '0';
         sync_calib_apply   <= '0';
       end if;
@@ -1633,6 +1632,20 @@ begin
   -- Convert to 32-bit word addressing for Wishbone
   wb_ddr_skidpad_adr_in <= std_logic_vector(ram_addr_cnt);
 
+  gen_no_byte_swap: if not g_BYTE_SWAP generate
+    wb_ddr_fifo_dout2 <= wb_ddr_fifo_dout(63 downto 0);
+  end generate;
+  gen_byte_swap: if g_BYTE_SWAP generate
+    wb_ddr_fifo_dout2 (63 downto 32) <= (  wb_ddr_fifo_dout(39 downto 32)
+                                         & wb_ddr_fifo_dout(47 downto 40)
+                                         & wb_ddr_fifo_dout(55 downto 48)
+                                         & wb_ddr_fifo_dout(63 downto 56));
+    wb_ddr_fifo_dout2 (31 downto  0) <= (  wb_ddr_fifo_dout(7  downto  0)
+                                         & wb_ddr_fifo_dout(15 downto  8)
+                                         & wb_ddr_fifo_dout(23 downto 16)
+                                         & wb_ddr_fifo_dout(31 downto 24));
+  end generate;
+
   inst_skidpad: entity work.wb_skidpad2
     generic map (
       g_adrbits => ram_addr_cnt'length,
@@ -1644,7 +1657,7 @@ begin
 
       stb_i => wb_ddr_skidpad_stb_in,
       adr_i => wb_ddr_skidpad_adr_in,
-      dat_i => wb_ddr_fifo_dout(63 downto 0),
+      dat_i => wb_ddr_fifo_dout2,
       sel_i => (others => '1'),
       we_i  => '1',
       stall_o => wb_ddr_skidpad_stall,

@@ -18,28 +18,32 @@
 
 #include <fmc-adc-100m14b4cha.h>
 
+#define MAX_OPT_NR 5
 static char options[] = "hf:o:D:b";
-static const char help_msg[] =
-	"Usage: fau-calibration [options]\n"
-	"\n"
-	"It reads calibration data from a file that contains it in binary\n"
-	"form and it shows it on STDOUT in binary form or in human readable\n"
-	"one (default).\n"
-	"This could be used to change the ADC calibration data at runtime\n"
-	"by redirectiong the binary output of this program to the proper \n"
-	"sysfs binary attribute\n"
-	"Rembember that we expect all values to be little endian\n"
-	"\n"
-	"General options:\n"
-	"-h                 Print this message\n"
-	"-b                 Show Calibration in binary form \n"
-	"\n"
-	"Read options:\n"
-	"-f                 Source file where to read calibration data from\n"
-	"-o                 Offset in bytes within the file (default 0)\n"
-	"Write options:\n"
-	"-D                 FMC ADC Target Device ID\n"
-	"\n";
+
+static void fau_calibration_help(void)
+{
+	fputs("Usage: fau-calibration [options]\n"
+		  "\n"
+		  "It reads calibration data from a file that contains it in binary\n"
+		  "form and it shows it on STDOUT in binary form or in human readable\n"
+		  "one (default).\n"
+		  "This could be used to change the ADC calibration data at runtime\n"
+		  "by redirectiong the binary output of this program to the proper \n"
+		  "sysfs binary attribute\n"
+		  "Rembember that we expect all values to be little endian\n"
+		  "\n"
+		  "General options:\n"
+		  "-h                 Print this message\n"
+		  "-b                 Show Calibration in binary form \n"
+		  "\n"
+		  "Read options:\n"
+		  "-f                 Source file where to read calibration data from\n"
+		  "-o                 Offset in bytes within the file (default 0)\n"
+		  "Write options:\n"
+		  "-D                 FMC ADC Target Device ID\n"
+		  "\n", stdout);
+}
 
 /**
  * Read calibration data from file
@@ -49,7 +53,7 @@ static const char help_msg[] =
  *
  * Return: number of bytes read
  */
-static int fau_calibration_read(char *path, struct fa_calib *calib,
+static int fau_calibration_read(const char *path, struct fa_calib *calib,
 				off_t offset)
 {
 	int fd;
@@ -59,8 +63,13 @@ static int fau_calibration_read(char *path, struct fa_calib *calib,
 	if (fd < 0)
 		return -1;
 	ret = lseek(fd, offset, SEEK_SET);
-	if (ret >= 0)
+	if (ret >= 0) {
 		ret = read(fd, calib, sizeof(*calib));
+		if (ret != sizeof(*calib)) {
+			ret = -1;
+			errno =EINVAL;
+		}
+	}
 	close(fd);
 
 	return ret;
@@ -121,11 +130,11 @@ static int fau_calibration_dump_machine(struct fa_calib *calib)
  */
 static int fau_calibration_write(unsigned int devid, struct fa_calib *calib)
 {
-	char path[128];
+	char path[55]; // store exactly the path we need
 	int fd;
 	int ret;
 
-	sprintf(path,
+	snprintf(path, sizeof(path),
 		"/sys/bus/zio/devices/adc-100m14b-%04x/calibration_data",
 		devid);
 
@@ -148,11 +157,24 @@ int main(int argc, char *argv[])
 	int show_bin = 0, write = 0;
 	struct fa_calib calib;
 
+	if (argc <= 0) {
+		fprintf(stderr, "What is going on here?\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (argc > MAX_OPT_NR) {
+		fprintf(stderr, "This program accepts no more that %d arguments, you provides %d\n",
+				MAX_OPT_NR, argc);
+		fau_calibration_help();
+		exit(EXIT_FAILURE);
+	}
+
+
 	while ((c = getopt(argc, argv, options)) != -1) {
 		switch (c) {
 		default:
-		case 'h':
-			fprintf(stderr, help_msg);
+			case 'h':
+			fau_calibration_help();
 			exit(EXIT_SUCCESS);
 		case 'D':
 			ret = sscanf(optarg, "0x%x", &devid);
