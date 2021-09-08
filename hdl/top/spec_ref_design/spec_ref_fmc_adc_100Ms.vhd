@@ -394,7 +394,7 @@ begin  -- architecture arch
     generic map (
       g_VENDOR_ID    => x"0000_10DC",
       g_DEVICE_ID    => x"4144_4301", -- "ADC1"
-      g_VERSION      => x"0500_0000",
+      g_VERSION      => x"0600_0000",
       g_CAPABILITIES => x"0000_0000",
       g_COMMIT_ID    => (others => '0'))
     port map (
