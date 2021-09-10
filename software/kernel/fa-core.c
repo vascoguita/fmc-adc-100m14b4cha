@@ -841,7 +841,6 @@ int fa_probe(struct platform_device *pdev)
 		goto out_dma;
 
 	fa_clock_enable(fa);
-	msleep(50);
 
 	err = fa_spi_init(fa);
 	if (err)
