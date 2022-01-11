@@ -6,6 +6,12 @@
 Changelog
 =========
 
+6.0.1 - 2022-01-11
+==================
+Changed
+-------
+- hdl: ip_cores have been updated
+
 6.0.0 - 2021-09-10
 ==================
 Added
