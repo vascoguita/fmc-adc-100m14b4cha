@@ -12,6 +12,11 @@ Changed
 -------
 - hdl: ip_cores have been updated
 
+Fixed
+-----
+- sw: use of invalid pointer that could lead to a kernel oops
+- sw: change completion order to prevent SVEC bugs
+
 6.0.0 - 2021-09-10
 ==================
 Added
