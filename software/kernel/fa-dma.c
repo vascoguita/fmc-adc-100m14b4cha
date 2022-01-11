@@ -404,14 +404,14 @@ static void fa_dma_complete(void *arg,
 	/* Clean/fix the context */
 	zfad_dma_context_exit(cset, zfad_block);
 
+	complete(&zfad_block->shot_done);
+
 	/* Complete the full acquisition when the last transfer is over */
 	--fa->transfers_left;
 	if (!fa->transfers_left) {
 		fa_dma_release_channel_svec(fa);
 		zfad_dma_done(cset);
 	}
-
-	complete(&zfad_block->shot_done);
 }
 
 
