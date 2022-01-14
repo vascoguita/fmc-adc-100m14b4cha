@@ -4,11 +4,14 @@
 
 TOP_DIR = ../../..
 
-all: spec_base_regs.htm svec_base_regs.htm svec_ref_fmc_adc_100Ms_mmap.htm spec_ref_fmc_adc_100Ms_mmap.htm
+all: spec_base_regs.htm svec_base_regs.htm svec_ref_fmc_adc_100Ms_mmap.htm spec_ref_fmc_adc_100Ms_mmap.htm fmc_adc_mezzanine_mmap.htm
 
 .PHONY: clean
 
 CHEBY_BUILD=(cd $(dir $<); cheby -i $(notdir $<) --gen-doc --doc html) > $@
+
+fmc_adc_mezzanine_mmap.htm: $(TOP_DIR)/hdl/cheby/fmc_adc_mezzanine_mmap.cheby
+	$(CHEBY_BUILD)
 
 spec_ref_fmc_adc_100Ms_mmap.htm: $(TOP_DIR)/hdl/cheby/spec_ref_fmc_adc_100Ms_mmap.cheby
 	$(CHEBY_BUILD)
