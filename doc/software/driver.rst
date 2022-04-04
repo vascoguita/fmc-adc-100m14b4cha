@@ -30,11 +30,13 @@ Compile And Install
 
 The compile and install the fmcadc100m14b4ch device driver you need
 first to export the path to its direct dependencies, and then you
-execute ``make``. This driver depends on the `zio`_ framework and `fmc`_ library; on a VME system it depends also on the VME bridge driver from CERN BE-CO.
+execute ``make``. This driver depends on the `zio`_ framework and
+`fmc`_ library; on a VME system it depends also on the VME bridge
+driver from CERN BE-CEM.
 
 ::
 
-      $ cd /path/to/fmc-adc-100m14b4cha-sw/kernel
+      $ cd /path/to/fmc-adc-100m14b4cha/software/kernel
       $ export LINUX=/path/to/linux/sources
       $ export ZIO=/path/to/zio
       $ export FMC=/path/to/fmc-sw
@@ -106,18 +108,18 @@ temp_calib_period=NUMBER
 Device Abstraction
 ==================
 
-This driver is based on the ZIO framework and the fmc-bus. It supports
-initial setup of the board; it allows users to manually configure the
-board, to start and stop acquisitions, to force trigger, to read
-acquisition time-stamps and to read acquired samples.
+This driver is based on the ZIO framework. It supports initial setup
+of the board; it allows users to manually configure the board, to
+start and stop acquisitions, to force trigger, to read acquisition
+time-stamps and to read acquired samples.
 
 The driver is designed as a ZIO driver. ZIO is a framework for
 input/output hosted on http://www.ohwr.org/projects/zio.
 
 ZIO devices are organized as csets (channel sets), and each of them
-includes channels. This device offers one cset and four channels.
-However, the device can only stores interleaved data for all four
-channels.
+includes channels. All channels belonging to the same cset trigger
+together. This device offers one cset with four channels.  However,
+the device can only stores interleaved data for all four channels.
 
 The current approach to this is defining 5 channels: channels 0 to 3 are
 the actual input connectors, and their software counterpart is used to
@@ -174,7 +176,7 @@ The Channel Set
 The ADC has 1 Channel Set named ``cset0``. Its attributes are used to
 control the ADC state machine, the channel parameters and so on.
 
-Some attributes are channel-specific, and one may thing they should live
+Some attributes are channel-specific, and one may think they should live
 at channel-level. Unfortunately, ZIO currently lacks the mechanisms to
 convey channel attributes in the meta-data associated with an
 interleaved acquisition (where several channels coexist), and for this
@@ -520,10 +522,7 @@ write-only device files (in this case they are both read-only).
 
 If more than one board is probed for, you'll have two or more similar
 pairs of devices, differing in the dev_id field, i.e. the ``0200`` shown
-above. The dev_id field is built using the PCI bus and the devfn octet;
-the example above refers to slot 0 of bus 2. (Most of the time each
-PCI-E physical slot is mapped as a bus, so the slot number is usually
-zero).
+above. The dev_id field is assigned by the Linux kernel platform subsystem.
 
 The ADC hardware does not allow to read data from a specific channel;
 data is only transferred as an interleaved block of samples. Neither the
