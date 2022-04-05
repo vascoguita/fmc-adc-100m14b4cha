@@ -534,7 +534,7 @@ begin -- architecture arch
     cmp_fmc_adc_mezzanine : entity work.fmc_adc_mezzanine
       generic map (
         g_MULTISHOT_RAM_SIZE => g_MULTISHOT_RAM_SIZE,
-        g_SPARTAN6_USE_PLL   => TRUE,
+        g_SPARTAN6_USE_PLL   => FALSE, -- I = 0, -- PLL on fmc0, no PLL on FMC 1
         g_BYTE_SWAP          => TRUE,
         g_FMC_ADC_NR         => I,
         g_WB_MODE            => PIPELINED,

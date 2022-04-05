@@ -6,6 +6,16 @@
 Changelog
 =========
 
+6.0.2 - 2022-04-05
+==================
+Changed
+-------
+- hdl: white-rabbit core update
+
+Fixed
+-----
+- hdl: digital noise on SVEC cards by chaning clocking schema
+
 6.0.1 - 2022-01-11
 ==================
 Changed
