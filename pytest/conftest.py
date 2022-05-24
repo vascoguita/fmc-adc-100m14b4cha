@@ -7,12 +7,20 @@ import os
 import pytest
 from PySPEC import PySPEC
 import re
+import socket
 
 
-def get_carrier(dev_id):
+def get_carrier(dev_id, fec):
     sys_dev_path = os.path.join("/sys/bus/zio/devices/",
                                 "adc-100m14b-{:04x}".format(dev_id))
-    r = re.search(r".*/(spec)", os.readlink(sys_dev_path))
+    if fec is None:
+        path = os.readlink(sys_dev_path)
+    else:
+        ret = os.popen("ssh -T {} 'readlink -f {}'".format(fec, sys_dev_path))
+        path = ret.read().strip()
+        ret.close()
+
+    r = re.search(r".*/(spec)", path)
     if r is None:
         Exception("Can't understand carrier type. Supported: 'spec'")
     return r.group(1)
@@ -50,10 +58,15 @@ def pytest_addoption(parser):
                      required=True, help="ADC Identifier")
     parser.addoption("--bitstream",
                      default=None, help="SPEC bitstream to be tested")
+    parser.addoption("--fec",
+                     default=None, help="Remote FEC to be tested")
 
 
 def pytest_configure(config):
     pytest.dev_id = config.getoption("--adc-id")
     pytest.cfg_bitstream = config.getoption("--bitstream")
+    pytest.fec = config.getoption("--fec")
 
-    pytest.is_spec = get_carrier(pytest.dev_id) == "spec"
+    pytest.is_fec = socket.gethostname()[:2] == "cf"
+    assert pytest.is_fec ^ (pytest.fec is not None)
+    pytest.is_spec = get_carrier(pytest.dev_id, pytest.fec) == "spec"
