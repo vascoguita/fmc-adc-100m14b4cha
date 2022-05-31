@@ -57,7 +57,8 @@ entity offset_gain_s is
     gain_i   : in  std_logic_vector(15 downto 0);  --! Unsigned gain input
     sat_i    : in  std_logic_vector(14 downto 0);  --! Unsigned saturation value input
     data_i   : in  std_logic_vector(15 downto 0);  --! Signed data input (two's complement)
-    data_o   : out std_logic_vector(15 downto 0)   --! Signed data output (two's complement)
+    data_o   : out std_logic_vector(15 downto 0);   --! Signed data output (two's complement)
+    product_o : out std_logic_vector(16 downto 0)  --! Signed intermediate output (two's complement)
     );
 end entity offset_gain_s;
 
@@ -143,6 +144,8 @@ begin
       end if;
     end if;
   end process p_pipeline;
+
+  product_o <= product;
 
   ------------------------------------------------------------------------------
   -- Saturate addition and multiplication result
