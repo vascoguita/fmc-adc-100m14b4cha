@@ -131,31 +131,9 @@ memory-map:
       address: 0x0000001c
       width: 32
       access: ro
-      description: Channel saturation register
+      description: Channel saturation register (read from hw)
       children:
       - field:
           name: val
           range: 14-0
           description: Saturation value for channel
-  - reg:
-      name: calib_sta
-      address: 0x00000020
-      width: 32
-      access: ro
-      description: Channel adjusted value register
-      children:
-      - field:
-          name: val
-          range: 15-0
-          description: Channel adjusted current ADC value
-  - reg:
-      name: prod_sta
-      address: 0x00000024
-      width: 32
-      access: ro
-      description: Channel adjusted value register
-      children:
-      - field:
-          name: val
-          range: 16-0
-          description: Channel adjusted by gain current ADC value

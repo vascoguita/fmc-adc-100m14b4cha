@@ -223,13 +223,11 @@ architecture rtl of fmc_adc_100Ms_core is
   signal sync_calib_out     : std_logic_vector(127 downto 0);
   signal data_calibr_in     : std_logic_vector(63 downto 0);
   signal data_calibr_out    : std_logic_vector(63 downto 0);
-  signal data_calibr_out_synced    : std_logic_vector(63 downto 0);
   signal data_calibr_out_d1 : std_logic_vector(63 downto 0);
   signal data_calibr_out_d2 : std_logic_vector(63 downto 0);
   signal data_calibr_out_d3 : std_logic_vector(63 downto 0);
   signal sat_val            : std_logic_vector(59 downto 0);
   signal sat_val_in         : std_logic_vector(59 downto 0);
-  signal product_out, product_out_synced    : std_logic_vector(17*4 - 1 downto 0);
 
   -- Acquisition FSM
   signal acq_fsm_current_state : t_acq_fsm_state;
@@ -571,8 +569,6 @@ begin
     channel_regin(I).calib_val_gain <= gain_calibr(I*16-1 downto (I-1)*16);
     channel_regin(I).calib_val_offset <= offset_calibr(I*16-1 downto (I-1)*16);
     channel_regin(I).sat_val_val <= sat_val(I*15-1 downto (I-1)*15);
-    channel_regin(I).calib_sta_val <= data_calibr_out_synced(I*16-1 downto (I-1)*16);
-    channel_regin(I).prod_sta_val <= product_out_synced(I*17-1 downto (I-1)*17);
 
     int_trig_delay_in(I)                          <= channel_regout(I).trig_dly;
     int_trig_thres_in(I)                          <= channel_regout(I).trig_thres_val;
@@ -747,35 +743,10 @@ begin
         gain_i   => gain_calibr((I+1)*16-1 downto I*16),
         sat_i    => sat_val((I+1)*15-1 downto I*15),
         data_i   => data_calibr_in((I+1)*16-1 downto I*16),
-        data_o   => data_calibr_out((I+1)*16-1 downto I*16),
-        product_o => product_out((I+1)*17-1 downto I*17)
+        data_o   => data_calibr_out((I+1)*16-1 downto I*16)
         );
   end generate l_offset_gain_calibr;
 
-  cmp_calib_sta_sync : gc_sync_word_wr
-    generic map (
-      g_AUTO_WR => TRUE,
-      g_WIDTH   => 64)
-    port map (
-      clk_in_i    => fs_clk,
-      rst_in_n_i  => fs_rst_n,
-      clk_out_i   => sys_clk_i,
-      rst_out_n_i => '1',
-      data_i      => data_calibr_out,
-      data_o      => data_calibr_out_synced);
-
-  cmp_prod_sta_sync : gc_sync_word_wr
-      generic map (
-        g_AUTO_WR => TRUE,
-        g_WIDTH   => 17*4)
-      port map (
-        clk_in_i    => fs_clk,
-        rst_in_n_i  => fs_rst_n,
-        clk_out_i   => sys_clk_i,
-        rst_out_n_i => '1',
-        data_i      => product_out,
-        data_o      => product_out_synced);
-  
   data_calibr_in <= serdes_out_data;
 
   ------------------------------------------------------------------------------
