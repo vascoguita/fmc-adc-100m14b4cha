@@ -27,6 +27,8 @@ class TestFlatSignal(object):
         """
         spec = fmc_adc_100m.carrier
         spec.program_fpga(pytest.cfg_bitstream)
+        pattern = 0x555
+        fmc_adc_100m.pattern_data = pattern
         for chan in range(4):
             path = os.path.join(fmc_adc_100m.sys_dev_path,
                                 "cset0/chan{:d}/current-value".format(chan))
@@ -34,7 +36,9 @@ class TestFlatSignal(object):
             with open(path) as file:
                 for i in range(size):
                     file.seek(0)
-                    sum += int(file.read())
+                    value = int(file.read())
+                    assert (value >> 2) == pattern
+                    sum += value
                     # Should we sleep? It is not the end of the
                     # world if we read twice the same value: the real issue
                     # is that everything is zero

@@ -46,12 +46,29 @@ class FmcAdc100M():
         else:
             Exception("Can't understand carrier type. Bad regular expression")
 
+        self.__dbg_path = "/sys/kernel/debug/fmc-adc-100m.{:d}.auto/".format(self.dev_id)
+
+    @property
+    def pattern_data(self):
+        with open(os.path.join(self.__dbg_path, "data_pattern"), 'r') as f:
+            tmp = f.read().split()
+        assert tmp[0] == "adc"
+        return None if tmp[1] == "0" else int(tmp[2], 0)
+
+    @pattern_data.setter
+    def pattern_data(self, value):
+        with open(os.path.join(self.__dbg_path, "data_pattern"), 'w') as f:
+            if value is not None:
+                f.write("adc 1 0x{:x}".format(value))
+            else:
+                f.write("adc 0")
+
 
 @pytest.fixture(scope="module")
 def fmc_adc_100m():
     dev = FmcAdc100M(pytest.dev_id)
     yield dev
-
+    dev.pattern_data = None
 
 def pytest_addoption(parser):
     parser.addoption("--adc-id", type=lambda x: int(x, 0),
