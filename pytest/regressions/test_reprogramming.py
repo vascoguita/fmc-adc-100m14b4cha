@@ -44,6 +44,16 @@ class TestFlatSignal(object):
                     # is that everything is zero
             assert sum != 0, "Missing data on channel {:d}".format(chan)
 
+        tool = "/acc/local/L867/drv/adc-lib/4.0.3/bin/adc-acq"
+        cmd = "sudo {} -D fmc-adc-100m14b4cha@0x{:x} -a 0,1000,1 --stat -s 0 --trg-sw 1".format(tool,
+                                                                                                fmc_adc_100m.dev_id)
+        ret = os.popen(cmd)
+        data = json.loads(ret.read().strip())
+        for chan in data["statistics"]:
+            assert chan["average"] != 0, "Flat signal on channel {}".format(chan["chan"])
+        time.sleep(1)
+
+
     @pytest.mark.skipif(pytest.is_fec is True,
                         reason="We must be NOT on a FEC")
     @pytest.mark.parametrize("fec", [pytest.fec])
