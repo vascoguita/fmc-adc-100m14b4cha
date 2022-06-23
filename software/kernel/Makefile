@@ -64,11 +64,6 @@ clean modules help modules_install coccicheck:
 		GIT_VERSION=$(GIT_VERSION) \
 		VMEBUS_ABS=$(VMEBUS_ABS) $@
 
-# be able to run the "clean" rule even if $(LINUX) is not valid
-clean:
-	rm -rf *.o *~  .*.cmd *.ko *.mod.c .tmp_versions Module.symvers \
-		Module.markers modules.order
-
 cppcheck:
 	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --suppress=missingIncludeSystem --enable=all *.c *.h
 
