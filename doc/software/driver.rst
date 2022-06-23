@@ -37,7 +37,7 @@ driver from CERN BE-CEM.
 ::
 
       $ cd /path/to/fmc-adc-100m14b4cha/software/kernel
-      $ export LINUX=/path/to/linux/sources
+      $ export KERNELSRC=/path/to/linux/sources
       $ export ZIO=/path/to/zio
       $ export FMC=/path/to/fmc-sw
       $ export VMEBUS=/path/to/vmebridge
@@ -581,8 +581,8 @@ directory or fail with an error like::
 
         make: *** /lib/modules/<kernel-version>/build: No such file or directory.
 
-This happens when you compiled by setting ``LINUX=`` and your sudo is not
+This happens when you compiled by setting ``KERNELSRC=`` and your sudo is not
 propagating the environment to its child processes. In this case, you
 should run this command instead::
 
-        sudo make modules_install  LINUX=$LINUX
+        sudo make modules_install  KERNELSRC=$KERNELSRC

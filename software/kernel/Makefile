@@ -13,7 +13,7 @@ CPPCHECK ?= cppcheck
 DKMS ?= 0
 CURDIR := $(shell /bin/pwd)
 KVERSION ?= $(shell uname -r)
-LINUX ?= /lib/modules/$(KVERSION)/build
+KERNELSRC ?= /lib/modules/$(KVERSION)/build
 
 ifdef REPO_PARENT
 ZIO ?= $(REPO_PARENT)/fmc/zio
@@ -57,7 +57,7 @@ GIT_VERSION = $(shell git describe --always --dirty --long --tags)
 all: modules
 
 clean modules help modules_install coccicheck:
-	$(MAKE) -C $(LINUX) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) FMC_ABS=$(FMC_ABS) \
+	$(MAKE) -C $(KERNELSRC) M=$(CURDIR) ZIO_ABS=$(ZIO_ABS) FMC_ABS=$(FMC_ABS) \
 		ZIO_EXTRA_SYMBOLS-y=$(ZIO_EXTRA_SYMBOLS-y) \
 		FMC_EXTRA_SYMBOLS-y=$(FMC_EXTRA_SYMBOLS-y) \
 		ZIO_VERSION=$(ZIO_VERSION) \
