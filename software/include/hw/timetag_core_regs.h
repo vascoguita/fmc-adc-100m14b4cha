@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 CERN (home.cern)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #ifndef __CHEBY__TIMETAG_CORE_REGS__H__
 #define __CHEBY__TIMETAG_CORE_REGS__H__
 #define TIMETAG_CORE_REGS_SIZE 128 /* 0x80 */
