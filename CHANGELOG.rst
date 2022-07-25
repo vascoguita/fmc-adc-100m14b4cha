@@ -6,6 +6,12 @@
 Changelog
 =========
 
+6.0.3 - 2022-07-25
+==================
+Fixed
+-----
+- hdl: fix threshold logic that unders certain conditions was forcing a channel to 0
+
 6.0.2 - 2022-04-05
 ==================
 Changed

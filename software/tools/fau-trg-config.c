@@ -124,7 +124,7 @@ static long strtol_or_die(const char *arg)
 int main(int argc, char *argv[])
 {
 	/* default attribute */
-	static int attrdef[FAU_TRIG_NUM_ATTR] = {1, 0, 0, 0, 0, 0, 0, 0, 0 ,0};
+	const static int attrdef[FAU_TRIG_NUM_ATTR] = {1, 0, 0, 0, 0, 0, 0, 0, 0 ,0};
 	/* getop attribute */
 	static int attrval[FAU_TRIG_NUM_ATTR] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 	static int force = 0;

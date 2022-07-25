@@ -85,7 +85,7 @@ int fau_read_time(long time[3], enum fau_attribute first_attr)
 	return err;
 }
 
-void fau_print_time(long time1[3], long time2[3])
+void fau_print_time(const long time1[3], const long time2[3])
 {
 	long result[3];
 
