@@ -566,6 +566,9 @@ begin
         fmc_adc_100ms_ch_o => channel_regout(I));
 
     channel_regin(I).sta_val <= serdes_out_data_synced((16*I)-1 downto 16*(I-1));
+    channel_regin(I).calib_val_gain <= gain_calibr(I*16-1 downto (I-1)*16);
+    channel_regin(I).calib_val_offset <= offset_calibr(I*16-1 downto (I-1)*16);
+    channel_regin(I).sat_val_val <= sat_val(I*15-1 downto (I-1)*15);
 
     int_trig_delay_in(I)                          <= channel_regout(I).trig_dly;
     int_trig_thres_in(I)                          <= channel_regout(I).trig_thres_val;
@@ -603,7 +606,7 @@ begin
       g_WIDTH   => 32)
     port map (
       clk_in_i    => sys_clk_i,
-      rst_in_n_i  => '1',
+      rst_in_n_i  => sys_rst_n_i,
       clk_out_i   => fs_clk,
       rst_out_n_i => '1',
       data_i      => csr_regout.downsample,
@@ -617,7 +620,7 @@ begin
       g_WIDTH   => 64)
     port map (
       clk_in_i    => fs_clk,
-      rst_in_n_i  => '1',
+      rst_in_n_i  => fs_rst_n,
       clk_out_i   => sys_clk_i,
       rst_out_n_i => '1',
       data_i      => serdes_out_data,
@@ -629,7 +632,7 @@ begin
       g_WIDTH   => 32)
     port map (
       clk_in_i    => sys_clk_i,
-      rst_in_n_i  => '1',
+      rst_in_n_i  => sys_rst_n_i,
       clk_out_i   => fs_clk,
       rst_out_n_i => '1',
       data_i      => csr_regout.ext_trig_dly,
@@ -657,7 +660,7 @@ begin
         g_WIDTH   => 32)
       port map (
         clk_in_i             => sys_clk_i,
-        rst_in_n_i           => '1',
+        rst_in_n_i           => sys_rst_n_i,
         clk_out_i            => fs_clk,
         rst_out_n_i          => '1',
         data_i(15 downto 0)  => int_trig_thres_in(I),
@@ -671,7 +674,7 @@ begin
         g_WIDTH   => 15)
       port map (
         clk_in_i    => sys_clk_i,
-        rst_in_n_i  => '1',
+        rst_in_n_i  => sys_rst_n_i,
         clk_out_i   => fs_clk,
         rst_out_n_i => '1',
         data_i      => sat_val_in(15*I-1 downto 15*(I-1)),
@@ -683,7 +686,7 @@ begin
         g_WIDTH   => 32)
       port map (
         clk_in_i    => sys_clk_i,
-        rst_in_n_i  => '1',
+        rst_in_n_i  => sys_rst_n_i,
         clk_out_i   => fs_clk,
         rst_out_n_i => '1',
         data_i      => int_trig_delay_in(I),
@@ -696,7 +699,7 @@ begin
       g_WIDTH   => 128)
     port map (
       clk_in_i    => sys_clk_i,
-      rst_in_n_i  => '1',
+      rst_in_n_i  => sys_rst_n_i,
       clk_out_i   => fs_clk,
       rst_out_n_i => '1',
       data_i      => sync_calib_in,

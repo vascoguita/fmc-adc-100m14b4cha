@@ -25,6 +25,9 @@ package fmc_adc_100ms_channel_regs_pkg is
 
   type t_fmc_adc_100ms_ch_slave_out is record
     sta_val          : std_logic_vector(15 downto 0);
+    calib_val_gain   : std_logic_vector(15 downto 0);
+    calib_val_offset : std_logic_vector(15 downto 0);
+    sat_val_val      : std_logic_vector(14 downto 0);
   end record t_fmc_adc_100ms_ch_slave_out;
   subtype t_fmc_adc_100ms_ch_master_in is t_fmc_adc_100ms_ch_slave_out;
 
@@ -218,6 +221,10 @@ begin
     end if;
   end process;
 
+  -- Register calib_val
+
+  -- Register sat_val
+
   -- Process for write requests.
   process (wr_adr_d0, wr_req_d0, ctl_wack, calib_wack, sat_wack, trig_thres_wack,
            trig_dly_wack) begin
@@ -250,6 +257,12 @@ begin
       -- Reg trig_dly
       trig_dly_wreq <= wr_req_d0;
       wr_ack_int <= trig_dly_wack;
+    when "110" =>
+      -- Reg calib_val
+      wr_ack_int <= wr_req_d0;
+    when "111" =>
+      -- Reg sat_val
+      wr_ack_int <= wr_req_d0;
     when others =>
       wr_ack_int <= wr_req_d0;
     end case;
@@ -258,7 +271,10 @@ begin
   -- Process for read requests.
   process (adr_int, rd_req_int, ctl_ssr_reg, fmc_adc_100ms_ch_i.sta_val,
            calib_gain_reg, calib_offset_reg, sat_val_reg, trig_thres_val_reg,
-           trig_thres_hyst_reg, trig_dly_reg) begin
+           trig_thres_hyst_reg, trig_dly_reg,
+           fmc_adc_100ms_ch_i.calib_val_gain,
+           fmc_adc_100ms_ch_i.calib_val_offset,
+           fmc_adc_100ms_ch_i.sat_val_val) begin
     -- By default ack read requests
     rd_dat_d0 <= (others => 'X');
     case adr_int(4 downto 2) is
@@ -291,6 +307,16 @@ begin
       -- Reg trig_dly
       rd_ack_d0 <= rd_req_int;
       rd_dat_d0 <= trig_dly_reg;
+    when "110" =>
+      -- Reg calib_val
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(15 downto 0) <= fmc_adc_100ms_ch_i.calib_val_gain;
+      rd_dat_d0(31 downto 16) <= fmc_adc_100ms_ch_i.calib_val_offset;
+    when "111" =>
+      -- Reg sat_val
+      rd_ack_d0 <= rd_req_int;
+      rd_dat_d0(14 downto 0) <= fmc_adc_100ms_ch_i.sat_val_val;
+      rd_dat_d0(31 downto 15) <= (others => '0');
     when others =>
       rd_ack_d0 <= rd_req_int;
     end case;

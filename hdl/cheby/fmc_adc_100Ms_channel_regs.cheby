@@ -111,3 +111,29 @@ memory-map:
       comment: |
         Delay to apply on the trigger in sampling clock period.
         The default clock frequency is 100MHz (period = 10ns).
+  - reg:
+      name: calib_val
+      address: 0x00000018
+      width: 32
+      access: ro
+      description: Channel calibration value (read from hw)
+      children:
+      - field:
+          name: gain
+          range: 15-0
+          description: Gain calibration for channel
+      - field:
+          name: offset
+          range: 31-16
+          description: Offset calibration for channel
+  - reg:
+      name: sat_val
+      address: 0x0000001c
+      width: 32
+      access: ro
+      description: Channel saturation register (read from hw)
+      children:
+      - field:
+          name: val
+          range: 14-0
+          description: Saturation value for channel

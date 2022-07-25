@@ -163,25 +163,25 @@ struct fmc_adc_100ms_csr {
   struct fmc_adc_100ms_channel_regs fmc_adc_ch1;
 
   /* padding to: 48 words */
-  uint32_t __padding_1[10];
+  uint32_t __padding_1[8];
 
   /* [0xc0]: SUBMAP Channel 2 registers */
   struct fmc_adc_100ms_channel_regs fmc_adc_ch2;
 
   /* padding to: 64 words */
-  uint32_t __padding_2[10];
+  uint32_t __padding_2[8];
 
   /* [0x100]: SUBMAP Channel 3 registers */
   struct fmc_adc_100ms_channel_regs fmc_adc_ch3;
 
   /* padding to: 80 words */
-  uint32_t __padding_3[10];
+  uint32_t __padding_3[8];
 
   /* [0x140]: SUBMAP Channel 4 registers */
   struct fmc_adc_100ms_channel_regs fmc_adc_ch4;
 
   /* padding to: 80 words */
-  uint32_t __padding_4[42];
+  uint32_t __padding_4[40];
 };
 
 #endif /* __CHEBY__FMC_ADC_100MS_CSR__H__ */
