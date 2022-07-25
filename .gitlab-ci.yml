@@ -70,11 +70,11 @@ build-centos-7:
   - *script_build_kernel_dep
   - make -C software/kernel all
 
-build-kernel-5.4.129:
+build-kernel-5.4.207:
   stage: build
   allow_failure: true
   variables:
-    VERSION: 5.4.129
+    VERSION: 5.4.207
   image:
     name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
   before_script:
@@ -88,11 +88,11 @@ build-kernel-5.4.129:
   - *script_build_kernel_dep
   - make -C software/kernel all
 
-build-kernel-5.10.47:
+build-kernel-5.10.132:
   stage: build
   allow_failure: true
   variables:
-    VERSION: 5.10.47
+    VERSION: 5.10.132
   image:
     name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
   before_script:
