@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 CERN (home.cern)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #ifndef __CHEBY__FMC_ADC_EIC_REGS__H__
 #define __CHEBY__FMC_ADC_EIC_REGS__H__
 #define FMC_ADC_EIC_REGS_SIZE 16 /* 0x10 */

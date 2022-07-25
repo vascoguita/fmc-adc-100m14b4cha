@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 CERN (home.cern)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #ifndef __CHEBY__FMC_ADC_100MS_CHANNEL_REGS__H__
 #define __CHEBY__FMC_ADC_100MS_CHANNEL_REGS__H__
 #define FMC_ADC_100MS_CHANNEL_REGS_SIZE 32 /* 0x20 */

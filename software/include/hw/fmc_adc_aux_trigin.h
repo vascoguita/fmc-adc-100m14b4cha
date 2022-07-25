@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 CERN (home.cern)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #ifndef __CHEBY__AUX_TRIGIN__H__
 #define __CHEBY__AUX_TRIGIN__H__
 #define AUX_TRIGIN_SIZE 20 /* 0x14 */

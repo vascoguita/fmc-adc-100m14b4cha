@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 CERN (home.cern)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #ifndef __CHEBY__SVEC_REF_FMC_ADC_100M_MMAP__H__
 #define __CHEBY__SVEC_REF_FMC_ADC_100M_MMAP__H__
 
