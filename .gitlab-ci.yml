@@ -43,7 +43,7 @@ documentation:
 .script_fetch_kernel_dep: &script_fetch_kernel_dep
   - git clone --depth 1 https://gitlab.cern.ch/cohtdrivers/coht.git ~/git/coht
   - export VMEBUS=~/git/coht/vmebridge-ng
-  - git clone -b v1.1.1 --depth 1 https://gitlab.cern.ch/coht/fmc.git ~/git/fmc
+  - git clone -b v1.1.1 --depth 1 https://gitlab.cern.ch/be-cem-edl/fec/hardware-modules/fmc.git ~/git/fmc
   - export FMC=~/git/fmc
   - git clone -b v1.4.0 --depth 1 https://ohwr.org/project/zio.git ~/git/zio
   - export ZIO=~/git/zio
