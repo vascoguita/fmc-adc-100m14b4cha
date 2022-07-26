@@ -67,4 +67,4 @@ clean modules help modules_install coccicheck:
 cppcheck:
 	$(CPPCHECK) -q -I. -I$(ZIO_ABS)/include -I$(FMC_BUS_ABS)/  --suppress=missingIncludeSystem --enable=all *.c *.h
 
-.PHONY: all install coccicheck cppcheck
+.PHONY: all coccicheck clean cppcheck modules modules_install
