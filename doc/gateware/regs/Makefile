@@ -16,8 +16,9 @@ CHEBY ?= cheby
 all: html rest
 
 html : $(addsuffix .htm, $(FILES))
+rest : $(addsuffix .rst, $(FILES))
 
-.PHONY: clean html
+.PHONY: clean html rest
 
 vpath %.cheby $(TOP_DIR)/hdl/cheby/
 vpath %.cheby $(TOP_DIR)/hdl/ip_cores/spec/hdl/rtl/
@@ -25,6 +26,9 @@ vpath %.cheby $(TOP_DIR)/hdl/ip_cores/svec/hdl/rtl/
 
 %.htm: %.cheby
 	$(CHEBY) -i $< --gen-doc --doc html > $@
+
+%.rst: %.cheby
+	$(CHEBY) -i $< --gen-doc --doc rest > $@
 
 clean:
 	@rm -f *.md *.rst *.htm

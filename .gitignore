@@ -76,6 +76,7 @@ hdl/svec/sim/testbench/top/work/
 doc/manual/fmcadc100m14b4cha_gateware_manual.info
 doc/manual/fmcadc100m14b4cha_gateware_manual.pdf
 doc/manual/fmcadc100m14b4cha_gateware_manual.txt
+doc/gateware/regs/*.rst
 *.texi
 *.aux
 *.log
