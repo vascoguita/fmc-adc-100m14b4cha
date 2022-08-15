@@ -10,11 +10,13 @@ HTML += svec_ref_fmc_adc_100Ms_mmap.htm
 HTML += spec_ref_fmc_adc_100Ms_mmap.htm
 HTML += fmc_adc_mezzanine_mmap.htm
 
+CHEBY ?= cheby
+
 all: $(HTML)
 
 .PHONY: clean
 
-CHEBY_BUILD=(cd $(dir $<); cheby -i $(notdir $<) --gen-doc --doc html) > $@
+CHEBY_BUILD=(cd $(dir $<); $(CHEBY) -i $(notdir $<) --gen-doc --doc html) > $@
 
 fmc_adc_mezzanine_mmap.htm: $(TOP_DIR)/hdl/cheby/fmc_adc_mezzanine_mmap.cheby
 	$(CHEBY_BUILD)
