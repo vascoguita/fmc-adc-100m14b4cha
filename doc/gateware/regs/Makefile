@@ -4,17 +4,20 @@
 
 TOP_DIR = ../../..
 
-HTML := spec_base_regs.htm
-HTML += svec_base_regs.htm
-HTML += svec_ref_fmc_adc_100Ms_mmap.htm
-HTML += spec_ref_fmc_adc_100Ms_mmap.htm
-HTML += fmc_adc_mezzanine_mmap.htm
+FILES := spec_base_regs
+FILES += svec_base_regs
+FILES += svec_ref_fmc_adc_100Ms_mmap
+FILES += spec_ref_fmc_adc_100Ms_mmap
+FILES += fmc_adc_mezzanine_mmap
+
 
 CHEBY ?= cheby
 
-all: $(HTML)
+all: html rest
 
-.PHONY: clean
+html : $(addsuffix .htm, $(FILES))
+
+.PHONY: clean html
 
 vpath %.cheby $(TOP_DIR)/hdl/cheby/
 vpath %.cheby $(TOP_DIR)/hdl/ip_cores/spec/hdl/rtl/
