@@ -12,11 +12,9 @@ designs, and the `FMC-ADC-100M`_ part specific to the FMC-ADC-100M mezzanine.
 Carrier
 =======
 
-.. raw:: html
-   :file: regs/svec_base_regs.htm
+.. include:: regs/svec_base_regs.rst
 
 FMC-ADC-100M
 ============
 
-.. raw:: html
-   :file: regs/svec_ref_fmc_adc_100Ms_mmap.htm
+.. include:: regs/svec_ref_fmc_adc_100Ms_mmap.rst

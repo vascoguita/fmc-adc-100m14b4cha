@@ -4,32 +4,31 @@
 
 TOP_DIR = ../../..
 
-HTML := spec_base_regs.htm
-HTML += svec_base_regs.htm
-HTML += svec_ref_fmc_adc_100Ms_mmap.htm
-HTML += spec_ref_fmc_adc_100Ms_mmap.htm
-HTML += fmc_adc_mezzanine_mmap.htm
+FILES := spec_base_regs
+FILES += svec_base_regs
+FILES += svec_ref_fmc_adc_100Ms_mmap
+FILES += spec_ref_fmc_adc_100Ms_mmap
+FILES += fmc_adc_mezzanine_mmap
 
-all: $(HTML)
 
-.PHONY: clean
+CHEBY ?= cheby
 
-CHEBY_BUILD=(cd $(dir $<); cheby -i $(notdir $<) --gen-doc --doc html) > $@
+all: html rest
 
-fmc_adc_mezzanine_mmap.htm: $(TOP_DIR)/hdl/cheby/fmc_adc_mezzanine_mmap.cheby
-	$(CHEBY_BUILD)
+html : $(addsuffix .htm, $(FILES))
+rest : $(addsuffix .rst, $(FILES))
 
-spec_ref_fmc_adc_100Ms_mmap.htm: $(TOP_DIR)/hdl/cheby/spec_ref_fmc_adc_100Ms_mmap.cheby
-	$(CHEBY_BUILD)
+.PHONY: clean html rest
 
-svec_ref_fmc_adc_100Ms_mmap.htm: $(TOP_DIR)/hdl/cheby/svec_ref_fmc_adc_100Ms_mmap.cheby
-	$(CHEBY_BUILD)
+vpath %.cheby $(TOP_DIR)/hdl/cheby/
+vpath %.cheby $(TOP_DIR)/hdl/ip_cores/spec/hdl/rtl/
+vpath %.cheby $(TOP_DIR)/hdl/ip_cores/svec/hdl/rtl/
 
-svec_base_regs.htm: $(TOP_DIR)/hdl/ip_cores/svec/hdl/rtl/svec_base_regs.cheby
-	$(CHEBY_BUILD)
+%.htm: %.cheby
+	$(CHEBY) -i $< --gen-doc --doc html > $@
 
-spec_base_regs.htm: $(TOP_DIR)/hdl/ip_cores/spec/hdl/rtl/spec_base_regs.cheby
-	$(CHEBY_BUILD)
+%.rst: %.cheby
+	$(CHEBY) -i $< --gen-doc --doc rest > $@
 
 clean:
 	@rm -f *.md *.rst *.htm
