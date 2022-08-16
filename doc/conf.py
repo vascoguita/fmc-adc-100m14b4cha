@@ -31,8 +31,6 @@ author = 'Matthieu Cattin, Dimitris Lampridis <dimitrios.lampridis@cern.ch>, Fed
 # source_suffix = ['.rst', '.md']
 source_suffix = '.rst'
 
-# The master toctree document.
-master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
@@ -48,10 +46,13 @@ extensions = ['sphinx.ext.autodoc',
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+# The root document.
+master_doc = 'index'
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['build_env', '_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
