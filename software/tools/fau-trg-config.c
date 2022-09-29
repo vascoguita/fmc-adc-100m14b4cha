@@ -63,10 +63,8 @@ int fau_write_attribute(enum fau_attribute attr, uint32_t val)
 	/* convert val to string */
 	snprintf(buf, buf_len, "%u",val);
 	/* build the attribute path */
-	strncpy(fullpath, basepath, path_len);
 	if (path_len > 0)
-		fullpath[path_len -1] = '\0';
-	strncat(fullpath, attribute[attr], path_len);
+		snprintf(fullpath, path_len, "%s%s", basepath, attribute[attr]);
 	/* Write the attribute */
 	printf("Writing %s in %s\n", buf, fullpath);
 	fd = open(fullpath, O_WRONLY);
