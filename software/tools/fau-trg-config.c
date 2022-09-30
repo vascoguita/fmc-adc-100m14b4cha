@@ -25,7 +25,7 @@ static char git_version[] = "version: " GIT_VERSION;
 #define buf_len 50
 #define base_len 40
 /* user will edit by adding the device name */
-char basepath[base_len] = "/sys/bus/zio/devices/";
+char basepath[base_len] = "/sys/bus/zio/devices";
 
 enum fau_attribute {
 	FAU_TRG_EN,
