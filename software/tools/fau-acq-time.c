@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	strncat(basepath, argv[argc-1], base_len);
+	strncat(basepath, argv[argc-1], base_len - strlen(basepath));
 	printf("Sysfs path to device is: %s\n", basepath);
 
 	if (last) {
