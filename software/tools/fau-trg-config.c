@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	strncat(basepath, argv[optind], base_len);
+	strncat(basepath, argv[optind], base_len - strlen(basepath));
 	printf("Sysfs path to device is: %s\n", basepath);
 
 	for (i = 0; i < FAU_TRIG_NUM_ATTR; ++i) {
