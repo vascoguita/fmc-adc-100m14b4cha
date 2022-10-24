@@ -5,28 +5,21 @@
 variables:
   GIT_SUBMODULE_STRATEGY: normal
 
-stages:
-  - static-analysis
-  - build
-
-reuse:
-  stage: static-analysis
-  image:
-    name: fsfe/reuse:latest
-    entrypoint: [""]
-  script:
-    - reuse lint
-  allow_failure: true
+include:
+  - project: 'be-cem-edl/evergreen/gitlab-ci'
+    ref: master
+    file:
+      - 'edl-gitlab-ci.yml'
 
 cppcheck:
-  stage: static-analysis
+  stage: analyse
   image:
     name: gitlab-registry.cern.ch/coht/common-containers/static-analysis:latest
   script:
     - make -C software cppcheck
 
 flawfinder:
-  stage: static-analysis
+  stage: analyse
   image:
     name: gitlab-registry.cern.ch/coht/common-containers/static-analysis:latest
   script:
