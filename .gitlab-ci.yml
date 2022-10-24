@@ -64,38 +64,18 @@ build-centos-7:
   script:
     - make -C software
 
-.script_build_kernel_ver: &script_build_kernel_ver
-  - source /linux-versions.sh
-  - fetch $VERSION && prepare $VERSION && export KERNELSRC=$(linux $VERSION) && export LINUX=$(linux $VERSION)
-  - *script_build_kernel_dep
-  - make -C software/kernel all
-
-build-kernel-5.4.207:
+build-kernel:
   stage: build
   allow_failure: true
-  variables:
-    VERSION: 5.4.207
   image:
     name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
+  parallel:
+    matrix:
+      - VERSION: [5.4.149, 5.15.74]
   before_script:
     - *script_fetch_kernel_dep
   script:
-    - *script_build_kernel_ver
-
-.script_build_kernel_ver: &script_build_kernel_ver
-  - source /linux-versions.sh
-  - fetch $VERSION && prepare $VERSION && export KERNELSRC=$(linux $VERSION) && export LINUX=$(linux $VERSION)
-  - *script_build_kernel_dep
-  - make -C software/kernel all
-
-build-kernel-5.10.132:
-  stage: build
-  allow_failure: true
-  variables:
-    VERSION: 5.10.132
-  image:
-    name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
-  before_script:
-    - *script_fetch_kernel_dep
-  script:
-    - *script_build_kernel_ver
+    - source /linux-versions.sh
+    - fetch $VERSION && prepare $VERSION  && export KERNELSRC=$(linux $VERSION)
+    - *script_build_kernel_dep
+    - make -C software/kernel all
