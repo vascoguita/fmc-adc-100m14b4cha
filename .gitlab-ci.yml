@@ -31,6 +31,11 @@ documentation:
     name: gitlab-registry.cern.ch/coht/common-containers/documentation:latest
   script:
     - make -C doc html
+    - mkdir -p $EDL_CI_EOS_OUTPUT_DIR
+    - cp -a doc/_build/html/* $EDL_CI_EOS_OUTPUT_DIR
+  artifacts:
+    paths:
+      - $EDL_CI_EOS_OUTPUT_DIR
 
 .script_fetch_kernel_dep: &script_fetch_kernel_dep
   - git clone --depth 1 https://gitlab.cern.ch/cohtdrivers/coht.git ~/git/coht
