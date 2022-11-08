@@ -736,7 +736,11 @@ static bool fa_is_fpga_valid(struct fa_dev *fa)
 	}
 
 	switch (fa->meta.device) {
+	case FA_META_DEVICE_ID_SVEC_DBL_ADC_WRTD:
+		break;
 	case FA_META_DEVICE_ID_SVEC_DBL_ADC:
+		break;
+	case FA_META_DEVICE_ID_SPEC_WRTD:
 		break;
 	case FA_META_DEVICE_ID_SPEC:
 		break;
