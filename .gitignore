@@ -114,3 +114,4 @@ GRTAGS
 .clangd
 compile_commands.json
 .cache
+*.swp

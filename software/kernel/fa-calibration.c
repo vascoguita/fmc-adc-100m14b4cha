@@ -339,7 +339,8 @@ static void __fa_calib_gain_update(struct fa_dev *fa)
 #if KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE
 static void fa_calib_gain_update(struct timer_list *timer)
 {
-	__fa_calib_gain_update(from_timer(fa, timer, calib_timer));
+	struct fa_dev *fa = from_timer(fa, timer, calib_timer);
+	__fa_calib_gain_update(fa);
 }
 #else
 static void fa_calib_gain_update(unsigned long arg)

@@ -25,7 +25,7 @@ static char git_version[] = "version: " GIT_VERSION;
 #define buf_len 50
 #define base_len 40
 /* user will edit by adding the device name */
-char basepath[base_len] = "/sys/bus/zio/devices/";
+char basepath[base_len] = "/sys/bus/zio/devices";
 
 enum fau_attribute {
 	FAU_TRG_EN,
@@ -63,10 +63,8 @@ int fau_write_attribute(enum fau_attribute attr, uint32_t val)
 	/* convert val to string */
 	snprintf(buf, buf_len, "%u",val);
 	/* build the attribute path */
-	strncpy(fullpath, basepath, path_len);
 	if (path_len > 0)
-		fullpath[path_len -1] = '\0';
-	strncat(fullpath, attribute[attr], path_len);
+		snprintf(fullpath, path_len, "%s%s", basepath, attribute[attr]);
 	/* Write the attribute */
 	printf("Writing %s in %s\n", buf, fullpath);
 	fd = open(fullpath, O_WRONLY);
@@ -190,7 +188,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	strncat(basepath, argv[optind], base_len);
+	strncat(basepath, argv[optind], base_len - strlen(basepath));
 	printf("Sysfs path to device is: %s\n", basepath);
 
 	for (i = 0; i < FAU_TRIG_NUM_ATTR; ++i) {
