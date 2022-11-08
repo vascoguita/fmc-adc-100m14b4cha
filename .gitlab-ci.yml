@@ -59,6 +59,7 @@ build-centos-7:
     - *script_fetch_kernel_dep
     - *script_build_kernel_dep
   script:
+    - export KERNELSRC=/usr/src/kernels/*/
     - make -C software
 
 build-kernel:
