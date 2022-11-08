@@ -69,7 +69,7 @@ build-kernel:
     name: gitlab-registry.cern.ch/coht/common-containers/build-kernel:latest
   parallel:
     matrix:
-      - VERSION: [5.4.149, 5.15.74]
+      - VERSION: [5.10.149, 5.15.74]
   before_script:
     - *script_fetch_kernel_dep
   script:
