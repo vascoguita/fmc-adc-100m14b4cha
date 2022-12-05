@@ -18,6 +18,11 @@ syn_tool    = "ise"
 if locals().get('fetchto', None) is None:
     fetchto="../../ip_cores"
 
+# Ideally this should be done by hdlmake itself, to allow downstream Manifests to be able to use the
+# fetchto variable independent of where those Manifests reside in the filesystem.
+import os
+fetchto = os.path.abspath(fetchto)
+
 files = [
     syn_top + "_wr.ucf",
     "buildinfo_pkg.vhd",
