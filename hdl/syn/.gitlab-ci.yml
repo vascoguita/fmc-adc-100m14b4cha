@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2022 CERN (home.cern)
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+.syn_template: &syn_template
+  interruptible: true
+  stage: build
+  needs: []
+  tags:
+    - xilinx_ise
+    - "14.7"
+  script:
+    - git submodule init && git submodule update
+    - cd hdl/syn/"$SYN_NAME"/
+    - hdlmake
+    - make
+  artifacts:
+    name: "$SYN_NAME-synthesis-$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    paths:
+      - hdl/syn/$SYN_NAME/*.syr
+      - hdl/syn/$SYN_NAME/*.par
+      - hdl/syn/$SYN_NAME/*.twr
+      - hdl/syn/$SYN_NAME/*.bit
+      - hdl/syn/$SYN_NAME/*.bin
+
+SPEC45T synthesis:
+  variables:
+    SYN_NAME: "spec_ref_design_wr"
+  <<: *syn_template
+
+SPEC150T synthesis:
+  variables:
+    SYN_NAME: "spec150_ref_design_wr"
+  <<: *syn_template
+
+SVEC synthesis:
+  variables:
+    SYN_NAME: "svec_ref_design_wr"
+  <<: *syn_template
