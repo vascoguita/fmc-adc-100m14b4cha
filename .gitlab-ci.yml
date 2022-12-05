@@ -10,6 +10,7 @@ include:
     ref: master
     file:
       - 'edl-gitlab-ci.yml'
+  - local: 'hdl/syn/.gitlab-ci.yml'
 
 cppcheck:
   stage: analyse
