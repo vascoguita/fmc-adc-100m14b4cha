@@ -175,6 +175,9 @@ NET  "gen_fmc_mezzanine[?].*/*/cmp_ext_trig_sync/gc_sync_ffs_in" MAXDELAY = 2.0 
 INST "gen_fmc_mezzanine[0].*/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X66Y189;
 INST "gen_fmc_mezzanine[1].*/*/cmp_ext_trig_sync/sync0"       RLOC_ORIGIN = X69Y2;
 
+# Needed for the DDR
+NET "inst_svec_base/gen_with_ddr?.cmp_ddr_ctrl_bank/*/mcb_soft_calibration_inst/SELFREFRESH_MCB_REQ" TIG;
+
 #----------------------------------------
 # IOB exceptions
 #----------------------------------------
