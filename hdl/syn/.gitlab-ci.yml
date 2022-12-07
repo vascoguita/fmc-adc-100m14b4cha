@@ -14,6 +14,12 @@
     - cd hdl/syn/"$SYN_NAME"/
     - hdlmake
     - make
+    - |
+      if [[ $(cat *.par | grep -c "All constraints were met") = 0 ]]
+      then
+        echo -e "\e[31mTiming errors detected in PAR report. Aborting...\e[0m"
+        exit 1
+      fi
   artifacts:
     name: "$SYN_NAME-synthesis-$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     paths:
