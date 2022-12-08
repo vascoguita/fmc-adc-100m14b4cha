@@ -28,7 +28,7 @@ here. You can clone the GIT project with the following command::
 
 Within the GIT respository, releases are marked with a TAG named
 using the `Semantic Versioning`_. For example the latest release is
-``v5.0.0``. You can also find older releases with a different versioning
+|latest_release|. You can also find older releases with a different versioning
 mechanism.
 
 For each release we will publish the FPGA bitstream for all supported
