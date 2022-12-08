@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+variables:
+  _FMC_ADC_BITSTREAM_DEST: $CI_PROJECT_DIR/$EDL_CI_EOS_OUTPUT_DIR/bitstreams
+
 .syn_template: &syn_template
   interruptible: true
   stage: build
@@ -20,14 +23,13 @@
         echo -e "\e[31mTiming errors detected in PAR report. Aborting...\e[0m"
         exit 1
       fi
+    - tar -cJf $SYN_NAME.tar.xz *.syr *.par *.twr *.bit *.bin
+    - mkdir -p $_FMC_ADC_BITSTREAM_DEST
+    - cp $SYN_NAME.tar.xz $_FMC_ADC_BITSTREAM_DEST
   artifacts:
     name: "$SYN_NAME-synthesis-$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
     paths:
-      - hdl/syn/$SYN_NAME/*.syr
-      - hdl/syn/$SYN_NAME/*.par
-      - hdl/syn/$SYN_NAME/*.twr
-      - hdl/syn/$SYN_NAME/*.bit
-      - hdl/syn/$SYN_NAME/*.bin
+      - $_FMC_ADC_BITSTREAM_DEST/*
 
 SPEC45T synthesis:
   variables:
