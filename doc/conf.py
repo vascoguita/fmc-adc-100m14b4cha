@@ -25,6 +25,12 @@ project = 'FMC-ADC-100M-14B-4CHA'
 copyright = u'2022, CERN, documentation released under CC-BY-SA-4.0'
 author = 'Matthieu Cattin, Dimitris Lampridis <dimitrios.lampridis@cern.ch>, Federico Vaga <federico.vaga@cern.ch>'
 
+import os
+import re
+
+release = os.popen('git describe --tags').read().strip()
+version = re.sub('^v', '', release.split('-')[0])
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
@@ -91,3 +97,6 @@ latex_documents = [
 # the title page.
 #
 latex_logo = 'fig/ohr_logo_lowres.png'
+
+# Will be appended to every rst source file in order to provide a reference to the latest version
+rst_epilog = '.. |latest_release| replace:: %s' % version

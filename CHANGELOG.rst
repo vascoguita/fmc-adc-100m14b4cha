@@ -6,6 +6,26 @@
 Changelog
 =========
 
+6.0.4 - 2022-09-12
+==================
+Added
+=====
+- hdl: update to latest releases of all dependencies
+- hdl: bitstreams now published under https://be-cem-edl.web.cern.ch/
+- sw: support for WRTD FMC-ADC designs
+- sw: support for newer Linux kernels
+
+Fixed
+=====
+- doc: HTML documentation now includes register maps
+- sw: compiler warnings
+
+Changed
+=======
+- bld: many improvements to CI
+- bld: build system cleanup
+- doc: now published under https://be-cem-edl.web.cern.ch/
+
 6.0.3 - 2022-07-25
 ==================
 Fixed
