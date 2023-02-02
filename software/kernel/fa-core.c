@@ -880,6 +880,12 @@ int fa_probe(struct platform_device *pdev)
 	if (err < 0)
 		goto out_irq;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+	err = fa_hwmon_init(fa);
+	if(err != 0)
+		dev_err(fa->msgdev, "Could not create HWMON device: %d", err);
+#endif
+
 	return 0;
 
 out_irq:

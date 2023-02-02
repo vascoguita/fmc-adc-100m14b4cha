@@ -347,6 +347,10 @@ struct fa_dev {
 	unsigned long		next_t;
 	int			temp;	/* temperature: scaled by 4 bits */
 
+	/* HWMON */
+	char *hwmon_temp_sensor_id;
+	struct device *hwmon_dev;
+
 	/* Calibration Data */
 	struct fa_calib calib;
 	int32_t range[FA100M14B4C_NCHAN];
@@ -566,5 +570,9 @@ extern void fa_calib_config_chan(struct fa_dev *fa, unsigned int chan,
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);
 extern void fa_debug_exit(struct fa_dev *fa);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+extern int fa_hwmon_init(struct fa_dev *fa);
+#endif
 
 #endif /*  FMC_ADC_H_ */
