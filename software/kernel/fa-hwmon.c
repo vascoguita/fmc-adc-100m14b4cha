@@ -25,6 +25,20 @@ static int fa_hwmon_temp_read(struct device *dev, enum hwmon_sensor_types type,
 	int32_t value;
 	struct fa_dev *fa = dev_get_drvdata(dev);
 
+	switch(attr) {
+		case hwmon_temp_min:
+			*val = 30*1000;
+			return 0;
+
+		case hwmon_temp_max:
+			*val = 60*1000;
+			return 0;
+
+		case hwmon_temp_crit:
+			*val = 65*1000;
+			return 0;
+	}
+
 	value = fa_temperature_read(fa);
 
 	*val = (long)value;
@@ -44,7 +58,8 @@ static int fa_hwmon_temp_sensor_id_read(struct device *dev,
 }
 
 static const struct hwmon_channel_info *fa_hwmon_info[] = {
-	HWMON_CHANNEL_INFO(temp, HWMON_T_INPUT | HWMON_T_LABEL),
+	HWMON_CHANNEL_INFO(temp, HWMON_T_INPUT | HWMON_T_LABEL | HWMON_T_MIN |
+			   HWMON_T_MAX | HWMON_T_CRIT),
 	NULL
 };
 
