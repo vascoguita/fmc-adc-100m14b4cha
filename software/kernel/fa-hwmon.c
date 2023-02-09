@@ -22,9 +22,12 @@ static umode_t fa_hwmon_temp_is_visible(const void *_data,
 static int fa_hwmon_temp_read(struct device *dev, enum hwmon_sensor_types type,
 				u32 attr, int channel, long *val)
 {
+	int32_t value;
 	struct fa_dev *fa = dev_get_drvdata(dev);
 
-	*val = fa_temperature_read(fa);
+	value = fa_temperature_read(fa);
+
+	*val = (long)value;
 
 	return 0;
 }
@@ -58,29 +61,22 @@ static const struct hwmon_chip_info fa_hwmon_temp_chip_info = {
 
 int fa_hwmon_init(struct fa_dev *fa)
 {
-	int size;
-	char device_type[] = "Temperature - FMC ADC 100M14B4C - ";
 	struct device *dev = &fa->pdev->dev;
 
 	fa->hwmon_dev = devm_hwmon_device_register_with_info(dev,
-							     "fa_temperature",
+							     "FMC_ADC_100M14B4C",
 							     fa,
 							     &fa_hwmon_temp_chip_info,
 							     NULL);
 	if(!IS_ERR(fa->hwmon_dev)) {
-		size = strlen(dev_name(&fa->slot->dev));
-		size += strlen(device_type);
-		size++;
-
-		fa->hwmon_temp_sensor_id = devm_kzalloc(fa->hwmon_dev,
-							size, GFP_KERNEL);
+		fa->hwmon_temp_sensor_id = devm_kasprintf(fa->hwmon_dev,
+							  GFP_KERNEL,
+							  "Temperature [%s]",
+							  dev_name(&fa->slot->dev));
 		if(!fa->hwmon_temp_sensor_id) {
 			devm_hwmon_device_unregister(dev);
 			return -ENOMEM;
 		}
-
-		snprintf(fa->hwmon_temp_sensor_id, size, "%s%s",
-			 device_type, dev_name(&fa->slot->dev));
 
 		return 0;
 	}
