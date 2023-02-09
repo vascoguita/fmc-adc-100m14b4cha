@@ -345,7 +345,6 @@ struct fa_dev {
 	/* one-wire */
 	uint8_t ds18_id[8];
 	unsigned long		next_t;
-	int			temp;	/* temperature: scaled by 4 bits */
 
 	/* HWMON */
 	char *hwmon_temp_sensor_id;
