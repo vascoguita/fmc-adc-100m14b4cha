@@ -22,6 +22,7 @@ static umode_t fa_hwmon_temp_is_visible(const void *_data,
 static int fa_hwmon_temp_read(struct device *dev, enum hwmon_sensor_types type,
 				u32 attr, int channel, long *val)
 {
+	int ret;
 	int32_t value;
 	struct fa_dev *fa = dev_get_drvdata(dev);
 
@@ -39,7 +40,12 @@ static int fa_hwmon_temp_read(struct device *dev, enum hwmon_sensor_types type,
 			return 0;
 	}
 
-	value = fa_temperature_read(fa);
+	ret = fa_temperature_read(fa, &value);
+
+	if(ret < 0){
+		dev_err(dev, "Could not read temperature: %d", ret);
+		return ret;
+	}
 
 	*val = (long)value;
 

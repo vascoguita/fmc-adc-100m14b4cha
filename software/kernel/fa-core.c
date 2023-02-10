@@ -126,19 +126,19 @@ bool fa_adc_is_output_randomizer(struct fa_dev *fa)
  * DS18B20 returns units of 1/16 degree. We return units
  * of 1/1000 of a degree instead.
  */
-int32_t fa_temperature_read(struct fa_dev *fa)
+int fa_temperature_read(struct fa_dev *fa, int32_t *temp)
 {
 	uint32_t reg;
-	int16_t raw_temp;
 
 	reg = fa_ioread(fa, fa->fa_ow_base + 0x08);
 	if (reg & BIT(31)) {
 		dev_err(&fa->pdev->dev, "Temperature sensor failure\n");
-		return 45000; /* 45.000 degrees as save value */
+		return -EIO;
 	}
-	raw_temp = reg & 0xFFFF;
 
-	return (raw_temp * 1000UL + 8) / 16;
+	*temp = (int)((reg & 0xFFFF) * 1000UL + 8) / 16;
+
+	return 0;
 }
 
 /**
