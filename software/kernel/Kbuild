@@ -61,6 +61,7 @@ fmc-adc-100m14b4ch-y += fa-irq.o
 fmc-adc-100m14b4ch-y += fa-debug.o
 fmc-adc-100m14b4ch-y += fa-dma.o
 fmc-adc-100m14b4ch-y += spi.o
+fmc-adc-100m14b4ch-y += fa-hwmon.o
 
 fmc-adc-100m14b4ch-spec-objs := fmc-adc-100m14b4ch-spec-core.o
 fmc-adc-100m14b4ch-svec-objs := fmc-adc-100m14b4ch-svec-core.o

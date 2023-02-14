@@ -167,12 +167,16 @@ void fa_calib_adc_config_chan(struct fa_dev *fa, unsigned int chan,
 	int range = fa->range[chan];
 	struct fa_calib_stanza *cal = &fa->calib.adc[range];
 	int gain;
+	int err;
 
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
-		if (flags & FA_CALIB_FLAG_READ_TEMP)
-			temperature = fa_temperature_read(fa);
+		if (flags & FA_CALIB_FLAG_READ_TEMP) {
+			err = fa_temperature_read(fa, &temperature);
+			if(err)
+				temperature = 45000; /* 45.000 degrees as safe value */
+		}
 		delta_temp = (temperature / 10) - cal->temperature;
 		gain = fa_calib_adc_gain_fix(range, cal->gain[chan],
 					     delta_temp);
@@ -280,8 +284,11 @@ int fa_calib_dac_config_chan(struct fa_dev *fa, unsigned int chan,
 	if (fa_calib_is_compensation_on(fa)) {
 		int32_t delta_temp;
 
-		if (flags & FA_CALIB_FLAG_READ_TEMP)
-			temperature = fa_temperature_read(fa);
+		if (flags & FA_CALIB_FLAG_READ_TEMP) {
+			err = fa_temperature_read(fa, &temperature);
+			if(err)
+				temperature = 45000; /* 45.000 degrees as safe value */
+		}
 		delta_temp = (temperature / 10) - cal->temperature;
 		gain = fa_calib_dac_gain_fix(range, cal->gain[chan],
 					     delta_temp);
@@ -312,8 +319,11 @@ void fa_calib_config(struct fa_dev *fa)
 {
 	int32_t temperature;
 	int i;
+	int err;
 
-	temperature = fa_temperature_read(fa);
+	err = fa_temperature_read(fa, &temperature);
+	if(err)
+		temperature = 45000; /* 45.000 degrees as safe value */
 	spin_lock(&fa->zdev->cset->lock);
 	for (i = 0; i < FA100M14B4C_NCHAN; ++i)
 		fa_calib_config_chan(fa, i, temperature, 0);

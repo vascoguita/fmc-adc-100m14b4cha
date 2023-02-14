@@ -345,7 +345,10 @@ struct fa_dev {
 	/* one-wire */
 	uint8_t ds18_id[8];
 	unsigned long		next_t;
-	int			temp;	/* temperature: scaled by 4 bits */
+
+	/* HWMON */
+	char *hwmon_temp_sensor_id;
+	struct device *hwmon_dev;
 
 	/* Calibration Data */
 	struct fa_calib calib;
@@ -504,7 +507,7 @@ extern const struct zfa_field_desc zfad_regs[];
 /* Functions exported by fa-core.c */
 extern int zfad_fsm_command(struct fa_dev *fa, uint32_t command);
 extern int zfad_convert_hw_range(uint32_t bitmask);
-extern int32_t fa_temperature_read(struct fa_dev *fa);
+extern int fa_temperature_read(struct fa_dev *fa, int *temp);
 extern int fa_trigger_software(struct fa_dev *fa);
 extern int fa_fsm_wait_state(struct fa_dev *fa,
                              enum fa100m14b4c_fsm_state state,
@@ -566,5 +569,9 @@ extern void fa_calib_config_chan(struct fa_dev *fa, unsigned int chan,
 /* functions exported by fa-debug.c */
 extern int fa_debug_init(struct fa_dev *fa);
 extern void fa_debug_exit(struct fa_dev *fa);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+extern int fa_hwmon_init(struct fa_dev *fa);
+#endif
 
 #endif /*  FMC_ADC_H_ */

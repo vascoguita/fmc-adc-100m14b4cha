@@ -335,6 +335,7 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 	struct fa_dev *fa = get_zfadc(dev);
 	void *baseoff = fa->fa_adc_csr_base;
 	int i, reg_index;
+	int err, temp;
 
 	i = FA100M14B4C_NCHAN;
 
@@ -370,7 +371,10 @@ static int zfad_info_get(struct device *dev, struct zio_attribute *zattr,
 		/* ZIO automatically return the attribute value */
 		return 0;
 	case ZFA_SW_R_NOADDRES_TEMP:
-		*usr_val = fa_temperature_read(fa);
+		err = fa_temperature_read(fa, &temp);
+		if(err)
+			return err;
+		*usr_val = (uint32_t)temp;
 		return 0;
 	case ZFA_SW_CH1_OFFSET_ZERO:
 		i--;
