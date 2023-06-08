@@ -52,6 +52,10 @@ static int fa_sg_alloc_table_from_pages(struct sg_table *sgt,
 					gfp_t gfp_mask)
 {
 #if KERNEL_VERSION(5, 10, 0) <= LINUX_VERSION_CODE
+#if KERNEL_VERSION(5, 15, 0) <= LINUX_VERSION_CODE
+	return sg_alloc_table_from_pages_segment(sgt, pages, n_pages, offset,
+					  size, max_segment, gfp_mask);
+#else
 	struct scatterlist *sg;
 
 	sg =  __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
@@ -60,6 +64,7 @@ static int fa_sg_alloc_table_from_pages(struct sg_table *sgt,
 		return PTR_ERR(sg);
 	else
 		return 0;
+#endif
 #else
 	return __sg_alloc_table_from_pages(sgt, pages, n_pages, offset, size,
 			max_segment, gfp_mask);
