@@ -1,0 +1,88 @@
+---
+# SPDX-FileCopyrightText: 2023 CERN (home.cern)
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# The version of the .ohwr.yaml template.
+version: '1.0.0'
+
+project:
+
+  # The name of your project.
+  name: 'FMC ADC 100M 14b 4cha'
+
+  # The description of your project. There are 2 options:
+  #   * Enter an inline Markdown description (like in the example below).
+  #   * Enter the URL of the Markdown file containing the description
+  #     (e.g. 'https://raw.githubusercontent.com/user/project/master/.ohwr/description.md').
+  description: |
+    The FmcAdc100M14b4cha is a 4 channel 100MSPS 14 bit ADC card in FMC (FPGA Mezzanine Card) format. By default it uses
+    only signals from the LPC rows of the HPC connector that is mounted. The gain can be set by software in three steps:
+    +/-50mV, +/-0.5V, +/-5V. An advanced offset circuit is used in the front-end design of the ADC board, and allows a
+    voltage shift in the range of +/-5V that is independent on the chosen gain range.
+
+  # The website of your project.
+  # Use the web page of your git repository if your project doesn't have dedicated website
+  # (e.g. 'https://github.com/user/project').
+  website: 'https://ohwr.org/project/fmc-adc-100m14b4cha'
+
+  # The licenses of your project. Use SPDX identifiers - https://spdx.org/licenses/.
+  licenses:
+    - 'CC-BY-SA-4.0'
+    - 'CC0-1.0'
+    - 'CERN-OHL-W-2.0'
+    - 'GPL-2.0-or-later'
+    - 'GPL-3.0-or-later'
+
+  # (optional) Image of your project (e.g. a photo of the latest prototype).
+  image: 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
+
+  # (optional) Link to the documentation of your project.
+  documentation: 'https://ohwr.org/project/fmc-adc-100m14b4cha/wikis'
+
+  # (optional) Link to the issue/bug tracker of your project.
+  issues: 'https://ohwr.org/project/fmc-adc-100m14b4cha/issues'
+
+  # (optional) Link to the latest release of your project.
+  latest_release: 'https://ohwr.org/project/fmc-adc-100m14b4cha/tags/v6.0.4'
+
+  # (optional) Link to the forum where your community has conversations, asks questions and posts answers.
+  forum: 'https://forums.ohwr.org/c/fmc-adc-100m14b4cha'
+
+  # (optional) Link to the news page of your project.
+  news: 'https://ohwr.org/project/fmc-adc-100m14b4cha/wikis/home#status'
+
+  # (optional) Addtional links.
+  links:
+    - name: 'FAQ'
+      url: 'https://ohwr.org/project/fmc-adc-100m14b4cha/wikis/FAQ'
+    - name: '📎 An informal description of the design'
+      url: 'https://www.ohwr.org/project/fmc-adc-100m14b4cha-hw/uploads/952e4a8d5d07883be5a00a6be7970657/fmc-adc_informal_description.pdf'
+    - name: '📎 Datasheet LTC2175-14/LTC2174-14/LTC2173-14 - 14-Bit, 125Msps/105Msps/80Msps Low Power Quad ADCs'
+      url: 'https://ohwr.org/project/fmc-adc-100m14b4cha-hw/wikis/uploads/58fd29ca0dd780866f9691f5f30dd3a4/LTC2174.pdf'
+    - name: '📎 Estimation of the performance of the FmcAdc100M14b4cha with higher input impedance'
+      url: 'https://www.ohwr.org/project/fmc-adc-100m14b4cha-hw/uploads/1e61f65d5eb38803625791e54e3c4f5b/1M_input_impedance_study.pdf'
+    - name: '📎 Simple bill of materials and prices of the truncated versions of the FmcAdc (reduced capability)'
+      url: 'https://www.ohwr.org/project/fmc-adc-100m14b4cha-hw/uploads/e1de4814081e6835d901980f7383de0e/fmc-adc_simple_bom_different_variants.pdf'
+    - name: 'Power consumption measurements of ADC on SPEC carrier'
+      url: 'https://ohwr.org/project/fmc-adc-100m14b4cha-hw/wikis/PowerConsumption'
+    - name: '📎 Current consumption measurements (30/7/2010)'
+      url: 'https://www.ohwr.org/project/fmc-adc-100m14b4cha-hw/uploads/01a018ddca7171b28cf01a31d7f6e000/fmc-adc_current_consumption.pdf'
+    - name: 'Fundamentals of Sampled Data Systems - Overview, Analog Devices'
+      url: 'https://www.analog.com/media/en/technical-documentation/application-notes/an-282.pdf'
+
+  # (optional) Additional images (maximum 5 images).
+  gallery:
+    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/669878f74ff69e386880d0d4394af9bd/fmc-adc_v3_front.jpg'
+    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
+
+  # (optional) Categories to which your project belongs.
+  # (e.g. 'FMC Carriers').
+  categories:
+    - 'FMC Modules'
+
+  # (optional) Tags that characterize your project.
+  # (e.g. 'ethernet').
+  tags:
+    - 'ADC'
+    - 'FMC'
