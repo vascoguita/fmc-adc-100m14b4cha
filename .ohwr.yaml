@@ -34,8 +34,11 @@ project:
     - 'GPL-2.0-or-later'
     - 'GPL-3.0-or-later'
 
-  # (optional) Image of your project (e.g. a photo of the latest prototype).
-  image: 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
+  # (optional) Images of your project (e.g. a photo of the latest prototype).
+  images:
+    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
+    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/669878f74ff69e386880d0d4394af9bd/fmc-adc_v3_front.jpg'
+    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
 
   # (optional) Link to the documentation of your project.
   documentation: 'https://ohwr.org/project/fmc-adc-100m14b4cha/wikis'
@@ -77,12 +80,7 @@ project:
       url: 'https://ohwr.org/project/fmc-adc-100m14b4cha-hw/wikis/PowerConsumption'
     - name: '📎 Current consumption measurements (30/7/2010)'
       url: 'https://www.ohwr.org/project/fmc-adc-100m14b4cha-hw/uploads/01a018ddca7171b28cf01a31d7f6e000/fmc-adc_current_consumption.pdf'
-
-  # (optional) Additional images (maximum 5 images).
-  gallery:
-    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/669878f74ff69e386880d0d4394af9bd/fmc-adc_v3_front.jpg'
-    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
-
+  
   # (optional) Categories to which your project belongs.
   # (e.g. 'FMC Carriers').
   categories:
