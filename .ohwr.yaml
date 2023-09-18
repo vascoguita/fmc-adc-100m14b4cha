@@ -38,7 +38,6 @@ project:
   images:
     - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
     - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/669878f74ff69e386880d0d4394af9bd/fmc-adc_v3_front.jpg'
-    - 'https://ohwr.org/project/fmc-adc-100m14b4cha/uploads/c812d406ca2b548917d8ff6a4c9301f4/fmc-adc_v3_top.jpg'
 
   # (optional) Link to the documentation of your project.
   documentation: 'https://ohwr.org/project/fmc-adc-100m14b4cha/wikis'
