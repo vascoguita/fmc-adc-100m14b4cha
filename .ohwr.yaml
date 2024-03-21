@@ -79,9 +79,3 @@ project:
       url: 'https://ohwr.org/project/fmc-adc-100m14b4cha-hw/wikis/PowerConsumption'
     - name: 'Current consumption measurements (30/7/2010)'
       url: 'https://www.ohwr.org/project/fmc-adc-100m14b4cha-hw/uploads/01a018ddca7171b28cf01a31d7f6e000/fmc-adc_current_consumption.pdf'
-  
-  # (optional) Categories to which your project belongs.
-  # (e.g. 'FMC Carriers').
-  categories:
-    - 'FMC Modules'
-
