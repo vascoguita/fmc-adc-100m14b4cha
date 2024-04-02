@@ -15,11 +15,7 @@ project:
   #   * Enter an inline Markdown description (like in the example below).
   #   * Enter the URL of the Markdown file containing the description
   #     (e.g. 'https://raw.githubusercontent.com/user/project/master/.ohwr/description.md').
-  description: |
-    The **FmcAdc100M14b4cha** is a 4 channel 100MSPS 14 bit ADC card in FMC (FPGA Mezzanine Card) format. By default it uses
-    only signals from the LPC rows of the HPC connector that is mounted. The gain can be set by software in three steps:
-    +/-50mV, +/-0.5V, +/-5V. An advanced offset circuit is used in the front-end design of the ADC board, and allows a
-    voltage shift in the range of +/-5V that is independent on the chosen gain range.
+  description: 'https://raw.githubusercontent.com/wiki/vascoguita/fmc-adc-100m14b4cha/Home.md'
 
   # The website of your project.
   # Use the web page of your git repository if your project doesn't have dedicated website
